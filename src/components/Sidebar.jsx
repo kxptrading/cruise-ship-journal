@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// components/Sidebar.jsx — Navigation sidebar
+//
+// On desktop (isOverlay = false) the sidebar sits permanently to the left of
+// the main content. On tablet and mobile it becomes a drawer that slides in
+// from the left over a darkened backdrop, controlled by isOpen / onClose.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { NAVY2, GOLD, WHITE } from '../constants'
 import { NAV } from '../constants'
 import { SvgIcon } from './ui'
@@ -7,6 +15,9 @@ const CLOSE_PATH = 'M18 6L6 18M6 6l12 12'
 export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) {
   return (
     <>
+      {/* ── Backdrop ────────────────────────────────────────────────────────
+          Semi-transparent overlay rendered behind the drawer on mobile/tablet.
+          Tapping it closes the sidebar without navigating anywhere.        */}
       {isOverlay && isOpen && (
         <div
           onClick={onClose}
@@ -14,6 +25,10 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
         />
       )}
 
+      {/* ── Sidebar panel ───────────────────────────────────────────────────
+          On desktop: static flex child, always visible.
+          On mobile/tablet: fixed, slides in via CSS transform. The transition
+          uses a material-motion easing curve for a natural feel.           */}
       <aside style={{
         width: 240, background: NAVY2, flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto',
         ...(isOverlay ? {
@@ -24,7 +39,9 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
         } : {}),
       }}>
 
-        {/* Header */}
+        {/* ── Header ────────────────────────────────────────────────────────
+            App brand mark. On mobile/tablet a close button is shown here
+            so the user can dismiss the drawer without tapping the backdrop. */}
         <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: GOLD, fontFamily: 'Georgia,serif', letterSpacing: '0.03em' }}>
@@ -42,7 +59,10 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
           )}
         </div>
 
-        {/* Nav items */}
+        {/* ── Navigation items ──────────────────────────────────────────────
+            One button per journal section. The active item is highlighted
+            with a gold left border, gold text, and a faint gold background.
+            All items are rendered from the NAV array in constants.js.      */}
         <nav style={{ flex: 1, paddingTop: 8, paddingBottom: 8 }}>
           {NAV.map(({ id, label, icon }) => {
             const active = section === id
@@ -65,6 +85,9 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
           })}
         </nav>
 
+        {/* ── Footer ────────────────────────────────────────────────────────
+            Reminds the user that data is stored locally (Phase 1). This will
+            change to a user avatar / account info block in Phase 2.        */}
         <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: 10, color: 'rgba(255,255,255,0.18)', textAlign: 'center', letterSpacing: '0.05em' }}>
           DATA SAVED LOCALLY
         </div>

@@ -1,3 +1,15 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// sections/DailyLog.jsx — Day-by-day voyage journal
+//
+// Lets the user log one entry per day of the voyage. The day selector at the
+// top scrolls horizontally on mobile so all 14 days are always reachable. Each
+// day's entry captures weather, highlights, meals, excursion details,
+// entertainment, a best moment, and a 1–5 star rating.
+//
+// Data is an array of exactly 14 objects (index = day - 1), always the same
+// length as the itinerary array so the two can be cross-referenced by index.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { useState } from 'react'
 import { NAVY, WHITE, BORDER, TEXT, BP, sty } from '../constants'
 import { useW } from '../context'
@@ -6,15 +18,24 @@ import { PgHdr, Box, Fld, Row2, Inp, TA, Stars } from '../components/ui'
 export default function DailyLog({ data, onChange, itinerary }) {
   const w   = useW()
   const cs  = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+
+  // day is the zero-based index into the data array (0 = Day 1)
   const [day, setDay] = useState(0)
   const log = data[day] || {}
+
+  // Update a single field on the current day without mutating the array
   const set = (f, v) => { const u = [...data]; u[day] = { ...log, [f]: v }; onChange(u) }
+
   const WX  = ['Sunny', 'Cloudy', 'Rainy', 'Windy', 'Hot', 'Mild', 'Cool']
 
   return (
     <div>
       <PgHdr title="Daily Log" sub="Record every moment of your voyage day by day" />
 
+      {/* ── Day selector ───────────────────────────────────────────────────────
+          Pill buttons for each of the 14 days. On mobile they scroll
+          horizontally (nowrap + overflowX auto) to avoid wrapping into a
+          multi-line block. The port name is appended when available.       */}
       <div style={{ display: 'flex', flexWrap: w < BP.mobile ? 'nowrap' : 'wrap', gap: 8, marginBottom: 24, overflowX: w < BP.mobile ? 'auto' : 'visible', paddingBottom: w < BP.mobile ? 8 : 0 }}>
         {data.map((_, i) => (
           <button key={i} onClick={() => setDay(i)}
@@ -25,6 +46,7 @@ export default function DailyLog({ data, onChange, itinerary }) {
       </div>
 
       <div style={cs}>
+        {/* Day heading: port name from itinerary + star rating */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
           <h2 style={{ margin: 0, color: NAVY, fontFamily: 'Georgia,serif', fontSize: 22 }}>
             Day {day + 1}{itinerary[day]?.port ? ` — ${itinerary[day].port}` : ''}
@@ -32,11 +54,13 @@ export default function DailyLog({ data, onChange, itinerary }) {
           <Stars value={log.rating || 0} onChange={v => set('rating', v)} />
         </div>
 
+        {/* Date and port fields — port pre-fills from itinerary but can be overridden */}
         <Row2>
           <Fld label="Date" half><Inp type="date" value={log.date} onChange={v => set('date', v)} /></Fld>
           <Fld label="Port / At Sea" half><Inp value={log.port} onChange={v => set('port', v)} placeholder="Port name or At Sea" /></Fld>
         </Row2>
 
+        {/* Weather: multi-select checkboxes — multiple conditions can apply */}
         <Box title="WEATHER">
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
             {WX.map(wx => (
@@ -50,16 +74,19 @@ export default function DailyLog({ data, onChange, itinerary }) {
           </div>
         </Box>
 
+        {/* Free-text highlights — this field counts toward the "Days Logged" metric */}
         <Box title="TODAY'S HIGHLIGHTS">
           <TA value={log.highlights} onChange={v => set('highlights', v)} placeholder="What happened today? Best moments, discoveries, experiences..." rows={5} />
         </Box>
 
+        {/* Four quick meal fields for the day — deeper logging goes in Food Log */}
         <Box title="MEALS & DRINKS">
           {[['Breakfast', 'breakfast'], ['Lunch', 'lunch'], ['Dinner', 'dinner'], ['Best Drink', 'drink']].map(([lbl, key]) => (
             <Fld key={key} label={lbl}><Inp value={log[key]} onChange={v => set(key, v)} placeholder="What did you have?" /></Fld>
           ))}
         </Box>
 
+        {/* Shore excursion or activity for the day */}
         <Box title="EXCURSION / SHORE ACTIVITY">
           <Fld label="Activity"><Inp value={log.activity} onChange={v => set('activity', v)} /></Fld>
           <Row2>
@@ -69,10 +96,12 @@ export default function DailyLog({ data, onChange, itinerary }) {
           <Fld label="Notes"><TA value={log.excNotes} onChange={v => set('excNotes', v)} rows={3} /></Fld>
         </Box>
 
+        {/* Brief note on evening shows, deck events, etc. Deeper logging goes in Entertainment Log */}
         <Box title="ONBOARD ENTERTAINMENT">
           <TA value={log.entertainment} onChange={v => set('entertainment', v)} placeholder="Shows, activities, events, games..." rows={3} />
         </Box>
 
+        {/* Single standout memory — counts toward "Days Logged" metric alongside highlights */}
         <Box title="BEST MOMENT OF THE DAY">
           <TA value={log.bestMoment} onChange={v => set('bestMoment', v)} rows={3} />
         </Box>

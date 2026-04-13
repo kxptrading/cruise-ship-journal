@@ -1,3 +1,12 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// main.jsx — Application entry point
+//
+// Mounts the React app and polyfills window.storage so any legacy code that
+// targets Claude's artifact renderer API still works unchanged when the app
+// runs locally. The actual data layer used by sections is db in storage.js —
+// this polyfill is only here for backwards compatibility.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
@@ -40,6 +49,8 @@ window.storage = {
   },
 }
 
+// Mount the React tree into the #root div defined in index.html.
+// StrictMode renders components twice in development to surface side-effects.
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <App />

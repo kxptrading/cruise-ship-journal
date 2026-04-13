@@ -1,3 +1,14 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// sections/Itinerary.jsx — 14-day itinerary table
+//
+// A fixed-length table with one row per day of the voyage. Each row stores the
+// date, port name (or "At Sea"), and arrival/departure times. The data array is
+// always exactly 14 entries — index 0 = Day 1.
+//
+// The Dashboard reads this data to build the port timeline and sea day count.
+// The Daily Log reads it to show the port name beside each day's heading.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { NAVY, WHITE, LIGHT, BORDER, TEXT, GOLD, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr } from '../components/ui'
@@ -5,12 +16,15 @@ import { PgHdr } from '../components/ui'
 export default function Itinerary({ data, onChange }) {
   const w  = useW()
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+
+  // Update a single field on a specific day without mutating the array
   const setDay = (i, f, v) => { const u = [...data]; u[i] = { ...u[i], [f]: v }; onChange(u) }
 
   return (
     <div>
       <PgHdr title="Itinerary Overview" sub="Your 14-day voyage at a glance" />
       <div style={cs}>
+        {/* Horizontal scroll on mobile so the table isn't cramped */}
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
@@ -22,7 +36,9 @@ export default function Itinerary({ data, onChange }) {
             </thead>
             <tbody>
               {data.map((day, i) => (
+                // Alternating row backgrounds for readability
                 <tr key={i} style={{ background: i % 2 === 0 ? WHITE : LIGHT, borderBottom: `1px solid ${BORDER}` }}>
+                  {/* Day number in gold serif — matches the journal's physical layout */}
                   <td style={{ padding: '8px 14px', fontWeight: 700, color: GOLD, fontSize: 16, textAlign: 'center', fontFamily: 'Georgia,serif' }}>{i + 1}</td>
                   <td style={{ padding: '6px 10px' }}>
                     <input type="date" value={day.date || ''} onChange={e => setDay(i, 'date', e.target.value)}

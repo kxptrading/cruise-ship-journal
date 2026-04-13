@@ -1,3 +1,11 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// sections/Dashboard.jsx — Home screen with voyage overview and live metrics
+//
+// Aggregates data from every other section to produce a single at-a-glance
+// view. Nothing is stored here — it derives all values from props at render
+// time, so metrics always reflect the latest saved data.
+// ─────────────────────────────────────────────────────────────────────────────
+
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, PLUM, BP } from '../constants'
 import { IC, NAV, sty } from '../constants'
 import { useW } from '../context'
@@ -6,36 +14,55 @@ import { SvgIcon, Donut, MetricCard } from '../components/ui'
 export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, onNav }) {
   const w          = useW()
   const cs         = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+
+  // ── Metric calculations ───────────────────────────────────────────────────
+  // Each value is derived live from the section data passed as props.
+
+  // Budget: sum all expense amounts; calculate percentage of total budget used
   const spent      = (budget.items || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
   const budgetAmt  = parseFloat(budget.budget) || 0
   const budgetPct  = budgetAmt > 0 ? Math.round((spent / budgetAmt) * 100) : 0
   const budgetOver = budgetPct > 100
 
+  // Itinerary: total nights, port count (excluding "at sea"), and sea day count
   const nights     = parseInt(voyage.totalNights) || 14
   const ports      = itinerary.filter(d => d.port && d.port.trim() && d.port.toLowerCase() !== 'at sea').length
   const seaDays    = itinerary.filter(d => d.port?.toLowerCase() === 'at sea').length
+
+  // Daily log: count days that have any written content
   const logged     = dailyLogs.filter(d => d.highlights || d.bestMoment).length
   const loggedPct  = Math.round((logged / nights) * 100)
+
+  // Dining: combined meal count across Food Log and Restaurant Log sections;
+  // unique venues for the sub-text
   const meals      = foodLogs.length + diningLog.length
   const venues     = [...new Set([...foodLogs.map(m => m.venue), ...diningLog.map(r => r.venue)].filter(Boolean))].length
 
+  // Packing: checked items vs fixed total of 24 defined in PackingList
   const packingChecked = Object.values(packing || {}).flat().length
   const packingTotal   = 24
   const packingPct     = Math.round((packingChecked / packingTotal) * 100)
 
+  // Ratings: average across all daily log entries that have a rating set
   const ratedDays  = dailyLogs.filter(d => d.rating > 0)
   const avgRating  = ratedDays.length > 0
     ? (ratedDays.reduce((s, d) => s + d.rating, 0) / ratedDays.length).toFixed(1)
     : null
 
+  // ── Voyage progress ───────────────────────────────────────────────────────
+  // Calculates which day of the voyage today falls on, based on the stored
+  // departure date. Used for the progress bar and day counter ring in the hero.
   const today      = new Date()
   const depDate    = voyage.departureDate ? new Date(voyage.departureDate) : null
   const currentDay = depDate ? Math.max(1, Math.min(nights, Math.floor((today - depDate) / 86400000) + 1)) : null
   const voyagePct  = currentDay ? Math.round((currentDay / nights) * 100) : null
   const daysLeft   = currentDay ? Math.max(0, nights - currentDay + 1) : null
 
+  // ── Supporting data for lower panels ─────────────────────────────────────
+  // Port list for the timeline — only days that have a port name filled in
   const portList   = itinerary.map((d, i) => ({ ...d, n: i + 1 })).filter(d => d.port?.trim())
 
+  // Spend by category — top 4 categories for the budget breakdown bar chart
   const catSpend   = {}
   ;(budget.items || []).forEach(i => {
     const c = i.category || 'Other'
@@ -46,14 +73,19 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
 
   return (
     <div>
-      {/* ── HERO ── */}
+      {/* ── Hero ─────────────────────────────────────────────────────────────
+          Dark navy panel showing the ship name, key voyage info, and a live
+          voyage progress bar. The day counter ring is hidden on mobile to
+          prevent it from squishing the text content.                       */}
       <div style={{ background: NAVY2, borderRadius: 18, padding: w < BP.mobile ? '20px 18px' : '32px 36px', marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
+        {/* Decorative background circles — purely visual */}
         <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(201,162,39,0.1)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', right: -25, top: -25, width: 200, height: 200, borderRadius: '50%', border: '1px solid rgba(201,162,39,0.07)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', right: 30, top: 30, width: 100, height: 100, borderRadius: '50%', border: '1px dashed rgba(201,162,39,0.08)', pointerEvents: 'none' }} />
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 24 }}>
           <div style={{ flex: 1 }}>
+            {/* Cruise line / app name badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(201,162,39,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <SvgIcon d={IC.anchor} size={13} color={GOLD} />
@@ -63,10 +95,12 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
               </span>
             </div>
 
+            {/* Ship name — scales down on mobile */}
             <h1 style={{ margin: 0, fontSize: w < BP.mobile ? (hasVoyage ? 26 : 22) : w < BP.tablet ? (hasVoyage ? 30 : 26) : (hasVoyage ? 34 : 28), fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif', lineHeight: 1.1, marginBottom: 10 }}>
               {voyage.shipName || 'Your Voyage Awaits'}
             </h1>
 
+            {/* Departure port, dates, and cabin number */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px', marginBottom: 16 }}>
               {voyage.departurePort && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -85,6 +119,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
               {voyage.cabin && <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)' }}>Cabin {voyage.cabin}</span>}
             </div>
 
+            {/* CTA shown only when no voyage is set up yet */}
             {!hasVoyage && (
               <button onClick={() => onNav('voyage')}
                 style={{ background: GOLD, color: NAVY2, border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
@@ -92,6 +127,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
               </button>
             )}
 
+            {/* Live voyage progress bar — shown only once a departure date is set */}
             {voyagePct !== null && (
               <div style={{ marginTop: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
@@ -107,7 +143,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
             )}
           </div>
 
-          {/* Day counter ring — hidden on mobile */}
+          {/* Day counter ring — hidden on mobile to save horizontal space */}
           {w >= BP.mobile && <div style={{ flexShrink: 0, textAlign: 'center' }}>
             <div style={{ position: 'relative', width: 100, height: 100 }}>
               <Donut pct={voyagePct || 0} size={100} color={GOLD} bg="rgba(255,255,255,0.07)" thick={7} />
@@ -126,7 +162,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
           </div>}
         </div>
 
-        {/* Companions */}
+        {/* Travel companions — shown beneath the hero content when set */}
         {(voyage.companion1 || voyage.companion2) && (
           <div style={{ marginTop: 18, paddingTop: 16, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>With:</span>
@@ -137,7 +173,9 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
         )}
       </div>
 
-      {/* ── METRICS GRID ── */}
+      {/* ── Metrics grid ──────────────────────────────────────────────────────
+          6 metric cards in a responsive grid: 3 columns on desktop, 2 on
+          tablet, 1 on mobile. Each MetricCard is self-contained.           */}
       <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? '1fr' : w < BP.tablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 14, marginBottom: 18 }}>
         <MetricCard icon={IC.calendar} color={NAVY} value={`${logged} / ${nights}`} label="Days Logged"
           sub={logged === 0 ? 'Open Daily Log to start' : `${nights - logged} day${nights - logged !== 1 ? 's' : ''} to journal`}
@@ -146,6 +184,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
           sub={ports === 0 ? 'Fill in your Itinerary' : `plus ${seaDays} sea day${seaDays !== 1 ? 's' : ''}`} />
         <MetricCard icon={IC.fork} color={GOLD} value={meals || '—'} label="Dining Entries"
           sub={venues > 0 ? `Across ${venues} venue${venues !== 1 ? 's' : ''}` : 'Start logging meals'} />
+        {/* Budget card turns amber at 80% and red above 100% of the budget */}
         <MetricCard icon={IC.wallet}
           color={budgetOver ? '#DC2626' : budgetPct > 80 ? '#D97706' : TEAL}
           alert={budgetOver}
@@ -159,7 +198,10 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
           sub={ratedDays.length > 0 ? `From ${ratedDays.length} rated day${ratedDays.length !== 1 ? 's' : ''}` : 'Rate days in Daily Log'} />
       </div>
 
-      {/* ── ITINERARY TIMELINE ── */}
+      {/* ── Itinerary timeline ────────────────────────────────────────────────
+          Horizontal scrollable port timeline. Each stop is shown as a dot on
+          a line; past days use navy fill, the current day is highlighted in
+          gold, and future days are empty circles.                           */}
       {portList.length > 0 && (
         <div style={{ ...cs, marginBottom: 18 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 22 }}>
@@ -174,9 +216,11 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
                 const isCurr = currentDay && p.n === currentDay
                 return (
                   <div key={i} style={{ flex: 1, minWidth: 100, textAlign: 'center', position: 'relative' }}>
+                    {/* Connector line between stops */}
                     {i < portList.length - 1 && (
                       <div style={{ position: 'absolute', top: 15, left: '50%', width: '100%', height: 2, background: isPast ? NAVY : BORDER, zIndex: 0 }} />
                     )}
+                    {/* Stop dot — gold for today, navy for past, outline for future */}
                     <div style={{ position: 'relative', zIndex: 1, display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
                       <div style={{
                         width: 30, height: 30, borderRadius: '50%',
@@ -200,7 +244,9 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
         </div>
       )}
 
-      {/* ── BUDGET + QUICK ACCESS ── */}
+      {/* ── Budget breakdown + Quick Access ───────────────────────────────────
+          Two-column grid on tablet and above; single column on mobile.
+          Budget breakdown only renders if there are categorised expenses.  */}
       <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? '1fr' : topCats.length > 0 ? '1fr 1fr' : '1fr', gap: 14 }}>
         {topCats.length > 0 && (
           <div style={cs}>
@@ -208,6 +254,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
               <h2 style={{ margin: 0, fontSize: 13, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Spend by Category</h2>
               <button onClick={() => onNav('budget')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 6, padding: '5px 12px', cursor: 'pointer', fontSize: 12, color: MUTED, fontFamily: 'inherit' }}>View →</button>
             </div>
+            {/* Horizontal bar per category showing its share of total spending */}
             {topCats.map(([cat, amt], i) => {
               const pct    = spent > 0 ? (amt / spent) * 100 : 0
               const colors = [NAVY, TEAL, GOLD, PLUM]
@@ -233,6 +280,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
           </div>
         )}
 
+        {/* Quick access grid — shortcut buttons to every section */}
         <div style={cs}>
           <h2 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Access</h2>
           <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? '1fr' : '1fr 1fr', gap: 8 }}>

@@ -72,8 +72,10 @@ export const NAV = [
 export const sty = {
   // White card with rounded corners — the primary content container
   card: { background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '22px 24px', marginBottom: 18 },
-  // Standard text input / select styling
-  inp:  { width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '10px 14px', fontSize: 14, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', background: WHITE, color: TEXT },
+  // Standard text input / select styling.
+  // fontSize is 16px — iOS Safari auto-zooms any input with font-size < 16px,
+  // so this must stay at 16px or above to prevent unwanted zoom on mobile.
+  inp:  { width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '10px 14px', fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', background: WHITE, color: TEXT },
   // Primary action button — navy background, white text
   btn:  { background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 },
   // Uppercase micro-label above form fields

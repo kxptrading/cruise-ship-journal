@@ -123,13 +123,16 @@ export default function App() {
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
         {/* ── Mobile/tablet topbar ────────────────────────────────────────────
-            Rendered as a flex row at the very top of the column layout —
-            outside the scrollable area — so it is always visible regardless
-            of scroll position. iOS Safari's sticky-in-flex bug is avoided
-            entirely by not using position:sticky here.                     */}
+            position:fixed anchors the bar to the visual viewport so iOS
+            keyboard appearance, address-bar hide/show, and layout reflows
+            cannot push it off screen. A matching spacer div preserves the
+            52px gap in the document flow so content doesn't slide under it. */}
         {isOverlay && (
+          <>
+          <div style={{ height: topbarHeight, flexShrink: 0 }} aria-hidden="true" />
           <div style={{
-            height: topbarHeight, flexShrink: 0, zIndex: 100,
+            position: 'fixed', top: 0, left: 0, right: 0,
+            height: topbarHeight, zIndex: 200,
             background: WHITE, borderBottom: `1px solid ${BORDER}`,
             display: 'flex', alignItems: 'center', gap: 14, padding: '0 16px',
             boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
@@ -145,6 +148,7 @@ export default function App() {
               </span>
             </div>
           </div>
+          </>
         )}
 
         {/* ── Body row: sidebar + scrollable content ──────────────────────────

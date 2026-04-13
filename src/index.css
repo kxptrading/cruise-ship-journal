@@ -22,3 +22,12 @@ input, textarea, select {
   font-family: inherit;
   font-size: inherit;
 }
+
+/* Prevent iOS Safari from zooming in when an input is focused.
+   Safari zooms any input with font-size < 16px. This override applies
+   only on mobile-width screens and doesn't affect desktop styling. */
+@media screen and (max-width: 640px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}

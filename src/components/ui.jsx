@@ -32,9 +32,14 @@ export const Fld = ({ label, children, half }) => (
   </div>
 )
 
-export const Row2 = ({ children }) => (
-  <div style={{ display: 'flex', gap: 16 }}>{children}</div>
-)
+export const Row2 = ({ children }) => {
+  const w = useW()
+  return (
+    <div style={{ display: 'flex', flexDirection: w < BP.mobile ? 'column' : 'row', gap: 16 }}>
+      {children}
+    </div>
+  )
+}
 
 export const Box = ({ title, children }) => (
   <div style={{ borderRadius: 8, marginBottom: 20, overflow: 'hidden', border: `1px solid ${BORDER}` }}>

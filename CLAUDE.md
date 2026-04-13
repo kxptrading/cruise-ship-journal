@@ -98,8 +98,9 @@ csj-dailyLogs   Array[14] One object per day: { date, port, weather[], highlight
                            excCost, excNotes, entertainment, bestMoment, rating }
 csj-foodLogs    Array     { day, date, meal, port, venue, what, standout, drinks,
                             notes, rating, cost, orderAgain }
-csj-diningLog   Array     { venue, date, meal, ordered, rating, notes }
-csj-foodFav     Object    { best, buffet, specialty, surprising, recreate, regret }
+csj-diningLog          Array     { venue, date, meal, ordered, rating, notes }
+csj-entertainmentLog   Array     { day, date, name, type, venue, performers, duration, rating, notes }
+csj-foodFav            Object    { best, buffet, specialty, surprising, recreate, regret }
 csj-budget      Object    { budget: string, items: Array<{ date, item, category, amount }> }
 csj-shopping    Object    { items: Array<{ item, port, cost }> }
 csj-highlights  Object    { port, meal, funny, view, friends, firstTime, moment }
@@ -136,7 +137,7 @@ photos         id, voyage_id, day_number, storage_path, caption, created_at
 
 ---
 
-## Journal Sections (12 total)
+## Journal Sections (13 total)
 
 | ID | Label | Source PDF | Status |
 |---|---|---|---|
@@ -146,6 +147,7 @@ photos         id, voyage_id, day_number, storage_path, caption, created_at
 | daily | Daily Log | `05_daily_log_page_a.pdf` + `06_daily_log_page_b.pdf` | Built |
 | food | Food Log | `07_food_log.pdf` + `07_food_log_b.pdf` | Built |
 | dining | Restaurant Log | `10_dining_log.pdf` | Built |
+| entertainment | Entertainment Log | — | Built |
 | foodfav | Food Favourites | `08_food_favourites.pdf` | Built |
 | budget | Budget Tracker | `09_budget_tracker.pdf` | Built |
 | shopping | Shopping Log | `11_souvenirs_shopping.pdf` | Built |

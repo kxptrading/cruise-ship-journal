@@ -26,6 +26,7 @@ export const IC = {
   food:     'M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3',
   ship:     'M2 21h20M4 21V10l8-7 8 7v11M9 21V13h6v8',
   menu:     'M3 12h18M3 6h18M3 18h18',
+  play:     'M12 22a10 10 0 100-20 10 10 0 000 20zM10 8l6 4-6 4V8z',
 }
 
 export const NAV = [
@@ -35,6 +36,7 @@ export const NAV = [
   { id: 'daily',      label: 'Daily Log',        icon: IC.calendar },
   { id: 'food',       label: 'Food Log',         icon: IC.fork },
   { id: 'dining',     label: 'Restaurant Log',   icon: IC.food },
+  { id: 'entertainment', label: 'Entertainment Log', icon: IC.play },
   { id: 'foodfav',    label: 'Food Favourites',  icon: IC.star },
   { id: 'budget',     label: 'Budget Tracker',   icon: IC.wallet },
   { id: 'shopping',   label: 'Shopping Log',     icon: IC.trending },

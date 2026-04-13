@@ -25,7 +25,7 @@ export default function DailyLog({ data, onChange, itinerary }) {
       </div>
 
       <div style={cs}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
           <h2 style={{ margin: 0, color: NAVY, fontFamily: 'Georgia,serif', fontSize: 22 }}>
             Day {day + 1}{itinerary[day]?.port ? ` — ${itinerary[day].port}` : ''}
           </h2>

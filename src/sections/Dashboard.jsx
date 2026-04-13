@@ -47,7 +47,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
   return (
     <div>
       {/* ── HERO ── */}
-      <div style={{ background: NAVY2, borderRadius: 18, padding: '32px 36px', marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
+      <div style={{ background: NAVY2, borderRadius: 18, padding: w < BP.mobile ? '20px 18px' : '32px 36px', marginBottom: 20, position: 'relative', overflow: 'hidden' }}>
         <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(201,162,39,0.1)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', right: -25, top: -25, width: 200, height: 200, borderRadius: '50%', border: '1px solid rgba(201,162,39,0.07)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', right: 30, top: 30, width: 100, height: 100, borderRadius: '50%', border: '1px dashed rgba(201,162,39,0.08)', pointerEvents: 'none' }} />
@@ -107,8 +107,8 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
             )}
           </div>
 
-          {/* Day counter ring */}
-          <div style={{ flexShrink: 0, textAlign: 'center' }}>
+          {/* Day counter ring — hidden on mobile */}
+          {w >= BP.mobile && <div style={{ flexShrink: 0, textAlign: 'center' }}>
             <div style={{ position: 'relative', width: 100, height: 100 }}>
               <Donut pct={voyagePct || 0} size={100} color={GOLD} bg="rgba(255,255,255,0.07)" thick={7} />
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -123,7 +123,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 6 }}>
               {currentDay ? 'Current Day' : 'Duration'}
             </div>
-          </div>
+          </div>}
         </div>
 
         {/* Companions */}

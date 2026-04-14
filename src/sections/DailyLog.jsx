@@ -10,21 +10,54 @@
 // length as the itinerary array so the two can be cross-referenced by index.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from 'react'
-import { NAVY, WHITE, BORDER, TEXT, BP, sty } from '../constants'
+import { useState, useEffect, useRef } from 'react'
+import { NAVY, WHITE, BORDER, TEXT, MUTED, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr, Box, Fld, Row2, Inp, TA, Stars } from '../components/ui'
+import { addPhoto, getPhotos, deletePhoto, updateCaption } from '../lib/photoStorage'
 
 export default function DailyLog({ data, onChange, itinerary }) {
   const w   = useW()
   const cs  = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
   // day is the zero-based index into the data array (0 = Day 1)
-  const [day, setDay] = useState(0)
+  const [day, setDay]         = useState(0)
+  const [photos, setPhotos]   = useState([])
+  const [uploading, setUploading] = useState(false)
+  const [lightbox, setLightbox]   = useState(null)
+  const fileRef = useRef(null)
+
   const log = data[day] || {}
 
   // Update a single field on the current day without mutating the array
   const set = (f, v) => { const u = [...data]; u[day] = { ...log, [f]: v }; onChange(u) }
+
+  // Load photos from IndexedDB whenever the active day changes
+  useEffect(() => {
+    getPhotos(day).then(setPhotos).catch(() => setPhotos([]))
+  }, [day])
+
+  const handleUpload = async (e) => {
+    const files = Array.from(e.target.files)
+    if (!files.length) return
+    setUploading(true)
+    for (const file of files) {
+      const photo = await addPhoto(day, file)
+      setPhotos(prev => [...prev, photo])
+    }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  const handleDelete = async (id) => {
+    await deletePhoto(id)
+    setPhotos(prev => prev.filter(p => p.id !== id))
+    if (lightbox?.id === id) setLightbox(null)
+  }
+
+  const handleCaption = (id, caption) => {
+    setPhotos(prev => prev.map(p => p.id === id ? { ...p, caption } : p))
+  }
 
   const WX  = ['Sunny', 'Cloudy', 'Rainy', 'Windy', 'Hot', 'Mild', 'Cool']
 
@@ -105,7 +138,80 @@ export default function DailyLog({ data, onChange, itinerary }) {
         <Box title="BEST MOMENT OF THE DAY">
           <TA value={log.bestMoment} onChange={v => set('bestMoment', v)} rows={3} />
         </Box>
+
+        {/* Photo memory slots — stored in IndexedDB, one collection per day */}
+        <Box title="PHOTOS">
+          <input
+            type="file" accept="image/*" multiple
+            ref={fileRef} style={{ display: 'none' }}
+            onChange={handleUpload}
+          />
+          <div style={{ marginBottom: 14 }}>
+            <button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              style={{ ...sty.btn, fontSize: 13, padding: '8px 16px', opacity: uploading ? 0.6 : 1 }}
+            >
+              {uploading ? 'Uploading…' : '📷 Add Photos'}
+            </button>
+          </div>
+          {photos.length === 0 ? (
+            <div style={{ color: MUTED, fontSize: 13, fontStyle: 'italic' }}>
+              No photos yet — add some to remember this day
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 10 }}>
+              {photos.map(photo => (
+                <div key={photo.id}>
+                  <div style={{ position: 'relative' }}>
+                    <div
+                      onClick={() => setLightbox(photo)}
+                      style={{ aspectRatio: '1', overflow: 'hidden', borderRadius: 8, cursor: 'pointer', border: `1px solid ${BORDER}` }}
+                    >
+                      <img src={photo.dataUrl} alt={photo.caption || `Day ${day + 1} photo`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                    </div>
+                    <button
+                      onClick={() => handleDelete(photo.id)}
+                      style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: WHITE, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
+                    >×</button>
+                  </div>
+                  <input
+                    type="text"
+                    value={photo.caption || ''}
+                    onChange={e => handleCaption(photo.id, e.target.value)}
+                    onBlur={e => updateCaption(photo.id, e.target.value)}
+                    placeholder="Add caption…"
+                    style={{ ...sty.inp, fontSize: 12, padding: '6px 10px', marginTop: 6 }}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </Box>
       </div>
+
+      {/* Lightbox — full-size photo viewer */}
+      {lightbox && (
+        <div
+          onClick={() => setLightbox(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+        >
+          <div onClick={e => e.stopPropagation()} style={{ position: 'relative', maxWidth: '90vw' }}>
+            <img src={lightbox.dataUrl} alt={lightbox.caption || ''}
+              style={{ maxWidth: '100%', maxHeight: '85vh', borderRadius: 10, objectFit: 'contain', display: 'block' }} />
+            {lightbox.caption && (
+              <div style={{ textAlign: 'center', color: 'rgba(255,255,255,0.65)', marginTop: 10, fontSize: 14 }}>
+                {lightbox.caption}
+              </div>
+            )}
+            <button
+              onClick={() => setLightbox(null)}
+              style={{ position: 'absolute', top: -14, right: -14, width: 30, height: 30, borderRadius: '50%', background: 'rgba(255,255,255,0.15)', border: 'none', color: WHITE, fontSize: 20, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            >×</button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

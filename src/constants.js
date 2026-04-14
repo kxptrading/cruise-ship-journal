@@ -51,19 +51,19 @@ export const IC = {
 // journal sections. Adding a new section requires an entry here as well as a
 // corresponding key in INIT (App.jsx) and a render case in the App return.
 export const NAV = [
-  { id: 'dashboard',     label: 'Dashboard',         icon: IC.compass  },
-  { id: 'voyage',        label: 'Voyage Details',     icon: IC.ship     },
-  { id: 'itinerary',     label: 'Itinerary',          icon: IC.mapPin   },
-  { id: 'daily',         label: 'Daily Log',          icon: IC.calendar },
-  { id: 'food',          label: 'Food Log',           icon: IC.fork     },
-  { id: 'dining',        label: 'Restaurant Log',     icon: IC.food     },
-  { id: 'entertainment', label: 'Entertainment Log',  icon: IC.play     },
-  { id: 'foodfav',       label: 'Food Favourites',    icon: IC.star     },
-  { id: 'budget',        label: 'Budget Tracker',     icon: IC.wallet   },
-  { id: 'shopping',      label: 'Shopping Log',       icon: IC.trending },
-  { id: 'highlights',    label: 'Highlights',         icon: IC.star     },
-  { id: 'packing',       label: 'Packing List',       icon: IC.check    },
-  { id: 'notes',         label: 'Notes',              icon: IC.calendar },
+  { id: 'dashboard',     label: 'Dashboard',         icon: '🧭' },
+  { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },
+  { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },
+  { id: 'daily',         label: 'Daily Log',          icon: '📅' },
+  { id: 'food',          label: 'Food Log',           icon: '🍴' },
+  { id: 'dining',        label: 'Restaurant Log',     icon: '🍽️' },
+  { id: 'entertainment', label: 'Entertainment Log',  icon: '🎭' },
+  { id: 'foodfav',       label: 'Food Favourites',    icon: '⭐' },
+  { id: 'budget',        label: 'Budget Tracker',     icon: '💳' },
+  { id: 'shopping',      label: 'Shopping Log',       icon: '🛍️' },
+  { id: 'highlights',    label: 'Highlights',         icon: '🌟' },
+  { id: 'packing',       label: 'Packing List',       icon: '🧳' },
+  { id: 'notes',         label: 'Notes',              icon: '📝' },
 ]
 
 // ── Shared component styles ───────────────────────────────────────────────────

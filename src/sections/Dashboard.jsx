@@ -7,9 +7,24 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, PLUM, BP } from '../constants'
-import { IC, NAV, sty } from '../constants'
+import { NAV, sty } from '../constants'
 import { useW } from '../context'
-import { SvgIcon, Donut, MetricCard } from '../components/ui'
+import { Donut, MetricCard } from '../components/ui'
+
+const QUICK_EMOJI = {
+  voyage:        '🚢',
+  itinerary:     '🗺️',
+  daily:         '📅',
+  food:          '🍴',
+  dining:        '🍽️',
+  entertainment: '🎭',
+  foodfav:       '⭐',
+  budget:        '💳',
+  shopping:      '🛍️',
+  highlights:    '🌟',
+  packing:       '🧳',
+  notes:         '📝',
+}
 
 export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, onNav }) {
   const w          = useW()
@@ -88,7 +103,7 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
             {/* Cruise line / app name badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
               <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(201,162,39,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <SvgIcon d={IC.anchor} size={13} color={GOLD} />
+                <span style={{ fontSize: 13, lineHeight: 1 }}>⚓</span>
               </div>
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
                 {voyage.cruiseLine || 'Cruise Ship Log'}
@@ -104,13 +119,13 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px', marginBottom: 16 }}>
               {voyage.departurePort && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <SvgIcon d={IC.mapPin} size={12} color={GOLD} />
+                  <span style={{ fontSize: 12, lineHeight: 1 }}>📍</span>
                   <span style={{ fontSize: 13, color: GOLD }}>{voyage.departurePort}</span>
                 </div>
               )}
               {voyage.departureDate && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <SvgIcon d={IC.calendar} size={12} color="rgba(255,255,255,0.35)" />
+                  <span style={{ fontSize: 12, lineHeight: 1 }}>📅</span>
                   <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)' }}>
                     {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
                   </span>
@@ -177,24 +192,24 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
           6 metric cards in a responsive grid: 3 columns on desktop, 2 on
           tablet, 1 on mobile. Each MetricCard is self-contained.           */}
       <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? '1fr' : w < BP.tablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 14, marginBottom: 18 }}>
-        <MetricCard icon={IC.calendar} color={NAVY} value={`${logged} / ${nights}`} label="Days Logged"
+        <MetricCard icon="📖" color={NAVY} value={`${logged} / ${nights}`} label="Days Logged"
           sub={logged === 0 ? 'Open Daily Log to start' : `${nights - logged} day${nights - logged !== 1 ? 's' : ''} to journal`}
           pct={loggedPct} />
-        <MetricCard icon={IC.mapPin} color={TEAL} value={ports || '—'} label="Ports Planned"
+        <MetricCard icon="📍" color={TEAL} value={ports || '—'} label="Ports Planned"
           sub={ports === 0 ? 'Fill in your Itinerary' : `plus ${seaDays} sea day${seaDays !== 1 ? 's' : ''}`} />
-        <MetricCard icon={IC.fork} color={GOLD} value={meals || '—'} label="Dining Entries"
+        <MetricCard icon="🍴" color={GOLD} value={meals || '—'} label="Dining Entries"
           sub={venues > 0 ? `Across ${venues} venue${venues !== 1 ? 's' : ''}` : 'Start logging meals'} />
         {/* Budget card turns amber at 80% and red above 100% of the budget */}
-        <MetricCard icon={IC.wallet}
+        <MetricCard icon="💳"
           color={budgetOver ? '#DC2626' : budgetPct > 80 ? '#D97706' : TEAL}
           alert={budgetOver}
           value={spent > 0 ? `£${spent.toFixed(0)}` : '£—'} label="Total Spent"
           sub={budgetAmt > 0 ? `£${Math.abs(budgetAmt - spent).toFixed(0)} ${budgetOver ? 'over budget!' : 'remaining'}` : 'Set a budget to track'}
           ring={budgetAmt > 0 ? Math.min(100, budgetPct) : undefined} />
-        <MetricCard icon={IC.check} color={PLUM} value={`${packingChecked} / ${packingTotal}`} label="Items Packed"
+        <MetricCard icon="🧳" color={PLUM} value={`${packingChecked} / ${packingTotal}`} label="Items Packed"
           sub={packingPct === 100 ? 'All packed — ready to sail!' : `${packingTotal - packingChecked} items to pack`}
           pct={packingPct} />
-        <MetricCard icon={IC.star} color={ROSE} value={avgRating ? `${avgRating} ★` : '—'} label="Avg Day Rating"
+        <MetricCard icon="⭐" color={ROSE} value={avgRating ? `${avgRating} ★` : '—'} label="Avg Day Rating"
           sub={ratedDays.length > 0 ? `From ${ratedDays.length} rated day${ratedDays.length !== 1 ? 's' : ''}` : 'Rate days in Daily Log'} />
       </div>
 
@@ -284,11 +299,11 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
         <div style={cs}>
           <h2 style={{ margin: '0 0 16px', fontSize: 13, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Quick Access</h2>
           <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? '1fr' : '1fr 1fr', gap: 8 }}>
-            {NAV.filter(n => n.id !== 'dashboard').map(({ id, label, icon }) => (
+            {NAV.filter(n => n.id !== 'dashboard').map(({ id, label }) => (
               <button key={id} onClick={() => onNav(id)}
                 style={{ background: '#F9F7F3', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 12px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ width: 26, height: 26, borderRadius: 7, background: NAVY + '0E', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                  <SvgIcon d={icon} size={13} color={NAVY} />
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>{QUICK_EMOJI[id]}</span>
                 </div>
                 <span style={{ fontSize: 12, fontWeight: 600, color: NAVY, lineHeight: 1.2 }}>{label}</span>
               </button>

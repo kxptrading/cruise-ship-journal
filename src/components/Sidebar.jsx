@@ -8,9 +8,6 @@
 
 import { NAVY2, GOLD, WHITE } from '../constants'
 import { NAV } from '../constants'
-import { SvgIcon } from './ui'
-
-const CLOSE_PATH = 'M18 6L6 18M6 6l12 12'
 
 export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) {
   return (
@@ -53,8 +50,8 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
           </div>
           {isOverlay && (
             <button onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginLeft: 8, marginTop: 2 }}>
-              <SvgIcon d={CLOSE_PATH} size={16} color="rgba(255,255,255,0.5)" />
+              style={{ background: 'rgba(255,255,255,0.06)', border: 'none', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginLeft: 8, marginTop: 2, fontSize: 18, color: 'rgba(255,255,255,0.5)' }}>
+              ×
             </button>
           )}
         </div>
@@ -78,7 +75,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
                   cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: active ? 600 : 400,
                   transition: 'background 0.15s',
                 }}>
-                <SvgIcon d={icon} size={15} color={active ? GOLD : 'rgba(255,255,255,0.35)'} />
+                <span style={{ fontSize: 15, lineHeight: 1, opacity: active ? 1 : 0.6 }}>{icon}</span>
                 {label}
               </button>
             )

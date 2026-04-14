@@ -140,7 +140,9 @@ export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert })
       {/* Top row: icon badge (left) + optional donut ring (right) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{ width: 38, height: 38, borderRadius: 10, background: color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <SvgIcon d={icon} size={18} color={color} />
+          {icon.length <= 4
+            ? <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
+            : <SvgIcon d={icon} size={18} color={color} />}
         </div>
         {ring !== undefined && (
           <div style={{ position: 'relative', flexShrink: 0 }}>

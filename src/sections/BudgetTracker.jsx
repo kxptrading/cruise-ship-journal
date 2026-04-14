@@ -35,7 +35,7 @@ export default function BudgetTracker({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Budget Tracker" sub="Every penny of your voyage, accounted for" />
+      <PgHdr icon="💳" title="Budget Tracker" sub="Every penny of your voyage, accounted for" />
 
       {/* ── Summary row ───────────────────────────────────────────────────────
           Two cards side by side: budget input (left) and running total with

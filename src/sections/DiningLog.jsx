@@ -22,7 +22,7 @@ export default function DiningLog({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Restaurant & Dining Log" sub="Rate every dining experience across the ship and in port" />
+      <PgHdr icon="🍽️" title="Restaurant & Dining Log" sub="Rate every dining experience across the ship and in port" />
 
       {/* One card per restaurant visit */}
       {data.map((r, i) => (

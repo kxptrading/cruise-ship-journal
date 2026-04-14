@@ -30,7 +30,7 @@ export default function Notes({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Notes" sub="Your personal notepad — tips, thoughts, anything you want to remember" />
+      <PgHdr icon="📝" title="Notes" sub="Your personal notepad — tips, thoughts, anything you want to remember" />
 
       {/* Empty state — shown when no notes have been added yet */}
       {notes.length === 0 && (

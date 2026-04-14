@@ -31,7 +31,7 @@ export default function FoodFavourites({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Food Favourites" sub="Reflecting on the very best bites of the entire voyage" />
+      <PgHdr icon="💛" title="Food Favourites" sub="Reflecting on the very best bites of the entire voyage" />
       <div style={cs}>
         {/* Render one Box section per reflection category */}
         {FIELDS.map(([k, lbl]) => (

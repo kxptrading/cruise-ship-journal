@@ -22,7 +22,7 @@ export default function FoodLog({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Food Log" sub="Track every delicious bite — from buffet discoveries to specialty dining gems" />
+      <PgHdr icon="🍴" title="Food Log" sub="Track every delicious bite — from buffet discoveries to specialty dining gems" />
 
       {/* One card per meal entry */}
       {data.map((meal, i) => (

@@ -25,7 +25,7 @@ export default function EntertainmentLog({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Entertainment Log" sub="Every show, performance, and event enjoyed on board" />
+      <PgHdr icon="🎭" title="Entertainment Log" sub="Every show, performance, and event enjoyed on board" />
 
       {/* One card per entertainment entry. The card heading uses the event name
           once entered, falling back to "Event N" while the field is empty.  */}

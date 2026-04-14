@@ -58,7 +58,7 @@ export const NAV = [
   { id: 'food',          label: 'Food Log',           icon: '🍴' },
   { id: 'dining',        label: 'Restaurant Log',     icon: '🍽️' },
   { id: 'entertainment', label: 'Entertainment Log',  icon: '🎭' },
-  { id: 'foodfav',       label: 'Food Favourites',    icon: '⭐' },
+  { id: 'foodfav',       label: 'Food Favourites',    icon: '💛' },
   { id: 'budget',        label: 'Budget Tracker',     icon: '💳' },
   { id: 'shopping',      label: 'Shopping Log',       icon: '🛍️' },
   { id: 'highlights',    label: 'Highlights',         icon: '🌟' },

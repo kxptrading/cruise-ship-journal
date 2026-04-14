@@ -32,7 +32,7 @@ export default function Highlights({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Cruise Highlights & Memories" sub="The moments that defined this voyage" />
+      <PgHdr icon="🌟" title="Cruise Highlights & Memories" sub="The moments that defined this voyage" />
       <div style={cs}>
         {/* Render one labelled textarea per memory category */}
         {FIELDS.map(([k, lbl]) => (

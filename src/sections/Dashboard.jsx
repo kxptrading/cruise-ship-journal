@@ -18,7 +18,7 @@ const QUICK_EMOJI = {
   food:          '🍴',
   dining:        '🍽️',
   entertainment: '🎭',
-  foodfav:       '⭐',
+  foodfav:       '💛',
   budget:        '💳',
   shopping:      '🛍️',
   highlights:    '🌟',

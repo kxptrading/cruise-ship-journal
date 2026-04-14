@@ -87,12 +87,14 @@ export const Stars = ({ value, onChange }) => (
 
 // Page heading with a gold underline bar. Font size steps down at mobile and
 // tablet breakpoints. The sub prop is optional supporting copy shown below.
-export const PgHdr = ({ title, sub }) => {
+export const PgHdr = ({ title, sub, icon }) => {
   const w = useW()
   const h1Size = w < BP.mobile ? 24 : w < BP.tablet ? 27 : 30
   return (
     <div style={{ marginBottom: 32 }}>
-      <h1 style={{ margin: 0, fontSize: h1Size, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,"Times New Roman",serif' }}>{title}</h1>
+      <h1 style={{ margin: 0, fontSize: h1Size, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,"Times New Roman",serif' }}>
+        {icon && <span style={{ marginRight: 10 }}>{icon}</span>}{title}
+      </h1>
       {sub && <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 14 }}>{sub}</p>}
       {/* Gold accent bar beneath the title */}
       <div style={{ height: 3, background: GOLD, width: 56, marginTop: 12, borderRadius: 2 }} />

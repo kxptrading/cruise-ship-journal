@@ -41,7 +41,7 @@ export default function PackingList({ data, onChange }) {
   return (
     <div>
       {/* Sub-heading shows current count dynamically */}
-      <PgHdr title="Packing Checklist" sub={`${checkedItems.length} of ${allItems.length} items packed`} />
+      <PgHdr icon="🧳" title="Packing Checklist" sub={`${checkedItems.length} of ${allItems.length} items packed`} />
 
       {/* Overall progress bar — turns green at 100% */}
       <div style={{ ...cs, marginBottom: 18 }}>

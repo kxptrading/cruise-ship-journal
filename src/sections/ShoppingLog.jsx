@@ -26,7 +26,7 @@ export default function ShoppingLog({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Souvenirs & Shopping Log" sub="Every purchase, port by port" />
+      <PgHdr icon="🛍️" title="Souvenirs & Shopping Log" sub="Every purchase, port by port" />
       <div style={cs}>
         {/* Horizontally scrollable on mobile */}
         <div style={{ overflowX: 'auto' }}>

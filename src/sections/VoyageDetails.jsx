@@ -19,7 +19,7 @@ export default function VoyageDetails({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Voyage Details" sub="All the essentials for your journey at sea" />
+      <PgHdr icon="🚢" title="Voyage Details" sub="All the essentials for your journey at sea" />
       <div style={cs}>
 
         {/* Ship name, cruise line, cabin number and deck */}

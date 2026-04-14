@@ -63,7 +63,7 @@ export default function DailyLog({ data, onChange, itinerary }) {
 
   return (
     <div>
-      <PgHdr title="Daily Log" sub="Record every moment of your voyage day by day" />
+      <PgHdr icon="📅" title="Daily Log" sub="Record every moment of your voyage day by day" />
 
       {/* ── Day selector ───────────────────────────────────────────────────────
           Pill buttons for each of the 14 days. On mobile they scroll

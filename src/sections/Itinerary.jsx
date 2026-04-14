@@ -22,7 +22,7 @@ export default function Itinerary({ data, onChange }) {
 
   return (
     <div>
-      <PgHdr title="Itinerary Overview" sub="Your 14-day voyage at a glance" />
+      <PgHdr icon="🗺️" title="Itinerary Overview" sub="Your 14-day voyage at a glance" />
       <div style={cs}>
         {/* Horizontal scroll on mobile so the table isn't cramped */}
         <div style={{ overflowX: 'auto' }}>

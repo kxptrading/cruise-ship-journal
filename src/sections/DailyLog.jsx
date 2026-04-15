@@ -29,6 +29,17 @@ export default function DailyLog({ data, onChange, itinerary }) {
 
   const log = data[day] || {}
 
+  const addDay = () => {
+    onChange([...data, {}])
+    setDay(data.length) // jump to the new day
+  }
+
+  const delDay = () => {
+    const next = data.filter((_, idx) => idx !== day)
+    onChange(next)
+    setDay(Math.max(0, Math.min(day, next.length - 1)))
+  }
+
   // Update a single field on the current day without mutating the array
   const set = (f, v) => { const u = [...data]; u[day] = { ...log, [f]: v }; onChange(u) }
 
@@ -63,28 +74,41 @@ export default function DailyLog({ data, onChange, itinerary }) {
 
   return (
     <div>
-      <PgHdr icon="📅" title="Daily Log" sub="Record every moment of your voyage day by day" />
+      <PgHdr icon="📅" title="Daily Log" sub="Add a day for each day of your voyage as you go" />
 
-      {/* ── Day selector ───────────────────────────────────────────────────────
-          Pill buttons for each of the 14 days. On mobile they scroll
-          horizontally (nowrap + overflowX auto) to avoid wrapping into a
-          multi-line block. The port name is appended when available.       */}
+      {/* ── Day selector + add button ─────────────────────────────────────────
+          Pills scroll horizontally on mobile. The port name from the
+          itinerary is appended when available. "+ Day" always sits at end. */}
       <div style={{ display: 'flex', flexWrap: w < BP.mobile ? 'nowrap' : 'wrap', gap: 8, marginBottom: 24, overflowX: w < BP.mobile ? 'auto' : 'visible', paddingBottom: w < BP.mobile ? 8 : 0 }}>
         {data.map((_, i) => (
           <button key={i} onClick={() => setDay(i)}
-            style={{ padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${day === i ? NAVY : BORDER}`, background: day === i ? NAVY : WHITE, color: day === i ? WHITE : TEXT, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: day === i ? 700 : 400 }}>
+            style={{ padding: '6px 14px', borderRadius: 20, border: `1.5px solid ${day === i ? NAVY : BORDER}`, background: day === i ? NAVY : WHITE, color: day === i ? WHITE : TEXT, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: day === i ? 700 : 400, whiteSpace: 'nowrap', flexShrink: 0 }}>
             Day {i + 1}{itinerary[i]?.port ? ` · ${itinerary[i].port.split(',')[0]}` : ''}
           </button>
         ))}
+        <button onClick={addDay}
+          style={{ padding: '6px 14px', borderRadius: 20, border: `1.5px dashed ${BORDER}`, background: 'transparent', color: MUTED, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', whiteSpace: 'nowrap', flexShrink: 0 }}>
+          + Day
+        </button>
       </div>
 
+      {data.length === 0 ? (
+        <div style={{ ...cs, textAlign: 'center', color: MUTED, padding: '48px 24px' }}>
+          No days logged yet — hit "+ Day" above to add your first entry.
+        </div>
+      ) : (
       <div style={cs}>
-        {/* Day heading: port name from itinerary + star rating */}
+        {/* Day heading: port name from itinerary + star rating + remove */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
           <h2 style={{ margin: 0, color: NAVY, fontFamily: 'Georgia,serif', fontSize: 22 }}>
             Day {day + 1}{itinerary[day]?.port ? ` — ${itinerary[day].port}` : ''}
           </h2>
-          <Stars value={log.rating || 0} onChange={v => set('rating', v)} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <Stars value={log.rating || 0} onChange={v => set('rating', v)} />
+            <button onClick={delDay} style={{ background: '#FEE2E2', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: '#DC2626', fontSize: 12, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
+              Remove day
+            </button>
+          </div>
         </div>
 
         {/* Date and port fields — port pre-fills from itinerary but can be overridden */}
@@ -190,6 +214,7 @@ export default function DailyLog({ data, onChange, itinerary }) {
           )}
         </Box>
       </div>
+      )}
 
       {/* Lightbox — full-size photo viewer */}
       {lightbox && (

@@ -57,24 +57,19 @@ function fromDbVoyage(row) {
 }
 
 // ── DB ↔ app shape converters for itinerary ──────────────────────────────────
-// DB stores one row per day (day_number 1–14). The app uses a fixed-length
-// 14-element array where index = day - 1. arrive/depart come back from
-// Postgres as HH:MM:SS so we slice to HH:MM to match <input type="time">.
+// Rows are sorted by day_number and returned as a plain dynamic array — no
+// fixed length. arrive/depart come back from Postgres as HH:MM:SS so we
+// slice to HH:MM to match <input type="time">.
 
 function fromDbItinerary(rows) {
-  const arr = Array.from({ length: 14 }, () => ({}))
-  rows.forEach(row => {
-    const i = row.day_number - 1
-    if (i >= 0 && i < 14) {
-      arr[i] = {
-        date:   row.date                              ?? '',
-        port:   row.port                              ?? '',
-        arrive: row.arrive ? row.arrive.slice(0, 5) : '',
-        depart: row.depart ? row.depart.slice(0, 5) : '',
-      }
-    }
-  })
-  return arr
+  return [...rows]
+    .sort((a, b) => a.day_number - b.day_number)
+    .map(row => ({
+      date:   row.date                              ?? '',
+      port:   row.port                              ?? '',
+      arrive: row.arrive ? row.arrive.slice(0, 5) : '',
+      depart: row.depart ? row.depart.slice(0, 5) : '',
+    }))
 }
 
 function toDbItinerary(voyageId, arr) {
@@ -89,34 +84,30 @@ function toDbItinerary(voyageId, arr) {
 }
 
 // ── DB ↔ app shape converters for daily logs ─────────────────────────────────
-// Same fixed-length array pattern. exc_cost/exc_notes/best_moment are the DB
-// column names; excCost/excNotes/bestMoment are the camelCase app names.
+// Sorted by day_number, returned as a plain dynamic array.
+// exc_cost/exc_notes/best_moment are the DB column names;
+// excCost/excNotes/bestMoment are the camelCase app names.
 
 function fromDbDailyLogs(rows) {
-  const arr = Array.from({ length: 14 }, () => ({}))
-  rows.forEach(row => {
-    const i = row.day_number - 1
-    if (i >= 0 && i < 14) {
-      arr[i] = {
-        date:          row.date          ?? '',
-        port:          row.port          ?? '',
-        weather:       row.weather       ?? [],
-        highlights:    row.highlights    ?? '',
-        breakfast:     row.breakfast     ?? '',
-        lunch:         row.lunch         ?? '',
-        dinner:        row.dinner        ?? '',
-        drink:         row.drink         ?? '',
-        activity:      row.activity      ?? '',
-        duration:      row.duration      ?? '',
-        excCost:       row.exc_cost      ?? '',
-        excNotes:      row.exc_notes     ?? '',
-        entertainment: row.entertainment ?? '',
-        bestMoment:    row.best_moment   ?? '',
-        rating:        row.rating        ?? 0,
-      }
-    }
-  })
-  return arr
+  return [...rows]
+    .sort((a, b) => a.day_number - b.day_number)
+    .map(row => ({
+      date:          row.date          ?? '',
+      port:          row.port          ?? '',
+      weather:       row.weather       ?? [],
+      highlights:    row.highlights    ?? '',
+      breakfast:     row.breakfast     ?? '',
+      lunch:         row.lunch         ?? '',
+      dinner:        row.dinner        ?? '',
+      drink:         row.drink         ?? '',
+      activity:      row.activity      ?? '',
+      duration:      row.duration      ?? '',
+      excCost:       row.exc_cost      ?? '',
+      excNotes:      row.exc_notes     ?? '',
+      entertainment: row.entertainment ?? '',
+      bestMoment:    row.best_moment   ?? '',
+      rating:        row.rating        ?? 0,
+    }))
 }
 
 function toDbDailyLogs(voyageId, arr) {
@@ -369,8 +360,8 @@ function toDbNotes(voyageId, arr) {
 // prefixed storage keys and the props passed to each section component.
 const INIT = {
   voyage:           {},
-  itinerary:        Array.from({ length: 14 }, () => ({})),
-  dailyLogs:        Array.from({ length: 14 }, () => ({})),
+  itinerary:        [],
+  dailyLogs:        [],
   foodLogs:         [],
   diningLog:        [],
   entertainmentLog: [],
@@ -615,18 +606,20 @@ export default function App() {
     if (key === 'voyage' && voyageId) {
       supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId)
     }
-    // Debounced upserts for fixed-length arrays. Wait 800 ms after the last
-    // change before writing so rapid keystrokes produce a single DB round-trip.
+    // Debounced delete-all + re-insert for dynamic-length day arrays. Simpler
+    // than upsert now that these sections have no fixed length.
     if (key === 'itinerary' && voyageId) {
       clearTimeout(itineraryTimer.current)
-      itineraryTimer.current = setTimeout(() => {
-        supabase.from('itinerary').upsert(toDbItinerary(voyageId, val), { onConflict: 'voyage_id,day_number' })
+      itineraryTimer.current = setTimeout(async () => {
+        await supabase.from('itinerary').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) supabase.from('itinerary').insert(toDbItinerary(voyageId, val))
       }, 800)
     }
     if (key === 'dailyLogs' && voyageId) {
       clearTimeout(dailyLogsTimer.current)
-      dailyLogsTimer.current = setTimeout(() => {
-        supabase.from('daily_logs').upsert(toDbDailyLogs(voyageId, val), { onConflict: 'voyage_id,day_number' })
+      dailyLogsTimer.current = setTimeout(async () => {
+        await supabase.from('daily_logs').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) supabase.from('daily_logs').insert(toDbDailyLogs(voyageId, val))
       }, 800)
     }
     // Dynamic arrays: delete all rows for this voyage then re-insert current

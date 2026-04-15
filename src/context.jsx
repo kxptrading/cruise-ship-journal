@@ -16,6 +16,11 @@ export const WCtx = createContext(1200)
 // Convenience hook — call inside any component to get the current width.
 export const useW = () => useContext(WCtx)
 
+// Voyage context — provides the active voyage ID to any component via
+// useVoyageId(), avoiding prop-drilling through the entire section tree.
+export const VoyageCtx = createContext(null)
+export const useVoyageId = () => useContext(VoyageCtx)
+
 // Custom hook used once in App.jsx to measure and track the window width.
 // Cleans up its own resize listener on unmount.
 export function useWindowSize() {

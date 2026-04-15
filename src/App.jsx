@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
 import { IC, NAV } from './constants'
-import { WCtx, useWindowSize } from './context'
+import { WCtx, VoyageCtx, useWindowSize } from './context'
 import { db } from './storage'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
@@ -62,6 +62,7 @@ export default function App() {
   const [data, setData]               = useState(INIT)
   const [loaded, setLoaded]           = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [voyageId, setVoyageId]       = useState(null)
 
   // ── Auth session ────────────────────────────────────────────────────────────
   // Check for an existing session on mount, then listen for sign-in/sign-out
@@ -76,6 +77,41 @@ export default function App() {
     })
     return () => subscription.unsubscribe()
   }, [])
+
+  // ── Voyage initialisation ───────────────────────────────────────────────────
+  // Runs once after the user is confirmed logged in. Fetches their first voyage
+  // row (ordered by created_at so the same voyage is always returned), or
+  // inserts a blank one for new users. Sets voyageId so every section knows
+  // which voyage to read/write. RLS ensures the query only sees their own rows.
+  useEffect(() => {
+    if (!session) return
+
+    async function initVoyage() {
+      const { data } = await supabase
+        .from('voyages')
+        .select('id')
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+
+      if (data) {
+        setVoyageId(data.id)
+        return
+      }
+
+      // First login — create a blank voyage row so all child tables have a
+      // valid voyage_id to reference.
+      const { data: created } = await supabase
+        .from('voyages')
+        .insert({ user_id: session.user.id })
+        .select('id')
+        .single()
+
+      if (created) setVoyageId(created.id)
+    }
+
+    initVoyage()
+  }, [session])
 
   // ── Load persisted data on mount ────────────────────────────────────────────
   // Reads every section's data from localStorage. Migrates legacy notes format
@@ -133,7 +169,7 @@ export default function App() {
 
   if (!session) return <AuthScreen />
 
-  if (!loaded) return (
+  if (!loaded || !voyageId) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>⚓</div>
@@ -143,9 +179,10 @@ export default function App() {
   )
 
   return (
-    // ── WCtx provider ──────────────────────────────────────────────────────────
-    // Makes the current viewport width available to all child components via
-    // useW(), so they can adjust layouts without receiving width as a prop.
+    // ── VoyageCtx + WCtx providers ─────────────────────────────────────────────
+    // VoyageCtx makes the active voyageId available anywhere via useVoyageId()
+    // without prop-drilling. WCtx does the same for viewport width.
+    <VoyageCtx.Provider value={voyageId}>
     <WCtx.Provider value={winW}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
@@ -221,5 +258,6 @@ export default function App() {
         </div>
       </div>
     </WCtx.Provider>
+    </VoyageCtx.Provider>
   )
 }

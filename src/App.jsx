@@ -163,6 +163,206 @@ function toDbVoyage(v) {
   }
 }
 
+// ── DB ↔ app shape converters — remaining sections ───────────────────────────
+
+// Food Log — dynamic array. DB uses meal_type / what_i_had / tasting_notes /
+// order_again; app uses meal / what / notes / orderAgain.
+function fromDbFoodLogs(rows) {
+  return rows.map(r => ({
+    day:        r.day             ?? '',
+    date:       r.date            ?? '',
+    meal:       r.meal_type       ?? '',
+    port:       r.port            ?? '',
+    venue:      r.venue           ?? '',
+    what:       r.what_i_had      ?? '',
+    standout:   r.standout        ?? '',
+    drinks:     r.drinks          ?? '',
+    notes:      r.tasting_notes   ?? '',
+    rating:     r.rating          ?? 0,
+    cost:       r.cost            ?? '',
+    orderAgain: r.order_again     ?? '',
+  }))
+}
+function toDbFoodLogs(voyageId, arr) {
+  return arr.map(m => ({
+    voyage_id:     voyageId,
+    day:           m.day        || null,
+    date:          m.date       || null,
+    meal_type:     m.meal       || null,
+    port:          m.port       || null,
+    venue:         m.venue      || null,
+    what_i_had:    m.what       || null,
+    standout:      m.standout   || null,
+    drinks:        m.drinks     || null,
+    tasting_notes: m.notes      || null,
+    rating:        m.rating     || null,
+    cost:          m.cost       || null,
+    order_again:   m.orderAgain || null,
+  }))
+}
+
+// Dining Log — dynamic array. Column names match app field names exactly.
+function fromDbDiningLog(rows) {
+  return rows.map(r => ({
+    venue:   r.venue   ?? '',
+    date:    r.date    ?? '',
+    meal:    r.meal    ?? '',
+    ordered: r.ordered ?? '',
+    rating:  r.rating  ?? 0,
+    notes:   r.notes   ?? '',
+  }))
+}
+function toDbDiningLog(voyageId, arr) {
+  return arr.map(r => ({
+    voyage_id: voyageId,
+    venue:     r.venue   || null,
+    date:      r.date    || null,
+    meal:      r.meal    || null,
+    ordered:   r.ordered || null,
+    rating:    r.rating  || null,
+    notes:     r.notes   || null,
+  }))
+}
+
+// Entertainment Log — dynamic array. day is stored as integer in DB.
+function fromDbEntertainmentLog(rows) {
+  return rows.map(r => ({
+    day:        r.day != null ? String(r.day) : '',
+    date:       r.date       ?? '',
+    name:       r.name       ?? '',
+    type:       r.type       ?? '',
+    venue:      r.venue      ?? '',
+    performers: r.performers ?? '',
+    duration:   r.duration   ?? '',
+    rating:     r.rating     ?? 0,
+    notes:      r.notes      ?? '',
+  }))
+}
+function toDbEntertainmentLog(voyageId, arr) {
+  return arr.map(e => ({
+    voyage_id:  voyageId,
+    day:        e.day  ? parseInt(e.day, 10) : null,
+    date:       e.date       || null,
+    name:       e.name       || null,
+    type:       e.type       || null,
+    venue:      e.venue      || null,
+    performers: e.performers || null,
+    duration:   e.duration   || null,
+    rating:     e.rating     || null,
+    notes:      e.notes      || null,
+  }))
+}
+
+// Food Favourites — single record per voyage. Direct 1-to-1 column mapping.
+function fromDbFoodFav(row) {
+  if (!row) return {}
+  return {
+    best:       row.best       ?? '',
+    buffet:     row.buffet     ?? '',
+    specialty:  row.specialty  ?? '',
+    surprising: row.surprising ?? '',
+    recreate:   row.recreate   ?? '',
+    regret:     row.regret     ?? '',
+  }
+}
+function toDbFoodFav(voyageId, v) {
+  return {
+    voyage_id:  voyageId,
+    best:       v.best       || null,
+    buffet:     v.buffet     || null,
+    specialty:  v.specialty  || null,
+    surprising: v.surprising || null,
+    recreate:   v.recreate   || null,
+    regret:     v.regret     || null,
+  }
+}
+
+// Highlights — single record per voyage. firstTime ↔ first_time.
+function fromDbHighlights(row) {
+  if (!row) return {}
+  return {
+    port:      row.port       ?? '',
+    meal:      row.meal       ?? '',
+    funny:     row.funny      ?? '',
+    view:      row.view       ?? '',
+    friends:   row.friends    ?? '',
+    firstTime: row.first_time ?? '',
+    moment:    row.moment     ?? '',
+  }
+}
+function toDbHighlights(voyageId, v) {
+  return {
+    voyage_id:  voyageId,
+    port:       v.port      || null,
+    meal:       v.meal      || null,
+    funny:      v.funny     || null,
+    view:       v.view      || null,
+    friends:    v.friends   || null,
+    first_time: v.firstTime || null,
+    moment:     v.moment    || null,
+  }
+}
+
+// Budget — budget row (total_budget) + budget_items array.
+function fromDbBudget(budgetRow, itemRows) {
+  return {
+    budget: budgetRow?.total_budget ?? '',
+    items:  (itemRows || []).map(r => ({
+      date:     r.date     ?? '',
+      item:     r.item     ?? '',
+      category: r.category ?? '',
+      amount:   r.amount != null ? String(r.amount) : '',
+    })),
+  }
+}
+
+// Shopping — wrapped { items: [] } shape. cost is numeric in DB.
+function fromDbShopping(rows) {
+  return {
+    items: rows.map(r => ({
+      item: r.item ?? '',
+      port: r.port ?? '',
+      cost: r.cost != null ? String(r.cost) : '',
+    })),
+  }
+}
+function toDbShoppingItems(voyageId, arr) {
+  return arr.map(i => ({
+    voyage_id: voyageId,
+    item:      i.item || null,
+    port:      i.port || null,
+    cost:      i.cost ? parseFloat(i.cost) : null,
+  }))
+}
+
+// Packing — { [category]: string[] } of checked items. DB stores one row per
+// checked item; unchecked items are not stored (they're hardcoded in the UI).
+function fromDbPacking(rows) {
+  const result = {}
+  rows.filter(r => r.checked).forEach(r => {
+    if (!result[r.category]) result[r.category] = []
+    result[r.category].push(r.item)
+  })
+  return result
+}
+function toDbPackingItems(voyageId, obj) {
+  return Object.entries(obj).flatMap(([cat, items]) =>
+    items.map(item => ({ voyage_id: voyageId, category: cat, item, checked: true }))
+  )
+}
+
+// Notes — dynamic array of { title, content } objects.
+function fromDbNotes(rows) {
+  return rows.map(r => ({ title: r.title ?? '', content: r.content ?? '' }))
+}
+function toDbNotes(voyageId, arr) {
+  return arr.map(n => ({
+    voyage_id: voyageId,
+    title:     n.title   || null,
+    content:   n.content || null,
+  }))
+}
+
 // ── Initial data shape ────────────────────────────────────────────────────────
 // Defines the default empty state for every section. Used as the fallback when
 // no saved data exists in localStorage. The keys here must match the "csj-"
@@ -200,8 +400,18 @@ export default function App() {
 
   // Debounce timers for array-section Supabase writes — held in refs so they
   // persist across renders without becoming useCallback dependencies.
-  const itineraryTimer  = useRef(null)
-  const dailyLogsTimer  = useRef(null)
+  const itineraryTimer       = useRef(null)
+  const dailyLogsTimer       = useRef(null)
+  const foodLogsTimer        = useRef(null)
+  const diningLogTimer       = useRef(null)
+  const entertainmentTimer   = useRef(null)
+  const shoppingTimer        = useRef(null)
+  const budgetTimer          = useRef(null)
+  const packingTimer         = useRef(null)
+  const notesTimer           = useRef(null)
+  // Stores the budget row's DB id after it's created/loaded so the write path
+  // can insert budget_items without an extra SELECT round-trip.
+  const budgetIdRef          = useRef(null)
 
   // ── Auth session ────────────────────────────────────────────────────────────
   // Check for an existing session on mount, then listen for sign-in/sign-out
@@ -303,6 +513,75 @@ export default function App() {
       })
   }, [voyageId])
 
+  // ── Load remaining sections from Supabase ───────────────────────────────────
+  // Runs once after voyageId is known. Fetches all remaining sections in a
+  // single parallel Promise.all, then handles the two-step budget load
+  // (budget row → budget_items). Budget row is created here if it doesn't
+  // exist yet so subsequent writes always have a valid budgetIdRef.
+  useEffect(() => {
+    if (!voyageId) return
+
+    async function loadRemaining() {
+      const [
+        { data: foodLogRows },
+        { data: diningLogRows },
+        { data: entertainmentRows },
+        { data: foodFavRow },
+        { data: highlightsRow },
+        { data: budgetRow },
+        { data: shoppingRows },
+        { data: packingRows },
+        { data: noteRows },
+      ] = await Promise.all([
+        supabase.from('food_logs').select('day,date,meal_type,port,venue,what_i_had,standout,drinks,tasting_notes,rating,cost,order_again').eq('voyage_id', voyageId),
+        supabase.from('dining_log').select('venue,date,meal,ordered,rating,notes').eq('voyage_id', voyageId),
+        supabase.from('entertainment_log').select('day,date,name,type,venue,performers,duration,rating,notes').eq('voyage_id', voyageId),
+        supabase.from('food_favourites').select('best,buffet,specialty,surprising,recreate,regret').eq('voyage_id', voyageId).maybeSingle(),
+        supabase.from('highlights').select('port,meal,funny,view,friends,first_time,moment').eq('voyage_id', voyageId).maybeSingle(),
+        supabase.from('budget').select('id,total_budget').eq('voyage_id', voyageId).maybeSingle(),
+        supabase.from('shopping_items').select('item,port,cost').eq('voyage_id', voyageId),
+        supabase.from('packing_items').select('category,item,checked').eq('voyage_id', voyageId),
+        supabase.from('notes').select('title,content').eq('voyage_id', voyageId).order('id'),
+      ])
+
+      // Budget: fetch items if the row exists, otherwise create the row so the
+      // write path always has a valid budgetIdRef.current.
+      let budgetItemRows = []
+      if (budgetRow) {
+        budgetIdRef.current = budgetRow.id
+        const { data: items } = await supabase
+          .from('budget_items')
+          .select('date,item,category,amount')
+          .eq('budget_id', budgetRow.id)
+        budgetItemRows = items || []
+      } else {
+        const { data: created } = await supabase
+          .from('budget')
+          .insert({ voyage_id: voyageId, total_budget: null })
+          .select('id')
+          .single()
+        if (created) budgetIdRef.current = created.id
+      }
+
+      const updates = {
+        foodLogs:         fromDbFoodLogs(foodLogRows         || []),
+        diningLog:        fromDbDiningLog(diningLogRows      || []),
+        entertainmentLog: fromDbEntertainmentLog(entertainmentRows || []),
+        foodFav:          fromDbFoodFav(foodFavRow),
+        highlights:       fromDbHighlights(highlightsRow),
+        budget:           fromDbBudget(budgetRow, budgetItemRows),
+        shopping:         fromDbShopping(shoppingRows        || []),
+        packing:          fromDbPacking(packingRows          || []),
+        notes:            fromDbNotes(noteRows               || []),
+      }
+
+      setData(prev => ({ ...prev, ...updates }))
+      Object.entries(updates).forEach(([k, v]) => db.set(`csj-${k}`, v))
+    }
+
+    loadRemaining()
+  }, [voyageId])
+
   // ── Load persisted data on mount ────────────────────────────────────────────
   // Reads every section's data from localStorage. Migrates legacy notes format
   // (plain string) to the current array-of-objects format.
@@ -348,6 +627,77 @@ export default function App() {
       clearTimeout(dailyLogsTimer.current)
       dailyLogsTimer.current = setTimeout(() => {
         supabase.from('daily_logs').upsert(toDbDailyLogs(voyageId, val), { onConflict: 'voyage_id,day_number' })
+      }, 800)
+    }
+    // Dynamic arrays: delete all rows for this voyage then re-insert current
+    // state. Simpler than diffing since the full array is always available.
+    if (key === 'foodLogs' && voyageId) {
+      clearTimeout(foodLogsTimer.current)
+      foodLogsTimer.current = setTimeout(async () => {
+        await supabase.from('food_logs').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) supabase.from('food_logs').insert(toDbFoodLogs(voyageId, val))
+      }, 800)
+    }
+    if (key === 'diningLog' && voyageId) {
+      clearTimeout(diningLogTimer.current)
+      diningLogTimer.current = setTimeout(async () => {
+        await supabase.from('dining_log').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) supabase.from('dining_log').insert(toDbDiningLog(voyageId, val))
+      }, 800)
+    }
+    if (key === 'entertainmentLog' && voyageId) {
+      clearTimeout(entertainmentTimer.current)
+      entertainmentTimer.current = setTimeout(async () => {
+        await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, val))
+      }, 800)
+    }
+    // Single-record sections: upsert the whole object on every change.
+    if (key === 'foodFav' && voyageId) {
+      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val), { onConflict: 'voyage_id' })
+    }
+    if (key === 'highlights' && voyageId) {
+      supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' })
+    }
+    // Budget: update the budget row then replace items (await sequentially so
+    // items are never inserted against a stale or missing budget row).
+    if (key === 'budget' && voyageId && budgetIdRef.current) {
+      clearTimeout(budgetTimer.current)
+      budgetTimer.current = setTimeout(async () => {
+        const bid = budgetIdRef.current
+        await supabase.from('budget').update({ total_budget: val.budget || null }).eq('id', bid)
+        await supabase.from('budget_items').delete().eq('budget_id', bid)
+        if (val.items?.length > 0) {
+          supabase.from('budget_items').insert(val.items.map(item => ({
+            budget_id: bid,
+            date:      item.date     || null,
+            item:      item.item     || null,
+            category:  item.category || null,
+            amount:    item.amount   ? parseFloat(item.amount) : null,
+          })))
+        }
+      }, 800)
+    }
+    if (key === 'shopping' && voyageId) {
+      clearTimeout(shoppingTimer.current)
+      shoppingTimer.current = setTimeout(async () => {
+        await supabase.from('shopping_items').delete().eq('voyage_id', voyageId)
+        if (val.items?.length > 0) supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, val.items))
+      }, 800)
+    }
+    if (key === 'packing' && voyageId) {
+      clearTimeout(packingTimer.current)
+      packingTimer.current = setTimeout(async () => {
+        await supabase.from('packing_items').delete().eq('voyage_id', voyageId)
+        const rows = toDbPackingItems(voyageId, val)
+        if (rows.length > 0) supabase.from('packing_items').insert(rows)
+      }, 800)
+    }
+    if (key === 'notes' && voyageId) {
+      clearTimeout(notesTimer.current)
+      notesTimer.current = setTimeout(async () => {
+        await supabase.from('notes').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) supabase.from('notes').insert(toDbNotes(voyageId, val))
       }, 800)
     }
   }, [voyageId])

@@ -11,7 +11,9 @@ import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
 import { IC, NAV } from './constants'
 import { WCtx, useWindowSize } from './context'
 import { db } from './storage'
+import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
+import AuthScreen from './components/AuthScreen'
 import { SvgIcon } from './components/ui'
 import Dashboard      from './sections/Dashboard'
 import VoyageDetails  from './sections/VoyageDetails'
@@ -54,10 +56,26 @@ export default function App() {
   const isOverlay = winW <= BP.tablet
   const isMobile  = winW < BP.mobile
 
+  const [session, setSession]         = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
   const [section, setSection]         = useState('dashboard')
   const [data, setData]               = useState(INIT)
   const [loaded, setLoaded]           = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  // ── Auth session ────────────────────────────────────────────────────────────
+  // Check for an existing session on mount, then listen for sign-in/sign-out
+  // events so the UI updates automatically without a page reload.
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session)
+      setAuthChecked(true)
+    })
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session)
+    })
+    return () => subscription.unsubscribe()
+  }, [])
 
   // ── Load persisted data on mount ────────────────────────────────────────────
   // Reads every section's data from localStorage. Migrates legacy notes format
@@ -103,9 +121,18 @@ export default function App() {
   const topbarHeight  = 52
   const currentLabel  = NAV.find(n => n.id === section)?.label ?? ''
 
-  // ── Loading screen ───────────────────────────────────────────────────────────
-  // Shown briefly while data is read from localStorage. Prevents sections from
-  // rendering with empty state before the stored data has been applied.
+  // ── Auth / data loading screens ─────────────────────────────────────────────
+  if (!authChecked) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ fontSize: 40, marginBottom: 16 }}>⚓</div>
+        <div style={{ color: NAVY, fontSize: 18 }}>Loading...</div>
+      </div>
+    </div>
+  )
+
+  if (!session) return <AuthScreen />
+
   if (!loaded) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
       <div style={{ textAlign: 'center' }}>
@@ -163,6 +190,8 @@ export default function App() {
             isOverlay={isOverlay}
             isOpen={sidebarOpen}
             onClose={() => setSidebarOpen(false)}
+            user={session?.user}
+            onSignOut={() => supabase.auth.signOut()}
           />
 
           {/* ── Section content ─────────────────────────────────────────────

@@ -9,7 +9,7 @@
 import { NAVY2, GOLD, WHITE } from '../constants'
 import { NAV } from '../constants'
 
-export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) {
+export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut }) {
   return (
     <>
       {/* ── Backdrop ────────────────────────────────────────────────────────
@@ -82,11 +82,18 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose }) 
           })}
         </nav>
 
-        {/* ── Footer ────────────────────────────────────────────────────────
-            Reminds the user that data is stored locally (Phase 1). This will
-            change to a user avatar / account info block in Phase 2.        */}
-        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: 10, color: 'rgba(255,255,255,0.18)', textAlign: 'center', letterSpacing: '0.05em' }}>
-          DATA SAVED LOCALLY
+        {/* ── Footer — user account + sign out ─────────────────────────────
+            Shows the signed-in email address and a sign out button.       */}
+        <div style={{ padding: '14px 20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+          {user && (
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', marginBottom: 8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {user.email}
+            </div>
+          )}
+          <button onClick={onSignOut}
+            style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 7, padding: '7px 12px', fontSize: 12, color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' }}>
+            Sign out
+          </button>
         </div>
       </aside>
     </>

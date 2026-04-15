@@ -29,6 +29,55 @@ import Highlights     from './sections/Highlights'
 import PackingList    from './sections/PackingList'
 import Notes          from './sections/Notes'
 
+// ── DB ↔ app shape converters for the voyage section ─────────────────────────
+// The voyages table uses snake_case column names; the app uses camelCase field
+// names. These two pure functions translate between the two shapes so nothing
+// else in the codebase ever needs to know about DB column names.
+
+function fromDbVoyage(row) {
+  return {
+    shipName:         row.ship_name         ?? '',
+    cruiseLine:       row.cruise_line       ?? '',
+    cabin:            row.cabin             ?? '',
+    deck:             row.deck              ?? '',
+    departureDate:    row.departure_date    ?? '',
+    returnDate:       row.return_date       ?? '',
+    departurePort:    row.departure_port    ?? '',
+    totalNights:      row.total_nights != null ? String(row.total_nights) : '',
+    companion1:       row.companion_1       ?? '',
+    companion2:       row.companion_2       ?? '',
+    companion3:       row.companion_3       ?? '',
+    companion4:       row.companion_4       ?? '',
+    emergencyContact: row.emergency_contact ?? '',
+    phone:            row.phone             ?? '',
+    guestServices:    row.guest_services    ?? '',
+    musterStation:    row.muster_station    ?? '',
+    diningTime:       row.dining_time       ?? '',
+  }
+}
+
+function toDbVoyage(v) {
+  return {
+    ship_name:         v.shipName         || null,
+    cruise_line:       v.cruiseLine       || null,
+    cabin:             v.cabin            || null,
+    deck:              v.deck             || null,
+    departure_date:    v.departureDate    || null,
+    return_date:       v.returnDate       || null,
+    departure_port:    v.departurePort    || null,
+    total_nights:      v.totalNights ? parseInt(v.totalNights, 10) : null,
+    companion_1:       v.companion1       || null,
+    companion_2:       v.companion2       || null,
+    companion_3:       v.companion3       || null,
+    companion_4:       v.companion4       || null,
+    emergency_contact: v.emergencyContact || null,
+    phone:             v.phone            || null,
+    guest_services:    v.guestServices    || null,
+    muster_station:    v.musterStation    || null,
+    dining_time:       v.diningTime       || null,
+  }
+}
+
 // ── Initial data shape ────────────────────────────────────────────────────────
 // Defines the default empty state for every section. Used as the fallback when
 // no saved data exists in localStorage. The keys here must match the "csj-"
@@ -113,6 +162,27 @@ export default function App() {
     initVoyage()
   }, [session])
 
+  // ── Load voyage details from Supabase ───────────────────────────────────────
+  // Runs once after voyageId is known. Fetches the voyage row's detail columns
+  // and merges them into data.voyage, replacing the localStorage fallback with
+  // the authoritative Supabase values. Also writes back to localStorage so the
+  // data is available as a fast initial render on the next page load.
+  useEffect(() => {
+    if (!voyageId) return
+
+    supabase
+      .from('voyages')
+      .select('ship_name, cruise_line, cabin, deck, departure_date, return_date, departure_port, total_nights, companion_1, companion_2, companion_3, companion_4, emergency_contact, phone, guest_services, muster_station, dining_time')
+      .eq('id', voyageId)
+      .single()
+      .then(({ data: row }) => {
+        if (!row) return
+        const voyage = fromDbVoyage(row)
+        setData(prev => ({ ...prev, voyage }))
+        db.set('csj-voyage', voyage)
+      })
+  }, [voyageId])
+
   // ── Load persisted data on mount ────────────────────────────────────────────
   // Reads every section's data from localStorage. Migrates legacy notes format
   // (plain string) to the current array-of-objects format.
@@ -141,7 +211,12 @@ export default function App() {
   const update = useCallback((key, val) => {
     setData(prev => ({ ...prev, [key]: val }))
     db.set(`csj-${key}`, val)
-  }, [])
+    // Write voyage changes to Supabase. Fire-and-forget — localStorage is the
+    // fallback if the write fails, so there's no need to block the UI on it.
+    if (key === 'voyage' && voyageId) {
+      supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId)
+    }
+  }, [voyageId])
 
   // ── Handle sidebar navigation clicks ────────────────────────────────────────
   // Switches the active section and collapses the sidebar on mobile/tablet

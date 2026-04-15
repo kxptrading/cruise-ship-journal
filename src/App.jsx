@@ -6,7 +6,7 @@
 // manages the sidebar open/close state for mobile and tablet viewports.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
 import { IC, NAV } from './constants'
 import { WCtx, VoyageCtx, useWindowSize } from './context'
@@ -54,6 +54,91 @@ function fromDbVoyage(row) {
     musterStation:    row.muster_station    ?? '',
     diningTime:       row.dining_time       ?? '',
   }
+}
+
+// ── DB ↔ app shape converters for itinerary ──────────────────────────────────
+// DB stores one row per day (day_number 1–14). The app uses a fixed-length
+// 14-element array where index = day - 1. arrive/depart come back from
+// Postgres as HH:MM:SS so we slice to HH:MM to match <input type="time">.
+
+function fromDbItinerary(rows) {
+  const arr = Array.from({ length: 14 }, () => ({}))
+  rows.forEach(row => {
+    const i = row.day_number - 1
+    if (i >= 0 && i < 14) {
+      arr[i] = {
+        date:   row.date                              ?? '',
+        port:   row.port                              ?? '',
+        arrive: row.arrive ? row.arrive.slice(0, 5) : '',
+        depart: row.depart ? row.depart.slice(0, 5) : '',
+      }
+    }
+  })
+  return arr
+}
+
+function toDbItinerary(voyageId, arr) {
+  return arr.map((day, i) => ({
+    voyage_id:  voyageId,
+    day_number: i + 1,
+    date:       day.date   || null,
+    port:       day.port   || null,
+    arrive:     day.arrive || null,
+    depart:     day.depart || null,
+  }))
+}
+
+// ── DB ↔ app shape converters for daily logs ─────────────────────────────────
+// Same fixed-length array pattern. exc_cost/exc_notes/best_moment are the DB
+// column names; excCost/excNotes/bestMoment are the camelCase app names.
+
+function fromDbDailyLogs(rows) {
+  const arr = Array.from({ length: 14 }, () => ({}))
+  rows.forEach(row => {
+    const i = row.day_number - 1
+    if (i >= 0 && i < 14) {
+      arr[i] = {
+        date:          row.date          ?? '',
+        port:          row.port          ?? '',
+        weather:       row.weather       ?? [],
+        highlights:    row.highlights    ?? '',
+        breakfast:     row.breakfast     ?? '',
+        lunch:         row.lunch         ?? '',
+        dinner:        row.dinner        ?? '',
+        drink:         row.drink         ?? '',
+        activity:      row.activity      ?? '',
+        duration:      row.duration      ?? '',
+        excCost:       row.exc_cost      ?? '',
+        excNotes:      row.exc_notes     ?? '',
+        entertainment: row.entertainment ?? '',
+        bestMoment:    row.best_moment   ?? '',
+        rating:        row.rating        ?? 0,
+      }
+    }
+  })
+  return arr
+}
+
+function toDbDailyLogs(voyageId, arr) {
+  return arr.map((day, i) => ({
+    voyage_id:     voyageId,
+    day_number:    i + 1,
+    date:          day.date          || null,
+    port:          day.port          || null,
+    weather:       day.weather       || [],
+    highlights:    day.highlights    || null,
+    breakfast:     day.breakfast     || null,
+    lunch:         day.lunch         || null,
+    dinner:        day.dinner        || null,
+    drink:         day.drink         || null,
+    activity:      day.activity      || null,
+    duration:      day.duration      || null,
+    exc_cost:      day.excCost       || null,
+    exc_notes:     day.excNotes      || null,
+    entertainment: day.entertainment || null,
+    best_moment:   day.bestMoment    || null,
+    rating:        day.rating        || null,
+  }))
 }
 
 function toDbVoyage(v) {
@@ -112,6 +197,11 @@ export default function App() {
   const [loaded, setLoaded]           = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [voyageId, setVoyageId]       = useState(null)
+
+  // Debounce timers for array-section Supabase writes — held in refs so they
+  // persist across renders without becoming useCallback dependencies.
+  const itineraryTimer  = useRef(null)
+  const dailyLogsTimer  = useRef(null)
 
   // ── Auth session ────────────────────────────────────────────────────────────
   // Check for an existing session on mount, then listen for sign-in/sign-out
@@ -183,6 +273,36 @@ export default function App() {
       })
   }, [voyageId])
 
+  // ── Load itinerary from Supabase ────────────────────────────────────────────
+  useEffect(() => {
+    if (!voyageId) return
+    supabase
+      .from('itinerary')
+      .select('day_number, date, port, arrive, depart')
+      .eq('voyage_id', voyageId)
+      .then(({ data: rows }) => {
+        if (!rows) return
+        const itinerary = fromDbItinerary(rows)
+        setData(prev => ({ ...prev, itinerary }))
+        db.set('csj-itinerary', itinerary)
+      })
+  }, [voyageId])
+
+  // ── Load daily logs from Supabase ────────────────────────────────────────────
+  useEffect(() => {
+    if (!voyageId) return
+    supabase
+      .from('daily_logs')
+      .select('day_number, date, port, weather, highlights, breakfast, lunch, dinner, drink, activity, duration, exc_cost, exc_notes, entertainment, best_moment, rating')
+      .eq('voyage_id', voyageId)
+      .then(({ data: rows }) => {
+        if (!rows) return
+        const dailyLogs = fromDbDailyLogs(rows)
+        setData(prev => ({ ...prev, dailyLogs }))
+        db.set('csj-dailyLogs', dailyLogs)
+      })
+  }, [voyageId])
+
   // ── Load persisted data on mount ────────────────────────────────────────────
   // Reads every section's data from localStorage. Migrates legacy notes format
   // (plain string) to the current array-of-objects format.
@@ -215,6 +335,20 @@ export default function App() {
     // fallback if the write fails, so there's no need to block the UI on it.
     if (key === 'voyage' && voyageId) {
       supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId)
+    }
+    // Debounced upserts for fixed-length arrays. Wait 800 ms after the last
+    // change before writing so rapid keystrokes produce a single DB round-trip.
+    if (key === 'itinerary' && voyageId) {
+      clearTimeout(itineraryTimer.current)
+      itineraryTimer.current = setTimeout(() => {
+        supabase.from('itinerary').upsert(toDbItinerary(voyageId, val), { onConflict: 'voyage_id,day_number' })
+      }, 800)
+    }
+    if (key === 'dailyLogs' && voyageId) {
+      clearTimeout(dailyLogsTimer.current)
+      dailyLogsTimer.current = setTimeout(() => {
+        supabase.from('daily_logs').upsert(toDbDailyLogs(voyageId, val), { onConflict: 'voyage_id,day_number' })
+      }, 800)
     }
   }, [voyageId])
 

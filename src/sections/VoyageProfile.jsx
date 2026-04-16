@@ -1,0 +1,294 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// sections/VoyageProfile.jsx — Multi-voyage manager
+//
+// The "My Voyages" page. Lists all the user's voyages, lets them switch between
+// them, create new ones, and upload a cover photo for the active voyage.
+//
+// Cover photos are stored in Supabase Storage under:
+//   voyage-covers/{user_id}/{voyage_id}/cover.jpg
+// The public URL is stored in voyages.cover_photo_url and shown in the Feed hero.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { useState, useRef } from 'react'
+import { NAVY, NAVY2, GOLD, WHITE, CREAM, BORDER, TEXT, MUTED, TEAL, BP, sty } from '../constants'
+import { useW } from '../context'
+import { PgHdr, Fld, Row2, Inp } from '../components/ui'
+import { supabase } from '../lib/supabase'
+
+// ── Voyage card ───────────────────────────────────────────────────────────────
+function VoyageCard({ voyage, isActive, onSwitch }) {
+  const nights = voyage.total_nights
+  const dateRange = [voyage.departure_date, voyage.return_date].filter(Boolean).join(' → ')
+
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 14,
+      background: isActive ? NAVY + '08' : WHITE,
+      border: `2px solid ${isActive ? NAVY : BORDER}`,
+      borderRadius: 12, padding: '14px 16px',
+      transition: 'border-color 0.15s',
+    }}>
+      {/* Cover photo thumbnail or placeholder */}
+      <div style={{
+        width: 64, height: 64, borderRadius: 10, flexShrink: 0, overflow: 'hidden',
+        background: voyage.cover_photo_url ? 'transparent' : NAVY2,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        {voyage.cover_photo_url
+          ? <img src={voyage.cover_photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          : <span style={{ fontSize: 26 }}>🚢</span>
+        }
+      </div>
+
+      {/* Voyage info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 15, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {voyage.ship_name || 'Unnamed Voyage'}
+        </div>
+        {voyage.cruise_line && (
+          <div style={{ fontSize: 12, color: MUTED, marginBottom: 2 }}>{voyage.cruise_line}</div>
+        )}
+        {(dateRange || nights) && (
+          <div style={{ fontSize: 12, color: MUTED }}>
+            {dateRange}{dateRange && nights ? ` · ` : ''}{nights ? `${nights} nights` : ''}
+          </div>
+        )}
+      </div>
+
+      {/* Status / action */}
+      {isActive ? (
+        <div style={{ background: GOLD + '20', border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 700, color: GOLD, flexShrink: 0, letterSpacing: '0.04em' }}>
+          ACTIVE
+        </div>
+      ) : (
+        <button
+          onClick={() => onSwitch(voyage.id)}
+          style={{ background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}
+        >
+          Switch →
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── New voyage form ───────────────────────────────────────────────────────────
+function NewVoyageForm({ onCreate, onCancel }) {
+  const w = useW()
+  const [fields, setFields] = useState({ shipName: '', cruiseLine: '', departureDate: '', returnDate: '', totalNights: '' })
+  const [saving, setSaving] = useState(false)
+
+  const set = (f, v) => setFields(p => ({ ...p, [f]: v }))
+
+  const handleCreate = async () => {
+    if (!fields.shipName.trim()) return
+    setSaving(true)
+    await onCreate({
+      ship_name:      fields.shipName.trim()      || null,
+      cruise_line:    fields.cruiseLine.trim()    || null,
+      departure_date: fields.departureDate        || null,
+      return_date:    fields.returnDate           || null,
+      total_nights:   fields.totalNights ? parseInt(fields.totalNights, 10) : null,
+    })
+    setSaving(false)
+  }
+
+  return (
+    <div style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, marginTop: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 16 }}>New Voyage</div>
+
+      <Fld label="Ship Name">
+        <Inp value={fields.shipName} onChange={v => set('shipName', v)} placeholder="e.g. Wonder of the Seas" />
+      </Fld>
+      <Fld label="Cruise Line">
+        <Inp value={fields.cruiseLine} onChange={v => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" />
+      </Fld>
+      <Row2>
+        <Fld label="Departure Date" half><Inp type="date" value={fields.departureDate} onChange={v => set('departureDate', v)} /></Fld>
+        <Fld label="Return Date" half><Inp type="date" value={fields.returnDate} onChange={v => set('returnDate', v)} /></Fld>
+      </Row2>
+      <Fld label="Total Nights">
+        <Inp type="number" value={fields.totalNights} onChange={v => set('totalNights', v)} placeholder="e.g. 14" />
+      </Fld>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+        <button
+          onClick={handleCreate}
+          disabled={saving || !fields.shipName.trim()}
+          style={{ ...sty.btn, fontSize: 13, padding: '9px 20px', opacity: saving || !fields.shipName.trim() ? 0.5 : 1, cursor: saving || !fields.shipName.trim() ? 'not-allowed' : 'pointer' }}
+        >
+          {saving ? 'Creating…' : 'Create Voyage'}
+        </button>
+        <button
+          onClick={onCancel}
+          style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 18px', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', color: MUTED }}
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── VoyageProfile ─────────────────────────────────────────────────────────────
+export default function VoyageProfile({ voyage, allVoyages, voyageId, session, onSwitch, onCreate, onCoverPhotoChange }) {
+  const w        = useW()
+  const cs       = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+  const fileRef  = useRef(null)
+
+  const [uploading,   setUploading]   = useState(false)
+  const [showNewForm, setShowNewForm] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+
+  // ── Cover photo upload ──────────────────────────────────────────────────────
+  const handleCoverUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !voyageId || !session?.user?.id) return
+
+    setUploading(true)
+    setUploadError('')
+    e.target.value = ''
+
+    const ext  = file.name.split('.').pop().toLowerCase()
+    const path = `${session.user.id}/${voyageId}/cover.${ext}`
+
+    const { error: uploadErr } = await supabase.storage
+      .from('voyage-covers')
+      .upload(path, file, { upsert: true, contentType: file.type })
+
+    if (uploadErr) {
+      setUploadError('Upload failed — please try again.')
+      setUploading(false)
+      return
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('voyage-covers').getPublicUrl(path)
+
+    await supabase.from('voyages').update({ cover_photo_url: publicUrl }).eq('id', voyageId)
+    onCoverPhotoChange(publicUrl)
+    setUploading(false)
+  }
+
+  const handleRemoveCover = async () => {
+    await supabase.from('voyages').update({ cover_photo_url: null }).eq('id', voyageId)
+    onCoverPhotoChange(null)
+  }
+
+  // ── New voyage handler ──────────────────────────────────────────────────────
+  const handleCreate = async (partial) => {
+    await onCreate(partial)
+    setShowNewForm(false)
+  }
+
+  const currentCover = voyage.coverPhotoUrl
+
+  return (
+    <div>
+      <PgHdr icon="🗂️" title="My Voyages" sub="Switch between cruises or plan a new voyage" />
+
+      {/* ── Active voyage cover photo ─────────────────────────────────────── */}
+      <div style={cs}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+          Cover Photo — {voyage.shipName || 'Active Voyage'}
+        </div>
+
+        {/* Cover display / upload area */}
+        <div
+          style={{
+            width: '100%', borderRadius: 12, overflow: 'hidden',
+            border: `2px dashed ${currentCover ? 'transparent' : BORDER}`,
+            background: currentCover ? 'transparent' : CREAM,
+            marginBottom: 14, position: 'relative',
+          }}
+        >
+          {currentCover ? (
+            <>
+              <img
+                src={currentCover}
+                alt="Voyage cover"
+                style={{ width: '100%', height: w < BP.mobile ? 180 : 240, objectFit: 'cover', display: 'block' }}
+              />
+              {/* Overlay actions */}
+              <div style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', gap: 8 }}>
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  style={{ background: 'rgba(0,0,0,0.6)', color: WHITE, border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}
+                >
+                  {uploading ? 'Uploading…' : '📷 Change'}
+                </button>
+                <button
+                  onClick={handleRemoveCover}
+                  style={{ background: 'rgba(220,38,38,0.75)', color: WHITE, border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}
+                >
+                  Remove
+                </button>
+              </div>
+            </>
+          ) : (
+            <div
+              onClick={() => fileRef.current?.click()}
+              style={{ padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center', cursor: 'pointer' }}
+            >
+              <div style={{ fontSize: 36, marginBottom: 10 }}>🌅</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: NAVY, marginBottom: 4 }}>Add a Cover Photo</div>
+              <div style={{ fontSize: 13, color: MUTED }}>
+                {uploading ? 'Uploading…' : 'Upload a photo of your ship or first port'}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Hidden file input */}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          style={{ display: 'none' }}
+          onChange={handleCoverUpload}
+        />
+
+        {uploadError && (
+          <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginTop: 8 }}>
+            {uploadError}
+          </div>
+        )}
+      </div>
+
+      {/* ── All voyages list ──────────────────────────────────────────────── */}
+      <div style={cs}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
+          All Voyages ({allVoyages.length})
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {allVoyages.map(v => (
+            <VoyageCard
+              key={v.id}
+              voyage={v}
+              isActive={v.id === voyageId}
+              onSwitch={onSwitch}
+            />
+          ))}
+        </div>
+
+        {/* New voyage */}
+        <div style={{ marginTop: 16 }}>
+          {showNewForm ? (
+            <NewVoyageForm
+              onCreate={handleCreate}
+              onCancel={() => setShowNewForm(false)}
+            />
+          ) : (
+            <button
+              onClick={() => setShowNewForm(true)}
+              style={{ width: '100%', background: 'transparent', border: `2px dashed ${BORDER}`, borderRadius: 12, padding: '14px 20px', cursor: 'pointer', fontSize: 14, color: MUTED, fontFamily: 'inherit', fontWeight: 600, transition: 'border-color 0.15s' }}
+            >
+              + Plan a New Voyage
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

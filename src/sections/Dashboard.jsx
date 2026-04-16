@@ -39,14 +39,15 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
   const budgetPct  = budgetAmt > 0 ? Math.round((spent / budgetAmt) * 100) : 0
   const budgetOver = budgetPct > 100
 
-  // Itinerary: total nights, port count (excluding "at sea"), and sea day count
-  const nights     = parseInt(voyage.totalNights) || 14
+  // Itinerary: total nights derived from Voyage Details (or itinerary length as fallback),
+  // port count (excluding "at sea"), and sea day count
+  const nights     = parseInt(voyage.totalNights) || itinerary.length || 0
   const ports      = itinerary.filter(d => d.port && d.port.trim() && d.port.toLowerCase() !== 'at sea').length
   const seaDays    = itinerary.filter(d => d.port?.toLowerCase() === 'at sea').length
 
   // Daily log: count days that have any written content
   const logged     = dailyLogs.filter(d => d.highlights || d.bestMoment).length
-  const loggedPct  = Math.round((logged / nights) * 100)
+  const loggedPct  = nights > 0 ? Math.round((logged / nights) * 100) : 0
 
   // Dining: combined meal count across Food Log and Restaurant Log sections;
   // unique venues for the sub-text
@@ -192,8 +193,8 @@ export default function Dashboard({ voyage, itinerary, dailyLogs, budget, packin
           6 metric cards in a responsive grid: 3 columns on desktop, 2 on
           tablet, 1 on mobile. Each MetricCard is self-contained.           */}
       <div style={{ display: 'grid', gridTemplateColumns: w < BP.mobile ? '1fr' : w < BP.tablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 14, marginBottom: 18 }}>
-        <MetricCard icon="📖" color={NAVY} value={`${logged} / ${nights}`} label="Days Logged"
-          sub={logged === 0 ? 'Open Daily Log to start' : `${nights - logged} day${nights - logged !== 1 ? 's' : ''} to journal`}
+        <MetricCard icon="📖" color={NAVY} value={nights > 0 ? `${logged} / ${nights}` : logged > 0 ? `${logged}` : '—'} label="Days Logged"
+          sub={nights === 0 ? 'Set Total Nights in Voyage Details' : logged === 0 ? 'Open Daily Log to start' : `${nights - logged} day${nights - logged !== 1 ? 's' : ''} to journal`}
           pct={loggedPct} />
         <MetricCard icon="📍" color={TEAL} value={ports || '—'} label="Ports Planned"
           sub={ports === 0 ? 'Fill in your Itinerary' : `plus ${seaDays} sea day${seaDays !== 1 ? 's' : ''}`} />

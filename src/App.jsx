@@ -15,7 +15,8 @@ import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
 import AuthScreen from './components/AuthScreen'
 import { SvgIcon } from './components/ui'
-import Dashboard      from './sections/Dashboard'
+import Feed           from './sections/Feed'
+import VoyageProfile  from './sections/VoyageProfile'
 import VoyageDetails  from './sections/VoyageDetails'
 import Itinerary      from './sections/Itinerary'
 import DailyLog       from './sections/DailyLog'
@@ -39,7 +40,7 @@ function fromDbVoyage(row) {
     shipName:         row.ship_name         ?? '',
     cruiseLine:       row.cruise_line       ?? '',
     cabin:            row.cabin             ?? '',
-    deck:             row.deck              ?? '',
+    deck:             row.deck             ?? '',
     departureDate:    row.departure_date    ?? '',
     returnDate:       row.return_date       ?? '',
     departurePort:    row.departure_port    ?? '',
@@ -53,6 +54,7 @@ function fromDbVoyage(row) {
     guestServices:    row.guest_services    ?? '',
     musterStation:    row.muster_station    ?? '',
     diningTime:       row.dining_time       ?? '',
+    coverPhotoUrl:    row.cover_photo_url   ?? '',
   }
 }
 
@@ -151,6 +153,7 @@ function toDbVoyage(v) {
     guest_services:    v.guestServices    || null,
     muster_station:    v.musterStation    || null,
     dining_time:       v.diningTime       || null,
+    cover_photo_url:   v.coverPhotoUrl    || null,
   }
 }
 
@@ -388,6 +391,7 @@ export default function App() {
   const [loaded, setLoaded]           = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [voyageId, setVoyageId]       = useState(null)
+  const [allVoyages, setAllVoyages]   = useState([])  // minimal rows for the voyage switcher
 
   // Debounce timers for array-section Supabase writes — held in refs so they
   // persist across renders without becoming useCallback dependencies.
@@ -419,23 +423,32 @@ export default function App() {
   }, [])
 
   // ── Voyage initialisation ───────────────────────────────────────────────────
-  // Runs once after the user is confirmed logged in. Fetches their first voyage
-  // row (ordered by created_at so the same voyage is always returned), or
-  // inserts a blank one for new users. Sets voyageId so every section knows
-  // which voyage to read/write. RLS ensures the query only sees their own rows.
+  // Loads all voyages for this user. Picks the active one from localStorage
+  // (so the last-used voyage is restored on reload), or falls back to the
+  // oldest voyage. Creates a blank voyage row for brand-new users.
   useEffect(() => {
     if (!session) return
+    // Guard against React StrictMode double-invocation — if the effect runs a
+    // second time before the first async completes, the cancelled flag stops the
+    // second run from creating a duplicate voyage row.
+    let cancelled = false
 
     async function initVoyage() {
-      const { data } = await supabase
-        .from('voyages')
-        .select('id')
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle()
+      const VOYAGE_SELECT = 'id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url'
 
-      if (data) {
-        setVoyageId(data.id)
+      const { data: rows } = await supabase
+        .from('voyages')
+        .select(VOYAGE_SELECT)
+        .order('created_at', { ascending: true })
+
+      if (cancelled) return
+
+      if (rows && rows.length > 0) {
+        setAllVoyages(rows)
+        const savedId = localStorage.getItem('csj-activeVoyageId')
+        const active  = rows.find(r => r.id === savedId) || rows[0]
+        setVoyageId(active.id)
+        localStorage.setItem('csj-activeVoyageId', active.id)
         return
       }
 
@@ -444,13 +457,20 @@ export default function App() {
       const { data: created } = await supabase
         .from('voyages')
         .insert({ user_id: session.user.id })
-        .select('id')
+        .select(VOYAGE_SELECT)
         .single()
 
-      if (created) setVoyageId(created.id)
+      if (cancelled) return
+
+      if (created) {
+        setAllVoyages([created])
+        setVoyageId(created.id)
+        localStorage.setItem('csj-activeVoyageId', created.id)
+      }
     }
 
     initVoyage()
+    return () => { cancelled = true }
   }, [session])
 
   // ── Load voyage details from Supabase ───────────────────────────────────────
@@ -463,7 +483,7 @@ export default function App() {
 
     supabase
       .from('voyages')
-      .select('ship_name, cruise_line, cabin, deck, departure_date, return_date, departure_port, total_nights, companion_1, companion_2, companion_3, companion_4, emergency_contact, phone, guest_services, muster_station, dining_time')
+      .select('ship_name, cruise_line, cabin, deck, departure_date, return_date, departure_port, total_nights, companion_1, companion_2, companion_3, companion_4, emergency_contact, phone, guest_services, muster_station, dining_time, cover_photo_url')
       .eq('id', voyageId)
       .single()
       .then(({ data: row }) => {
@@ -598,62 +618,86 @@ export default function App() {
   // Called by every section component via its onChange prop. Updates React
   // state and writes through to localStorage in one step. useCallback prevents
   // child components from re-rendering when unrelated state changes.
+  // NOTE: Every Supabase call must be awaited or have .then() called.
+  // In Supabase JS v2 the query builder is lazy — the HTTP request only fires
+  // when the Promise chain is started. Unawaited calls silently do nothing.
   const update = useCallback((key, val) => {
     setData(prev => ({ ...prev, [key]: val }))
     db.set(`csj-${key}`, val)
-    // Write voyage changes to Supabase. Fire-and-forget — localStorage is the
-    // fallback if the write fails, so there's no need to block the UI on it.
+
+    // Voyage — immediate write, no debounce needed (one row, small payload)
     if (key === 'voyage' && voyageId) {
-      supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId)
+      supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId).then(() => {})
     }
-    // Debounced delete-all + re-insert for dynamic-length day arrays. Simpler
-    // than upsert now that these sections have no fixed length.
+
+    // Single-record sections — upsert on every keystroke (tiny payload)
+    if (key === 'foodFav' && voyageId) {
+      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val), { onConflict: 'voyage_id' }).then(() => {})
+    }
+    if (key === 'highlights' && voyageId) {
+      supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' }).then(() => {})
+    }
+
+    // Dynamic arrays — debounced delete-all + re-insert to avoid write-per-keystroke
     if (key === 'itinerary' && voyageId) {
       clearTimeout(itineraryTimer.current)
       itineraryTimer.current = setTimeout(async () => {
         await supabase.from('itinerary').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) supabase.from('itinerary').insert(toDbItinerary(voyageId, val))
+        if (val.length > 0) await supabase.from('itinerary').insert(toDbItinerary(voyageId, val))
       }, 800)
     }
     if (key === 'dailyLogs' && voyageId) {
       clearTimeout(dailyLogsTimer.current)
       dailyLogsTimer.current = setTimeout(async () => {
         await supabase.from('daily_logs').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) supabase.from('daily_logs').insert(toDbDailyLogs(voyageId, val))
+        if (val.length > 0) await supabase.from('daily_logs').insert(toDbDailyLogs(voyageId, val))
       }, 800)
     }
-    // Dynamic arrays: delete all rows for this voyage then re-insert current
-    // state. Simpler than diffing since the full array is always available.
     if (key === 'foodLogs' && voyageId) {
       clearTimeout(foodLogsTimer.current)
       foodLogsTimer.current = setTimeout(async () => {
         await supabase.from('food_logs').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) supabase.from('food_logs').insert(toDbFoodLogs(voyageId, val))
+        if (val.length > 0) await supabase.from('food_logs').insert(toDbFoodLogs(voyageId, val))
       }, 800)
     }
     if (key === 'diningLog' && voyageId) {
       clearTimeout(diningLogTimer.current)
       diningLogTimer.current = setTimeout(async () => {
         await supabase.from('dining_log').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) supabase.from('dining_log').insert(toDbDiningLog(voyageId, val))
+        if (val.length > 0) await supabase.from('dining_log').insert(toDbDiningLog(voyageId, val))
       }, 800)
     }
     if (key === 'entertainmentLog' && voyageId) {
       clearTimeout(entertainmentTimer.current)
       entertainmentTimer.current = setTimeout(async () => {
         await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, val))
+        if (val.length > 0) await supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, val))
       }, 800)
     }
-    // Single-record sections: upsert the whole object on every change.
-    if (key === 'foodFav' && voyageId) {
-      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val), { onConflict: 'voyage_id' })
+    if (key === 'shopping' && voyageId) {
+      clearTimeout(shoppingTimer.current)
+      shoppingTimer.current = setTimeout(async () => {
+        await supabase.from('shopping_items').delete().eq('voyage_id', voyageId)
+        if (val.items?.length > 0) await supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, val.items))
+      }, 800)
     }
-    if (key === 'highlights' && voyageId) {
-      supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' })
+    if (key === 'packing' && voyageId) {
+      clearTimeout(packingTimer.current)
+      packingTimer.current = setTimeout(async () => {
+        await supabase.from('packing_items').delete().eq('voyage_id', voyageId)
+        const rows = toDbPackingItems(voyageId, val)
+        if (rows.length > 0) await supabase.from('packing_items').insert(rows)
+      }, 800)
     }
-    // Budget: update the budget row then replace items (await sequentially so
-    // items are never inserted against a stale or missing budget row).
+    if (key === 'notes' && voyageId) {
+      clearTimeout(notesTimer.current)
+      notesTimer.current = setTimeout(async () => {
+        await supabase.from('notes').delete().eq('voyage_id', voyageId)
+        if (val.length > 0) await supabase.from('notes').insert(toDbNotes(voyageId, val))
+      }, 800)
+    }
+
+    // Budget — two-table write: update row first, then replace items
     if (key === 'budget' && voyageId && budgetIdRef.current) {
       clearTimeout(budgetTimer.current)
       budgetTimer.current = setTimeout(async () => {
@@ -661,7 +705,7 @@ export default function App() {
         await supabase.from('budget').update({ total_budget: val.budget || null }).eq('id', bid)
         await supabase.from('budget_items').delete().eq('budget_id', bid)
         if (val.items?.length > 0) {
-          supabase.from('budget_items').insert(val.items.map(item => ({
+          await supabase.from('budget_items').insert(val.items.map(item => ({
             budget_id: bid,
             date:      item.date     || null,
             item:      item.item     || null,
@@ -671,29 +715,44 @@ export default function App() {
         }
       }, 800)
     }
-    if (key === 'shopping' && voyageId) {
-      clearTimeout(shoppingTimer.current)
-      shoppingTimer.current = setTimeout(async () => {
-        await supabase.from('shopping_items').delete().eq('voyage_id', voyageId)
-        if (val.items?.length > 0) supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, val.items))
-      }, 800)
-    }
-    if (key === 'packing' && voyageId) {
-      clearTimeout(packingTimer.current)
-      packingTimer.current = setTimeout(async () => {
-        await supabase.from('packing_items').delete().eq('voyage_id', voyageId)
-        const rows = toDbPackingItems(voyageId, val)
-        if (rows.length > 0) supabase.from('packing_items').insert(rows)
-      }, 800)
-    }
-    if (key === 'notes' && voyageId) {
-      clearTimeout(notesTimer.current)
-      notesTimer.current = setTimeout(async () => {
-        await supabase.from('notes').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) supabase.from('notes').insert(toDbNotes(voyageId, val))
-      }, 800)
-    }
   }, [voyageId])
+
+  // ── Switch active voyage ─────────────────────────────────────────────────────
+  // Clears all section data and localStorage cache, then sets the new voyageId
+  // which re-triggers every Supabase load effect.
+  const switchVoyage = (newId) => {
+    if (newId === voyageId) return
+    Object.keys(INIT).forEach(k => db.set(`csj-${k}`, INIT[k]))
+    localStorage.setItem('csj-activeVoyageId', newId)
+    setData(INIT)
+    setVoyageId(newId)
+    setSection('dashboard')
+  }
+
+  // ── Create a new voyage ───────────────────────────────────────────────────────
+  // Inserts a row in the voyages table, adds it to allVoyages, and switches to it.
+  const createVoyage = async (partial = {}) => {
+    const VOYAGE_SELECT = 'id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url'
+    const { data: created } = await supabase
+      .from('voyages')
+      .insert({ user_id: session.user.id, ...partial })
+      .select(VOYAGE_SELECT)
+      .single()
+
+    if (created) {
+      setAllVoyages(prev => [...prev, created])
+      switchVoyage(created.id)
+    }
+    return created
+  }
+
+  // ── Cover photo change ────────────────────────────────────────────────────────
+  // Called by VoyageProfile after a successful Supabase Storage upload.
+  // Updates the in-memory voyage data and the allVoyages summary list.
+  const handleCoverPhotoChange = (url) => {
+    setData(prev => ({ ...prev, voyage: { ...prev.voyage, coverPhotoUrl: url || '' } }))
+    setAllVoyages(prev => prev.map(v => v.id === voyageId ? { ...v, cover_photo_url: url } : v))
+  }
 
   // ── Handle sidebar navigation clicks ────────────────────────────────────────
   // Switches the active section and collapses the sidebar on mobile/tablet
@@ -781,6 +840,8 @@ export default function App() {
             onClose={() => setSidebarOpen(false)}
             user={session?.user}
             onSignOut={() => supabase.auth.signOut()}
+            voyageName={data.voyage.shipName}
+            voyageCount={allVoyages.length}
           />
 
           {/* ── Section content ─────────────────────────────────────────────
@@ -790,7 +851,8 @@ export default function App() {
           <main style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ padding: mainPad }}>
             <div style={{ maxWidth: 840 }}>
-              {section === 'dashboard'     && <Dashboard voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} onNav={navClick} />}
+              {section === 'dashboard'     && <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} onChange={v => update('dailyLogs', v)} onNav={navClick} />}
+              {section === 'profile'       && <VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />}
               {section === 'voyage'        && <VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />}
               {section === 'itinerary'     && <Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />}
               {section === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} />}

@@ -51,7 +51,7 @@ export const IC = {
 // journal sections. Adding a new section requires an entry here as well as a
 // corresponding key in INIT (App.jsx) and a render case in the App return.
 export const NAV = [
-  { id: 'dashboard',     label: 'Dashboard',         icon: '🧭' },
+  { id: 'dashboard',     label: 'Feed',               icon: '🧭' },
   { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },
   { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },
   { id: 'daily',         label: 'Daily Log',          icon: '📅' },

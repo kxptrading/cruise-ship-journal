@@ -9,7 +9,7 @@
 import { NAVY2, GOLD, WHITE } from '../constants'
 import { NAV } from '../constants'
 
-export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut }) {
+export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount }) {
   return (
     <>
       {/* ── Backdrop ────────────────────────────────────────────────────────
@@ -54,6 +54,36 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
               ×
             </button>
           )}
+        </div>
+
+        {/* ── Voyage switcher pill ──────────────────────────────────────────
+            Shows the active ship name. Clicking navigates to My Voyages.    */}
+        <div style={{ padding: '0 12px 12px' }}>
+          <button
+            onClick={() => onNav('profile')}
+            style={{
+              width: '100%', background: section === 'profile' ? 'rgba(201,162,39,0.1)' : 'rgba(255,255,255,0.04)',
+              border: `1px solid ${section === 'profile' ? 'rgba(201,162,39,0.3)' : 'rgba(255,255,255,0.08)'}`,
+              borderRadius: 8, padding: '8px 12px', cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              fontFamily: 'inherit', transition: 'background 0.15s',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+              <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
+              <span style={{ fontSize: 12, color: section === 'profile' ? GOLD : 'rgba(255,255,255,0.65)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {voyageName || 'My Voyages'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+              {voyageCount > 1 && (
+                <span style={{ background: 'rgba(255,255,255,0.12)', borderRadius: 10, padding: '1px 7px', fontSize: 10, color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>
+                  {voyageCount}
+                </span>
+              )}
+              <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)' }}>›</span>
+            </div>
+          </button>
         </div>
 
         {/* ── Navigation items ──────────────────────────────────────────────

@@ -1,92 +1,70 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// lib/photoStorage.js — IndexedDB-backed photo storage
+// lib/photoStorage.js — Supabase Storage-backed photo storage
 //
-// Stores photos as base64 data URLs keyed by voyage day index.
-// IndexedDB is used instead of localStorage because photos are binary and
-// can easily exceed localStorage's ~5 MB quota.
+// Stores photos in the `daily-photos` Supabase Storage bucket under:
+//   {userId}/{voyageId}/{dayNumber}/{photoId}.{ext}
 //
-// When Supabase Storage is connected, replace the body of each function with
-// a supabase.storage call — the DailyLog component interface stays the same.
+// Metadata (caption, path) lives in the `photos` table so captions can be
+// edited without re-uploading the file.
+//
+// Each function accepts a context object { voyageId, userId } as the last
+// argument, provided by the calling component via useVoyageId() and UserCtx.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const DB_NAME = 'csj-photos'
-const STORE   = 'photos'
-const VERSION = 1
+import { supabase } from './supabase'
 
-function openDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, VERSION)
-    req.onupgradeneeded = e => {
-      const db = e.target.result
-      if (!db.objectStoreNames.contains(STORE)) {
-        const store = db.createObjectStore(STORE, { keyPath: 'id' })
-        store.createIndex('dayIndex', 'dayIndex', { unique: false })
-      }
-    }
-    req.onsuccess = e => resolve(e.target.result)
-    req.onerror   = e => reject(e.target.error)
-  })
+const BUCKET = 'daily-photos'
+
+// Returns the Supabase public URL for a given storage path.
+function publicUrl(path) {
+  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
 }
 
-// Read a File into a base64 data URL
-function fileToDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload  = e => resolve(e.target.result)
-    reader.onerror = e => reject(e.target.error)
-    reader.readAsDataURL(file)
-  })
+// Upload a photo file and insert a metadata row.
+// Returns a photo object compatible with DailyLog + Feed (has id, dataUrl, caption, storage_path).
+export async function addPhoto(dayNumber, file, { voyageId, userId }, caption = '') {
+  const ext     = file.name.split('.').pop().toLowerCase() || 'jpg'
+  const photoId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const path    = `${userId}/${voyageId}/${dayNumber}/${photoId}.${ext}`
+
+  const { error: uploadErr } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, file, { contentType: file.type })
+
+  if (uploadErr) throw uploadErr
+
+  const { data: row, error: dbErr } = await supabase
+    .from('photos')
+    .insert({ voyage_id: voyageId, day_number: dayNumber, storage_path: path, caption })
+    .select('id, storage_path, caption, created_at')
+    .single()
+
+  if (dbErr) throw dbErr
+
+  return { ...row, dataUrl: publicUrl(path) }
 }
 
-export async function addPhoto(dayIndex, file, caption = '') {
-  const dataUrl = await fileToDataUrl(file)
-  const photo = {
-    id:        `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-    dayIndex,
-    dataUrl,
-    caption,
-    createdAt: new Date().toISOString(),
-  }
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite')
-    tx.objectStore(STORE).add(photo)
-    tx.oncomplete = () => resolve(photo)
-    tx.onerror    = e => reject(e.target.error)
-  })
+// Fetch all photos for a given day, ordered oldest-first.
+// Returns array of { id, storage_path, caption, created_at, dataUrl }.
+export async function getPhotos(dayNumber, { voyageId }) {
+  const { data: rows } = await supabase
+    .from('photos')
+    .select('id, storage_path, caption, created_at')
+    .eq('voyage_id', voyageId)
+    .eq('day_number', dayNumber)
+    .order('created_at', { ascending: true })
+
+  if (!rows) return []
+  return rows.map(row => ({ ...row, dataUrl: publicUrl(row.storage_path) }))
 }
 
-export async function getPhotos(dayIndex) {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const tx  = db.transaction(STORE, 'readonly')
-    const req = tx.objectStore(STORE).index('dayIndex').getAll(dayIndex)
-    req.onsuccess = e => resolve(e.target.result)
-    req.onerror   = e => reject(e.target.error)
-  })
+// Remove a photo from Storage and delete its metadata row.
+export async function deletePhoto(id, storagePath) {
+  await supabase.storage.from(BUCKET).remove([storagePath])
+  await supabase.from('photos').delete().eq('id', id).then(() => {})
 }
 
-export async function deletePhoto(id) {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const tx = db.transaction(STORE, 'readwrite')
-    tx.objectStore(STORE).delete(id)
-    tx.oncomplete = () => resolve()
-    tx.onerror    = e => reject(e.target.error)
-  })
-}
-
+// Update the caption text for a photo (DB only — file unchanged).
 export async function updateCaption(id, caption) {
-  const db = await openDB()
-  return new Promise((resolve, reject) => {
-    const tx    = db.transaction(STORE, 'readwrite')
-    const store = tx.objectStore(STORE)
-    const req   = store.get(id)
-    req.onsuccess = e => {
-      const photo = e.target.result
-      if (photo) store.put({ ...photo, caption })
-    }
-    tx.oncomplete = () => resolve()
-    tx.onerror    = e => reject(e.target.error)
-  })
+  supabase.from('photos').update({ caption }).eq('id', id).then(() => {})
 }

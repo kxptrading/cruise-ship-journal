@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, BP, sty } from '../constants'
-import { useW } from '../context'
+import { useW, useVoyageId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
 
@@ -157,7 +157,8 @@ function PostCard({ item, onNav }) {
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
 export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, onChange, onNav }) {
-  const w = useW()
+  const w        = useW()
+  const voyageId = useVoyageId()
 
   // Photos keyed by day index — loads the first photo for each day in the
   // background after the feed renders, then triggers a re-render to show them.
@@ -172,10 +173,10 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
   // Load the first photo for every day that has a daily log entry.
   useEffect(() => {
-    if (!dailyLogs.length) return
+    if (!dailyLogs.length || !voyageId) return
     Promise.all(
       dailyLogs.map((_, i) =>
-        getPhotos(i)
+        getPhotos(i, { voyageId })
           .then(photos => ({ day: i, photo: photos[0] || null }))
           .catch(() => ({ day: i, photo: null }))
       )
@@ -184,7 +185,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       results.forEach(({ day, photo }) => { if (photo) map[day] = photo })
       setPhotosByDay(map)
     })
-  }, [dailyLogs.length])
+  }, [dailyLogs.length, voyageId])
 
   // ── Metrics ───────────────────────────────────────────────────────────────
   const spent     = (budget.items || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)

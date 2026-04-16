@@ -12,13 +12,15 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { NAVY, WHITE, BORDER, TEXT, MUTED, BP, sty } from '../constants'
-import { useW } from '../context'
+import { useW, useVoyageId, useUserId } from '../context'
 import { PgHdr, Box, Fld, Row2, Inp, TA, Stars } from '../components/ui'
 import { addPhoto, getPhotos, deletePhoto, updateCaption } from '../lib/photoStorage'
 
 export default function DailyLog({ data, onChange, itinerary }) {
-  const w   = useW()
-  const cs  = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+  const w        = useW()
+  const voyageId = useVoyageId()
+  const userId   = useUserId()
+  const cs       = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
   // day is the zero-based index into the data array (0 = Day 1)
   const [day, setDay]         = useState(0)
@@ -43,27 +45,28 @@ export default function DailyLog({ data, onChange, itinerary }) {
   // Update a single field on the current day without mutating the array
   const set = (f, v) => { const u = [...data]; u[day] = { ...log, [f]: v }; onChange(u) }
 
-  // Load photos from IndexedDB whenever the active day changes
+  // Load photos from Supabase whenever the active day or voyage changes
   useEffect(() => {
-    getPhotos(day).then(setPhotos).catch(() => setPhotos([]))
-  }, [day])
+    if (!voyageId) return
+    getPhotos(day, { voyageId }).then(setPhotos).catch(() => setPhotos([]))
+  }, [day, voyageId])
 
   const handleUpload = async (e) => {
     const files = Array.from(e.target.files)
-    if (!files.length) return
+    if (!files.length || !voyageId || !userId) return
     setUploading(true)
     for (const file of files) {
-      const photo = await addPhoto(day, file)
+      const photo = await addPhoto(day, file, { voyageId, userId })
       setPhotos(prev => [...prev, photo])
     }
     setUploading(false)
     e.target.value = ''
   }
 
-  const handleDelete = async (id) => {
-    await deletePhoto(id)
-    setPhotos(prev => prev.filter(p => p.id !== id))
-    if (lightbox?.id === id) setLightbox(null)
+  const handleDelete = async (photo) => {
+    await deletePhoto(photo.id, photo.storage_path)
+    setPhotos(prev => prev.filter(p => p.id !== photo.id))
+    if (lightbox?.id === photo.id) setLightbox(null)
   }
 
   const handleCaption = (id, caption) => {
@@ -196,7 +199,7 @@ export default function DailyLog({ data, onChange, itinerary }) {
                         style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     </div>
                     <button
-                      onClick={() => handleDelete(photo.id)}
+                      onClick={() => handleDelete(photo)}
                       style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: '50%', background: 'rgba(0,0,0,0.55)', border: 'none', color: WHITE, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}
                     >×</button>
                   </div>

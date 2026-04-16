@@ -21,6 +21,11 @@ export const useW = () => useContext(WCtx)
 export const VoyageCtx = createContext(null)
 export const useVoyageId = () => useContext(VoyageCtx)
 
+// User context — provides the authenticated user's ID so photo storage
+// functions can build the correct storage path without needing session props.
+export const UserCtx = createContext(null)
+export const useUserId = () => useContext(UserCtx)
+
 // Custom hook used once in App.jsx to measure and track the window width.
 // Cleans up its own resize listener on unmount.
 export function useWindowSize() {

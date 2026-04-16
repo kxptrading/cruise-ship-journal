@@ -11,7 +11,7 @@ import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, MUTED, TEXT } from '../constan
 import { supabase } from '../lib/supabase'
 
 export default function AuthScreen() {
-  const [mode, setMode]       = useState('signin')   // 'signin' | 'signup'
+  const [mode, setMode]       = useState('signin')   // 'signin' | 'signup' | 'reset'
   const [email, setEmail]     = useState('')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -20,6 +20,7 @@ export default function AuthScreen() {
   const [success, setSuccess] = useState(false)
 
   const isSignUp = mode === 'signup'
+  const isReset  = mode === 'reset'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -32,7 +33,16 @@ export default function AuthScreen() {
 
     setLoading(true)
 
-    if (isSignUp) {
+    if (isReset) {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: window.location.origin,
+      })
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess(true)
+      }
+    } else if (isSignUp) {
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setError(error.message)
@@ -71,10 +81,10 @@ export default function AuthScreen() {
           {/* Card header */}
           <div style={{ background: NAVY2, padding: '20px 28px' }}>
             <div style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif' }}>
-              {isSignUp ? 'Create your account' : 'Welcome back'}
+              {isReset ? 'Reset your password' : isSignUp ? 'Create your account' : 'Welcome back'}
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', marginTop: 4 }}>
-              {isSignUp ? 'Start logging your voyages' : 'Sign in to your voyage journal'}
+              {isReset ? 'We\'ll email you a reset link' : isSignUp ? 'Start logging your voyages' : 'Sign in to your voyage journal'}
             </div>
           </div>
 
@@ -86,8 +96,10 @@ export default function AuthScreen() {
                 <div style={{ fontSize: 32, marginBottom: 12 }}>📧</div>
                 <div style={{ fontWeight: 700, color: NAVY, marginBottom: 6 }}>Check your email</div>
                 <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.6 }}>
-                  We've sent a confirmation link to <strong>{email}</strong>.<br />
-                  Click it to activate your account, then sign in.
+                  {isReset
+                    ? <>We've sent a password reset link to <strong>{email}</strong>.<br />Follow the link to choose a new password.</>
+                    : <>We've sent a confirmation link to <strong>{email}</strong>.<br />Click it to activate your account, then sign in.</>
+                  }
                 </div>
                 <button type="button" onClick={() => { setMode('signin'); setSuccess(false) }}
                   style={{ marginTop: 20, background: 'none', border: 'none', color: GOLD, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
@@ -102,11 +114,23 @@ export default function AuthScreen() {
                     placeholder="you@example.com" required autoComplete="email" style={inp} />
                 </div>
 
-                <div style={{ marginBottom: isSignUp ? 16 : 20 }}>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Password</label>
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                    placeholder="••••••••" required autoComplete={isSignUp ? 'new-password' : 'current-password'} style={inp} />
-                </div>
+                {!isReset && (
+                  <div style={{ marginBottom: isSignUp ? 16 : 8 }}>
+                    <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Password</label>
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                      placeholder="••••••••" required autoComplete={isSignUp ? 'new-password' : 'current-password'} style={inp} />
+                  </div>
+                )}
+
+                {!isReset && !isSignUp && (
+                  <div style={{ textAlign: 'right', marginBottom: 16 }}>
+                    <button type="button"
+                      onClick={() => { setMode('reset'); setError('') }}
+                      style={{ background: 'none', border: 'none', color: MUTED, cursor: 'pointer', fontSize: 12, fontFamily: 'inherit' }}>
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
 
                 {isSignUp && (
                   <div style={{ marginBottom: 20 }}>
@@ -123,16 +147,16 @@ export default function AuthScreen() {
                 )}
 
                 <button type="submit" disabled={loading}
-                  style={{ width: '100%', background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '12px 20px', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1 }}>
-                  {loading ? '...' : isSignUp ? 'Create Account' : 'Sign In'}
+                  style={{ width: '100%', background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '12px 20px', fontSize: 14, fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit', opacity: loading ? 0.7 : 1, marginTop: isReset ? 4 : 0 }}>
+                  {loading ? '...' : isReset ? 'Send Reset Link' : isSignUp ? 'Create Account' : 'Sign In'}
                 </button>
 
                 <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: MUTED }}>
-                  {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+                  {isReset ? 'Remembered it?' : isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                   <button type="button"
-                    onClick={() => { setMode(isSignUp ? 'signin' : 'signup'); setError('') }}
+                    onClick={() => { setMode(isReset || isSignUp ? 'signin' : 'signup'); setError('') }}
                     style={{ background: 'none', border: 'none', color: GOLD, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
-                    {isSignUp ? 'Sign In' : 'Create one'}
+                    {isReset || isSignUp ? 'Sign In' : 'Create one'}
                   </button>
                 </div>
               </>

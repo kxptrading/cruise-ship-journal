@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
 import { IC, NAV } from './constants'
-import { WCtx, VoyageCtx, useWindowSize } from './context'
+import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
 import { db } from './storage'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
@@ -794,6 +794,7 @@ export default function App() {
     // VoyageCtx makes the active voyageId available anywhere via useVoyageId()
     // without prop-drilling. WCtx does the same for viewport width.
     <VoyageCtx.Provider value={voyageId}>
+    <UserCtx.Provider value={session?.user?.id ?? null}>
     <WCtx.Provider value={winW}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
@@ -872,6 +873,7 @@ export default function App() {
         </div>
       </div>
     </WCtx.Provider>
+    </UserCtx.Provider>
     </VoyageCtx.Provider>
   )
 }

@@ -7,7 +7,7 @@
 // under "csj-foodLogs" and counted in the Dashboard's Dining Entries metric.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { NAVY, BORDER, TEXT, BP, sty } from '../constants'
+import { NAVY, MUTED, BORDER, TEXT, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr, Fld, Row2, Inp, TA, Stars, Lbl } from '../components/ui'
 
@@ -23,6 +23,15 @@ export default function FoodLog({ data, onChange }) {
   return (
     <div>
       <PgHdr icon="🍴" title="Food Log" sub="Track every delicious bite — from buffet discoveries to specialty dining gems" />
+
+      {/* Empty state */}
+      {data.length === 0 && (
+        <div style={{ ...sty.card, textAlign: 'center', padding: '56px 32px', color: MUTED }}>
+          <div style={{ fontSize: 48, marginBottom: 14 }}>🍴</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>No meals logged yet</div>
+          <div style={{ fontSize: 14, color: MUTED, marginBottom: 24 }}>Track every meal — from buffet discoveries to specialty dining gems.</div>
+        </div>
+      )}
 
       {/* One card per meal entry */}
       {data.map((meal, i) => (

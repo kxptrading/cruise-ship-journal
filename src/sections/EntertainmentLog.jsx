@@ -7,7 +7,7 @@
 // a growing array under "csj-entertainmentLog".
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { NAVY, BP, sty } from '../constants'
+import { NAVY, MUTED, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr, Fld, Row2, Inp, TA, Stars, Lbl } from '../components/ui'
 
@@ -26,6 +26,15 @@ export default function EntertainmentLog({ data, onChange }) {
   return (
     <div>
       <PgHdr icon="🎭" title="Entertainment Log" sub="Every show, performance, and event enjoyed on board" />
+
+      {/* Empty state */}
+      {data.length === 0 && (
+        <div style={{ ...sty.card, textAlign: 'center', padding: '56px 32px', color: MUTED }}>
+          <div style={{ fontSize: 48, marginBottom: 14 }}>🎭</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>No shows logged yet</div>
+          <div style={{ fontSize: 14, color: MUTED, marginBottom: 24 }}>Log every show, performance, and event enjoyed on board.</div>
+        </div>
+      )}
 
       {/* One card per entertainment entry. The card heading uses the event name
           once entered, falling back to "Event N" while the field is empty.  */}

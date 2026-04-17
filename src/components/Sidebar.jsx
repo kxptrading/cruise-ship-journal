@@ -9,7 +9,7 @@
 import { NAVY2, GOLD, WHITE } from '../constants'
 import { NAV } from '../constants'
 
-export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount }) {
+export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus }) {
   return (
     <>
       {/* ── Backdrop ────────────────────────────────────────────────────────
@@ -106,7 +106,11 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
                   transition: 'background 0.15s',
                 }}>
                 <span style={{ fontSize: 15, lineHeight: 1, opacity: active ? 1 : 0.6 }}>{icon}</span>
-                {label}
+                <span style={{ flex: 1 }}>{label}</span>
+                {/* Gold dot when section has data — gives at-a-glance journal completeness */}
+                {sectionStatus?.has(id) && !active && (
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.7, flexShrink: 0 }} />
+                )}
               </button>
             )
           })}

@@ -16,10 +16,19 @@ import { useW, useVoyageId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
 
-// ── Weather chips ─────────────────────────────────────────────────────────────
+// ── Weather chip styles — per-condition colour tinting ───────────────────────
 const WX_EMOJI = {
   Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️',
   Windy: '💨', Hot:  '🌡️', Mild:  '🌤️', Cool: '❄️',
+}
+const WX_STYLE = {
+  Sunny:  { background: '#FEF3C7', border: '1px solid #FCD34D', color: '#92400E' },
+  Hot:    { background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B' },
+  Rainy:  { background: '#EFF6FF', border: '1px solid #93C5FD', color: '#1D4ED8' },
+  Cloudy: { background: '#F3F4F6', border: '1px solid #D1D5DB', color: '#374151' },
+  Windy:  { background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' },
+  Mild:   { background: '#F0FDF4', border: '1px solid #86EFAC', color: '#166534' },
+  Cool:   { background: '#EFF6FF', border: '1px solid #BAE6FD', color: '#0369A1' },
 }
 
 // ── Post card ─────────────────────────────────────────────────────────────────
@@ -37,7 +46,7 @@ function PostCard({ item, onNav }) {
   ].filter(Boolean)
 
   return (
-    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden' }}>
+    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden' }}>
 
       {/* ── Card header: day badge + port + date ──────────────────────────── */}
       <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -98,11 +107,11 @@ function PostCard({ item, onNav }) {
           </p>
         )}
 
-        {/* Best moment — styled as a pull quote */}
+        {/* Best moment — magazine-style pull quote */}
         {bestMoment && (
-          <div style={{ borderLeft: `3px solid ${GOLD}`, paddingLeft: 12, marginBottom: 14 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Best Moment</div>
-            <div style={{ fontSize: 13, color: MUTED, fontStyle: 'italic', lineHeight: 1.6 }}>{bestMoment}</div>
+          <div style={{ borderLeft: `3px solid ${GOLD}`, paddingLeft: 14, marginBottom: 14, background: '#C9A22710', borderRadius: '0 8px 8px 0', padding: '10px 14px', marginLeft: 0 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Best Moment</div>
+            <div style={{ fontSize: 16, color: '#4A3B2A', fontStyle: 'italic', lineHeight: 1.6, fontFamily: 'Georgia,serif' }}>{bestMoment}</div>
           </div>
         )}
 
@@ -114,11 +123,11 @@ function PostCard({ item, onNav }) {
           </div>
         )}
 
-        {/* Weather chips */}
+        {/* Weather chips — each condition gets its own tinted colour */}
         {(weather || []).length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
             {weather.map(wx => (
-              <span key={wx} style={{ fontSize: 12, background: '#F0F7FF', border: '1px solid #C7DCF5', borderRadius: 20, padding: '3px 10px', color: '#2563EB' }}>
+              <span key={wx} style={{ fontSize: 12, borderRadius: 20, padding: '3px 10px', ...(WX_STYLE[wx] || { background: '#F0F7FF', border: '1px solid #C7DCF5', color: '#2563EB' }) }}>
                 {WX_EMOJI[wx] || '🌈'} {wx}
               </span>
             ))}
@@ -156,13 +165,16 @@ function PostCard({ item, onNav }) {
 }
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
-export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, onChange, onNav }) {
+export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast }) {
   const w        = useW()
   const voyageId = useVoyageId()
 
   // Photos keyed by day index — loads the first photo for each day in the
   // background after the feed renders, then triggers a re-render to show them.
   const [photosByDay, setPhotosByDay] = useState({})
+
+  // Animated progress bar — starts at 0 and transitions to actual % on mount
+  const [barPct, setBarPct] = useState(0)
 
   // Composer state
   const [composing, setComposing]         = useState(false)
@@ -186,6 +198,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       setPhotosByDay(map)
     })
   }, [dailyLogs.length, voyageId])
+
+  // Animate the progress bar from 0 → actual % on mount / when voyagePct changes
+  useEffect(() => {
+    const t = setTimeout(() => setBarPct(voyagePct || 0), 120)
+    return () => clearTimeout(t)
+  }, [voyagePct])
 
   // ── Metrics ───────────────────────────────────────────────────────────────
   const spent     = (budget.items || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
@@ -229,12 +247,14 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     const idx = parseInt(composeDay, 10)
     if (!composeText.trim() || isNaN(idx) || idx < 0 || idx >= dailyLogs.length) return
     const updated = [...dailyLogs]
+    const wasFirst = !dailyLogs.some(d => d.highlights || d.bestMoment)
     updated[idx] = {
       ...updated[idx],
       highlights: composeText.trim(),
       ...(composeRating > 0 ? { rating: composeRating } : {}),
     }
     onChange(updated)
+    if (wasFirst && showToast) showToast(`Day ${idx + 1} logged! ⚓`)
     setComposing(false)
     setComposeText('')
     setComposeRating(0)
@@ -335,7 +355,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                   </span>
                 </div>
                 <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${voyagePct}%`, background: GOLD, borderRadius: 3, transition: 'width 0.6s ease' }} />
+                  <div style={{ height: '100%', width: `${barPct}%`, background: GOLD, borderRadius: 3, transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                 </div>
               </div>
             )}
@@ -375,34 +395,27 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       </div>
 
       {/* ── Compact metrics strip ─────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 16 }}>
-        {[
-          {
-            icon: '📖',
-            value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—',
-            label: 'Days Logged',
-            color: NAVY,
-          },
-          {
-            icon: '📍',
-            value: ports > 0 ? String(ports) : '—',
-            label: 'Ports',
-            color: TEAL,
-          },
-          {
-            icon: '💳',
-            value: spent > 0 ? `£${spent.toFixed(0)}` : '£—',
-            label: budgetOver ? 'Over Budget!' : 'Spent',
-            color: budgetOver ? '#DC2626' : TEAL,
-          },
-        ].map(m => (
-          <div key={m.label} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: w < BP.mobile ? '10px 8px' : '12px 14px', textAlign: 'center' }}>
-            <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
-            <div style={{ fontSize: w < BP.mobile ? 16 : 20, fontWeight: 700, color: m.color, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{m.value}</div>
-            <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 3 }}>{m.label}</div>
+      {(() => {
+        const completedCount = sectionStatus?.size || 0
+        const totalSections  = 12 // all sections except dashboard
+        const metrics = [
+          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged', color: NAVY },
+          { icon: '📍', value: ports > 0 ? String(ports) : '—', label: 'Ports', color: TEAL },
+          { icon: '💳', value: spent > 0 ? `£${spent.toFixed(0)}` : '£—', label: budgetOver ? 'Over Budget!' : 'Spent', color: budgetOver ? '#DC2626' : TEAL },
+          { icon: '🏆', value: `${completedCount} / ${totalSections}`, label: 'Journal Complete', color: completedCount === totalSections ? '#22C55E' : NAVY },
+        ]
+        return (
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${w < BP.mobile ? 2 : 4}, 1fr)`, gap: 10, marginBottom: 16 }}>
+            {metrics.map(m => (
+              <div key={m.label} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: w < BP.mobile ? '10px 8px' : '12px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
+                <div style={{ fontSize: w < BP.mobile ? 15 : 20, fontWeight: 700, color: m.color, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{m.value}</div>
+                <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 3 }}>{m.label}</div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+        )
+      })()}
 
       {/* ── Quick composer ────────────────────────────────────────────────── */}
       {dailyLogs.length > 0 && (

@@ -6,7 +6,7 @@
 // manages the sidebar open/close state for mobile and tablet viewports.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
 import { IC, NAV } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
@@ -14,7 +14,7 @@ import { db } from './storage'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
 import AuthScreen from './components/AuthScreen'
-import { SvgIcon } from './components/ui'
+import { SvgIcon, Toast } from './components/ui'
 import Feed           from './sections/Feed'
 import VoyageProfile  from './sections/VoyageProfile'
 import VoyageDetails  from './sections/VoyageDetails'
@@ -408,6 +408,19 @@ export default function App() {
   // can insert budget_items without an extra SELECT round-trip.
   const budgetIdRef          = useRef(null)
 
+  // ── Toast notification state ────────────────────────────────────────────────
+  const [toast, setToast]   = useState({ message: '', visible: false })
+  const toastTimer          = useRef(null)
+  // Refs track whether the first-entry toasts have already been shown this session
+  const toastLoggedRef      = useRef(false)
+  const toastVoyageRef      = useRef(false)
+
+  const showToast = (message) => {
+    clearTimeout(toastTimer.current)
+    setToast({ message, visible: true })
+    toastTimer.current = setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
+  }
+
   // ── Auth session ────────────────────────────────────────────────────────────
   // Check for an existing session on mount, then listen for sign-in/sign-out
   // events so the UI updates automatically without a page reload.
@@ -613,6 +626,50 @@ export default function App() {
   useEffect(() => {
     if (!isOverlay) setSidebarOpen(false)
   }, [isOverlay])
+
+  // ── Toast triggers ──────────────────────────────────────────────────────────
+  // Only fire after data has loaded from Supabase (loaded + voyageId set),
+  // and only once per session to avoid repeat toasts on every render.
+  useEffect(() => {
+    if (!loaded || !voyageId) return
+    if (!toastVoyageRef.current && data.voyage.shipName) {
+      toastVoyageRef.current = true
+      return // suppress on initial load — only fire on actual user input
+    }
+    if (toastVoyageRef.current && data.voyage.shipName) return
+    toastVoyageRef.current = !!data.voyage.shipName
+  }, [data.voyage.shipName])
+
+  useEffect(() => {
+    if (!loaded || !voyageId) return
+    const logged = data.dailyLogs.filter(d => d.highlights || d.bestMoment).length
+    if (!toastLoggedRef.current && logged > 0) {
+      // Suppress on page load — wait for the count to increase
+      toastLoggedRef.current = true
+      return
+    }
+    if (toastLoggedRef.current && logged === 0) toastLoggedRef.current = false
+  }, [data.dailyLogs, loaded, voyageId])
+
+  // ── Derived section completion status ──────────────────────────────────────
+  // A Set of section IDs that have meaningful data. Used by Sidebar (dots) and
+  // Feed (journal completion score). Recomputed only when data changes.
+  const sectionStatus = useMemo(() => {
+    const has = new Set()
+    if (data.voyage.shipName || data.voyage.cruiseLine || data.voyage.departureDate) has.add('voyage')
+    if (data.itinerary.length > 0) has.add('itinerary')
+    if (data.dailyLogs.some(d => d.highlights || d.bestMoment || d.activity)) has.add('daily')
+    if (data.foodLogs.length > 0) has.add('food')
+    if (data.diningLog.length > 0) has.add('dining')
+    if (data.entertainmentLog.length > 0) has.add('entertainment')
+    if (Object.values(data.foodFav).some(v => v)) has.add('foodfav')
+    if (data.budget.budget || data.budget.items.length > 0) has.add('budget')
+    if (data.shopping.items.length > 0) has.add('shopping')
+    if (Object.values(data.highlights).some(v => v)) has.add('highlights')
+    if (Object.values(data.packing).flat().length > 0) has.add('packing')
+    if (data.notes.some(n => n.content || n.title)) has.add('notes')
+    return has
+  }, [data])
 
   // ── Persist a section's data update ─────────────────────────────────────────
   // Called by every section component via its onChange prop. Updates React
@@ -843,6 +900,7 @@ export default function App() {
             onSignOut={() => supabase.auth.signOut()}
             voyageName={data.voyage.shipName}
             voyageCount={allVoyages.length}
+            sectionStatus={sectionStatus}
           />
 
           {/* ── Section content ─────────────────────────────────────────────
@@ -852,7 +910,7 @@ export default function App() {
           <main style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ padding: mainPad }}>
             <div style={{ maxWidth: 840 }}>
-              {section === 'dashboard'     && <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} onChange={v => update('dailyLogs', v)} onNav={navClick} />}
+              {section === 'dashboard'     && <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} />}
               {section === 'profile'       && <VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />}
               {section === 'voyage'        && <VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />}
               {section === 'itinerary'     && <Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />}
@@ -872,6 +930,7 @@ export default function App() {
 
         </div>
       </div>
+      <Toast message={toast.message} visible={toast.visible} />
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

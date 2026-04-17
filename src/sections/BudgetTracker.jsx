@@ -10,9 +10,21 @@
 // the Spend by Category breakdown chart.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { NAVY, NAVY2, GOLD, WHITE, LIGHT, BORDER, TEXT, BP, sty } from '../constants'
+import { NAVY, NAVY2, GOLD, WHITE, LIGHT, BORDER, TEXT, MUTED, TEAL, ROSE, PLUM, BP, sty } from '../constants'
 import { useW } from '../context'
-import { PgHdr, Inp, Lbl } from '../components/ui'
+import { PgHdr, Inp, Lbl, Donut } from '../components/ui'
+
+// Distinct colour per expense category for the breakdown bars
+const CAT_COLORS = {
+  'Food & Drink':    GOLD,
+  'Shopping':        TEAL,
+  'Excursions':      '#3B82F6',
+  'Entertainment':   ROSE,
+  'Spa':             PLUM,
+  'Tips':            '#F97316',
+  'Transport':       '#64748B',
+  'Other':           MUTED,
+}
 
 // Expense categories available in the row dropdown
 const CATS = ['Food & Drink', 'Shopping', 'Excursions', 'Entertainment', 'Spa', 'Tips', 'Transport', 'Other']
@@ -62,6 +74,61 @@ export default function BudgetTracker({ data, onChange }) {
           )}
         </div>
       </div>
+
+      {/* ── Spend overview: donut + category breakdown ───────────────────────
+          Only shown when there is at least a budget set or some expenses.   */}
+      {(budget > 0 || spent > 0) && (
+        <div style={{ ...cs, display: 'flex', gap: w < BP.mobile ? 16 : 32, alignItems: 'flex-start', flexWrap: w < BP.mobile ? 'wrap' : 'nowrap' }}>
+          {/* Donut */}
+          {budget > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
+              <div style={{ position: 'relative', width: 110, height: 110 }}>
+                <Donut pct={Math.min(100, pct)} size={110} color={pct > 100 ? '#EF4444' : GOLD} thick={10} bg={BORDER} />
+                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ fontSize: 22, fontWeight: 700, color: pct > 100 ? '#EF4444' : NAVY, fontFamily: 'Georgia,serif', lineHeight: 1 }}>
+                    {Math.round(pct)}%
+                  </div>
+                  <div style={{ fontSize: 9, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3 }}>used</div>
+                </div>
+              </div>
+              <div style={{ fontSize: 12, color: MUTED, marginTop: 8, textAlign: 'center' }}>
+                £{spent.toFixed(0)} of £{budget.toFixed(0)}
+              </div>
+            </div>
+          )}
+
+          {/* Category breakdown bars */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>
+              By Category
+            </div>
+            {(() => {
+              const catTotals = CATS.reduce((acc, cat) => {
+                const total = items.filter(i => i.category === cat).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
+                if (total > 0) acc.push({ cat, total })
+                return acc
+              }, []).sort((a, b) => b.total - a.total)
+
+              if (catTotals.length === 0) return (
+                <div style={{ fontSize: 13, color: MUTED, fontStyle: 'italic' }}>No expenses logged yet</div>
+              )
+
+              const maxTotal = catTotals[0].total
+              return catTotals.map(({ cat, total }) => (
+                <div key={cat} style={{ marginBottom: 10 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+                    <span style={{ fontSize: 12, color: TEXT }}>{cat}</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: NAVY }}>£{total.toFixed(0)}</span>
+                  </div>
+                  <div style={{ height: 5, background: BORDER, borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${(total / maxTotal) * 100}%`, background: CAT_COLORS[cat] || MUTED, borderRadius: 3 }} />
+                  </div>
+                </div>
+              ))
+            })()}
+          </div>
+        </div>
+      )}
 
       {/* ── Expense table ─────────────────────────────────────────────────────
           Horizontally scrollable on mobile so columns aren't cramped.

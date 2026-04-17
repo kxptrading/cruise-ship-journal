@@ -6,6 +6,7 @@
 // its own sizing without needing the parent to pass a width prop.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { useState } from 'react'
 import { NAVY, GOLD, BORDER, TEXT, MUTED, LIGHT, WHITE } from '../constants'
 import { sty } from '../constants'
 import { BP } from '../constants'
@@ -71,19 +72,27 @@ export const Box = ({ title, children }) => (
   </div>
 )
 
-// Interactive 5-star rating. Filled stars are gold, empty stars use the border
-// colour. Clicking a star that's already selected does not clear the rating —
-// to clear, the parent should pass onChange(0) via a separate control.
-export const Stars = ({ value, onChange }) => (
-  <div style={{ display: 'flex', gap: 4 }}>
-    {[1, 2, 3, 4, 5].map(n => (
-      <button key={n} onClick={() => onChange(n)}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: n <= value ? GOLD : BORDER, padding: 0, lineHeight: 1 }}>
-        ★
-      </button>
-    ))}
-  </div>
-)
+// Interactive 5-star rating. Clicking a star triggers a scale-pulse animation
+// (defined in index.css as .star-pulse) for a tactile feel.
+export const Stars = ({ value, onChange }) => {
+  const [pulse, setPulse] = useState(null)
+  const click = (n) => {
+    onChange(n)
+    setPulse(n)
+    setTimeout(() => setPulse(null), 300)
+  }
+  return (
+    <div style={{ display: 'flex', gap: 4 }}>
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} onClick={() => click(n)}
+          className={pulse === n ? 'star-pulse' : ''}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 22, color: n <= value ? GOLD : BORDER, padding: 0, lineHeight: 1, display: 'inline-block' }}>
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
 
 // Page heading with a gold underline bar. Font size steps down at mobile and
 // tablet breakpoints. The sub prop is optional supporting copy shown below.
@@ -167,6 +176,28 @@ export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert })
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+// Fixed-position toast notification. Renders at the bottom-centre of the
+// viewport. Fades in via CSS animation; the parent controls visibility.
+export const Toast = ({ message, visible }) => {
+  if (!message) return null
+  return (
+    <div style={{
+      position: 'fixed', bottom: 32, left: '50%',
+      transform: 'translateX(-50%)',
+      background: NAVY, color: WHITE,
+      borderRadius: 10, padding: '12px 26px',
+      fontSize: 14, fontWeight: 600,
+      boxShadow: '0 6px 24px rgba(0,0,0,0.22)',
+      zIndex: 9999, pointerEvents: 'none',
+      whiteSpace: 'nowrap',
+      animation: visible ? 'toastIn 0.3s ease forwards' : 'toastOut 0.3s ease forwards',
+      letterSpacing: '0.01em',
+    }}>
+      {message}
     </div>
   )
 }

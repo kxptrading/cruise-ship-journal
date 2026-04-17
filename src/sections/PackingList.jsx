@@ -10,7 +10,7 @@
 // each array contains the names of checked items in that category.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { NAVY, GOLD, MUTED, TEXT, BORDER, BP, sty } from '../constants'
+import { NAVY, GOLD, MUTED, TEXT, BORDER, TEAL, ROSE, PLUM, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr } from '../components/ui'
 
@@ -21,6 +21,14 @@ const CATS = {
   'CLOTHING':               ['Swimsuits', 'Casual daywear', 'Formal night outfit', 'Light jacket', 'Walking shoes', 'Flip flops'],
   'TOILETRIES & HEALTH':    ['Sunscreen SPF 50+', 'After-sun lotion', 'Seasickness remedy', 'Hand sanitiser', 'Insect repellent', 'First aid basics'],
   'ENTERTAINMENT & EXTRAS': ['Book / e-reader', 'Journal & pen', 'Camera', 'Binoculars', 'Water bottle', 'Lanyard for card'],
+}
+
+// Unique accent colour per category — applied as a left border strip on each card
+const CAT_COLOR = {
+  'DOCUMENTS & ESSENTIALS': TEAL,
+  'CLOTHING':               ROSE,
+  'TOILETRIES & HEALTH':    PLUM,
+  'ENTERTAINMENT & EXTRAS': GOLD,
 }
 
 export default function PackingList({ data, onChange }) {
@@ -54,17 +62,23 @@ export default function PackingList({ data, onChange }) {
         </div>
       </div>
 
-      {/* One card per category, each with a 2-column checkbox grid */}
-      {Object.entries(CATS).map(([cat, items]) => (
-        <div key={cat} style={cs}>
-          <h3 style={{ margin: '0 0 14px', fontSize: 11, fontWeight: 700, color: NAVY, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{cat}</h3>
+      {/* One card per category — each gets a unique accent colour on the left edge */}
+      {Object.entries(CATS).map(([cat, items]) => {
+        const accent = CAT_COLOR[cat] || NAVY
+        const checked = (data[cat] || []).length
+        return (
+        <div key={cat} style={{ ...cs, borderLeft: `4px solid ${accent}`, paddingLeft: w < BP.mobile ? 14 : 20 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{cat}</h3>
+            <span style={{ fontSize: 11, color: MUTED }}>{checked} / {items.length}</span>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 32px' }}>
             {items.map(item => {
               const done = (data[cat] || []).includes(item)
               return (
                 <label key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                   <input type="checkbox" checked={done} onChange={() => toggle(cat, item)}
-                    style={{ accentColor: NAVY, width: 16, height: 16, flexShrink: 0 }} />
+                    style={{ accentColor: accent, width: 16, height: 16, flexShrink: 0 }} />
                   {/* Checked items are muted and struck through */}
                   <span style={{ fontSize: 14, color: done ? MUTED : TEXT, textDecoration: done ? 'line-through' : 'none' }}>{item}</span>
                 </label>
@@ -72,7 +86,8 @@ export default function PackingList({ data, onChange }) {
             })}
           </div>
         </div>
-      ))}
+        )
+      })}
     </div>
   )
 }

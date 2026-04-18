@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { NAVY, GOLD, BORDER, TEXT, MUTED, LIGHT, WHITE } from '../constants'
+import { NAVY, NAVY2, GOLD, BORDER, TEXT, MUTED, LIGHT, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { sty } from '../constants'
 import { BP } from '../constants'
 import { useW } from '../context'
@@ -61,12 +61,13 @@ export const Row2 = ({ children }) => {
   )
 }
 
-// Section box — a titled grouping block used inside cards. Navy header bar
-// with a LIGHT background body, matching the physical journal's section style.
-export const Box = ({ title, children }) => (
-  <div style={{ borderRadius: 8, marginBottom: 20, overflow: 'hidden', border: `1px solid ${BORDER}` }}>
-    <div style={{ background: NAVY, color: WHITE, padding: '8px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em' }}>
-      {title}
+// Section box — a titled grouping block used inside cards. Coloured header bar
+// (defaults to NAVY) with a LIGHT background body. Pass a `color` prop to tint
+// the header to the section's accent colour.
+export const Box = ({ title, children, color, emoji }) => (
+  <div style={{ borderRadius: 12, marginBottom: 20, overflow: 'hidden', border: `1px solid ${BORDER}` }}>
+    <div style={{ background: color || NAVY2, color: WHITE, padding: '8px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', borderRadius: '12px 12px 0 0', fontFamily: FONT_BODY }}>
+      {emoji && <span style={{ marginRight: 6 }}>{emoji}</span>}{title}
     </div>
     <div style={{ padding: 16, background: LIGHT }}>{children}</div>
   </div>
@@ -94,19 +95,19 @@ export const Stars = ({ value, onChange }) => {
   )
 }
 
-// Page heading with a gold underline bar. Font size steps down at mobile and
+// Page heading with an amber underline bar. Font size steps down at mobile and
 // tablet breakpoints. The sub prop is optional supporting copy shown below.
 export const PgHdr = ({ title, sub, icon }) => {
   const w = useW()
-  const h1Size = w < BP.mobile ? 24 : w < BP.tablet ? 27 : 30
+  const h1Size = w < BP.mobile ? 30 : 36
   return (
     <div style={{ marginBottom: 32 }}>
-      <h1 style={{ margin: 0, fontSize: h1Size, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,"Times New Roman",serif' }}>
+      <h1 style={{ margin: 0, fontSize: h1Size, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
         {icon && <span style={{ marginRight: 10 }}>{icon}</span>}{title}
       </h1>
-      {sub && <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 14 }}>{sub}</p>}
-      {/* Gold accent bar beneath the title */}
-      <div style={{ height: 3, background: GOLD, width: 56, marginTop: 12, borderRadius: 2 }} />
+      {sub && <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600 }}>{sub}</p>}
+      {/* Amber accent bar beneath the title */}
+      <div style={{ height: 4, background: GOLD, width: 56, marginTop: 10, borderRadius: 2 }} />
     </div>
   )
 }
@@ -140,20 +141,20 @@ export const Donut = ({ pct = 0, size = 64, color = GOLD, bg = '#E8E4DB', thick 
 }
 
 // Summary card used in the Dashboard metrics grid. Shows an icon badge, a
-// large serif value, an uppercase label, optional supporting text, and
+// large display-font value, an uppercase label, optional supporting text, and
 // optionally either a progress bar (pct) or a donut ring (ring).
 export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert }) => {
   const w      = useW()
   const valSize = w < BP.tablet ? 22 : 24
   const cs     = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
   return (
-    <div style={{ ...cs, marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 148 }}>
+    <div style={{ ...cs, marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 148, background: `linear-gradient(135deg, ${WHITE} 60%, ${color}15 100%)` }}>
       {/* Top row: icon badge (left) + optional donut ring (right) */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 10, background: color + '1A', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <div style={{ width: 40, height: 40, borderRadius: 12, background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon.length <= 4
-            ? <span style={{ fontSize: 18, lineHeight: 1 }}>{icon}</span>
-            : <SvgIcon d={icon} size={18} color={color} />}
+            ? <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+            : <SvgIcon d={icon} size={20} color={color} />}
         </div>
         {ring !== undefined && (
           <div style={{ position: 'relative', flexShrink: 0 }}>
@@ -167,9 +168,9 @@ export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert })
       </div>
       {/* Bottom section: large value, label, sub-text, optional progress bar */}
       <div>
-        <div style={{ fontSize: valSize, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', lineHeight: 1, marginBottom: 3 }}>{value}</div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</div>
-        {sub && <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.4 }}>{sub}</div>}
+        <div style={{ fontSize: valSize, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1, marginBottom: 3 }}>{value}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8, fontFamily: FONT_BODY }}>{label}</div>
+        {sub && <div style={{ fontSize: 12, color: MUTED, lineHeight: 1.4, fontFamily: FONT_BODY }}>{sub}</div>}
         {pct !== undefined && (
           <div style={{ marginTop: 10, height: 3, background: BORDER, borderRadius: 2, overflow: 'hidden' }}>
             <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: color, borderRadius: 2 }} />

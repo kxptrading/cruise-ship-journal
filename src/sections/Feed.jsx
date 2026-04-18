@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from 'react'
-import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, BP, sty } from '../constants'
+import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, BP, sty, FONT_DISPLAY, FONT_BODY, SECTION_COLORS } from '../constants'
 import { useW, useVoyageId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
@@ -46,7 +46,7 @@ function PostCard({ item, onNav }) {
   ].filter(Boolean)
 
   return (
-    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden' }}>
+    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', borderTop: `4px solid ${NAVY}` }}>
 
       {/* ── Card header: day badge + port + date ──────────────────────────── */}
       <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -109,9 +109,9 @@ function PostCard({ item, onNav }) {
 
         {/* Best moment — magazine-style pull quote */}
         {bestMoment && (
-          <div style={{ borderLeft: `3px solid ${GOLD}`, paddingLeft: 14, marginBottom: 14, background: '#C9A22710', borderRadius: '0 8px 8px 0', padding: '10px 14px', marginLeft: 0 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: GOLD, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>Best Moment</div>
-            <div style={{ fontSize: 16, color: '#4A3B2A', fontStyle: 'italic', lineHeight: 1.6, fontFamily: 'Georgia,serif' }}>{bestMoment}</div>
+          <div style={{ borderLeft: `3px solid ${CORAL}`, marginBottom: 14, background: 'rgba(249,115,22,0.06)', borderRadius: '0 10px 10px 0', padding: '10px 14px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: CORAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4, fontFamily: FONT_BODY }}>Best Moment</div>
+            <div style={{ fontSize: 16, color: '#92400E', fontStyle: 'italic', lineHeight: 1.6, fontFamily: FONT_DISPLAY, fontWeight: 400 }}>{bestMoment}</div>
           </div>
         )}
 
@@ -153,10 +153,10 @@ function PostCard({ item, onNav }) {
       </div>
 
       {/* ── Card footer: view full day link ────────────────────────────────── */}
-      <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#FAFAF8', display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#F0F9FF', display: 'flex', justifyContent: 'flex-end' }}>
         <button
           onClick={() => onNav('daily')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: MUTED, fontFamily: 'inherit', fontWeight: 600, padding: 0 }}>
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: NAVY, fontFamily: FONT_BODY, fontWeight: 700, padding: 0 }}>
           View full day →
         </button>
       </div>
@@ -199,12 +199,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     })
   }, [dailyLogs.length, voyageId])
 
-  // Animate the progress bar from 0 → actual % on mount / when voyagePct changes
-  useEffect(() => {
-    const t = setTimeout(() => setBarPct(voyagePct || 0), 120)
-    return () => clearTimeout(t)
-  }, [voyagePct])
-
   // ── Metrics ───────────────────────────────────────────────────────────────
   const spent     = (budget.items || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
   const budgetAmt = parseFloat(budget.budget) || 0
@@ -228,6 +222,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   // If the voyage has ended, lock the bar at 100% and show "Voyage Complete".
   const voyagePct    = rawDay !== null ? (voyageOver ? 100 : Math.round((currentDay / voyageNights) * 100)) : null
   const daysLeft     = voyageOver ? 0 : (currentDay ? Math.max(0, voyageNights - currentDay) : null)
+
+  // Animate the progress bar from 0 → actual % on mount / when voyagePct changes
+  useEffect(() => {
+    const t = setTimeout(() => setBarPct(voyagePct || 0), 120)
+    return () => clearTimeout(t)
+  }, [voyagePct])
 
   // ── Feed items ────────────────────────────────────────────────────────────
   // Only show days that have some content — empty days stay out of the feed.
@@ -277,7 +277,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
       {/* ── Voyage hero ───────────────────────────────────────────────────── */}
       <div style={{
-        background: NAVY2, borderRadius: 18,
+        background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)', borderRadius: 20,
         marginBottom: 16, position: 'relative', overflow: 'hidden',
       }}>
         {/* Cover photo — full-width banner at top of hero when set */}
@@ -286,7 +286,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             <img
               src={voyage.coverPhotoUrl}
               alt="Voyage cover"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 0.85 }}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
             />
           </div>
         )}
@@ -296,15 +296,27 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
         {/* Decorative rings — only shown when no cover photo */}
         {!voyage.coverPhotoUrl && <>
-          <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(201,162,39,0.1)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(201,162,39,0.07)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.15)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.1)', pointerEvents: 'none' }} />
         </>}
+
+        {/* Animated wave — sits at the bottom of the hero */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', lineHeight: 0, pointerEvents: 'none' }}>
+          <svg className="hero-wave-1" viewBox="0 0 1440 60" preserveAspectRatio="none"
+            style={{ width: '150%', height: 40, display: 'block', marginLeft: '-10%' }}>
+            <path d="M0,40 C240,0 480,60 720,30 C960,0 1200,50 1440,20 L1440,60 L0,60 Z" fill="rgba(255,255,255,0.07)" />
+          </svg>
+          <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none"
+            style={{ position: 'absolute', bottom: 0, width: '150%', height: 26, display: 'block', marginLeft: '-10%' }}>
+            <path d="M0,20 C300,40 600,0 900,20 C1100,35 1280,10 1440,20 L1440,40 L0,40 Z" fill="rgba(255,255,255,0.05)" />
+          </svg>
+        </div>
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             {/* Cruise line badge */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(201,162,39,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>⚓</div>
+              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>⚓</div>
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
                 {voyage.cruiseLine || 'Cruise Ship Log'}
               </span>
@@ -313,9 +325,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             {/* Ship name */}
             <h1 style={{
               margin: 0,
-              fontSize: w < BP.mobile ? 22 : 28,
-              fontWeight: 700, color: WHITE,
-              fontFamily: 'Georgia,serif', lineHeight: 1.1,
+              fontSize: w < BP.mobile ? 32 : 40,
+              fontWeight: 400, color: WHITE,
+              fontFamily: FONT_DISPLAY, lineHeight: 1.1,
               marginBottom: 10,
             }}>
               {voyage.shipName || 'Your Voyage Awaits'}
@@ -340,7 +352,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             {!voyage.shipName && (
               <button
                 onClick={() => onNav('voyage')}
-                style={{ background: GOLD, color: NAVY2, border: 'none', borderRadius: 8, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit' }}>
+                style={{ background: GOLD, color: '#1C2B3A', border: 'none', borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY }}>
                 Set Up Your Voyage →
               </button>
             )}
@@ -367,7 +379,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               <div style={{ position: 'relative', width: 90, height: 90 }}>
                 <Donut pct={voyagePct || 0} size={90} color={GOLD} bg="rgba(255,255,255,0.07)" thick={7} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: currentDay ? 26 : 20, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif', lineHeight: 1 }}>
+                  <div style={{ fontSize: currentDay ? 26 : 20, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
                     {currentDay || voyageNights}
                   </div>
                   <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.05em', marginTop: 2 }}>
@@ -399,18 +411,18 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         const completedCount = sectionStatus?.size || 0
         const totalSections  = 12 // all sections except dashboard
         const metrics = [
-          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged', color: NAVY },
+          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged', color: NAVY2 },
           { icon: '📍', value: ports > 0 ? String(ports) : '—', label: 'Ports', color: TEAL },
           { icon: '💳', value: spent > 0 ? `£${spent.toFixed(0)}` : '£—', label: budgetOver ? 'Over Budget!' : 'Spent', color: budgetOver ? '#DC2626' : TEAL },
-          { icon: '🏆', value: `${completedCount} / ${totalSections}`, label: 'Journal Complete', color: completedCount === totalSections ? '#22C55E' : NAVY },
+          { icon: '🏆', value: `${completedCount} / ${totalSections}`, label: 'Journal Complete', color: completedCount === totalSections ? '#22C55E' : NAVY2 },
         ]
         return (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${w < BP.mobile ? 2 : 4}, 1fr)`, gap: 10, marginBottom: 16 }}>
             {metrics.map(m => (
-              <div key={m.label} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, padding: w < BP.mobile ? '10px 8px' : '12px 14px', textAlign: 'center' }}>
-                <div style={{ fontSize: 18, marginBottom: 3 }}>{m.icon}</div>
-                <div style={{ fontSize: w < BP.mobile ? 15 : 20, fontWeight: 700, color: m.color, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{m.value}</div>
-                <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 3 }}>{m.label}</div>
+              <div key={m.label} style={{ background: `linear-gradient(135deg, ${WHITE} 60%, ${m.color}18 100%)`, border: `1px solid ${BORDER}`, borderRadius: 16, padding: w < BP.mobile ? '10px 8px' : '12px 14px', textAlign: 'center' }}>
+                <div style={{ fontSize: 20, marginBottom: 3 }}>{m.icon}</div>
+                <div style={{ fontSize: w < BP.mobile ? 16 : 22, fontWeight: 400, color: m.color, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{m.value}</div>
+                <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 3, fontFamily: FONT_BODY }}>{m.label}</div>
               </div>
             ))}
           </div>
@@ -419,25 +431,25 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
       {/* ── Quick composer ────────────────────────────────────────────────── */}
       {dailyLogs.length > 0 && (
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, marginBottom: 16, overflow: 'hidden' }}>
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, marginBottom: 16, overflow: 'hidden' }}>
           {!composing ? (
-            /* Collapsed state — looks like the Facebook "What's on your mind?" bar */
+            /* Collapsed state — blue-tinted pill */
             <div
               onClick={handleComposeOpen}
-              style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'text' }}
+              style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'text', background: 'linear-gradient(135deg, #F0F9FF, #EFF9FF)' }}
             >
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: NAVY, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #0EA5E9, #0369A1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
                 ⚓
               </div>
-              <div style={{ flex: 1, background: '#F4F1EB', borderRadius: 22, padding: '10px 18px', fontSize: 14, color: MUTED, cursor: 'text', userSelect: 'none' }}>
+              <div style={{ flex: 1, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 22, padding: '10px 18px', fontSize: 14, color: MUTED, cursor: 'text', userSelect: 'none', fontFamily: FONT_BODY }}>
                 What happened today?
               </div>
             </div>
           ) : (
             /* Expanded composer */
-            <div style={{ padding: 16 }}>
+            <div style={{ padding: 16, boxShadow: '0 4px 20px rgba(14,165,233,0.12)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: NAVY, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, marginTop: 2 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #0EA5E9, #0369A1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, marginTop: 2 }}>
                   ⚓
                 </div>
                 <textarea
@@ -486,20 +498,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => { setComposing(false); setComposeText(''); setComposeRating(0); setComposeDay('') }}
-                    style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '7px 16px', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', color: MUTED }}
+                    style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 16px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handlePost}
                     disabled={!composeText.trim() || composeDay === ''}
+                    className="btn-primary"
                     style={{
-                      background: NAVY, color: WHITE, border: 'none', borderRadius: 8,
-                      padding: '7px 22px', fontSize: 13, fontWeight: 700,
-                      fontFamily: 'inherit',
+                      ...sty.btn,
+                      padding: '7px 22px', fontSize: 13,
                       cursor: composeText.trim() && composeDay !== '' ? 'pointer' : 'not-allowed',
                       opacity: composeText.trim() && composeDay !== '' ? 1 : 0.45,
-                      transition: 'opacity 0.15s',
+                      transition: 'opacity 0.15s, filter 0.15s, transform 0.15s',
                     }}
                   >
                     Post
@@ -514,9 +526,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       {/* ── Feed ─────────────────────────────────────────────────────────── */}
       {feedItems.length === 0 ? (
         /* Empty state */
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center' }}>
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 14 }}>🌊</div>
-          <div style={{ fontSize: 20, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>
+          <div style={{ fontSize: 24, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>
             Your voyage feed is empty
           </div>
           <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.7, maxWidth: 380, margin: '0 auto 24px' }}>
@@ -525,12 +537,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               : 'You\'ve got days added — write some highlights and they\'ll appear here as posts.'}
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => onNav('daily')} style={{ ...sty.btn, fontSize: 13, padding: '9px 20px' }}>
+            <button onClick={() => onNav('daily')} className="btn-primary" style={{ ...sty.btn, fontSize: 13, padding: '9px 20px' }}>
               Open Daily Log →
             </button>
             {dailyLogs.length === 0 && (
               <button onClick={() => onNav('itinerary')}
-                style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 20px', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', color: MUTED }}>
+                style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
                 Set Up Itinerary
               </button>
             )}
@@ -547,7 +559,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
             <button
               onClick={() => onNav('daily')}
-              style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', color: MUTED }}
+              style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}
             >
               Open Daily Log for full details →
             </button>

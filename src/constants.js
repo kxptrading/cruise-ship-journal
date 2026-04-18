@@ -7,20 +7,42 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Colour palette ────────────────────────────────────────────────────────────
-// All colours are locked to this palette. Do not introduce new colours without
-// updating CLAUDE.md and discussing with the team.
-export const NAVY   = '#1B3A5C'  // Primary brand — headings, sidebar active states
-export const NAVY2  = '#14293F'  // Dark surfaces — sidebar bg, hero panels
-export const GOLD   = '#C9A227'  // Accent — highlights, star ratings, progress fills
-export const CREAM  = '#F4F1EB'  // Page background
+// Ocean Adventure theme — vibrant blues, amber, coral and emerald.
+export const NAVY   = '#0EA5E9'  // Bright sky blue — interactive accents, icons
+export const NAVY2  = '#0369A1'  // Deep ocean blue — headings, sidebar bg, dark surfaces
+export const GOLD   = '#F59E0B'  // Sunshine amber — accent, stars, progress
+export const CREAM  = '#F8F9FA'  // Neutral light grey — page background
 export const WHITE  = '#FFFFFF'  // Card backgrounds
-export const BORDER = '#E0DBD0'  // All borders and dividers
-export const TEXT   = '#1C2B3A'  // Body copy
-export const MUTED  = '#7A8594'  // Labels, secondary text, placeholders
-export const LIGHT  = '#F9F7F3'  // Alternating table rows, box backgrounds
-export const TEAL   = '#0D6B55'  // Ports, positive metrics
-export const ROSE   = '#B03060'  // Ratings, emotional metrics
-export const PLUM   = '#4A3B8C'  // Packing, completion metrics
+export const BORDER = '#E5E7EB'  // Neutral grey — borders and dividers
+export const TEXT   = '#1C2B3A'  // Body copy (unchanged)
+export const MUTED  = '#6B7280'  // Neutral grey — labels, secondary text
+export const LIGHT  = '#F9FAFB'  // Near-white grey — alternating rows, box backgrounds
+export const TEAL   = '#10B981'  // Bright emerald — ports, positive metrics
+export const ROSE   = '#F97316'  // Coral orange — ratings, emotional metrics
+export const PLUM   = '#8B5CF6'  // Fun purple — packing, completion metrics
+export const CORAL  = '#F97316'  // Coral — pull-quotes, highlights
+
+// ── Per-section accent colours ────────────────────────────────────────────────
+// Used to tint section header bars, PgHdr underlines, and completion dots.
+export const SECTION_COLORS = {
+  feed:          '#0EA5E9',
+  voyage:        '#0EA5E9',
+  itinerary:     '#10B981',
+  daily:         '#0EA5E9',
+  food:          '#F97316',
+  dining:        '#F97316',
+  entertainment: '#8B5CF6',
+  foodfav:       '#F59E0B',
+  budget:        '#10B981',
+  shopping:      '#F59E0B',
+  highlights:    '#F97316',
+  packing:       '#F59E0B',
+  notes:         '#8B5CF6',
+}
+
+// ── Typography ────────────────────────────────────────────────────────────────
+export const FONT_DISPLAY = "'Fredoka One', cursive"
+export const FONT_BODY    = "'Nunito', sans-serif"
 
 // ── Responsive breakpoints (px) ───────────────────────────────────────────────
 // mobile  — single-column layout, compact padding, hamburger nav
@@ -71,13 +93,13 @@ export const NAV = [
 // radius, and colour decisions are consistent across every section.
 export const sty = {
   // White card with rounded corners — the primary content container
-  card: { background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '22px 24px', marginBottom: 18 },
+  card: { background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '22px 24px', marginBottom: 18 },
   // Standard text input / select styling.
   // fontSize is 16px — iOS Safari auto-zooms any input with font-size < 16px,
   // so this must stay at 16px or above to prevent unwanted zoom on mobile.
-  inp:  { width: '100%', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '10px 14px', fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', background: WHITE, color: TEXT },
-  // Primary action button — navy background, white text
-  btn:  { background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 },
+  inp:  { width: '100%', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 14px', fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', background: WHITE, color: TEXT },
+  // Primary action button — ocean gradient, white text
+  btn:  { background: 'linear-gradient(135deg, #0EA5E9, #0369A1)', color: WHITE, border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, boxShadow: '0 4px 12px rgba(14,165,233,0.35)' },
   // Uppercase micro-label above form fields
   lbl:  { display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 },
 }

@@ -6,7 +6,7 @@
 // from the left over a darkened backdrop, controlled by isOpen / onClose.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { NAVY2, GOLD, WHITE } from '../constants'
+import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { NAV } from '../constants'
 
 export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus }) {
@@ -27,7 +27,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
           On mobile/tablet: fixed, slides in via CSS transform. The transition
           uses a material-motion easing curve for a natural feel.           */}
       <aside style={{
-        width: 240, background: NAVY2, flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto',
+        width: 240, background: 'linear-gradient(180deg, #0369A1 0%, #0284C7 60%, #0EA5E9 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto',
         ...(isOverlay ? {
           position: 'fixed', left: 0, top: 0, height: '100vh', zIndex: 1000,
           transform: isOpen ? 'translateX(0)' : 'translateX(-240px)',
@@ -41,10 +41,10 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
             so the user can dismiss the drawer without tapping the backdrop. */}
         <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: GOLD, fontFamily: 'Georgia,serif', letterSpacing: '0.03em' }}>
-              ⚓ CRUISE LOG
+            <div style={{ fontSize: 18, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.02em' }}>
+              ⚓ Cruise Log
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 4, letterSpacing: '0.09em', textTransform: 'uppercase' }}>
+            <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 3, letterSpacing: '0.09em', textTransform: 'uppercase', fontFamily: FONT_BODY }}>
               A Journal for Every Voyage
             </div>
           </div>
@@ -62,16 +62,16 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
           <button
             onClick={() => onNav('profile')}
             style={{
-              width: '100%', background: section === 'profile' ? 'rgba(201,162,39,0.1)' : 'rgba(255,255,255,0.04)',
-              border: `1px solid ${section === 'profile' ? 'rgba(201,162,39,0.3)' : 'rgba(255,255,255,0.08)'}`,
-              borderRadius: 8, padding: '8px 12px', cursor: 'pointer',
+              width: '100%', background: section === 'profile' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)',
+              border: `1px solid ${section === 'profile' ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.15)'}`,
+              borderRadius: 10, padding: '8px 12px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              fontFamily: 'inherit', transition: 'background 0.15s',
+              fontFamily: FONT_BODY, transition: 'background 0.15s',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
               <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
-              <span style={{ fontSize: 12, color: section === 'profile' ? GOLD : 'rgba(255,255,255,0.65)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {voyageName || 'My Voyages'}
               </span>
             </div>
@@ -98,14 +98,14 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
                   padding: '11px 18px',
-                  background: active ? 'rgba(201,162,39,0.1)' : 'transparent',
-                  color: active ? GOLD : 'rgba(255,255,255,0.62)',
+                  background: active ? 'rgba(255,255,255,0.15)' : 'transparent',
+                  color: WHITE,
                   border: 'none',
-                  borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
-                  cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: active ? 600 : 400,
+                  borderLeft: `3px solid ${active ? WHITE : 'transparent'}`,
+                  cursor: 'pointer', fontSize: 15, fontFamily: FONT_BODY, fontWeight: active ? 700 : 500,
                   transition: 'background 0.15s',
                 }}>
-                <span style={{ fontSize: 15, lineHeight: 1, opacity: active ? 1 : 0.6 }}>{icon}</span>
+                <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
                 <span style={{ flex: 1 }}>{label}</span>
                 {/* Gold dot when section has data — gives at-a-glance journal completeness */}
                 {sectionStatus?.has(id) && !active && (

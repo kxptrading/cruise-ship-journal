@@ -176,12 +176,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   // Animated progress bar — starts at 0 and transitions to actual % on mount
   const [barPct, setBarPct] = useState(0)
 
-  // Tracks whether the user has scrolled — used to fade the bottom of the hero
-  const [scrolled, setScrolled] = useState(false)
+  // Tracks scroll position for the collapsing hero (0 = top, 1 = fully condensed)
+  const [scrollY, setScrollY] = useState(0)
   const heroRef = useRef(null)
 
-  // Find the closest scrollable ancestor of the hero and watch its scroll position.
-  // When scrollTop > 40px the hero's bottom half fades to reduce visual weight.
+  // Find the closest scrollable ancestor and track scroll position.
+  // Hero condenses over the first 150px of scroll.
   useEffect(() => {
     const hero = heroRef.current
     if (!hero) return
@@ -192,10 +192,14 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       parent = parent.parentElement
     }
     if (!parent) return
-    const handler = () => setScrolled(parent.scrollTop > 40)
+    const handler = () => setScrollY(Math.min(parent.scrollTop, 150))
     parent.addEventListener('scroll', handler, { passive: true })
     return () => parent.removeEventListener('scroll', handler)
   }, [])
+
+  // Linear interpolation helper — drives all hero size/opacity transitions
+  const lerp = (a, b, t) => a + (b - a) * t
+  const p = scrollY / 150  // 0 = full size, 1 = fully condensed
 
   // Composer state
   const [composing, setComposing]         = useState(false)
@@ -296,11 +300,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   return (
     <div>
 
-      {/* ── Voyage hero — sticky so cruise details stay visible while scrolling */}
+      {/* ── Voyage hero — sticky + collapses as user scrolls ─────────────── */}
       <div ref={heroRef} style={{
-        background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)', borderRadius: 20,
+        background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)',
+        borderRadius: lerp(20, 14, p),
         marginBottom: 16, position: 'sticky', top: 0, zIndex: 50, overflow: 'hidden',
-        boxShadow: '0 6px 24px rgba(3,105,161,0.25)',
+        boxShadow: `0 ${lerp(6, 3, p)}px ${lerp(24, 12, p)}px rgba(3,105,161,0.25)`,
       }}>
         {/* Cover photo — full-width banner at top of hero when set */}
         {voyage.coverPhotoUrl && (
@@ -313,8 +318,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           </div>
         )}
 
-        {/* Content area — padding applied here so cover photo bleeds edge to edge */}
-        <div style={{ padding: w < BP.mobile ? '20px 18px' : '28px 32px', position: 'relative' }}>
+        {/* Content area — padding shrinks as hero condenses */}
+        <div style={{ padding: `${lerp(w < BP.mobile ? 20 : 28, 10, p)}px ${w < BP.mobile ? 18 : 32}px`, position: 'relative' }}>
 
         {/* Decorative rings — only shown when no cover photo */}
         {!voyage.coverPhotoUrl && <>
@@ -344,19 +349,19 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               </span>
             </div>
 
-            {/* Ship name */}
+            {/* Ship name — shrinks from display to compact as hero condenses */}
             <h1 style={{
               margin: 0,
-              fontSize: w < BP.mobile ? 32 : 40,
+              fontSize: lerp(w < BP.mobile ? 32 : 40, w < BP.mobile ? 18 : 22, p),
               fontWeight: 400, color: WHITE,
               fontFamily: FONT_DISPLAY, lineHeight: 1.1,
-              marginBottom: 10,
+              marginBottom: lerp(10, 4, p),
             }}>
               {voyage.shipName || 'Your Voyage Awaits'}
             </h1>
 
-            {/* Location + dates row */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 16 : 0 }}>
+            {/* Location + dates row — fades out as hero condenses */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? lerp(16, 0, p) : 0, opacity: lerp(1, 0, Math.min(1, p * 2)), overflow: 'hidden', maxHeight: lerp(60, 0, p) }}>
               {voyage.departurePort && (
                 <span style={{ fontSize: 13, color: GOLD }}>📍 {voyage.departurePort}</span>
               )}
@@ -395,9 +400,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             )}
           </div>
 
-          {/* Day counter ring — desktop only */}
+          {/* Day counter ring — desktop only, fades as hero condenses */}
           {w >= BP.mobile && voyageNights > 0 && (
-            <div style={{ flexShrink: 0, textAlign: 'center' }}>
+            <div style={{ flexShrink: 0, textAlign: 'center', opacity: lerp(1, 0, Math.min(1, p * 1.5)), overflow: 'hidden', maxWidth: lerp(90, 0, p) }}>
               <div style={{ position: 'relative', width: 90, height: 90 }}>
                 <Donut pct={voyagePct || 0} size={90} color={GOLD} bg="rgba(255,255,255,0.07)" thick={7} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -416,9 +421,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           )}
         </div>
 
-        {/* Companions strip */}
+        {/* Companions strip — collapses as hero condenses */}
         {(voyage.companion1 || voyage.companion2) && (
-          <div style={{ marginTop: 14, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ marginTop: lerp(14, 0, p), paddingTop: lerp(12, 0, p), borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', opacity: lerp(1, 0, Math.min(1, p * 2)), overflow: 'hidden', maxHeight: lerp(60, 0, p) }}>
             <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>With:</span>
             {[voyage.companion1, voyage.companion2, voyage.companion3, voyage.companion4].filter(Boolean).map((c, i) => (
               <div key={i} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, padding: '3px 12px', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{c}</div>
@@ -427,13 +432,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         )}
         </div> {/* end content padding div */}
 
-        {/* Fade overlay — softens the bottom half of the hero when scrolled */}
+        {/* Fade overlay — deepens gradually as hero condenses */}
         <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
-          background: 'linear-gradient(to bottom, transparent, rgba(3,105,161,0.82))',
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%',
+          background: 'linear-gradient(to bottom, transparent, rgba(3,105,161,0.85))',
           pointerEvents: 'none',
-          opacity: scrolled ? 1 : 0,
-          transition: 'opacity 0.35s ease',
+          opacity: p,
           zIndex: 2,
         }} />
       </div>

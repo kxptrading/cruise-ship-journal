@@ -33,7 +33,7 @@ const WX_STYLE = {
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onNav }) {
+function PostCard({ item, onViewDay }) {
   const w = useW()
   const { dayIndex, resolvedPort, date, highlights, bestMoment, weather,
           breakfast, lunch, dinner, drink, activity, rating, photo } = item
@@ -155,8 +155,8 @@ function PostCard({ item, onNav }) {
       {/* ── Card footer: view full day link ────────────────────────────────── */}
       <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#F0F9FF', display: 'flex', justifyContent: 'flex-end' }}>
         <button
-          onClick={() => onNav('daily')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: NAVY, fontFamily: FONT_BODY, fontWeight: 700, padding: 0 }}>
+          onClick={() => onViewDay(dayIndex)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: NAVY2, fontFamily: FONT_BODY, fontWeight: 700, padding: 0 }}>
           View full day →
         </button>
       </div>
@@ -165,7 +165,7 @@ function PostCard({ item, onNav }) {
 }
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
-export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast }) {
+export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast, onViewDay }) {
   const w        = useW()
   const voyageId = useVoyageId()
 
@@ -584,7 +584,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         /* Post cards */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {feedItems.map(item => (
-            <PostCard key={item.dayIndex} item={item} onNav={onNav} />
+            <PostCard key={item.dayIndex} item={item} onViewDay={onViewDay} />
           ))}
 
           {/* Bottom CTA — go to full Daily Log */}

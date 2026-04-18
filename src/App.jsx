@@ -16,6 +16,7 @@ import Sidebar from './components/Sidebar'
 import AuthScreen from './components/AuthScreen'
 import { SvgIcon, Toast } from './components/ui'
 import Feed           from './sections/Feed'
+import DayDetail      from './sections/DayDetail'
 import VoyageProfile  from './sections/VoyageProfile'
 import VoyageDetails  from './sections/VoyageDetails'
 import Itinerary      from './sections/Itinerary'
@@ -387,6 +388,7 @@ export default function App() {
   const [session, setSession]         = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
   const [section, setSection]         = useState('dashboard')
+  const [selectedDay, setSelectedDay] = useState(null)  // day index open in DayDetail
   const [data, setData]               = useState(INIT)
   const [loaded, setLoaded]           = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -816,6 +818,7 @@ export default function App() {
   // after a nav item is tapped.
   const navClick = (id) => {
     setSection(id)
+    setSelectedDay(null)   // close any open day detail when navigating
     if (isOverlay) setSidebarOpen(false)
   }
 
@@ -910,7 +913,12 @@ export default function App() {
           <main style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ padding: mainPad }}>
             <div style={{ maxWidth: 840, margin: '0 auto' }}>
-              {section === 'dashboard'     && <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} />}
+              {section === 'dashboard' && selectedDay === null && (
+                <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} />
+              )}
+              {section === 'dashboard' && selectedDay !== null && (
+                <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setSelectedDay(null); navClick('daily') }} />
+              )}
               {section === 'profile'       && <VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />}
               {section === 'voyage'        && <VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />}
               {section === 'itinerary'     && <Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />}

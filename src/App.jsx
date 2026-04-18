@@ -909,7 +909,7 @@ export default function App() {
               that calls update() to persist the change.                     */}
           <main style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ padding: mainPad }}>
-            <div style={{ maxWidth: 840 }}>
+            <div style={{ maxWidth: 840, margin: '0 auto' }}>
               {section === 'dashboard'     && <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} />}
               {section === 'profile'       && <VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />}
               {section === 'voyage'        && <VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />}

@@ -176,6 +176,27 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   // Animated progress bar — starts at 0 and transitions to actual % on mount
   const [barPct, setBarPct] = useState(0)
 
+  // Tracks whether the user has scrolled — used to fade the bottom of the hero
+  const [scrolled, setScrolled] = useState(false)
+  const heroRef = useRef(null)
+
+  // Find the closest scrollable ancestor of the hero and watch its scroll position.
+  // When scrollTop > 40px the hero's bottom half fades to reduce visual weight.
+  useEffect(() => {
+    const hero = heroRef.current
+    if (!hero) return
+    let parent = hero.parentElement
+    while (parent) {
+      const { overflowY } = getComputedStyle(parent)
+      if (overflowY === 'auto' || overflowY === 'scroll') break
+      parent = parent.parentElement
+    }
+    if (!parent) return
+    const handler = () => setScrolled(parent.scrollTop > 40)
+    parent.addEventListener('scroll', handler, { passive: true })
+    return () => parent.removeEventListener('scroll', handler)
+  }, [])
+
   // Composer state
   const [composing, setComposing]         = useState(false)
   const [composeDay, setComposeDay]       = useState('')
@@ -275,10 +296,11 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   return (
     <div>
 
-      {/* ── Voyage hero ───────────────────────────────────────────────────── */}
-      <div style={{
+      {/* ── Voyage hero — sticky so cruise details stay visible while scrolling */}
+      <div ref={heroRef} style={{
         background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)', borderRadius: 20,
-        marginBottom: 16, position: 'relative', overflow: 'hidden',
+        marginBottom: 16, position: 'sticky', top: 0, zIndex: 50, overflow: 'hidden',
+        boxShadow: '0 6px 24px rgba(3,105,161,0.25)',
       }}>
         {/* Cover photo — full-width banner at top of hero when set */}
         {voyage.coverPhotoUrl && (
@@ -404,6 +426,16 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           </div>
         )}
         </div> {/* end content padding div */}
+
+        {/* Fade overlay — softens the bottom half of the hero when scrolled */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0, height: '55%',
+          background: 'linear-gradient(to bottom, transparent, rgba(3,105,161,0.82))',
+          pointerEvents: 'none',
+          opacity: scrolled ? 1 : 0,
+          transition: 'opacity 0.35s ease',
+          zIndex: 2,
+        }} />
       </div>
 
       {/* ── Compact metrics strip ─────────────────────────────────────────── */}

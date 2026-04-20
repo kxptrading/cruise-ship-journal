@@ -34,10 +34,14 @@ const WX_STYLE = {
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onViewDay, avatarUrl, initials }) {
+function PostCard({ item, onViewDay, avatarUrl, initials, author }) {
   const w = useW()
   const { dayIndex, resolvedPort, date, highlights, bestMoment, weather,
           breakfast, lunch, dinner, drink, activity, rating, photo } = item
+
+  // For friend posts, author prop overrides the passed-in avatar/initials
+  const displayAvatar   = author ? author.avatarUrl  : avatarUrl
+  const displayInitials = author ? author.initials   : initials
 
   const meals = [
     breakfast && { icon: '🍳', text: breakfast },
@@ -49,9 +53,26 @@ function PostCard({ item, onViewDay, avatarUrl, initials }) {
   return (
     <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', borderTop: `4px solid ${NAVY}`, position: 'relative' }}>
 
+      {/* ── Friend attribution banner ─────────────────────────────────────── */}
+      {author && (
+        <div style={{ background: `linear-gradient(135deg, ${NAVY2}08, ${NAVY2}18)`, borderBottom: `1px solid ${BORDER}`, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{ width: 28, height: 28, borderRadius: '50%', background: NAVY2, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {author.avatarUrl
+              ? <img src={author.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : <span style={{ fontSize: 11, fontWeight: 700, color: WHITE }}>{author.initials}</span>
+            }
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: NAVY2 }}>{author.name}</span>
+            {author.shipName && <span style={{ fontSize: 12, color: MUTED }}> · {author.shipName}</span>}
+          </div>
+          <span style={{ fontSize: 11, color: MUTED, background: GOLD + '20', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>Friend</span>
+        </div>
+      )}
+
       {/* ── Profile avatar — top-right corner ────────────────────────────── */}
       <div style={{
-        position: 'absolute', top: 12, right: 14,
+        position: 'absolute', top: author ? 42 : 12, right: 14,
         width: 36, height: 36, borderRadius: '50%',
         background: NAVY2, border: `2px solid ${WHITE}`,
         boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
@@ -59,10 +80,10 @@ function PostCard({ item, onViewDay, avatarUrl, initials }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         zIndex: 1,
       }}>
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        {displayAvatar ? (
+          <img src={displayAvatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif' }}>{initials}</span>
+          <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif' }}>{displayInitials}</span>
         )}
       </div>
 
@@ -170,14 +191,16 @@ function PostCard({ item, onViewDay, avatarUrl, initials }) {
         )}
       </div>
 
-      {/* ── Card footer: view full day link ────────────────────────────────── */}
-      <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#F0F9FF', display: 'flex', justifyContent: 'flex-end' }}>
-        <button
-          onClick={() => onViewDay(dayIndex)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: NAVY2, fontFamily: FONT_BODY, fontWeight: 700, padding: 0 }}>
-          View full day →
-        </button>
-      </div>
+      {/* ── Card footer: view full day link (own posts only) ────────────────── */}
+      {onViewDay && (
+        <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#F0F9FF', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={() => onViewDay(dayIndex)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: NAVY2, fontFamily: FONT_BODY, fontWeight: 700, padding: 0 }}>
+            View full day →
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -188,10 +211,22 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const voyageId = useVoyageId()
   const userId   = useUserId()
 
-  // User profile — avatar and initials for the post card attribution bubble
-  const [avatarUrl, setAvatarUrl]     = useState('')
+  // Own profile — avatar and initials for post card attribution
+  const [avatarUrl, setAvatarUrl]       = useState('')
   const [userInitials, setUserInitials] = useState('?')
 
+  // Friend posts — daily log entries from accepted friends, merged into the feed
+  const [friendPosts, setFriendPosts] = useState([])
+
+  // Helper: derive initials from a profile row
+  const toInitials = (data) => {
+    const name = data?.display_name || `${data?.first_name || ''} ${data?.last_name || ''}`.trim() || '?'
+    const words = name.trim().split(/\s+/).filter(Boolean)
+    if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+    return (words[0] || '?').slice(0, 2).toUpperCase()
+  }
+
+  // Load own profile
   useEffect(() => {
     if (!userId) return
     supabase
@@ -202,11 +237,96 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       .then(({ data }) => {
         if (!data) return
         if (data.avatar_url) setAvatarUrl(data.avatar_url)
-        const name = data.display_name || `${data.first_name || ''} ${data.last_name || ''}`.trim()
-        const words = name.trim().split(/\s+/).filter(Boolean)
-        if (words.length >= 2) setUserInitials((words[0][0] + words[words.length - 1][0]).toUpperCase())
-        else if (words[0]) setUserInitials(words[0].slice(0, 2).toUpperCase())
+        setUserInitials(toInitials(data))
       })
+  }, [userId])
+
+  // Load friends' posts
+  useEffect(() => {
+    if (!userId) return
+
+    async function loadFriendFeeds() {
+      // 1. Get accepted friend connections
+      const { data: requests } = await supabase
+        .from('friend_requests')
+        .select('from_user_id, to_user_id')
+        .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
+        .eq('status', 'accepted')
+
+      if (!requests?.length) return
+
+      const friendIds = requests.map(r =>
+        r.from_user_id === userId ? r.to_user_id : r.from_user_id
+      )
+
+      // 2. Fetch profiles, voyages, daily logs, itineraries in parallel
+      const [
+        { data: profiles },
+        { data: voyages },
+        { data: logs },
+        { data: itineraryRows },
+        { data: photoRows },
+      ] = await Promise.all([
+        supabase.from('profiles').select('user_id, display_name, first_name, last_name, avatar_url').in('user_id', friendIds),
+        supabase.from('voyages').select('id, user_id, ship_name').in('user_id', friendIds),
+        supabase.from('daily_logs').select('voyage_id, day_number, date, port, highlights, best_moment, weather, breakfast, lunch, dinner, drink, activity, rating').in('voyage_id', (voyages || []).map(v => v.id)),
+        supabase.from('itinerary').select('voyage_id, day_number, port').in('voyage_id', (voyages || []).map(v => v.id)),
+        supabase.from('photos').select('voyage_id, day_number, storage_path, caption').in('voyage_id', (voyages || []).map(v => v.id)),
+      ])
+
+      // Build lookup maps
+      const profileMap   = Object.fromEntries((profiles   || []).map(p => [p.user_id,   p]))
+      const voyageMap    = Object.fromEntries((voyages    || []).map(v => [v.id,         v]))
+      const itineraryMap = {}
+      ;(itineraryRows || []).forEach(r => {
+        if (!itineraryMap[r.voyage_id]) itineraryMap[r.voyage_id] = {}
+        itineraryMap[r.voyage_id][r.day_number] = r.port
+      })
+      const photoMap = {}
+      ;(photoRows || []).forEach(r => {
+        const key = `${r.voyage_id}-${r.day_number}`
+        if (!photoMap[key]) {
+          const { data: { publicUrl } } = supabase.storage.from('daily-photos').getPublicUrl(r.storage_path)
+          photoMap[key] = { dataUrl: publicUrl, caption: r.caption }
+        }
+      })
+
+      // 3. Map each log into a feed item with author attribution
+      const posts = (logs || [])
+        .filter(log => log.highlights || log.best_moment || log.activity)
+        .map(log => {
+          const voyage  = voyageMap[log.voyage_id] || {}
+          const profile = profileMap[voyage.user_id] || {}
+          const port    = log.port || itineraryMap[log.voyage_id]?.[log.day_number] || ''
+          const photo   = photoMap[`${log.voyage_id}-${log.day_number}`] || null
+          return {
+            dayIndex:     log.day_number - 1,
+            date:         log.date,
+            port:         log.port,
+            resolvedPort: port,
+            highlights:   log.highlights,
+            bestMoment:   log.best_moment,
+            weather:      log.weather || [],
+            breakfast:    log.breakfast,
+            lunch:        log.lunch,
+            dinner:       log.dinner,
+            drink:        log.drink,
+            activity:     log.activity,
+            rating:       log.rating,
+            photo,
+            author: {
+              name:      profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Cruiser',
+              avatarUrl: profile.avatar_url || '',
+              initials:  toInitials(profile),
+              shipName:  voyage.ship_name || '',
+            },
+          }
+        })
+
+      setFriendPosts(posts)
+    }
+
+    loadFriendFeeds()
   }, [userId])
 
   // Photos keyed by day index — loads the first photo for each day in the
@@ -295,17 +415,27 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   }, [voyagePct])
 
   // ── Feed items ────────────────────────────────────────────────────────────
-  // Only show days that have some content — empty days stay out of the feed.
-  // Reversed so the most recent entry appears at the top, like a social feed.
-  const feedItems = dailyLogs
+  // Own posts merged with friend posts, sorted newest first.
+  const ownItems = dailyLogs
     .map((log, i) => ({
       ...log,
       dayIndex:     i,
       resolvedPort: log.port || itinerary[i]?.port || '',
       photo:        photosByDay[i] || null,
+      author:       null,   // null = own post
     }))
     .filter(log => log.highlights || log.bestMoment || log.activity || log.photo)
-    .reverse()
+
+  const feedItems = [...ownItems, ...friendPosts]
+    .sort((a, b) => {
+      // Sort by date descending; fall back to dayIndex if no date
+      const da = a.date ? new Date(a.date) : null
+      const db = b.date ? new Date(b.date) : null
+      if (da && db) return db - da
+      if (da) return -1
+      if (db) return 1
+      return b.dayIndex - a.dayIndex
+    })
 
   // ── Composer submit ───────────────────────────────────────────────────────
   const handlePost = () => {
@@ -627,8 +757,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       ) : (
         /* Post cards */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {feedItems.map(item => (
-            <PostCard key={item.dayIndex} item={item} onViewDay={onViewDay} avatarUrl={avatarUrl} initials={userInitials} />
+          {feedItems.map((item, i) => (
+            <PostCard key={i} item={item} onViewDay={item.author ? null : onViewDay} avatarUrl={avatarUrl} initials={userInitials} author={item.author} />
           ))}
 
           {/* Bottom CTA — go to full Daily Log */}

@@ -74,9 +74,9 @@ export const IC = {
 // corresponding key in INIT (App.jsx) and a render case in the App return.
 export const NAV = [
   { id: 'dashboard',     label: 'Feed',               icon: '🧭' },
+  { id: 'daily',         label: 'Daily Log',          icon: '📅' },
   { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },
   { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },
-  { id: 'daily',         label: 'Daily Log',          icon: '📅' },
   { id: 'food',          label: 'Food Log',           icon: '🍴' },
   { id: 'dining',        label: 'Restaurant Log',     icon: '🍽️' },
   { id: 'entertainment', label: 'Entertainment Log',  icon: '🎭' },

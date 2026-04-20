@@ -31,6 +31,7 @@ import Highlights     from './sections/Highlights'
 import PackingList    from './sections/PackingList'
 import Notes          from './sections/Notes'
 import Friends        from './sections/Friends'
+import UserProfile    from './sections/UserProfile'
 
 // ── DB ↔ app shape converters for the voyage section ─────────────────────────
 // The voyages table uses snake_case column names; the app uses camelCase field
@@ -934,6 +935,7 @@ export default function App() {
               {section === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
               {section === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
               {section === 'friends'       && <Friends />}
+              {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} />}
             </div>
             </div>
           </main>

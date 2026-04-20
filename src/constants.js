@@ -75,6 +75,8 @@ export const IC = {
 export const NAV = [
   { id: 'dashboard',     label: 'Feed',               icon: '🧭' },
   { id: 'daily',         label: 'Daily Log',          icon: '📅' },
+  { id: 'friends',       label: 'Friends',            icon: '👥' },
+  { id: 'userprofile',   label: 'My Profile',         icon: '👤' },
   { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },
   { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },
   { id: 'food',          label: 'Food Log',           icon: '🍴' },
@@ -86,7 +88,6 @@ export const NAV = [
   { id: 'highlights',    label: 'Highlights',         icon: '🌟' },
   { id: 'packing',       label: 'Packing List',       icon: '🧳' },
   { id: 'notes',         label: 'Notes',              icon: '📝' },
-  { id: 'friends',      label: 'Friends',            icon: '👥' },
 ]
 
 // ── Shared component styles ───────────────────────────────────────────────────

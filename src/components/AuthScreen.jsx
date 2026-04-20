@@ -11,13 +11,16 @@ import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, MUTED, TEXT } from '../constan
 import { supabase } from '../lib/supabase'
 
 export default function AuthScreen() {
-  const [mode, setMode]       = useState('signin')   // 'signin' | 'signup' | 'reset'
-  const [email, setEmail]     = useState('')
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [error, setError]     = useState('')
-  const [loading, setLoading] = useState(false)
-  const [success, setSuccess] = useState(false)
+  const [mode, setMode]         = useState('signin')   // 'signin' | 'signup' | 'reset'
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName]   = useState('')
+  const [age, setAge]             = useState('')
+  const [email, setEmail]         = useState('')
+  const [password, setPassword]   = useState('')
+  const [confirm, setConfirm]     = useState('')
+  const [error, setError]         = useState('')
+  const [loading, setLoading]     = useState(false)
+  const [success, setSuccess]     = useState(false)
 
   const isSignUp = mode === 'signup'
   const isReset  = mode === 'reset'
@@ -26,9 +29,20 @@ export default function AuthScreen() {
     e.preventDefault()
     setError('')
 
-    if (isSignUp && password !== confirm) {
-      setError('Passwords do not match.')
-      return
+    if (isSignUp) {
+      if (!firstName.trim() || !lastName.trim() || !age) {
+        setError('Please fill in all required fields.')
+        return
+      }
+      const parsedAge = parseInt(age, 10)
+      if (isNaN(parsedAge) || parsedAge < 1 || parsedAge > 120) {
+        setError('Please enter a valid age.')
+        return
+      }
+      if (password !== confirm) {
+        setError('Passwords do not match.')
+        return
+      }
     }
 
     setLoading(true)
@@ -43,10 +57,21 @@ export default function AuthScreen() {
         setSuccess(true)
       }
     } else if (isSignUp) {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) {
         setError(error.message)
       } else {
+        // Write mandatory profile fields immediately using the new user's ID
+        if (data?.user?.id) {
+          await supabase.from('profiles').upsert({
+            user_id:      data.user.id,
+            email:        email.trim().toLowerCase(),
+            first_name:   firstName.trim(),
+            last_name:    lastName.trim(),
+            display_name: `${firstName.trim()} ${lastName.trim()}`,
+            age:          parseInt(age, 10),
+          }, { onConflict: 'user_id' })
+        }
         setSuccess(true)
       }
     } else {
@@ -108,6 +133,28 @@ export default function AuthScreen() {
               </div>
             ) : (
               <>
+                {isSignUp && (
+                  <>
+                    <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>First Name</label>
+                        <input value={firstName} onChange={e => setFirstName(e.target.value)}
+                          placeholder="Kiran" required autoComplete="given-name" style={inp} />
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Last Name</label>
+                        <input value={lastName} onChange={e => setLastName(e.target.value)}
+                          placeholder="Parmar" required autoComplete="family-name" style={inp} />
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: 16 }}>
+                      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Age</label>
+                      <input type="number" value={age} onChange={e => setAge(e.target.value)}
+                        placeholder="e.g. 34" required min="1" max="120" style={inp} />
+                    </div>
+                  </>
+                )}
+
                 <div style={{ marginBottom: 16 }}>
                   <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>Email</label>
                   <input type="email" value={email} onChange={e => setEmail(e.target.value)}
@@ -154,7 +201,7 @@ export default function AuthScreen() {
                 <div style={{ textAlign: 'center', marginTop: 18, fontSize: 13, color: MUTED }}>
                   {isReset ? 'Remembered it?' : isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
                   <button type="button"
-                    onClick={() => { setMode(isReset || isSignUp ? 'signin' : 'signup'); setError('') }}
+                    onClick={() => { setMode(isReset || isSignUp ? 'signin' : 'signup'); setError(''); setFirstName(''); setLastName(''); setAge('') }}
                     style={{ background: 'none', border: 'none', color: GOLD, fontWeight: 700, cursor: 'pointer', fontSize: 13, fontFamily: 'inherit' }}>
                     {isReset || isSignUp ? 'Sign In' : 'Create one'}
                   </button>

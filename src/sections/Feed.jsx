@@ -259,19 +259,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         r.from_user_id === userId ? r.to_user_id : r.from_user_id
       )
 
-      // 2. Fetch profiles, voyages, daily logs, itineraries in parallel
-      const [
-        { data: profiles },
-        { data: voyages },
-        { data: logs },
-        { data: itineraryRows },
-        { data: photoRows },
-      ] = await Promise.all([
+      // 2a. Fetch profiles and voyages first
+      const [{ data: profiles }, { data: voyages }] = await Promise.all([
         supabase.from('profiles').select('user_id, display_name, first_name, last_name, avatar_url').in('user_id', friendIds),
         supabase.from('voyages').select('id, user_id, ship_name').in('user_id', friendIds),
-        supabase.from('daily_logs').select('voyage_id, day_number, date, port, highlights, best_moment, weather, breakfast, lunch, dinner, drink, activity, rating').in('voyage_id', (voyages || []).map(v => v.id)),
-        supabase.from('itinerary').select('voyage_id, day_number, port').in('voyage_id', (voyages || []).map(v => v.id)),
-        supabase.from('photos').select('voyage_id, day_number, storage_path, caption').in('voyage_id', (voyages || []).map(v => v.id)),
+      ])
+
+      const voyageIds = (voyages || []).map(v => v.id)
+      if (!voyageIds.length) return
+
+      // 2b. Now fetch logs, itinerary and photos using the resolved voyage IDs
+      const [{ data: logs }, { data: itineraryRows }, { data: photoRows }] = await Promise.all([
+        supabase.from('daily_logs').select('voyage_id, day_number, date, port, highlights, best_moment, weather, breakfast, lunch, dinner, drink, activity, rating').in('voyage_id', voyageIds),
+        supabase.from('itinerary').select('voyage_id, day_number, port').in('voyage_id', voyageIds),
+        supabase.from('photos').select('voyage_id, day_number, storage_path, caption').in('voyage_id', voyageIds),
       ])
 
       // Build lookup maps

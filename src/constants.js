@@ -86,6 +86,7 @@ export const NAV = [
   { id: 'highlights',    label: 'Highlights',         icon: '🌟' },
   { id: 'packing',       label: 'Packing List',       icon: '🧳' },
   { id: 'notes',         label: 'Notes',              icon: '📝' },
+  { id: 'friends',      label: 'Friends',            icon: '👥' },
 ]
 
 // ── Shared component styles ───────────────────────────────────────────────────

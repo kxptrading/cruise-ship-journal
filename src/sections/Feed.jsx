@@ -12,9 +12,10 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, BP, sty, FONT_DISPLAY, FONT_BODY, SECTION_COLORS } from '../constants'
-import { useW, useVoyageId } from '../context'
+import { useW, useVoyageId, useUserId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
+import { supabase } from '../lib/supabase'
 
 // ── Weather chip styles — per-condition colour tinting ───────────────────────
 const WX_EMOJI = {
@@ -33,7 +34,7 @@ const WX_STYLE = {
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onViewDay }) {
+function PostCard({ item, onViewDay, avatarUrl, initials }) {
   const w = useW()
   const { dayIndex, resolvedPort, date, highlights, bestMoment, weather,
           breakfast, lunch, dinner, drink, activity, rating, photo } = item
@@ -46,10 +47,27 @@ function PostCard({ item, onViewDay }) {
   ].filter(Boolean)
 
   return (
-    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', borderTop: `4px solid ${NAVY}` }}>
+    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', borderTop: `4px solid ${NAVY}`, position: 'relative' }}>
+
+      {/* ── Profile avatar — top-right corner ────────────────────────────── */}
+      <div style={{
+        position: 'absolute', top: 12, right: 14,
+        width: 36, height: 36, borderRadius: '50%',
+        background: NAVY2, border: `2px solid ${WHITE}`,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+        overflow: 'hidden', flexShrink: 0,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        zIndex: 1,
+      }}>
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+        ) : (
+          <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif' }}>{initials}</span>
+        )}
+      </div>
 
       {/* ── Card header: day badge + port + date ──────────────────────────── */}
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 62 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {/* Day number badge */}
           <div style={{
@@ -168,6 +186,28 @@ function PostCard({ item, onViewDay }) {
 export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast, onViewDay }) {
   const w        = useW()
   const voyageId = useVoyageId()
+  const userId   = useUserId()
+
+  // User profile — avatar and initials for the post card attribution bubble
+  const [avatarUrl, setAvatarUrl]     = useState('')
+  const [userInitials, setUserInitials] = useState('?')
+
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('profiles')
+      .select('avatar_url, display_name, first_name, last_name')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) return
+        if (data.avatar_url) setAvatarUrl(data.avatar_url)
+        const name = data.display_name || `${data.first_name || ''} ${data.last_name || ''}`.trim()
+        const words = name.trim().split(/\s+/).filter(Boolean)
+        if (words.length >= 2) setUserInitials((words[0][0] + words[words.length - 1][0]).toUpperCase())
+        else if (words[0]) setUserInitials(words[0].slice(0, 2).toUpperCase())
+      })
+  }, [userId])
 
   // Photos keyed by day index — loads the first photo for each day in the
   // background after the feed renders, then triggers a re-render to show them.
@@ -588,7 +628,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         /* Post cards */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {feedItems.map(item => (
-            <PostCard key={item.dayIndex} item={item} onViewDay={onViewDay} />
+            <PostCard key={item.dayIndex} item={item} onViewDay={onViewDay} avatarUrl={avatarUrl} initials={userInitials} />
           ))}
 
           {/* Bottom CTA — go to full Daily Log */}

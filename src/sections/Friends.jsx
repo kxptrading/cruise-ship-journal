@@ -170,7 +170,7 @@ export default function Friends() {
 
   return (
     <div>
-      <PgHdr title="Friends" />
+      <PgHdr icon="👥" title="Friends" />
 
       {/* ── Search ──────────────────────────────────────────────────────────── */}
       <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: w < BP.mobile ? 16 : '20px 24px', marginBottom: 24 }}>

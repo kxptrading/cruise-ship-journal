@@ -215,13 +215,28 @@ export default function UserProfile({ session, allVoyages, voyage }) {
   // ── Cruise stats from allVoyages + current voyage data ────────────────────
   const totalVoyages = allVoyages.length
   const totalNights  = allVoyages.reduce((s, v) => s + (parseInt(v.total_nights) || 0), 0)
+  const [friendCount, setFriendCount] = useState(null)
+
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('friend_requests')
+      .select('id', { count: 'exact', head: true })
+      .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
+      .eq('status', 'accepted')
+      .then(({ count }) => setFriendCount(count ?? 0))
+  }, [userId])
   const memberSince  = session?.user?.created_at
     ? new Date(session.user.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
     : null
 
   // Initials fallback for avatar
-  const initials = (profile.displayName || session?.user?.email || '?')
-    .split(/\s|@/)[0].slice(0, 2).toUpperCase()
+  const initials = (() => {
+    const name = profile.displayName || session?.user?.email?.split('@')[0] || '?'
+    const words = name.trim().split(/\s+/).filter(Boolean)
+    if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+    return words[0].slice(0, 2).toUpperCase()
+  })()
 
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: MUTED, fontSize: 14 }}>
@@ -400,7 +415,7 @@ export default function UserProfile({ session, allVoyages, voyage }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
           <Stat emoji="🚢" value={totalVoyages}          label="Voyages" />
           <Stat emoji="🌙" value={totalNights || '—'}    label="Nights at Sea" />
-          <Stat emoji="👥" value="—"                     label="Cruise Friends" />
+          <Stat emoji="👥" value={friendCount ?? '—'}    label="Cruise Friends" />
           <Stat emoji="🌍" value="—"                     label="Ports Visited" />
         </div>
       </div>

@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { NAVY, NAVY2, GOLD, BORDER, TEXT, MUTED, LIGHT, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
+import { NAVY, NAVY2, GOLD, BORDER, TEXT, MUTED, LIGHT, WHITE, CREAM, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { sty } from '../constants'
 import { BP } from '../constants'
 import { useW } from '../context'
@@ -101,7 +101,7 @@ export const PgHdr = ({ title, sub, icon }) => {
   const w = useW()
   const h1Size = w < BP.mobile ? 30 : 36
   return (
-    <div style={{ marginBottom: 32 }}>
+    <div style={{ position: 'sticky', top: 0, zIndex: 10, background: CREAM, paddingTop: 12, paddingBottom: 4, marginBottom: 20, boxShadow: '0 4px 16px rgba(248,249,250,0.95)' }}>
       <h1 style={{ margin: 0, fontSize: h1Size, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, letterSpacing: '-0.01em', lineHeight: 1.1 }}>
         {icon && <span style={{ marginRight: 10 }}>{icon}</span>}{title}
       </h1>

@@ -117,7 +117,13 @@ export default function DailyLog({ data, onChange, itinerary }) {
         {/* Date and port fields — port pre-fills from itinerary but can be overridden */}
         <Row2>
           <Fld label="Date" half><Inp type="date" value={log.date} onChange={v => set('date', v)} /></Fld>
-          <Fld label="Port / At Sea" half><Inp value={log.port} onChange={v => set('port', v)} placeholder="Port name or At Sea" /></Fld>
+          <Fld label="Port / Sea" half>
+            <select value={log.port || ''} onChange={e => set('port', e.target.value)} style={sty.inp}>
+              <option value="">Select…</option>
+              <option value="Port">Port</option>
+              <option value="Sea">Sea</option>
+            </select>
+          </Fld>
         </Row2>
 
         {/* Weather: multi-select checkboxes — multiple conditions can apply */}
@@ -150,7 +156,7 @@ export default function DailyLog({ data, onChange, itinerary }) {
         <Box title="EXCURSION / SHORE ACTIVITY">
           <Fld label="Activity"><Inp value={log.activity} onChange={v => set('activity', v)} /></Fld>
           <Row2>
-            <Fld label="Duration" half><Inp value={log.duration} onChange={v => set('duration', v)} placeholder="e.g. 3 hours" /></Fld>
+            <Fld label="Duration (hh:mm)" half><Inp type="time" value={log.duration} onChange={v => set('duration', v)} /></Fld>
             <Fld label="Cost" half><Inp value={log.excCost} onChange={v => set('excCost', v)} placeholder="£0.00" /></Fld>
           </Row2>
           <Fld label="Notes"><TA value={log.excNotes} onChange={v => set('excNotes', v)} rows={3} /></Fld>

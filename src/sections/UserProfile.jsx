@@ -6,19 +6,257 @@
 //   • Circular avatar overlapping the bottom of the banner
 //   • Display name, bio, and personal details (editable in-place)
 //   • Fun at-a-glance cruise stats derived from all voyages
+//
+// Photo uploads go through ImageCropper — user drags/zooms to frame the shot
+// before the canvas-rendered crop is sent to Supabase Storage.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useUserId, useW } from '../context'
 import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, BP } from '../constants'
 import { sty } from '../constants'
 
-// ── Colours ───────────────────────────────────────────────────────────────────
+// ── Layout constants ──────────────────────────────────────────────────────────
 const BANNER_H        = 220
 const AVATAR_SIZE     = 96
 const AVATAR_BORDER   = 4
 const AVATAR_OVERLAP  = AVATAR_SIZE / 2 + AVATAR_BORDER
+const BANNER_ASPECT   = 840 / BANNER_H   // ≈ 3.82
+
+// ── Image Cropper Modal ───────────────────────────────────────────────────────
+// Opens after the user picks a file. They drag to reposition and use the zoom
+// slider to frame their shot. "Use this photo" renders the visible area onto a
+// canvas and emits a JPEG blob — no file is uploaded until they confirm.
+//
+// aspect  — width/height ratio for the preview box (1 for avatar, ~3.82 for banner)
+// label   — shown in the button: "photo" | "banner"
+// onConfirm(blob) — called with the cropped JPEG blob
+function ImageCropper({ file, aspect, label, onConfirm, onCancel }) {
+  const [src,       setSrc]    = useState(null)
+  const [zoom,      setZoom]   = useState(1)
+  const [offset,    setOffset] = useState({ x: 0, y: 0 })
+  const [minZoom,   setMinZoom] = useState(1)
+  const [ready,     setReady]  = useState(false)
+  const [exporting, setExport] = useState(false)
+
+  const boxRef  = useRef(null)
+  const imgRef  = useRef(null)
+  const dragRef = useRef(null)   // { sx, sy, ox, oy } — values at drag-start
+  // liveRef mirrors zoom/offset/natural synchronously so event handlers never
+  // read stale closure values between React render cycles.
+  const liveRef = useRef({ zoom: 1, offset: { x: 0, y: 0 }, natural: { w: 0, h: 0 } })
+
+  // Load the selected file as an object URL
+  useEffect(() => {
+    const url = URL.createObjectURL(file)
+    setSrc(url)
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  // Clamp offset so the image always fills the preview box (no empty edges)
+  const clamp = useCallback((ox, oy, z) => {
+    const box = boxRef.current
+    if (!box) return { x: ox, y: oy }
+    const { w, h } = liveRef.current.natural
+    return {
+      x: Math.min(0, Math.max(ox, box.clientWidth  - w * z)),
+      y: Math.min(0, Math.max(oy, box.clientHeight - h * z)),
+    }
+  }, [])
+
+  // Once the <img> has loaded, calculate the fill zoom and centre the image
+  const onImgLoad = useCallback(() => {
+    const img = imgRef.current
+    const box = boxRef.current
+    if (!img || !box) return
+    const nat = { w: img.naturalWidth, h: img.naturalHeight }
+    liveRef.current.natural = nat
+    const mz = Math.max(box.clientWidth / nat.w, box.clientHeight / nat.h)
+    const initOff = {
+      x: (box.clientWidth  - nat.w * mz) / 2,
+      y: (box.clientHeight - nat.h * mz) / 2,
+    }
+    liveRef.current.zoom   = mz
+    liveRef.current.offset = initOff
+    setMinZoom(mz)
+    setZoom(mz)
+    setOffset(initOff)
+    setReady(true)
+  }, [])
+
+  // ── Drag ─────────────────────────────────────────────────────────────────
+  const startDrag = useCallback((cx, cy) => {
+    dragRef.current = { sx: cx, sy: cy, ox: liveRef.current.offset.x, oy: liveRef.current.offset.y }
+  }, [])
+
+  const moveDrag = useCallback((cx, cy) => {
+    if (!dragRef.current) return
+    const { sx, sy, ox, oy } = dragRef.current
+    const clamped = clamp(ox + cx - sx, oy + cy - sy, liveRef.current.zoom)
+    liveRef.current.offset = clamped
+    setOffset({ ...clamped })
+  }, [clamp])
+
+  const endDrag = useCallback(() => { dragRef.current = null }, [])
+
+  // ── Zoom — zooms around the centre of the preview box ────────────────────
+  const applyZoom = useCallback((newZ) => {
+    const box = boxRef.current
+    if (!box) return
+    const { zoom: oldZ, offset: { x: ox, y: oy } } = liveRef.current
+    const cx = box.clientWidth / 2, cy = box.clientHeight / 2
+    // Keep the image point that's currently at box-centre pinned there
+    const imgPx = (cx - ox) / oldZ, imgPy = (cy - oy) / oldZ
+    const clamped = clamp(cx - imgPx * newZ, cy - imgPy * newZ, newZ)
+    liveRef.current.zoom   = newZ
+    liveRef.current.offset = clamped
+    setZoom(newZ)
+    setOffset(clamped)
+  }, [clamp])
+
+  // ── Export ───────────────────────────────────────────────────────────────
+  // Draw only the visible portion of the image onto a canvas and emit a blob.
+  const handleConfirm = useCallback(() => {
+    if (!ready || !src) return
+    setExport(true)
+    const box = boxRef.current
+    const { zoom: z, offset: { x: ox, y: oy } } = liveRef.current
+    const boxW = box.clientWidth, boxH = box.clientHeight
+    // Output resolution — 840×220 for banner, 400×400 for avatar
+    const outW = aspect > 1.5 ? 840 : 400
+    const outH = Math.round(outW / aspect)
+    const canvas = document.createElement('canvas')
+    canvas.width = outW; canvas.height = outH
+    const ctx = canvas.getContext('2d')
+    const img = new Image()
+    img.onload = () => {
+      // Source rect in natural-image coordinates
+      ctx.drawImage(img, -ox / z, -oy / z, boxW / z, boxH / z, 0, 0, outW, outH)
+      canvas.toBlob(blob => { setExport(false); onConfirm(blob) }, 'image/jpeg', 0.92)
+    }
+    img.src = src
+  }, [ready, src, aspect, onConfirm])
+
+  return (
+    // Full-screen overlay — mousemove/mouseup here so dragging beyond the
+    // preview box edge still registers correctly.
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16,
+      }}
+      onMouseMove={e => moveDrag(e.clientX, e.clientY)}
+      onMouseUp={endDrag}
+    >
+      <div style={{
+        background: WHITE, borderRadius: 20, overflow: 'hidden',
+        width: '100%', maxWidth: 580,
+        boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+      }}>
+
+        {/* Header */}
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontWeight: 700, color: NAVY2, fontSize: 15 }}>Position your {label}</div>
+            <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>Drag to reposition · slider to zoom in</div>
+          </div>
+          <button onClick={onCancel} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: MUTED, padding: 4, lineHeight: 1 }}>×</button>
+        </div>
+
+        {/* Preview box — aspect-ratio-locked, image draggable inside */}
+        <div
+          ref={boxRef}
+          style={{
+            width: '100%', aspectRatio: `${aspect}`, overflow: 'hidden',
+            background: '#111', position: 'relative',
+            cursor: ready ? 'grab' : 'default',
+            userSelect: 'none', touchAction: 'none',
+          }}
+          onMouseDown={e => { e.preventDefault(); startDrag(e.clientX, e.clientY) }}
+          onTouchStart={e => startDrag(e.touches[0].clientX, e.touches[0].clientY)}
+          onTouchMove={e => { e.preventDefault(); moveDrag(e.touches[0].clientX, e.touches[0].clientY) }}
+          onTouchEnd={endDrag}
+        >
+          {src && (
+            <img
+              ref={imgRef}
+              src={src}
+              onLoad={onImgLoad}
+              draggable={false}
+              alt=""
+              style={{
+                position: 'absolute',
+                left: offset.x, top: offset.y,
+                width:  liveRef.current.natural.w * zoom,
+                height: liveRef.current.natural.h * zoom,
+                display: ready ? 'block' : 'none',
+                pointerEvents: 'none',
+              }}
+            />
+          )}
+          {/* Rule-of-thirds grid overlay */}
+          {ready && (
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              backgroundImage: [
+                'linear-gradient(rgba(255,255,255,0.18) 1px, transparent 1px)',
+                'linear-gradient(90deg, rgba(255,255,255,0.18) 1px, transparent 1px)',
+              ].join(','),
+              backgroundSize: '33.33% 33.33%',
+            }} />
+          )}
+          {!ready && src && (
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>
+              Loading…
+            </div>
+          )}
+        </div>
+
+        {/* Zoom slider */}
+        <div style={{ padding: '14px 20px', display: 'flex', alignItems: 'center', gap: 12, borderTop: `1px solid ${BORDER}` }}>
+          <span style={{ fontSize: 15, userSelect: 'none' }}>🔍</span>
+          <input
+            type="range"
+            min={minZoom}
+            max={minZoom * 3}
+            step={minZoom * 0.005}
+            value={zoom}
+            disabled={!ready}
+            onChange={e => applyZoom(parseFloat(e.target.value))}
+            style={{ flex: 1, accentColor: NAVY }}
+          />
+          <span style={{ fontSize: 12, color: MUTED, minWidth: 38, textAlign: 'right', fontWeight: 600 }}>
+            {ready ? `${Math.round((zoom / minZoom) * 100)}%` : '—'}
+          </span>
+        </div>
+
+        {/* Actions */}
+        <div style={{ padding: '0 20px 20px', display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+          <button
+            onClick={onCancel}
+            style={{ background: 'transparent', border: `1px solid ${BORDER}`, color: MUTED, borderRadius: 10, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={!ready || exporting}
+            style={{
+              background: NAVY, color: WHITE, border: 'none', borderRadius: 10,
+              padding: '10px 20px', fontSize: 14, fontWeight: 600, fontFamily: 'inherit',
+              cursor: (!ready || exporting) ? 'default' : 'pointer',
+              opacity: (!ready || exporting) ? 0.6 : 1,
+            }}
+          >
+            {exporting ? 'Processing…' : `Use this ${label}`}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── Micro-label ───────────────────────────────────────────────────────────────
 const Lbl = ({ children }) => (
@@ -119,6 +357,9 @@ export default function UserProfile({ session, allVoyages, voyage }) {
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadError,     setUploadError]     = useState('')
 
+  // Cropper state — set when user picks a file, cleared on confirm or cancel
+  const [cropState, setCropState] = useState(null) // { file, type: 'avatar'|'banner' }
+
   const avatarRef = useRef(null)
   const bannerRef = useRef(null)
 
@@ -169,51 +410,58 @@ export default function UserProfile({ session, allVoyages, voyage }) {
     setEditing(false)
   }
 
-  // ── Photo upload helpers ───────────────────────────────────────────────────
-  const uploadPhoto = async (file, type) => {
-    if (!file || !userId) return
+  // ── Upload a cropped blob to Supabase Storage ──────────────────────────────
+  const uploadPhotoBlob = async (blob, type) => {
+    if (!blob || !userId) return null
     setUploadError('')
-    if (file.size > 10 * 1024 * 1024) {
-      setUploadError('Image must be under 10 MB — try compressing it first.')
+    if (blob.size > 10 * 1024 * 1024) {
+      setUploadError('Image must be under 10 MB.')
       return null
     }
-    const ext  = file.name.split('.').pop().toLowerCase()
-    const path = `${userId}/user-profiles/${type}.${ext}`
-
-    const { error } = await supabase.storage.from('voyage-covers').upload(path, file, { upsert: true, contentType: file.type })
+    const path = `${userId}/user-profiles/${type}.jpg`
+    const { error } = await supabase.storage
+      .from('voyage-covers')
+      .upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
     if (error) { setUploadError('Upload failed — please try again.'); return null }
-
     const { data: { publicUrl } } = supabase.storage.from('voyage-covers').getPublicUrl(path)
     return publicUrl
   }
 
-  const handleAvatarUpload = async (e) => {
+  // ── File picker handlers — open the cropper instead of uploading directly ─
+  const handleAvatarFileSelect = (e) => {
     const file = e.target.files?.[0]; e.target.value = ''
-    if (!file) return
-    setUploadingAvatar(true)
-    const url = await uploadPhoto(file, 'avatar')
-    if (url) {
-      await supabase.from('profiles').upsert({ user_id: userId, email: session?.user?.email ?? '', avatar_url: url }, { onConflict: 'user_id' })
-      setProfile(p => ({ ...p, avatarUrl: url }))
-      setDraft(p    => ({ ...p, avatarUrl: url }))
-    }
-    setUploadingAvatar(false)
+    if (file) setCropState({ file, type: 'avatar' })
   }
 
-  const handleBannerUpload = async (e) => {
+  const handleBannerFileSelect = (e) => {
     const file = e.target.files?.[0]; e.target.value = ''
-    if (!file) return
-    setUploadingBanner(true)
-    const url = await uploadPhoto(file, 'banner')
-    if (url) {
-      await supabase.from('profiles').upsert({ user_id: userId, email: session?.user?.email ?? '', banner_url: url }, { onConflict: 'user_id' })
-      setProfile(p => ({ ...p, bannerUrl: url }))
-      setDraft(p    => ({ ...p, bannerUrl: url }))
-    }
-    setUploadingBanner(false)
+    if (file) setCropState({ file, type: 'banner' })
   }
 
-  // ── Cruise stats from allVoyages + current voyage data ────────────────────
+  // ── Cropper confirmed — upload the blob ────────────────────────────────────
+  const handleCropConfirm = async (blob) => {
+    const { type } = cropState
+    setCropState(null)
+    if (type === 'avatar') setUploadingAvatar(true)
+    else                   setUploadingBanner(true)
+    const url = await uploadPhotoBlob(blob, type)
+    if (url) {
+      const dbField    = type === 'avatar' ? 'avatar_url'  : 'banner_url'
+      const stateField = type === 'avatar' ? 'avatarUrl'   : 'bannerUrl'
+      await supabase.from('profiles').upsert(
+        { user_id: userId, email: session?.user?.email ?? '', [dbField]: url },
+        { onConflict: 'user_id' }
+      )
+      setProfile(p => ({ ...p, [stateField]: url }))
+      setDraft(p    => ({ ...p, [stateField]: url }))
+    }
+    if (type === 'avatar') setUploadingAvatar(false)
+    else                   setUploadingBanner(false)
+  }
+
+  const handleCropCancel = () => setCropState(null)
+
+  // ── Cruise stats ───────────────────────────────────────────────────────────
   const totalVoyages = allVoyages.length
   const totalNights  = allVoyages.reduce((s, v) => s + (parseInt(v.total_nights) || 0), 0)
   const [friendCount, setFriendCount] = useState(null)
@@ -227,13 +475,14 @@ export default function UserProfile({ session, allVoyages, voyage }) {
       .eq('status', 'accepted')
       .then(({ count }) => setFriendCount(count ?? 0))
   }, [userId])
-  const memberSince  = session?.user?.created_at
+
+  const memberSince = session?.user?.created_at
     ? new Date(session.user.created_at).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
     : null
 
   // Initials fallback for avatar
   const initials = (() => {
-    const name = profile.displayName || session?.user?.email?.split('@')[0] || '?'
+    const name  = profile.displayName || session?.user?.email?.split('@')[0] || '?'
     const words = name.trim().split(/\s+/).filter(Boolean)
     if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
     return words[0].slice(0, 2).toUpperCase()
@@ -247,6 +496,17 @@ export default function UserProfile({ session, allVoyages, voyage }) {
 
   return (
     <div style={{ maxWidth: 840, margin: '0 auto' }}>
+
+      {/* ── Image cropper modal ─────────────────────────────────────────────── */}
+      {cropState && (
+        <ImageCropper
+          file={cropState.file}
+          aspect={cropState.type === 'banner' ? BANNER_ASPECT : 1}
+          label={cropState.type === 'banner' ? 'banner photo' : 'profile photo'}
+          onConfirm={handleCropConfirm}
+          onCancel={handleCropCancel}
+        />
+      )}
 
       {/* ── Banner + avatar hero ───────────────────────────────────────────── */}
       <div style={{ borderRadius: 20, overflow: 'visible', marginBottom: 0, position: 'relative' }}>
@@ -284,11 +544,8 @@ export default function UserProfile({ session, allVoyages, voyage }) {
           position: 'relative',
         }}>
 
-          {/* Avatar — sits half-over the banner, positioned relative to this card */}
-          <div style={{
-            position: 'absolute', top: -AVATAR_OVERLAP,
-            left: 24,
-          }}>
+          {/* Avatar — sits half-over the banner */}
+          <div style={{ position: 'absolute', top: -AVATAR_OVERLAP, left: 24 }}>
             <div style={{
               width: AVATAR_SIZE, height: AVATAR_SIZE,
               borderRadius: '50%', overflow: 'hidden',
@@ -401,7 +658,7 @@ export default function UserProfile({ session, allVoyages, voyage }) {
         </div>
       </div>
 
-      {/* ── Error banner ───────────────────────────────────────────────────── */}
+      {/* ── Error banner ──────────────────────────────────────────────────── */}
       {uploadError && (
         <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#DC2626', marginTop: 12 }}>
           {uploadError}
@@ -437,10 +694,10 @@ export default function UserProfile({ session, allVoyages, voyage }) {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 20 }}>
             {[
-              { emoji: '🏠', label: 'Home Port',           value: profile.homePort             },
-              { emoji: '⚓', label: 'Favourite Line',      value: profile.favouriteCruiseLine  },
-              { emoji: '🌴', label: 'Favourite Destination',value: profile.favouriteDestination },
-              { emoji: '✉️', label: 'Email',               value: session?.user?.email         },
+              { emoji: '🏠', label: 'Home Port',            value: profile.homePort             },
+              { emoji: '⚓', label: 'Favourite Line',       value: profile.favouriteCruiseLine  },
+              { emoji: '🌴', label: 'Favourite Destination', value: profile.favouriteDestination },
+              { emoji: '✉️', label: 'Email',                value: session?.user?.email         },
             ].map(({ emoji, label, value }) => (
               <div key={label}>
                 <Lbl>{label}</Lbl>
@@ -454,9 +711,9 @@ export default function UserProfile({ session, allVoyages, voyage }) {
         )}
       </div>
 
-      {/* Hidden file inputs */}
-      <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarUpload} />
-      <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerUpload} />
+      {/* Hidden file inputs — open the cropper modal instead of uploading directly */}
+      <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />
+      <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerFileSelect} />
 
     </div>
   )

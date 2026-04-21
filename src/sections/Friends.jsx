@@ -9,9 +9,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, ROSE } from '../constants'
+import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, ROSE, BP } from '../constants'
 import { PgHdr } from '../components/ui'
-import { useUserId } from '../context'
+import { useUserId, useW } from '../context'
 
 // ── Avatar bubble ─────────────────────────────────────────────────────────────
 function Avatar({ name, size = 40, bg = NAVY }) {
@@ -51,6 +51,7 @@ const card = {
 
 export default function Friends() {
   const currentUserId = useUserId()
+  const w             = useW()
 
   const [searchEmail, setSearchEmail]     = useState('')
   const [searchResult, setSearchResult]   = useState(null)   // profile row | 'not_found' | null
@@ -172,7 +173,7 @@ export default function Friends() {
       <PgHdr title="Friends" />
 
       {/* ── Search ──────────────────────────────────────────────────────────── */}
-      <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 24 }}>
+      <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: w < BP.mobile ? 16 : '20px 24px', marginBottom: 24 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
           Find a Friend
         </div>

@@ -10,8 +10,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabase'
-import { useUserId } from '../context'
-import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL } from '../constants'
+import { useUserId, useW } from '../context'
+import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, BP } from '../constants'
 import { sty } from '../constants'
 
 // ── Colours ───────────────────────────────────────────────────────────────────
@@ -97,6 +97,7 @@ function EditFld({ label, value, onChange, placeholder, multiline }) {
 // ── Main component ────────────────────────────────────────────────────────────
 export default function UserProfile({ session, allVoyages, voyage }) {
   const userId = useUserId()
+  const w      = useW()
 
   // ── Profile state ──────────────────────────────────────────────────────────
   const [profile, setProfile] = useState({
@@ -279,7 +280,7 @@ export default function UserProfile({ session, allVoyages, voyage }) {
         <div style={{
           background: WHITE, border: `1px solid ${BORDER}`,
           borderRadius: '0 0 20px 20px', borderTop: 'none',
-          padding: `${AVATAR_OVERLAP + 12}px 24px 24px`,
+          padding: `${AVATAR_OVERLAP + 12}px ${w < BP.mobile ? 16 : 24}px 24px`,
           position: 'relative',
         }}>
 
@@ -421,7 +422,7 @@ export default function UserProfile({ session, allVoyages, voyage }) {
       </div>
 
       {/* ── Personal details ──────────────────────────────────────────────── */}
-      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '22px 24px', marginTop: 18 }}>
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: w < BP.mobile ? 16 : '22px 24px', marginTop: 18 }}>
         <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 18 }}>
           About Me
         </div>

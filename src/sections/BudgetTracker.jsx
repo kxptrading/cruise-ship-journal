@@ -138,35 +138,36 @@ export default function BudgetTracker({ data, onChange }) {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: NAVY }}>
-                {['Date', 'Item / Description', 'Category', 'Amount (£)', ''].map(h => (
-                  <th key={h} style={{ padding: '10px 12px', color: WHITE, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+                {(w < BP.mobile ? ['Item', 'Cat', '£', ''] : ['Date', 'Item / Description', 'Category', 'Amount (£)', '']).map(h => (
+                  <th key={h} style={{ padding: w < BP.mobile ? '9px 8px' : '10px 12px', color: WHITE, fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {items.map((item, i) => (
-                // Alternating row backgrounds for readability
                 <tr key={i} style={{ background: i % 2 === 0 ? WHITE : LIGHT, borderBottom: `1px solid ${BORDER}` }}>
-                  <td style={{ padding: '6px 10px' }}>
-                    <input type="date" value={item.date || ''} onChange={e => set(i, 'date', e.target.value)}
-                      style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, cursor: 'pointer' }} />
-                  </td>
-                  <td style={{ padding: '6px 10px' }}>
+                  {w >= BP.mobile && (
+                    <td style={{ padding: '6px 8px' }}>
+                      <input type="date" value={item.date || ''} onChange={e => set(i, 'date', e.target.value)}
+                        style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, cursor: 'pointer' }} />
+                    </td>
+                  )}
+                  <td style={{ padding: w < BP.mobile ? '6px 8px' : '6px 10px' }}>
                     <input value={item.item || ''} onChange={e => set(i, 'item', e.target.value)} placeholder="Description"
-                      style={{ border: 'none', background: 'transparent', fontSize: 13, color: TEXT, width: '100%', minWidth: 160 }} />
+                      style={{ border: 'none', background: 'transparent', fontSize: 13, color: TEXT, width: '100%', minWidth: w < BP.mobile ? 100 : 140 }} />
                   </td>
-                  <td style={{ padding: '6px 10px' }}>
+                  <td style={{ padding: w < BP.mobile ? '6px 6px' : '6px 10px' }}>
                     <select value={item.category || ''} onChange={e => set(i, 'category', e.target.value)}
-                      style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, cursor: 'pointer' }}>
-                      <option value="">Select</option>
-                      {CATS.map(c => <option key={c}>{c}</option>)}
+                      style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, cursor: 'pointer', maxWidth: w < BP.mobile ? 80 : 'none' }}>
+                      <option value="">—</option>
+                      {CATS.map(c => <option key={c} value={c}>{w < BP.mobile ? c.split(' ')[0] : c}</option>)}
                     </select>
                   </td>
-                  <td style={{ padding: '6px 10px' }}>
+                  <td style={{ padding: w < BP.mobile ? '6px 6px' : '6px 10px' }}>
                     <input type="number" value={item.amount || ''} onChange={e => set(i, 'amount', e.target.value)} placeholder="0.00"
-                      style={{ border: 'none', background: 'transparent', fontSize: 13, color: TEXT, width: 80 }} />
+                      style={{ border: 'none', background: 'transparent', fontSize: 13, color: TEXT, width: w < BP.mobile ? 60 : 80 }} />
                   </td>
-                  <td style={{ padding: '6px 10px', textAlign: 'center' }}>
+                  <td style={{ padding: '6px 6px', textAlign: 'center' }}>
                     <button onClick={() => del(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', fontSize: 18, lineHeight: 1 }}>×</button>
                   </td>
                 </tr>
@@ -175,9 +176,9 @@ export default function BudgetTracker({ data, onChange }) {
           </table>
         </div>
         {/* Table footer: add button (left) + running total (right) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
           <button onClick={add} style={sty.btn}>+ Add Expense</button>
-          <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif' }}>TOTAL: £{spent.toFixed(2)}</div>
+          <div style={{ fontSize: w < BP.mobile ? 15 : 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif' }}>TOTAL: £{spent.toFixed(2)}</div>
         </div>
       </div>
     </div>

@@ -72,7 +72,7 @@ export default function PackingList({ data, onChange }) {
             <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{cat}</h3>
             <span style={{ fontSize: 11, color: MUTED }}>{checked} / {items.length}</span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 32px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: w < BP.mobile ? '10px 16px' : '10px 32px' }}>
             {items.map(item => {
               const done = (data[cat] || []).includes(item)
               return (

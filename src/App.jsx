@@ -914,8 +914,6 @@ export default function App() {
             voyageName={data.voyage.shipName}
             voyageCount={allVoyages.length}
             sectionStatus={sectionStatus}
-            theme={theme}
-            onThemeChange={switchTheme}
           />
 
           {/* ── Section content ─────────────────────────────────────────────
@@ -945,7 +943,7 @@ export default function App() {
               {section === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
               {section === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
               {section === 'friends'       && <Friends />}
-              {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} />}
+              {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} />}
             </div>
             </div>
           </main>

@@ -34,8 +34,9 @@ import Personality   from './profile/Personality'
 import Badges        from './profile/Badges'
 import Companions    from './profile/Companions'
 import VoyagesStrip  from './profile/VoyagesStrip'
-import Preferences   from './profile/Preferences'
-import SettingsBlock from './profile/SettingsBlock'
+import Preferences      from './profile/Preferences'
+import SettingsBlock    from './profile/SettingsBlock'
+import AppearanceBlock  from './profile/AppearanceBlock'
 
 // ── Image Cropper Modal ───────────────────────────────────────────────────────
 // Opens after the user picks a file. They drag to reposition and use the zoom
@@ -181,7 +182,7 @@ function ImageCropper({ file, aspect, label, onConfirm, onCancel }) {
 }
 
 // ── Root component ────────────────────────────────────────────────────────────
-export default function UserProfile({ session, allVoyages, voyage, onNav }) {
+export default function UserProfile({ session, allVoyages, voyage, onNav, theme, onThemeChange }) {
   const userId = useUserId()
 
   const [profile, setProfile] = useState({ displayName: '', bio: '', homePort: '', favouriteCruiseLine: '', favouriteDestination: '', avatarUrl: '', bannerUrl: '' })
@@ -324,11 +325,14 @@ export default function UserProfile({ session, allVoyages, voyage, onNav }) {
       {/* 5. Voyages */}
       <VoyagesStrip allVoyages={allVoyages} onViewAll={() => onNav?.('voyage')} />
 
-      {/* 6. Preferences + Settings */}
-      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap' }}>
+      {/* 6. Appearance + Preferences */}
+      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 20 }}>
+        <AppearanceBlock theme={theme} onThemeChange={onThemeChange} />
         <Preferences />
-        <SettingsBlock onSignOut={() => supabase.auth.signOut()} />
       </div>
+
+      {/* 7. Settings */}
+      <SettingsBlock onSignOut={() => supabase.auth.signOut()} />
 
       {/* Hidden file inputs */}
       <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />

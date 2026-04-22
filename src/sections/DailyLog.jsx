@@ -16,7 +16,7 @@ import { useW, useVoyageId, useUserId } from '../context'
 import { PgHdr, Box, Fld, Row2, Inp, TA, Stars } from '../components/ui'
 import { addPhoto, getPhotos, deletePhoto, updateCaption } from '../lib/photoStorage'
 
-export default function DailyLog({ data, onChange, itinerary }) {
+export default function DailyLog({ data, onChange, itinerary, voyage }) {
   const w        = useW()
   const voyageId = useVoyageId()
   const userId   = useUserId()
@@ -30,6 +30,22 @@ export default function DailyLog({ data, onChange, itinerary }) {
   const fileRef = useRef(null)
 
   const log = data[day] || {}
+
+  // Auto-sync the number of days to voyage.totalNights whenever it changes.
+  // Only ever adds days — never removes them — so existing entries are safe.
+  useEffect(() => {
+    const nights = parseInt(voyage?.totalNights) || 0
+    if (nights <= 0 || nights <= data.length) return
+    const depDate = voyage?.departureDate ? new Date(voyage.departureDate + 'T00:00:00') : null
+    const padded  = [...data]
+    for (let i = data.length; i < nights; i++) {
+      const date = depDate
+        ? new Date(depDate.getTime() + i * 86400000).toISOString().split('T')[0]
+        : ''
+      padded.push({ date })
+    }
+    onChange(padded)
+  }, [voyage?.totalNights, voyage?.departureDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addDay = () => {
     onChange([...data, {}])
@@ -77,7 +93,11 @@ export default function DailyLog({ data, onChange, itinerary }) {
 
   return (
     <div>
-      <PgHdr icon="📅" title="Daily Log" sub="Add a day for each day of your voyage as you go" />
+      <PgHdr icon="📅" title="Daily Log" sub={
+        voyage?.totalNights
+          ? `${data.length} of ${voyage.totalNights} days — filled in automatically from your voyage`
+          : "Set Total Nights in Voyage Details to auto-populate your days"
+      } />
 
       {/* ── Day selector + add button ─────────────────────────────────────────
           Pills scroll horizontally on mobile. The port name from the

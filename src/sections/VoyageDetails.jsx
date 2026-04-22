@@ -6,7 +6,7 @@
 // "csj-voyage" key and drives the hero panel on the Dashboard.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { BP, sty } from '../constants'
+import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '../constants'
 import { useW } from '../context'
 import { PgHdr, Box, Fld, Row2, Inp } from '../components/ui'
 
@@ -15,7 +15,17 @@ export default function VoyageDetails({ data, onChange }) {
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
   // Helper: update a single field on the voyage object without mutating state
-  const set = (f, v) => onChange({ ...data, [f]: v })
+  const set = (f, v) => {
+    const updated = { ...data, [f]: v }
+    // Recalculate totalNights whenever either date changes
+    const dep = updated.departureDate
+    const ret = updated.returnDate
+    if (dep && ret) {
+      const nights = Math.round((new Date(ret + 'T00:00:00') - new Date(dep + 'T00:00:00')) / 86400000)
+      updated.totalNights = nights > 0 ? String(nights) : updated.totalNights
+    }
+    onChange(updated)
+  }
 
   return (
     <div>
@@ -40,7 +50,23 @@ export default function VoyageDetails({ data, onChange }) {
           </Row2>
           <Row2>
             <Fld label="Departure Port" half><Inp value={data.departurePort} onChange={v => set('departurePort', v)} placeholder="e.g. Southampton" /></Fld>
-            <Fld label="Total Nights" half><Inp type="number" value={data.totalNights} onChange={v => set('totalNights', v)} placeholder="e.g. 14" /></Fld>
+            <Fld label="Total Nights" half>
+              {data.totalNights ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 8,
+                  border: `1px solid ${GOLD}50`, borderRadius: 8,
+                  padding: '10px 14px', background: `${GOLD}10`,
+                }}>
+                  <span style={{ fontSize: 16 }}>🌙</span>
+                  <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, color: NAVY2, fontWeight: 400, lineHeight: 1 }}>{data.totalNights}</span>
+                  <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>night{data.totalNights !== '1' ? 's' : ''}</span>
+                </div>
+              ) : (
+                <div style={{ border: `1px solid #E0DBD0`, borderRadius: 8, padding: '10px 14px', fontSize: 13, color: MUTED, fontFamily: FONT_BODY, fontStyle: 'italic' }}>
+                  Set both dates above
+                </div>
+              )}
+            </Fld>
           </Row2>
         </Box>
 

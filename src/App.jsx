@@ -390,10 +390,18 @@ export default function App() {
 
   const [theme, setTheme]             = useState(getSavedTheme)
 
-  const switchTheme = (id) => { applyTheme(id); setTheme(id) }
-
-  // Apply the persisted theme immediately on first render
+  // Apply the persisted theme immediately on first render (localStorage fallback)
   useEffect(() => { applyTheme(theme) }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const switchTheme = async (id) => {
+    applyTheme(id)
+    setTheme(id)
+    // Persist to DB so it survives across devices / browsers
+    const userId = supabase.auth.getUser ? (await supabase.auth.getUser()).data?.user?.id : null
+    if (userId) {
+      supabase.from('profiles').upsert({ user_id: userId, theme: id }, { onConflict: 'user_id' })
+    }
+  }
 
   const [session, setSession]         = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -440,6 +448,17 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setAuthChecked(true)
+      // Load theme from DB — overrides the localStorage fallback once we know the user
+      if (session?.user?.id) {
+        supabase
+          .from('profiles')
+          .select('theme')
+          .eq('user_id', session.user.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data?.theme) { applyTheme(data.theme); setTheme(data.theme) }
+          })
+      }
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)

@@ -31,20 +31,37 @@ export default function DailyLog({ data, onChange, itinerary, voyage }) {
 
   const log = data[day] || {}
 
-  // Auto-sync the number of days to voyage.totalNights whenever it changes.
-  // Only ever adds days — never removes them — so existing entries are safe.
+  // Fully sync day count to voyage.totalNights whenever dates change.
+  // Adds blank days when nights increases; trims from the end when it decreases
+  // but only removes days that have no content — filled entries are never deleted.
   useEffect(() => {
     const nights = parseInt(voyage?.totalNights) || 0
-    if (nights <= 0 || nights <= data.length) return
+    if (nights <= 0 || nights === data.length) return
+
     const depDate = voyage?.departureDate ? new Date(voyage.departureDate + 'T00:00:00') : null
-    const padded  = [...data]
-    for (let i = data.length; i < nights; i++) {
-      const date = depDate
-        ? new Date(depDate.getTime() + i * 86400000).toISOString().split('T')[0]
-        : ''
-      padded.push({ date })
+
+    if (nights > data.length) {
+      // Pad up to the new night count, pre-filling dates from departure date
+      const padded = [...data]
+      for (let i = data.length; i < nights; i++) {
+        const date = depDate
+          ? new Date(depDate.getTime() + i * 86400000).toISOString().split('T')[0]
+          : ''
+        padded.push({ date })
+      }
+      onChange(padded)
+    } else {
+      // Trim empty days from the end until we reach the target count.
+      // Stop early if the next day to remove has any content — never delete data.
+      const hasContent = d =>
+        d.highlights || d.bestMoment || d.activity || d.excNotes || d.entertainment ||
+        d.breakfast || d.lunch || d.dinner || d.drink || (d.weather?.length > 0)
+      const trimmed = [...data]
+      while (trimmed.length > nights && !hasContent(trimmed[trimmed.length - 1])) {
+        trimmed.pop()
+      }
+      if (trimmed.length !== data.length) onChange(trimmed)
     }
-    onChange(padded)
   }, [voyage?.totalNights, voyage?.departureDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const addDay = () => {
@@ -95,8 +112,8 @@ export default function DailyLog({ data, onChange, itinerary, voyage }) {
     <div>
       <PgHdr icon="📅" title="Daily Log" sub={
         voyage?.totalNights
-          ? `${data.length} of ${voyage.totalNights} days — filled in automatically from your voyage`
-          : "Set Total Nights in Voyage Details to auto-populate your days"
+          ? `${data.length} day${data.length !== 1 ? 's' : ''} — synced from your voyage dates`
+          : "Set your departure and return dates in Voyage Details to auto-populate days"
       } />
 
       {/* ── Day selector + add button ─────────────────────────────────────────

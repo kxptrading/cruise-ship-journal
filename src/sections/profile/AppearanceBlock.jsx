@@ -58,10 +58,10 @@ export default function AppearanceBlock({ theme, onThemeChange }) {
                 )}
               </div>
 
-              {/* Label row */}
-              <div style={{ padding: '8px 10px', display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span style={{ fontSize: 14 }}>{t.emoji}</span>
-                <span style={{ fontSize: 12, fontWeight: active ? 700 : 500, color: active ? NAVY2 : MUTED }}>{t.name}</span>
+              {/* Label row — fixed height so all cards stay identical */}
+              <div style={{ padding: '6px 8px', height: 32, display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden' }}>
+                <span style={{ fontSize: 13, flexShrink: 0 }}>{t.emoji}</span>
+                <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? NAVY2 : MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
               </div>
             </button>
           )

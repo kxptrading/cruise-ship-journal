@@ -902,19 +902,31 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         const completedCount = sectionStatus?.size || 0
         const totalSections  = 12 // all sections except dashboard
         const metrics = [
-          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged', color: NAVY2 },
-          { icon: '📍', value: ports > 0 ? String(ports) : '—', label: 'Ports', color: TEAL },
-          { icon: '💳', value: spent > 0 ? `£${spent.toFixed(0)}` : '£—', label: budgetOver ? 'Over Budget!' : 'Spent', color: budgetOver ? '#DC2626' : TEAL },
-          { icon: '🏆', value: `${completedCount} / ${totalSections}`, label: 'Journal Complete', color: completedCount === totalSections ? '#22C55E' : NAVY2 },
+          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged',      color: NAVY2,                                          nav: 'daily' },
+          { icon: '📍', value: ports > 0 ? String(ports) : '—',                                          label: 'Ports',             color: TEAL,                                           nav: 'itinerary' },
+          { icon: '💳', value: spent > 0 ? `£${spent.toFixed(0)}` : '£—',                               label: budgetOver ? 'Over Budget!' : 'Spent', color: budgetOver ? '#DC2626' : TEAL, nav: 'budget' },
+          { icon: '🏆', value: `${completedCount} / ${totalSections}`,                                   label: 'Journal Complete',  color: completedCount === totalSections ? '#22C55E' : NAVY2, nav: 'highlights' },
         ]
         return (
           <div style={{ display: 'grid', gridTemplateColumns: `repeat(${w < BP.mobile ? 2 : 4}, 1fr)`, gap: 10, marginBottom: 16 }}>
             {metrics.map(m => (
-              <div key={m.label} style={{ background: `linear-gradient(135deg, ${WHITE} 60%, ${m.color}18 100%)`, border: `1px solid ${BORDER}`, borderRadius: 16, padding: w < BP.mobile ? '10px 8px' : '12px 14px', textAlign: 'center' }}>
+              <button
+                key={m.label}
+                onClick={() => onNav(m.nav)}
+                style={{
+                  background: `linear-gradient(135deg, ${WHITE} 60%, ${m.color}18 100%)`,
+                  border: `1px solid ${BORDER}`, borderRadius: 16,
+                  padding: w < BP.mobile ? '10px 8px' : '12px 14px',
+                  textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+                }}
+                onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 6px 18px ${m.color}28`; e.currentTarget.style.borderColor = `${m.color}55` }}
+                onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = BORDER }}
+              >
                 <div style={{ fontSize: 20, marginBottom: 3 }}>{m.icon}</div>
                 <div style={{ fontSize: w < BP.mobile ? 16 : 22, fontWeight: 400, color: m.color, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>{m.value}</div>
                 <div style={{ fontSize: 10, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: 3, fontFamily: FONT_BODY }}>{m.label}</div>
-              </div>
+              </button>
             ))}
           </div>
         )

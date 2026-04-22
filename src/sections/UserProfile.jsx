@@ -245,7 +245,9 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
     const { error } = await supabase.storage.from('voyage-covers').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
     if (error) { setUploadError('Upload failed — please try again.'); return null }
     const { data: { publicUrl } } = supabase.storage.from('voyage-covers').getPublicUrl(path)
-    return publicUrl
+    // Append a timestamp so the browser/CDN never serves a stale cached version
+    // when the same storage path is overwritten with a new image.
+    return `${publicUrl}?t=${Date.now()}`
   }
 
   // ── File pickers → open cropper ───────────────────────────────────────────────

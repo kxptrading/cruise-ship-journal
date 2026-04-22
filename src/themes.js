@@ -125,6 +125,66 @@ export const THEMES = {
       '--t-btn-shadow':  'rgba(13,148,136,0.35)',
     },
   },
+
+  blush: {
+    id:    'blush',
+    name:  'Blush',
+    emoji: '🌷',
+    vars: {
+      '--t-primary':     '#DB7093',
+      '--t-primary-dk':  '#C05674',
+      '--t-primary-mid': '#CF6585',
+      '--t-primary-lt':  '#F0B8C8',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#FFF0F5',
+      '--t-btn-shadow':  'rgba(219,112,147,0.35)',
+    },
+  },
+
+  sage: {
+    id:    'sage',
+    name:  'Sage',
+    emoji: '🌿',
+    vars: {
+      '--t-primary':     '#7BAF8E',
+      '--t-primary-dk':  '#537A64',
+      '--t-primary-mid': '#6A9E7D',
+      '--t-primary-lt':  '#AECFBA',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#F2F9F5',
+      '--t-btn-shadow':  'rgba(123,175,142,0.35)',
+    },
+  },
+
+  periwinkle: {
+    id:    'periwinkle',
+    name:  'Periwinkle',
+    emoji: '🫐',
+    vars: {
+      '--t-primary':     '#8B9DC9',
+      '--t-primary-dk':  '#6175A8',
+      '--t-primary-mid': '#7889BC',
+      '--t-primary-lt':  '#BAC4E0',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#F2F4FB',
+      '--t-btn-shadow':  'rgba(139,157,201,0.35)',
+    },
+  },
+
+  peach: {
+    id:    'peach',
+    name:  'Peach',
+    emoji: '🍑',
+    vars: {
+      '--t-primary':     '#E8956D',
+      '--t-primary-dk':  '#C46E47',
+      '--t-primary-mid': '#D88060',
+      '--t-primary-lt':  '#F5BFA4',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#FFF7F2',
+      '--t-btn-shadow':  'rgba(232,149,109,0.35)',
+    },
+  },
 }
 
 // Apply a theme's CSS variables to :root

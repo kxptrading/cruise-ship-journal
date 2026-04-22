@@ -66,9 +66,9 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }) 
 
       {/* ── Hero card ───────────────────────────────────────────────────── */}
       <div style={{
-        background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)',
+        background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary) 100%)',
         borderRadius: 20, overflow: 'hidden', marginBottom: 16,
-        boxShadow: '0 8px 32px rgba(3,105,161,0.25)',
+        boxShadow: '0 8px 32px var(--t-btn-shadow)',
       }}>
         {/* Photo banner — first photo if available */}
         {photos.length > 0 && (

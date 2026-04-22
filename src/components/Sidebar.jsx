@@ -8,8 +8,9 @@
 
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { NAV } from '../constants'
+import { THEMES } from '../themes'
 
-export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus }) {
+export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus, theme, onThemeChange }) {
   return (
     <>
       {/* ── Backdrop ────────────────────────────────────────────────────────
@@ -27,7 +28,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
           On mobile/tablet: fixed, slides in via CSS transform. The transition
           uses a material-motion easing curve for a natural feel.           */}
       <aside style={{
-        width: 240, background: 'linear-gradient(180deg, #0369A1 0%, #0284C7 60%, #0EA5E9 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto',
+        width: 240, background: 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)', flexShrink: 0, display: 'flex', flexDirection: 'column', overflowY: 'auto',
         ...(isOverlay ? {
           position: 'fixed', left: 0, top: 0, height: '100vh', zIndex: 1000,
           transform: isOpen ? 'translateX(0)' : 'translateX(-240px)',
@@ -115,6 +116,31 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
             )
           })}
         </nav>
+
+        {/* ── Theme switcher ───────────────────────────────────────────────
+            Colour-swatch circles at the bottom of the nav. Tapping one
+            switches the whole UI to that theme instantly.                */}
+        <div style={{ padding: '12px 20px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8, fontFamily: FONT_BODY }}>Theme</div>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {Object.values(THEMES).map(t => (
+              <button
+                key={t.id}
+                title={t.name}
+                onClick={() => onThemeChange?.(t.id)}
+                style={{
+                  width: 24, height: 24, borderRadius: '50%',
+                  background: t.vars['--t-primary'],
+                  border: theme === t.id ? '2px solid white' : '2px solid transparent',
+                  outline: theme === t.id ? '1px solid rgba(255,255,255,0.4)' : 'none',
+                  cursor: 'pointer', padding: 0, flexShrink: 0,
+                  boxShadow: theme === t.id ? '0 0 0 3px rgba(255,255,255,0.2)' : 'none',
+                  transition: 'box-shadow 0.15s, border-color 0.15s',
+                }}
+              />
+            ))}
+          </div>
+        </div>
 
         {/* ── Footer — user account + sign out ─────────────────────────────
             Shows the signed-in email address and a sign out button.       */}

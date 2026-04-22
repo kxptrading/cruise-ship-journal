@@ -89,7 +89,7 @@ export default function Hero({
       <div
         style={{
           height: BANNER_H,
-          background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 55%, #38BDF8 100%)',
+          background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary) 55%, var(--t-primary-lt) 100%)',
           position: 'relative', overflow: 'hidden', cursor: 'pointer',
         }}
         onClick={() => !uploadingBanner && onUploadBanner()}

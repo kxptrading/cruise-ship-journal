@@ -124,8 +124,8 @@ function ImageCropper({ file, aspect, label, onConfirm, onCancel }) {
     img.src = src
   }, [ready, src, aspect, onConfirm])
 
-  const NAVY  = '#0EA5E9'
-  const NAVY2 = '#0369A1'
+  const NAVY  = 'var(--t-primary)'
+  const NAVY2 = 'var(--t-primary-dk)'
   const BORDER = '#E5E7EB'
   const WHITE = '#FFFFFF'
   const MUTED = '#6B7280'

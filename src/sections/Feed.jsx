@@ -490,7 +490,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           }}>
 
             {/* ── Background: gradient base always present ──────────────────── */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg, #0369A1 0%, #0284C7 50%, #0EA5E9 100%)' }} />
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 50%, var(--t-primary) 100%)' }} />
 
             {/* Cover photo over gradient — fades out as banner collapses */}
             {voyage.coverPhotoUrl && (
@@ -680,9 +680,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             /* Collapsed state — blue-tinted pill */
             <div
               onClick={handleComposeOpen}
-              style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'text', background: 'linear-gradient(135deg, #F0F9FF, #EFF9FF)' }}
+              style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'text', background: 'linear-gradient(135deg, var(--t-bg), var(--t-bg))' }}
             >
-              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #0EA5E9, #0369A1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
+              <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
                 ⚓
               </div>
               <div style={{ flex: 1, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 22, padding: '10px 18px', fontSize: 14, color: MUTED, cursor: 'text', userSelect: 'none', fontFamily: FONT_BODY }}>
@@ -691,9 +691,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             </div>
           ) : (
             /* Expanded composer */
-            <div style={{ padding: 16, boxShadow: '0 4px 20px rgba(14,165,233,0.12)' }}>
+            <div style={{ padding: 16, boxShadow: '0 4px 20px var(--t-btn-shadow)' }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, #0EA5E9, #0369A1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, marginTop: 2 }}>
+                <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, marginTop: 2 }}>
                   ⚓
                 </div>
                 <textarea

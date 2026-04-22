@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
 import { IC, NAV } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
+import { applyTheme, getSavedTheme, THEMES } from './themes'
 import { db } from './storage'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
@@ -386,6 +387,13 @@ export default function App() {
   const winW      = useWindowSize()
   const isOverlay = winW <= BP.tablet
   const isMobile  = winW < BP.mobile
+
+  const [theme, setTheme]             = useState(getSavedTheme)
+
+  const switchTheme = (id) => { applyTheme(id); setTheme(id) }
+
+  // Apply the persisted theme immediately on first render
+  useEffect(() => { applyTheme(theme) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [session, setSession]         = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -906,6 +914,8 @@ export default function App() {
             voyageName={data.voyage.shipName}
             voyageCount={allVoyages.length}
             sectionStatus={sectionStatus}
+            theme={theme}
+            onThemeChange={switchTheme}
           />
 
           {/* ── Section content ─────────────────────────────────────────────

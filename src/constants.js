@@ -7,36 +7,37 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Colour palette ────────────────────────────────────────────────────────────
-// Ocean Adventure theme — vibrant blues, amber, coral and emerald.
-export const NAVY   = '#0EA5E9'  // Bright sky blue — interactive accents, icons
-export const NAVY2  = '#0369A1'  // Deep ocean blue — headings, sidebar bg, dark surfaces
-export const GOLD   = '#F59E0B'  // Sunshine amber — accent, stars, progress
-export const CREAM  = '#F8F9FA'  // Neutral light grey — page background
-export const WHITE  = '#FFFFFF'  // Card backgrounds
-export const BORDER = '#E5E7EB'  // Neutral grey — borders and dividers
-export const TEXT   = '#1C2B3A'  // Body copy (unchanged)
-export const MUTED  = '#6B7280'  // Neutral grey — labels, secondary text
-export const LIGHT  = '#F9FAFB'  // Near-white grey — alternating rows, box backgrounds
-export const TEAL   = '#10B981'  // Bright emerald — ports, positive metrics
-export const ROSE   = '#F97316'  // Coral orange — ratings, emotional metrics
-export const PLUM   = '#8B5CF6'  // Fun purple — packing, completion metrics
-export const CORAL  = '#F97316'  // Coral — pull-quotes, highlights
+// Theme-aware tokens — NAVY/NAVY2/GOLD/CREAM resolve via CSS variables set by
+// the active theme (see themes.js). All other colours are neutral/fixed.
+export const NAVY   = 'var(--t-primary)'      // Primary brand colour
+export const NAVY2  = 'var(--t-primary-dk)'   // Darker shade of primary
+export const GOLD   = 'var(--t-accent)'        // Accent colour
+export const CREAM  = 'var(--t-bg)'            // Page background
+export const WHITE  = '#FFFFFF'               // Card backgrounds (fixed)
+export const BORDER = '#E5E7EB'               // Borders and dividers (fixed)
+export const TEXT   = '#1C2B3A'               // Body copy (fixed)
+export const MUTED  = '#6B7280'               // Labels, secondary text (fixed)
+export const LIGHT  = '#F9FAFB'               // Alternating rows, box backgrounds (fixed)
+export const TEAL   = '#10B981'               // Ports, positive metrics (fixed)
+export const ROSE   = '#F97316'               // Ratings, emotional metrics (fixed)
+export const PLUM   = '#8B5CF6'               // Packing, completion metrics (fixed)
+export const CORAL  = '#F97316'               // Pull-quotes, highlights (fixed)
 
 // ── Per-section accent colours ────────────────────────────────────────────────
 // Used to tint section header bars, PgHdr underlines, and completion dots.
 export const SECTION_COLORS = {
-  feed:          '#0EA5E9',
-  voyage:        '#0EA5E9',
+  feed:          'var(--t-primary)',
+  voyage:        'var(--t-primary)',
   itinerary:     '#10B981',
-  daily:         '#0EA5E9',
+  daily:         'var(--t-primary)',
   food:          '#F97316',
   dining:        '#F97316',
   entertainment: '#8B5CF6',
-  foodfav:       '#F59E0B',
+  foodfav:       'var(--t-accent)',
   budget:        '#10B981',
-  shopping:      '#F59E0B',
+  shopping:      'var(--t-accent)',
   highlights:    '#F97316',
-  packing:       '#F59E0B',
+  packing:       'var(--t-accent)',
   notes:         '#8B5CF6',
 }
 
@@ -101,7 +102,7 @@ export const sty = {
   // so this must stay at 16px or above to prevent unwanted zoom on mobile.
   inp:  { width: '100%', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 14px', fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', background: WHITE, color: TEXT },
   // Primary action button — ocean gradient, white text
-  btn:  { background: 'linear-gradient(135deg, #0EA5E9, #0369A1)', color: WHITE, border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, boxShadow: '0 4px 12px rgba(14,165,233,0.35)' },
+  btn:  { background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', color: WHITE, border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, boxShadow: '0 4px 12px var(--t-btn-shadow)' },
   // Uppercase micro-label above form fields
   lbl:  { display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 },
 }

@@ -80,8 +80,8 @@ export default function EntertainmentLog({ data, onChange }) {
             <Fld label="Performers / Cast" half>
               <Inp value={entry.performers} onChange={v => set(i, 'performers', v)} placeholder="Who was on stage?" />
             </Fld>
-            <Fld label="Duration" half>
-              <Inp value={entry.duration} onChange={v => set(i, 'duration', v)} placeholder="e.g. 1 hour 30 mins" />
+            <Fld label="Duration (hh:mm)" half>
+              <Inp type="time" value={entry.duration} onChange={v => set(i, 'duration', v)} />
             </Fld>
           </Row2>
 

@@ -157,14 +157,6 @@ export default function Hero({
                   {initials}
                 </div>
               )}
-              {/* Camera hover overlay */}
-              <div
-                style={{ position: 'absolute', inset: 0, borderRadius: '50%', background: 'rgba(0,0,0,0)', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.32)'}
-                onMouseLeave={e => e.currentTarget.style.background = 'rgba(0,0,0,0)'}
-              >
-                <span style={{ fontSize: 20 }}>📷</span>
-              </div>
               {uploadingAvatar && (
                 <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', color: WHITE, fontSize: 12, fontWeight: 700 }}>…</div>
               )}

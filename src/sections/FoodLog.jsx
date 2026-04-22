@@ -52,7 +52,7 @@ export default function FoodLog({ data, onChange }) {
             <Fld label="Meal Type" half>
               <select value={meal.meal || ''} onChange={e => set(i, 'meal', e.target.value)} style={{ ...sty.inp }}>
                 <option value="">Select...</option>
-                {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(m => <option key={m}>{m}</option>)}
+                {['Breakfast', 'Lunch', 'Tea', 'Dinner', 'Snack', 'Other'].map(m => <option key={m}>{m}</option>)}
               </select>
             </Fld>
             <Fld label="Ship / Port" half><Inp value={meal.port} onChange={v => set(i, 'port', v)} /></Fld>

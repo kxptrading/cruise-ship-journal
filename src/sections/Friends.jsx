@@ -53,8 +53,8 @@ export default function Friends() {
   const currentUserId = useUserId()
   const w             = useW()
 
-  const [searchEmail, setSearchEmail]     = useState('')
-  const [searchResult, setSearchResult]   = useState(null)   // profile row | 'not_found' | null
+  const [searchQuery, setSearchQuery]      = useState('')
+  const [searchResult, setSearchResult]   = useState(null)   // profile[] | 'not_found' | null
   const [searching, setSearching]         = useState(false)
 
   const [incoming, setIncoming]           = useState([])  // pending requests sent TO me
@@ -115,9 +115,9 @@ export default function Friends() {
 
   useEffect(() => { loadConnections() }, [loadConnections])
 
-  // ── Search by email ──────────────────────────────────────────────────────────
+  // ── Search by name ───────────────────────────────────────────────────────────
   const handleSearch = async () => {
-    const q = searchEmail.trim().toLowerCase()
+    const q = searchQuery.trim()
     if (!q) return
     setSearching(true)
     setSearchResult(null)
@@ -125,11 +125,11 @@ export default function Friends() {
     const { data } = await supabase
       .from('profiles')
       .select('user_id, email, display_name')
-      .ilike('email', q)
+      .ilike('display_name', `%${q}%`)
       .neq('user_id', currentUserId)
-      .maybeSingle()
+      .limit(8)
 
-    setSearchResult(data || 'not_found')
+    setSearchResult(data && data.length > 0 ? data : 'not_found')
     setSearching(false)
   }
 
@@ -140,7 +140,7 @@ export default function Friends() {
       to_user_id:   toUserId,
     })
     setSearchResult(null)
-    setSearchEmail('')
+    setSearchQuery('')
     loadConnections()
   }
 
@@ -179,10 +179,10 @@ export default function Friends() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <input
-            value={searchEmail}
-            onChange={e => { setSearchEmail(e.target.value); setSearchResult(null) }}
+            value={searchQuery}
+            onChange={e => { setSearchQuery(e.target.value); setSearchResult(null) }}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Search by email address…"
+            placeholder="Search by name…"
             style={{
               flex: 1, border: `1px solid ${BORDER}`, borderRadius: 8,
               padding: '10px 14px', fontSize: 16, fontFamily: 'inherit',
@@ -191,50 +191,54 @@ export default function Friends() {
           />
           <button
             onClick={handleSearch}
-            disabled={searching || !searchEmail.trim()}
+            disabled={searching || !searchQuery.trim()}
             style={{
               background: NAVY2, color: WHITE, border: 'none', borderRadius: 8,
               padding: '10px 18px', fontSize: 14, fontWeight: 600,
               cursor: searching ? 'default' : 'pointer', fontFamily: 'inherit',
-              opacity: !searchEmail.trim() ? 0.45 : 1,
+              opacity: !searchQuery.trim() ? 0.45 : 1,
             }}
           >
             {searching ? '…' : 'Search'}
           </button>
         </div>
 
-        {/* Search result */}
+        {/* Search results */}
         {searchResult === 'not_found' && (
           <div style={{ marginTop: 12, fontSize: 13, color: MUTED }}>
-            No user found with that email address.
+            No users found with that name.
           </div>
         )}
-        {searchResult && searchResult !== 'not_found' && (() => {
-          const rel = getRelationship(searchResult.user_id)
-          return (
-            <div style={{ ...card, marginTop: 14, marginBottom: 0, background: LIGHT }}>
-              <Avatar name={searchResult.display_name} bg={avatarColor(searchResult.user_id)} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{searchResult.display_name}</div>
-                <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{searchResult.email}</div>
-              </div>
-              {rel === 'friends'  && <Pill label="Already friends" color={TEAL} />}
-              {rel === 'incoming' && <Pill label="Request pending" color={GOLD} />}
-              {rel === 'none' && (
-                <button
-                  onClick={() => sendRequest(searchResult.user_id)}
-                  style={{
-                    background: NAVY2, color: WHITE, border: 'none', borderRadius: 8,
-                    padding: '8px 16px', fontSize: 13, fontWeight: 600,
-                    cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
-                  }}
-                >
-                  + Add Friend
-                </button>
-              )}
-            </div>
-          )
-        })()}
+        {Array.isArray(searchResult) && (
+          <div style={{ marginTop: 14 }}>
+            {searchResult.map(profile => {
+              const rel = getRelationship(profile.user_id)
+              return (
+                <div key={profile.user_id} style={{ ...card, marginBottom: 8, background: LIGHT }}>
+                  <Avatar name={profile.display_name} bg={avatarColor(profile.user_id)} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{profile.display_name || 'Unknown'}</div>
+                    <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{profile.email}</div>
+                  </div>
+                  {rel === 'friends'  && <Pill label="Already friends" color={TEAL} />}
+                  {rel === 'incoming' && <Pill label="Request pending" color={GOLD} />}
+                  {rel === 'none' && (
+                    <button
+                      onClick={() => sendRequest(profile.user_id)}
+                      style={{
+                        background: NAVY2, color: WHITE, border: 'none', borderRadius: 8,
+                        padding: '8px 16px', fontSize: 13, fontWeight: 600,
+                        cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0,
+                      }}
+                    >
+                      + Add Friend
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* ── Pending incoming requests ────────────────────────────────────────── */}

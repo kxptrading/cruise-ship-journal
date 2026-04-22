@@ -45,7 +45,12 @@ export default function DiningLog({ data, onChange }) {
 
           <Row2>
             <Fld label="Date" half><Inp type="date" value={r.date} onChange={v => set(i, 'date', v)} /></Fld>
-            <Fld label="Meal" half><Inp value={r.meal} onChange={v => set(i, 'meal', v)} placeholder="Breakfast / Lunch / Dinner" /></Fld>
+            <Fld label="Meal" half>
+              <select value={r.meal || ''} onChange={e => set(i, 'meal', e.target.value)} style={sty.inp}>
+                <option value="">Select…</option>
+                {['Breakfast', 'Lunch', 'Tea', 'Dinner', 'Snack', 'Other'].map(m => <option key={m}>{m}</option>)}
+              </select>
+            </Fld>
           </Row2>
 
           <Fld label="What I Ordered"><Inp value={r.ordered} onChange={v => set(i, 'ordered', v)} /></Fld>

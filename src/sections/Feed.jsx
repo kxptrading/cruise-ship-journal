@@ -353,14 +353,14 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       parent = parent.parentElement
     }
     if (!parent) return
-    const handler = () => setScrollY(Math.min(parent.scrollTop, 150))
+    const handler = () => setScrollY(Math.min(parent.scrollTop, 200))
     parent.addEventListener('scroll', handler, { passive: true })
     return () => parent.removeEventListener('scroll', handler)
   }, [])
 
   // Linear interpolation helper — drives all hero size/opacity transitions
   const lerp = (a, b, t) => a + (b - a) * t
-  const p = scrollY / 150  // 0 = full size, 1 = fully condensed
+  const p = scrollY / 200  // 0 = full size, 1 = fully condensed
 
   // Composer state
   const [composing, setComposing]         = useState(false)
@@ -471,147 +471,184 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   return (
     <div>
 
-      {/* ── Voyage hero — sticky + collapses as user scrolls ─────────────── */}
-      <div ref={heroRef} style={{
-        background: 'linear-gradient(135deg, #0369A1 0%, #0EA5E9 100%)',
-        borderRadius: lerp(20, 14, p),
-        marginBottom: 16, position: 'sticky', top: 0, zIndex: 50, overflow: 'hidden',
-        boxShadow: `0 ${lerp(6, 3, p)}px ${lerp(24, 12, p)}px rgba(3,105,161,0.25)`,
-      }}>
-        {/* Cover photo — full-width banner at top of hero when set */}
-        {voyage.coverPhotoUrl && (
-          <div style={{ width: '100%', height: w < BP.mobile ? 160 : 220, overflow: 'hidden' }}>
-            <img
-              src={voyage.coverPhotoUrl}
-              alt="Voyage cover"
-              style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-            />
-          </div>
-        )}
+      {/* ── Voyage hero — full-bleed banner that morphs to a compact bar ─── */}
+      {(() => {
+        const HERO_H_FULL = w < BP.mobile ? 210 : 250
+        const HERO_H_MIN  = 62
+        const heroH = lerp(HERO_H_FULL, HERO_H_MIN, p)
+        // Expanded layer fades out in first half of scroll; condensed fades in second half
+        const expandedOpacity  = Math.max(0, 1 - p * 2.2)
+        const condensedOpacity = Math.max(0, (p - 0.45) * 2.2)
 
-        {/* Content area — padding shrinks as hero condenses */}
-        <div style={{ padding: `${lerp(w < BP.mobile ? 20 : 28, 10, p)}px ${w < BP.mobile ? 18 : 32}px`, position: 'relative' }}>
+        return (
+          <div ref={heroRef} style={{
+            position: 'sticky', top: 0, zIndex: 50,
+            height: heroH,
+            borderRadius: lerp(20, 14, p),
+            marginBottom: 16, overflow: 'hidden',
+            boxShadow: `0 ${lerp(10, 2, p)}px ${lerp(40, 10, p)}px rgba(3,105,161,${lerp(0.3, 0.12, p)})`,
+          }}>
 
-        {/* Decorative rings — only shown when no cover photo */}
-        {!voyage.coverPhotoUrl && <>
-          <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.15)', pointerEvents: 'none' }} />
-          <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.1)', pointerEvents: 'none' }} />
-        </>}
+            {/* ── Background: gradient base always present ──────────────────── */}
+            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg, #0369A1 0%, #0284C7 50%, #0EA5E9 100%)' }} />
 
-        {/* Animated wave — sits at the bottom of the hero */}
-        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', lineHeight: 0, pointerEvents: 'none' }}>
-          <svg className="hero-wave-1" viewBox="0 0 1440 60" preserveAspectRatio="none"
-            style={{ width: '150%', height: 40, display: 'block', marginLeft: '-10%' }}>
-            <path d="M0,40 C240,0 480,60 720,30 C960,0 1200,50 1440,20 L1440,60 L0,60 Z" fill="rgba(255,255,255,0.07)" />
-          </svg>
-          <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none"
-            style={{ position: 'absolute', bottom: 0, width: '150%', height: 26, display: 'block', marginLeft: '-10%' }}>
-            <path d="M0,20 C300,40 600,0 900,20 C1100,35 1280,10 1440,20 L1440,40 L0,40 Z" fill="rgba(255,255,255,0.05)" />
-          </svg>
-        </div>
+            {/* Cover photo over gradient — fades out as banner collapses */}
+            {voyage.coverPhotoUrl && (
+              <img src={voyage.coverPhotoUrl} alt="Voyage cover" style={{
+                position: 'absolute', inset: 0,
+                width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                opacity: Math.max(0, 1 - p * 1.8),
+              }} />
+            )}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 20 }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {/* Cruise line badge */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: 'rgba(245,158,11,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>⚓</div>
-              <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.12em', textTransform: 'uppercase', fontWeight: 700 }}>
-                {voyage.cruiseLine || 'Cruise Ship Log'}
-              </span>
+            {/* Vignette — helps text stay readable over both photo and gradient */}
+            <div style={{
+              position: 'absolute', inset: 0, pointerEvents: 'none',
+              background: `linear-gradient(to bottom, rgba(3,105,161,0.0) 0%, rgba(3,50,100,${lerp(0.55, 0.78, p)}) 100%)`,
+            }} />
+
+            {/* Decorative rings — gradient-only, fade quickly on scroll */}
+            {!voyage.coverPhotoUrl && (
+              <>
+                <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.13)', pointerEvents: 'none', opacity: expandedOpacity }} />
+                <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.08)', pointerEvents: 'none', opacity: expandedOpacity }} />
+              </>
+            )}
+
+            {/* Animated wave — fades out as banner collapses */}
+            <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', lineHeight: 0, pointerEvents: 'none', opacity: expandedOpacity }}>
+              <svg className="hero-wave-1" viewBox="0 0 1440 60" preserveAspectRatio="none"
+                style={{ width: '150%', height: 38, display: 'block', marginLeft: '-10%' }}>
+                <path d="M0,40 C240,0 480,60 720,30 C960,0 1200,50 1440,20 L1440,60 L0,60 Z" fill="rgba(255,255,255,0.07)" />
+              </svg>
+              <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none"
+                style={{ position: 'absolute', bottom: 0, width: '150%', height: 24, display: 'block', marginLeft: '-10%' }}>
+                <path d="M0,20 C300,40 600,0 900,20 C1100,35 1280,10 1440,20 L1440,40 L0,40 Z" fill="rgba(255,255,255,0.05)" />
+              </svg>
             </div>
 
-            {/* Ship name — shrinks from display to compact as hero condenses */}
-            <h1 style={{
-              margin: 0,
-              fontSize: lerp(w < BP.mobile ? 32 : 40, w < BP.mobile ? 18 : 22, p),
-              fontWeight: 400, color: WHITE,
-              fontFamily: FONT_DISPLAY, lineHeight: 1.1,
-              marginBottom: lerp(10, 4, p),
+            {/* ── Expanded content — pinned to bottom of banner ─────────────── */}
+            <div style={{
+              position: 'absolute', bottom: 0, left: 0, right: 0,
+              padding: `0 ${w < BP.mobile ? 18 : 28}px 20px`,
+              opacity: expandedOpacity,
+              transform: `translateY(${lerp(0, 8, p)}px)`,
+              pointerEvents: p > 0.35 ? 'none' : 'auto',
             }}>
-              {voyage.shipName || 'Your Voyage Awaits'}
-            </h1>
-
-            {/* Location + dates row — fades out as hero condenses */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? lerp(16, 0, p) : 0, opacity: lerp(1, 0, Math.min(1, p * 2)), overflow: 'hidden', maxHeight: lerp(60, 0, p) }}>
-              {voyage.departurePort && (
-                <span style={{ fontSize: 13, color: GOLD }}>📍 {voyage.departurePort}</span>
-              )}
-              {voyage.departureDate && (
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)' }}>
-                  📅 {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
+              {/* Cruise line badge */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
+                <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(245,158,11,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>⚓</div>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.13em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY }}>
+                  {voyage.cruiseLine || 'Cruise Ship Log'}
                 </span>
-              )}
-              {voyage.cabin && (
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)' }}>🚪 Cabin {voyage.cabin}</span>
-              )}
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20 }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Ship name */}
+                  <h1 style={{ margin: '0 0 8px', fontSize: w < BP.mobile ? 30 : 38, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.05 }}>
+                    {voyage.shipName || 'Your Voyage Awaits'}
+                  </h1>
+
+                  {/* Dates + port */}
+                  {(voyage.departurePort || voyage.departureDate) && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 16px', marginBottom: voyagePct !== null ? 12 : 0 }}>
+                      {voyage.departurePort && <span style={{ fontSize: 12, color: GOLD }}>📍 {voyage.departurePort}</span>}
+                      {voyage.departureDate && (
+                        <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)' }}>
+                          📅 {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
+                        </span>
+                      )}
+                      {voyage.cabin && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>🚪 Cabin {voyage.cabin}</span>}
+                    </div>
+                  )}
+
+                  {/* Set up CTA */}
+                  {!voyage.shipName && (
+                    <button onClick={() => onNav('voyage')} style={{ background: GOLD, color: '#1C2B3A', border: 'none', borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY, marginBottom: 10 }}>
+                      Set Up Your Voyage →
+                    </button>
+                  )}
+
+                  {/* Progress bar */}
+                  {voyagePct !== null && (
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
+                        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: FONT_BODY }}>Voyage Progress</span>
+                        <span style={{ fontSize: 10, color: GOLD, fontWeight: 700, fontFamily: FONT_BODY }}>
+                          {daysLeft === 0 ? 'Voyage Complete ✓' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
+                        </span>
+                      </div>
+                      <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${barPct}%`, background: GOLD, borderRadius: 2, transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }} />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Companions */}
+                  {(voyage.companion1 || voyage.companion2) && (
+                    <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>With:</span>
+                      {[voyage.companion1, voyage.companion2, voyage.companion3, voyage.companion4].filter(Boolean).map((c, i) => (
+                        <div key={i} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{c}</div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Day counter ring — desktop */}
+                {w >= BP.mobile && voyageNights > 0 && (
+                  <div style={{ flexShrink: 0, textAlign: 'center' }}>
+                    <div style={{ position: 'relative', width: 80, height: 80 }}>
+                      <Donut pct={voyagePct || 0} size={80} color={GOLD} bg="rgba(255,255,255,0.1)" thick={6} />
+                      <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ fontSize: currentDay ? 24 : 18, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
+                          {currentDay || voyageNights}
+                        </div>
+                        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.38)', marginTop: 2 }}>
+                          {currentDay ? `of ${voyageNights}` : 'nights'}
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
+                      {currentDay ? 'Current Day' : 'Duration'}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Set up CTA */}
-            {!voyage.shipName && (
-              <button
-                onClick={() => onNav('voyage')}
-                style={{ background: GOLD, color: '#1C2B3A', border: 'none', borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY }}>
-                Set Up Your Voyage →
-              </button>
-            )}
-
-            {/* Progress bar */}
-            {voyagePct !== null && (
-              <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.07em', textTransform: 'uppercase' }}>Voyage Progress</span>
-                  <span style={{ fontSize: 11, color: GOLD, fontWeight: 700 }}>
-                    {daysLeft === 0 ? 'Voyage Complete ✓' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} remaining`}
+            {/* ── Condensed bar — fades in as banner collapses ──────────────── */}
+            <div style={{
+              position: 'absolute', inset: 0,
+              display: 'flex', alignItems: 'center',
+              padding: `0 ${w < BP.mobile ? 16 : 24}px`,
+              opacity: condensedOpacity,
+              pointerEvents: p < 0.55 ? 'none' : 'auto',
+            }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'rgba(245,158,11,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0, marginRight: 12 }}>⚓</div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontFamily: FONT_DISPLAY, fontSize: w < BP.mobile ? 15 : 18, color: WHITE, fontWeight: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', lineHeight: 1.2 }}>
+                  {voyage.shipName || 'Your Voyage'}
+                </div>
+                {voyage.cruiseLine && (
+                  <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)', textTransform: 'uppercase', letterSpacing: '0.09em', fontFamily: FONT_BODY }}>{voyage.cruiseLine}</div>
+                )}
+              </div>
+              {voyagePct !== null && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                  <span style={{ fontSize: 12, color: GOLD, fontWeight: 700, fontFamily: FONT_BODY }}>
+                    {daysLeft === 0 ? '✓ Complete' : `Day ${currentDay}`}
                   </span>
-                </div>
-                <div style={{ height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', width: `${barPct}%`, background: GOLD, borderRadius: 3, transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }} />
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Day counter ring — desktop only, fades as hero condenses */}
-          {w >= BP.mobile && voyageNights > 0 && (
-            <div style={{ flexShrink: 0, textAlign: 'center', opacity: lerp(1, 0, Math.min(1, p * 1.5)), overflow: 'hidden', maxWidth: lerp(90, 0, p) }}>
-              <div style={{ position: 'relative', width: 90, height: 90 }}>
-                <Donut pct={voyagePct || 0} size={90} color={GOLD} bg="rgba(255,255,255,0.07)" thick={7} />
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: currentDay ? 26 : 20, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
-                    {currentDay || voyageNights}
-                  </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.05em', marginTop: 2 }}>
-                    {currentDay ? `of ${voyageNights}` : 'nights'}
+                  <div style={{ width: 52, height: 3, background: 'rgba(255,255,255,0.14)', borderRadius: 2 }}>
+                    <div style={{ height: '100%', width: `${barPct}%`, background: GOLD, borderRadius: 2 }} />
                   </div>
                 </div>
-              </div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: 5 }}>
-                {currentDay ? 'Current Day' : 'Duration'}
-              </div>
+              )}
             </div>
-          )}
-        </div>
-
-        {/* Companions strip — collapses as hero condenses */}
-        {(voyage.companion1 || voyage.companion2) && (
-          <div style={{ marginTop: lerp(14, 0, p), paddingTop: lerp(12, 0, p), borderTop: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', opacity: lerp(1, 0, Math.min(1, p * 2)), overflow: 'hidden', maxHeight: lerp(60, 0, p) }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>With:</span>
-            {[voyage.companion1, voyage.companion2, voyage.companion3, voyage.companion4].filter(Boolean).map((c, i) => (
-              <div key={i} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', borderRadius: 20, padding: '3px 12px', fontSize: 12, color: 'rgba(255,255,255,0.55)' }}>{c}</div>
-            ))}
           </div>
-        )}
-        </div> {/* end content padding div */}
-
-        {/* Fade overlay — deepens gradually as hero condenses */}
-        <div style={{
-          position: 'absolute', bottom: 0, left: 0, right: 0, height: '60%',
-          background: 'linear-gradient(to bottom, transparent, rgba(3,105,161,0.85))',
-          pointerEvents: 'none',
-          opacity: p,
-          zIndex: 2,
-        }} />
-      </div>
+        )
+      })()}
 
       {/* ── Compact metrics strip ─────────────────────────────────────────── */}
       {(() => {

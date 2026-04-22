@@ -65,6 +65,66 @@ export const THEMES = {
       '--t-btn-shadow':  'rgba(249,115,22,0.35)',
     },
   },
+
+  violet: {
+    id:    'violet',
+    name:  'Violet',
+    emoji: '💜',
+    vars: {
+      '--t-primary':     '#7C3AED',
+      '--t-primary-dk':  '#5B21B6',
+      '--t-primary-mid': '#6D28D9',
+      '--t-primary-lt':  '#C4B5FD',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#F5F3FF',
+      '--t-btn-shadow':  'rgba(124,58,237,0.35)',
+    },
+  },
+
+  coral: {
+    id:    'coral',
+    name:  'Coral',
+    emoji: '🪸',
+    vars: {
+      '--t-primary':     '#F43F5E',
+      '--t-primary-dk':  '#BE123C',
+      '--t-primary-mid': '#E11D48',
+      '--t-primary-lt':  '#FDA4AF',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#FFF1F2',
+      '--t-btn-shadow':  'rgba(244,63,94,0.35)',
+    },
+  },
+
+  indigo: {
+    id:    'indigo',
+    name:  'Indigo',
+    emoji: '🔷',
+    vars: {
+      '--t-primary':     '#4F46E5',
+      '--t-primary-dk':  '#3730A3',
+      '--t-primary-mid': '#4338CA',
+      '--t-primary-lt':  '#A5B4FC',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#EEF2FF',
+      '--t-btn-shadow':  'rgba(79,70,229,0.35)',
+    },
+  },
+
+  teal: {
+    id:    'teal',
+    name:  'Teal',
+    emoji: '🐚',
+    vars: {
+      '--t-primary':     '#0D9488',
+      '--t-primary-dk':  '#0F766E',
+      '--t-primary-mid': '#14B8A6',
+      '--t-primary-lt':  '#5EEAD4',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#F0FDFA',
+      '--t-btn-shadow':  'rgba(13,148,136,0.35)',
+    },
+  },
 }
 
 // Apply a theme's CSS variables to :root

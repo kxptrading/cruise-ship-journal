@@ -15,8 +15,8 @@ export default function AppearanceBlock({ theme, onThemeChange }) {
         <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, color: NAVY2, lineHeight: 1 }}>Appearance</h2>
       </div>
 
-      {/* Theme swatches — 2×2 grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      {/* Theme swatches — 4 columns, 2 rows */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
         {Object.values(THEMES).map(t => {
           const active = theme === t.id
           return (

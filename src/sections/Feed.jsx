@@ -245,23 +245,26 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
                 onMouseEnter={() => setHovered(r.id)}
                 onMouseLeave={() => setHovered(null)}
                 style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
                   background: rd.mine ? 'var(--t-bg)' : 'transparent',
                   border: `1.5px solid ${rd.mine ? 'var(--t-primary)' : BORDER}`,
-                  borderRadius: 12, padding: '6px 8px',
-                  cursor: 'pointer', minWidth: 44,
-                  transform: isAnimating ? 'scale(1.35)' : isHovered ? 'scale(1.25)' : 'scale(1)',
+                  borderRadius: 14, padding: '8px 10px',
+                  cursor: 'pointer', minWidth: 52,
+                  transform: isAnimating ? 'scale(1.2)' : 'scale(1)',
                   transition: isAnimating
                     ? 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)'
-                    : 'transform 0.15s ease, border-color 0.15s, background 0.15s, box-shadow 0.15s',
-                  boxShadow: rd.mine ? '0 2px 8px var(--t-btn-shadow)' : isHovered ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                    : 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+                  boxShadow: rd.mine ? '0 2px 10px var(--t-btn-shadow)' : isHovered ? '0 3px 10px rgba(0,0,0,0.1)' : 'none',
                   outline: 'none',
                 }}
               >
-                <span style={{ fontSize: 20, lineHeight: 1 }}>{r.emoji}</span>
+                <span
+                  className={isHovered ? 'reaction-emoji-hover' : ''}
+                  style={{ fontSize: 26, lineHeight: 1, display: 'block' }}
+                >{r.emoji}</span>
                 {rd.count > 0 && (
                   <span style={{
-                    fontSize: 10, fontWeight: 700, lineHeight: 1,
+                    fontSize: 11, fontWeight: 700, lineHeight: 1,
                     color: rd.mine ? 'var(--t-primary)' : MUTED,
                     transition: 'color 0.15s',
                   }}>{rd.count}</span>

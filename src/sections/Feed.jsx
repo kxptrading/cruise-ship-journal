@@ -17,6 +17,15 @@ import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
 
+// ── Reaction definitions ──────────────────────────────────────────────────────
+const REACTIONS = [
+  { id: 'love',      emoji: '🚢', label: 'Love This' },
+  { id: 'epic',      emoji: '🌊', label: 'Epic Memory' },
+  { id: 'wish',      emoji: '🍹', label: 'Wish I Was There' },
+  { id: 'hilarious', emoji: '😂', label: 'Hilarious' },
+  { id: 'shot',      emoji: '📸', label: 'Great Shot' },
+]
+
 // ── Weather chip styles — per-condition colour tinting ───────────────────────
 const WX_EMOJI = {
   Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️',
@@ -34,8 +43,15 @@ const WX_STYLE = {
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onViewDay, avatarUrl, initials, author }) {
+function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact }) {
   const w = useW()
+  const [animating, setAnimating] = useState(null)
+
+  const handleReactClick = (id) => {
+    setAnimating(id)
+    setTimeout(() => setAnimating(null), 320)
+    onReact?.(id)
+  }
   const { dayIndex, resolvedPort, date, highlights, bestMoment, weather,
           breakfast, lunch, dinner, drink, activity, rating, photo } = item
 
@@ -191,6 +207,48 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author }) {
         )}
       </div>
 
+      {/* ── Reactions bar ──────────────────────────────────────────────────── */}
+      <div style={{ padding: '10px 14px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        {REACTIONS.map(r => {
+          const rd = reactions?.[r.id] || { count: 0, mine: false }
+          const isAnimating = animating === r.id
+          return (
+            <button
+              key={r.id}
+              onClick={() => handleReactClick(r.id)}
+              title={r.label}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: rd.mine ? 'var(--t-bg)' : '#F9FAFB',
+                border: `1.5px solid ${rd.mine ? 'var(--t-primary)' : BORDER}`,
+                borderRadius: 20, padding: '5px 10px',
+                cursor: 'pointer', fontFamily: FONT_BODY,
+                color: rd.mine ? 'var(--t-primary)' : MUTED,
+                fontWeight: rd.mine ? 700 : 400,
+                fontSize: 13,
+                transform: isAnimating ? 'scale(1.3)' : rd.mine ? 'scale(1.05)' : 'scale(1)',
+                transition: isAnimating ? 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1)' : 'all 0.2s ease',
+                boxShadow: rd.mine ? '0 2px 8px var(--t-btn-shadow)' : 'none',
+              }}
+            >
+              <span style={{ fontSize: 16, lineHeight: 1 }}>{r.emoji}</span>
+              {w >= BP.mobile && (
+                <span style={{ fontSize: 11, whiteSpace: 'nowrap' }}>{r.label}</span>
+              )}
+              {rd.count > 0 && (
+                <span style={{
+                  background: rd.mine ? 'var(--t-primary)' : BORDER,
+                  color: rd.mine ? WHITE : MUTED,
+                  borderRadius: 10, padding: '1px 6px',
+                  fontSize: 11, fontWeight: 700, lineHeight: 1.4,
+                  transition: 'all 0.2s',
+                }}>{rd.count}</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
       {/* ── Card footer: view full day link (own posts only) ────────────────── */}
       {onViewDay && (
         <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#F0F9FF', display: 'flex', justifyContent: 'flex-end' }}>
@@ -302,6 +360,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           const photo   = photoMap[`${log.voyage_id}-${log.day_number}`] || null
           return {
             dayIndex:     log.day_number - 1,
+            dayNumber:    log.day_number,
+            voyageId:     log.voyage_id,
             date:         log.date,
             port:         log.port,
             resolvedPort: port,
@@ -329,6 +389,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
     loadFriendFeeds()
   }, [userId])
+
+  // Reactions — keyed by `${voyageId}-${dayNumber}`, value is { [reactionId]: { count, mine } }
+  const [reactionsMap, setReactionsMap] = useState({})
 
   // Photos keyed by day index — loads the first photo for each day in the
   // background after the feed renders, then triggers a re-render to show them.
@@ -421,6 +484,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     .map((log, i) => ({
       ...log,
       dayIndex:     i,
+      dayNumber:    i + 1,
+      voyageId:     voyageId,
       resolvedPort: log.port || itinerary[i]?.port || '',
       photo:        photosByDay[i] || null,
       author:       null,   // null = own post
@@ -437,6 +502,66 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       if (db) return 1
       return b.dayIndex - a.dayIndex
     })
+
+  // ── Load reactions for all visible posts ─────────────────────────────
+  useEffect(() => {
+    if (!feedItems.length || !userId) return
+    const voyageIds = [...new Set(feedItems.map(i => i.voyageId).filter(Boolean))]
+    if (!voyageIds.length) return
+
+    supabase
+      .from('reactions')
+      .select('voyage_id, day_number, reaction, user_id')
+      .in('voyage_id', voyageIds)
+      .then(({ data }) => {
+        if (!data) return
+        const map = {}
+        data.forEach(row => {
+          const key = `${row.voyage_id}-${row.day_number}`
+          if (!map[key]) map[key] = {}
+          if (!map[key][row.reaction]) map[key][row.reaction] = { count: 0, mine: false }
+          map[key][row.reaction].count++
+          if (row.user_id === userId) map[key][row.reaction].mine = true
+        })
+        setReactionsMap(map)
+      })
+  }, [feedItems.length, userId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Toggle a reaction — optimistic update then DB sync ────────────────
+  const handleReact = async (postVoyageId, dayNumber, reactionId) => {
+    if (!userId || !postVoyageId) return
+    const key     = `${postVoyageId}-${dayNumber}`
+    const current = reactionsMap[key]?.[reactionId] || { count: 0, mine: false }
+    const adding  = !current.mine
+
+    // Optimistic UI update
+    setReactionsMap(prev => ({
+      ...prev,
+      [key]: {
+        ...(prev[key] || {}),
+        [reactionId]: {
+          count: Math.max(0, current.count + (adding ? 1 : -1)),
+          mine:  adding,
+        },
+      },
+    }))
+
+    // Sync to DB
+    if (adding) {
+      await supabase.from('reactions').insert({
+        voyage_id:  postVoyageId,
+        day_number: dayNumber,
+        user_id:    userId,
+        reaction:   reactionId,
+      })
+    } else {
+      await supabase.from('reactions').delete()
+        .eq('voyage_id',  postVoyageId)
+        .eq('day_number', dayNumber)
+        .eq('user_id',    userId)
+        .eq('reaction',   reactionId)
+    }
+  }
 
   // ── Composer submit ───────────────────────────────────────────────────────
   const handlePost = () => {
@@ -796,7 +921,16 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         /* Post cards */
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {feedItems.map((item, i) => (
-            <PostCard key={i} item={item} onViewDay={item.author ? null : onViewDay} avatarUrl={avatarUrl} initials={userInitials} author={item.author} />
+            <PostCard
+              key={i}
+              item={item}
+              onViewDay={item.author ? null : onViewDay}
+              avatarUrl={avatarUrl}
+              initials={userInitials}
+              author={item.author}
+              reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
+              onReact={(rid) => handleReact(item.voyageId, item.dayNumber, rid)}
+            />
           ))}
 
           {/* Bottom CTA — go to full Daily Log */}

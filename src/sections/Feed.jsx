@@ -45,7 +45,8 @@ const WX_STYLE = {
 // Renders a single daily log entry as a social-style post card.
 function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact }) {
   const w = useW()
-  const [animating, setAnimating] = useState(null)
+  const [animating, setAnimating]     = useState(null)
+  const [hoveredReaction, setHovered] = useState(null)
 
   const handleReactClick = (id) => {
     setAnimating(id)
@@ -208,43 +209,65 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
       </div>
 
       {/* ── Reactions bar ──────────────────────────────────────────────────── */}
-      <div style={{ padding: '10px 14px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+      <div style={{ padding: '10px 16px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 4 }}>
         {REACTIONS.map(r => {
-          const rd = reactions?.[r.id] || { count: 0, mine: false }
+          const rd         = reactions?.[r.id] || { count: 0, mine: false }
           const isAnimating = animating === r.id
+          const isHovered   = hoveredReaction === r.id
           return (
-            <button
-              key={r.id}
-              onClick={() => handleReactClick(r.id)}
-              title={r.label}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                background: rd.mine ? 'var(--t-bg)' : '#F9FAFB',
-                border: `1.5px solid ${rd.mine ? 'var(--t-primary)' : BORDER}`,
-                borderRadius: 20, padding: '5px 10px',
-                cursor: 'pointer', fontFamily: FONT_BODY,
-                color: rd.mine ? 'var(--t-primary)' : MUTED,
-                fontWeight: rd.mine ? 700 : 400,
-                fontSize: 13,
-                transform: isAnimating ? 'scale(1.3)' : rd.mine ? 'scale(1.05)' : 'scale(1)',
-                transition: isAnimating ? 'transform 0.15s cubic-bezier(0.34,1.56,0.64,1)' : 'all 0.2s ease',
-                boxShadow: rd.mine ? '0 2px 8px var(--t-btn-shadow)' : 'none',
-              }}
-            >
-              <span style={{ fontSize: 16, lineHeight: 1 }}>{r.emoji}</span>
-              {w >= BP.mobile && (
-                <span style={{ fontSize: 11, whiteSpace: 'nowrap' }}>{r.label}</span>
+            <div key={r.id} style={{ position: 'relative', flexShrink: 0 }}>
+              {/* Tooltip — appears above on hover */}
+              {isHovered && (
+                <div style={{
+                  position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: '#1C2B3A', color: WHITE,
+                  borderRadius: 7, padding: '5px 10px',
+                  fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
+                  pointerEvents: 'none', zIndex: 20,
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                }}>
+                  {r.label}
+                  {/* Arrow */}
+                  <div style={{
+                    position: 'absolute', top: '100%', left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: 0, height: 0,
+                    borderLeft: '5px solid transparent',
+                    borderRight: '5px solid transparent',
+                    borderTop: '5px solid #1C2B3A',
+                  }} />
+                </div>
               )}
-              {rd.count > 0 && (
-                <span style={{
-                  background: rd.mine ? 'var(--t-primary)' : BORDER,
-                  color: rd.mine ? WHITE : MUTED,
-                  borderRadius: 10, padding: '1px 6px',
-                  fontSize: 11, fontWeight: 700, lineHeight: 1.4,
-                  transition: 'all 0.2s',
-                }}>{rd.count}</span>
-              )}
-            </button>
+
+              <button
+                onClick={() => handleReactClick(r.id)}
+                onMouseEnter={() => setHovered(r.id)}
+                onMouseLeave={() => setHovered(null)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
+                  background: rd.mine ? 'var(--t-bg)' : 'transparent',
+                  border: `1.5px solid ${rd.mine ? 'var(--t-primary)' : BORDER}`,
+                  borderRadius: 12, padding: '6px 8px',
+                  cursor: 'pointer', minWidth: 44,
+                  transform: isAnimating ? 'scale(1.35)' : isHovered ? 'scale(1.25)' : 'scale(1)',
+                  transition: isAnimating
+                    ? 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)'
+                    : 'transform 0.15s ease, border-color 0.15s, background 0.15s, box-shadow 0.15s',
+                  boxShadow: rd.mine ? '0 2px 8px var(--t-btn-shadow)' : isHovered ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                  outline: 'none',
+                }}
+              >
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{r.emoji}</span>
+                {rd.count > 0 && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, lineHeight: 1,
+                    color: rd.mine ? 'var(--t-primary)' : MUTED,
+                    transition: 'color 0.15s',
+                  }}>{rd.count}</span>
+                )}
+              </button>
+            </div>
           )
         })}
       </div>
@@ -527,26 +550,43 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       })
   }, [feedItems.length, userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Toggle a reaction — optimistic update then DB sync ────────────────
+  // ── Toggle a reaction — radio behaviour (one per post) ───────────────
+  // Selecting a new reaction first removes any existing one from this user.
+  // Tapping the active reaction again deselects it.
   const handleReact = async (postVoyageId, dayNumber, reactionId) => {
     if (!userId || !postVoyageId) return
-    const key     = `${postVoyageId}-${dayNumber}`
-    const current = reactionsMap[key]?.[reactionId] || { count: 0, mine: false }
-    const adding  = !current.mine
+    const key = `${postVoyageId}-${dayNumber}`
+    const postReactions    = reactionsMap[key] || {}
+    const prevReactionId   = Object.entries(postReactions).find(([, v]) => v.mine)?.[0]
+    const isSame           = prevReactionId === reactionId
+    const adding           = !isSame  // adding=false means user tapped their active reaction
 
-    // Optimistic UI update
-    setReactionsMap(prev => ({
-      ...prev,
-      [key]: {
-        ...(prev[key] || {}),
-        [reactionId]: {
-          count: Math.max(0, current.count + (adding ? 1 : -1)),
-          mine:  adding,
-        },
-      },
-    }))
+    // Optimistic update — remove old, add new (unless deselecting)
+    setReactionsMap(prev => {
+      const current = { ...(prev[key] || {}) }
+      if (prevReactionId && current[prevReactionId]) {
+        current[prevReactionId] = {
+          count: Math.max(0, current[prevReactionId].count - 1),
+          mine: false,
+        }
+      }
+      if (adding) {
+        current[reactionId] = {
+          count: (current[reactionId]?.count || 0) + 1,
+          mine: true,
+        }
+      }
+      return { ...prev, [key]: current }
+    })
 
-    // Sync to DB
+    // DB sync — delete previous, insert new
+    if (prevReactionId) {
+      await supabase.from('reactions').delete()
+        .eq('voyage_id',  postVoyageId)
+        .eq('day_number', dayNumber)
+        .eq('user_id',    userId)
+        .eq('reaction',   prevReactionId)
+    }
     if (adding) {
       await supabase.from('reactions').insert({
         voyage_id:  postVoyageId,
@@ -554,12 +594,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         user_id:    userId,
         reaction:   reactionId,
       })
-    } else {
-      await supabase.from('reactions').delete()
-        .eq('voyage_id',  postVoyageId)
-        .eq('day_number', dayNumber)
-        .eq('user_id',    userId)
-        .eq('reaction',   reactionId)
     }
   }
 

@@ -388,23 +388,25 @@ export default function App() {
   const isOverlay = winW <= BP.tablet
   const isMobile  = winW < BP.mobile
 
+  const [session, setSession]         = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
   const [theme, setTheme]             = useState(getSavedTheme)
 
   // Apply the persisted theme immediately on first render (localStorage fallback)
   useEffect(() => { applyTheme(theme) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const switchTheme = async (id) => {
-    applyTheme(id)
+  const switchTheme = (id) => {
+    applyTheme(id)   // writes CSS vars + localStorage
     setTheme(id)
-    // Persist to DB so it survives across devices / browsers
-    const userId = supabase.auth.getUser ? (await supabase.auth.getUser()).data?.user?.id : null
-    if (userId) {
-      supabase.from('profiles').upsert({ user_id: userId, theme: id }, { onConflict: 'user_id' })
+    // Persist to DB using the session already in state — no extra API call needed
+    const uid = session?.user?.id
+    if (uid) {
+      supabase.from('profiles')
+        .update({ theme: id })
+        .eq('user_id', uid)
     }
   }
-
-  const [session, setSession]         = useState(null)
-  const [authChecked, setAuthChecked] = useState(false)
   const [section, setSection]         = useState('dashboard')
   const [selectedDay, setSelectedDay] = useState(null)  // day index open in DayDetail
   const [data, setData]               = useState(INIT)

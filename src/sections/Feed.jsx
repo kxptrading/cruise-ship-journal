@@ -10,12 +10,14 @@
 // onChange('dailyLogs', updatedArray) to post a highlight to a day.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, BP, sty, FONT_DISPLAY, FONT_BODY, SECTION_COLORS } from '../constants'
 import { useW, useVoyageId, useUserId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
+import { getTimeOfDay, getTimeGradient, getVignetteRGB, playShipHorn } from '../lib/atmosphere'
+import Confetti from '../components/Confetti'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
 const REACTIONS = [
@@ -416,6 +418,30 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     loadFriendFeeds()
   }, [userId])
 
+  // ── Atmosphere ─────────────────────────────────────────────────────────────
+  const [timeOfDay, setTimeOfDay]     = useState(getTimeOfDay)
+  const [showConfetti, setShowConfetti] = useState(false)
+  const hornPlayedRef                 = useRef(false)
+
+  // Re-check time of day every minute so long sessions stay accurate
+  useEffect(() => {
+    const t = setInterval(() => setTimeOfDay(getTimeOfDay()), 60_000)
+    return () => clearInterval(t)
+  }, [])
+
+  // Stars — generated once, stable across renders
+  const stars = useMemo(() =>
+    Array.from({ length: 70 }, (_, i) => ({
+      id:          i,
+      x:           Math.random() * 100,
+      y:           Math.random() * 85,    // keep out of wave zone
+      size:        Math.random() * 2.5 + 0.8,
+      delay:       Math.random() * 4,
+      duration:    Math.random() * 2.5 + 1.8,
+      baseOpacity: Math.random() * 0.5 + 0.3,
+    })), []
+  )
+
   // Reactions — keyed by `${voyageId}-${dayNumber}`, value is { [reactionId]: { count, mine } }
   const [reactionsMap, setReactionsMap] = useState({})
 
@@ -503,6 +529,18 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     const t = setTimeout(() => setBarPct(voyagePct || 0), 120)
     return () => clearTimeout(t)
   }, [voyagePct])
+
+  // Fire confetti + horn once per session when voyage is complete
+  useEffect(() => {
+    if (voyageOver && !hornPlayedRef.current) {
+      hornPlayedRef.current = true
+      setTimeout(() => {
+        playShipHorn()
+        setShowConfetti(true)
+        setTimeout(() => setShowConfetti(false), 4500)
+      }, 800)
+    }
+  }, [voyageOver])
 
   // ── Feed items ────────────────────────────────────────────────────────────
   // Own posts merged with friend posts, sorted newest first.
@@ -632,6 +670,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
+      <Confetti active={showConfetti} />
 
       {/* ── Voyage hero — full-bleed banner that morphs to a compact bar ─── */}
       {(() => {
@@ -651,23 +690,65 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             boxShadow: `0 ${lerp(10, 2, p)}px ${lerp(40, 10, p)}px rgba(3,105,161,${lerp(0.3, 0.12, p)})`,
           }}>
 
-            {/* ── Background: gradient base always present ──────────────────── */}
-            <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 50%, var(--t-primary) 100%)' }} />
+            {/* ── Background: time-of-day gradient (falls back to theme) ─────── */}
+            {(() => {
+              const tg = getTimeGradient(timeOfDay)
+              const [vr, vg, vb] = getVignetteRGB(timeOfDay)
+              return (
+                <>
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: tg || 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 50%, var(--t-primary) 100%)',
+                    transition: 'background 3s ease',
+                  }} />
 
-            {/* Cover photo over gradient — fades out as banner collapses */}
-            {voyage.coverPhotoUrl && (
-              <img src={voyage.coverPhotoUrl} alt="Voyage cover" style={{
-                position: 'absolute', inset: 0,
-                width: '100%', height: '100%', objectFit: 'cover', display: 'block',
-                opacity: Math.max(0, 1 - p * 1.8),
-              }} />
-            )}
+                  {/* Night sky — twinkling stars + moon */}
+                  {timeOfDay === 'night' && (
+                    <>
+                      {stars.map(s => (
+                        <div
+                          key={s.id}
+                          className="night-star"
+                          style={{
+                            position: 'absolute',
+                            left: `${s.x}%`, top: `${s.y}%`,
+                            width: s.size, height: s.size,
+                            borderRadius: '50%',
+                            background: 'white',
+                            animationDelay:    `${s.delay}s`,
+                            animationDuration: `${s.duration}s`,
+                          }}
+                        />
+                      ))}
+                      <div
+                        className="moon-icon"
+                        style={{
+                          position: 'absolute', top: 14, right: 58,
+                          fontSize: 28, opacity: expandedOpacity,
+                          pointerEvents: 'none',
+                        }}
+                      >🌙</div>
+                    </>
+                  )}
 
-            {/* Vignette — helps text stay readable over both photo and gradient */}
-            <div style={{
-              position: 'absolute', inset: 0, pointerEvents: 'none',
-              background: `linear-gradient(to bottom, rgba(3,105,161,0.0) 0%, rgba(3,50,100,${lerp(0.55, 0.78, p)}) 100%)`,
-            }} />
+                  {/* Cover photo over background — fades out as banner collapses */}
+                  {voyage.coverPhotoUrl && (
+                    <img src={voyage.coverPhotoUrl} alt="Voyage cover" style={{
+                      position: 'absolute', inset: 0,
+                      width: '100%', height: '100%', objectFit: 'cover', display: 'block',
+                      opacity: Math.max(0, 1 - p * 1.8),
+                    }} />
+                  )}
+
+                  {/* Vignette — colour-tinted to match the time of day */}
+                  <div style={{
+                    position: 'absolute', inset: 0, pointerEvents: 'none',
+                    background: `linear-gradient(to bottom, rgba(${vr},${vg},${vb},0.0) 0%, rgba(${vr},${vg},${vb},${lerp(0.55, 0.78, p)}) 100%)`,
+                  }} />
+                </>
+              )
+            })()}
+
 
             {/* Decorative rings — gradient-only, fade quickly on scroll */}
             {!voyage.coverPhotoUrl && (
@@ -686,6 +767,10 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none"
                 style={{ position: 'absolute', bottom: 0, width: '150%', height: 24, display: 'block', marginLeft: '-10%' }}>
                 <path d="M0,20 C300,40 600,0 900,20 C1100,35 1280,10 1440,20 L1440,40 L0,40 Z" fill="rgba(255,255,255,0.05)" />
+              </svg>
+              <svg className="hero-wave-3" viewBox="0 0 1440 30" preserveAspectRatio="none"
+                style={{ position: 'absolute', bottom: 0, width: '160%', height: 16, display: 'block', marginLeft: '-5%' }}>
+                <path d="M0,15 C200,30 500,0 800,15 C1050,28 1300,5 1440,15 L1440,30 L0,30 Z" fill="rgba(255,255,255,0.03)" />
               </svg>
             </div>
 

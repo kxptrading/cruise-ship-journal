@@ -101,6 +101,50 @@ input, textarea, select {
   transform: translateY(-2px);
 }
 
+/* ── Subtle ocean drift on page background ────────────────────────────────── */
+@keyframes oceanDrift {
+  0%, 100% { opacity: 0.7; transform: scale(1)    translateX(0); }
+  33%       { opacity: 1;   transform: scale(1.06) translateX(12px); }
+  66%       { opacity: 0.8; transform: scale(0.97) translateX(-8px); }
+}
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 25% 35%, rgba(14,165,233,0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 70%, rgba(14,165,233,0.04) 0%, transparent 50%);
+  animation: oceanDrift 18s ease-in-out infinite;
+  z-index: -1;
+}
+
+/* ── Night sky — star twinkle ──────────────────────────────────────────────── */
+@keyframes starTwinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.8); }
+  50%       { opacity: 1;    transform: scale(1.4); }
+}
+.night-star {
+  animation: starTwinkle ease-in-out infinite;
+}
+
+/* ── Night moon float ──────────────────────────────────────────────────────── */
+@keyframes moonFloat {
+  0%, 100% { transform: translateY(0)    rotate(-8deg); }
+  50%       { transform: translateY(-5px) rotate(4deg);  }
+}
+.moon-icon {
+  animation: moonFloat 7s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px rgba(255,255,180,0.55));
+}
+
+/* ── Third hero wave ────────────────────────────────────────────────────────── */
+@keyframes waveFloat3 {
+  0%, 100% { transform: translateX(0); }
+  50%       { transform: translateX(15px); }
+}
+.hero-wave-3 { animation: waveFloat3 7s ease-in-out infinite; }
+
 /* ── Reaction emoji hover wiggle ──────────────────────────────────────────── */
 @keyframes reactionWiggle {
   0%   { transform: scale(1.0) rotate(0deg); }

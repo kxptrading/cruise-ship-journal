@@ -16,8 +16,7 @@ import { useW, useVoyageId, useUserId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
-import { getTimeOfDay, getTimeGradient, getVignetteRGB, playShipHorn } from '../lib/atmosphere'
-import Confetti from '../components/Confetti'
+import { getTimeOfDay, getTimeGradient, getVignetteRGB } from '../lib/atmosphere'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
 const REACTIONS = [
@@ -544,9 +543,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   }, [userId])
 
   // ── Atmosphere ─────────────────────────────────────────────────────────────
-  const [timeOfDay, setTimeOfDay]     = useState(getTimeOfDay)
-  const [showConfetti, setShowConfetti] = useState(false)
-  const hornPlayedRef                 = useRef(false)
+  const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay)
 
   // Re-check time of day every minute so long sessions stay accurate
   useEffect(() => {
@@ -658,17 +655,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     return () => clearTimeout(t)
   }, [voyagePct])
 
-  // Fire confetti + horn once per session when voyage is complete
-  useEffect(() => {
-    if (voyageOver && !hornPlayedRef.current) {
-      hornPlayedRef.current = true
-      setTimeout(() => {
-        playShipHorn()
-        setShowConfetti(true)
-        setTimeout(() => setShowConfetti(false), 4500)
-      }, 800)
-    }
-  }, [voyageOver])
 
   // ── Feed items ────────────────────────────────────────────────────────────
   // Own posts merged with friend posts, sorted newest first.
@@ -872,8 +858,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
-      <Confetti active={showConfetti} />
-
       {/* ── Voyage hero — full-bleed banner that morphs to a compact bar ─── */}
       {(() => {
         const HERO_H_FULL = w < BP.mobile ? 210 : 250

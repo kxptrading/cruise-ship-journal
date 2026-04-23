@@ -143,8 +143,27 @@ export default function DailyLog({ data, onChange, itinerary, voyage }) {
           <h2 style={{ margin: 0, color: NAVY, fontFamily: 'Georgia,serif', fontSize: 22 }}>
             Day {day + 1}{itinerary[day]?.port ? ` — ${itinerary[day].port}` : ''}
           </h2>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <Stars value={log.rating || 0} onChange={v => set('rating', v)} />
+
+            {/* Share to Feed toggle */}
+            <button
+              onClick={() => set('isPublic', !log.isPublic)}
+              title={log.isPublic ? 'Visible in Feed — click to make private' : 'Private — click to share to Feed'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                background: log.isPublic ? '#ECFDF5' : '#F9FAFB',
+                border: `1.5px solid ${log.isPublic ? '#34D399' : '#D1D5DB'}`,
+                borderRadius: 20, padding: '4px 12px',
+                cursor: 'pointer', fontSize: 12, fontWeight: 700,
+                color: log.isPublic ? '#065F46' : '#6B7280',
+                fontFamily: 'inherit', whiteSpace: 'nowrap',
+                transition: 'background 0.15s, border-color 0.15s, color 0.15s',
+              }}
+            >
+              {log.isPublic ? '🌐 Public' : '🔒 Private'}
+            </button>
+
             <button onClick={delDay} style={{ background: '#FEE2E2', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: '#DC2626', fontSize: 12, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
               Remove day
             </button>

@@ -481,7 +481,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
       // 2b. Now fetch logs, itinerary and photos using the resolved voyage IDs
       const [{ data: logs }, { data: itineraryRows }, { data: photoRows }] = await Promise.all([
-        supabase.from('daily_logs').select('voyage_id, day_number, date, port, highlights, best_moment, weather, breakfast, lunch, dinner, drink, activity, rating').in('voyage_id', voyageIds),
+        supabase.from('daily_logs').select('voyage_id, day_number, date, port, highlights, best_moment, weather, breakfast, lunch, dinner, drink, activity, rating').in('voyage_id', voyageIds).eq('is_public', true),
         supabase.from('itinerary').select('voyage_id, day_number, port').in('voyage_id', voyageIds),
         supabase.from('photos').select('voyage_id, day_number, storage_path, caption').in('voyage_id', voyageIds),
       ])
@@ -505,7 +505,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
       // 3. Map each log into a feed item with author attribution
       const posts = (logs || [])
-        .filter(log => log.highlights || log.best_moment || log.activity)
+        .filter(log => log.highlights || log.best_moment || log.activity || log.rating)
         .map(log => {
           const voyage  = voyageMap[log.voyage_id] || {}
           const profile = profileMap[voyage.user_id] || {}
@@ -682,7 +682,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       photo:        photosByDay[i] || null,
       author:       null,   // null = own post
     }))
-    .filter(log => log.highlights || log.bestMoment || log.activity || log.photo)
+    .filter(log => log.isPublic && (log.highlights || log.bestMoment || log.activity || log.photo))
 
   const feedItems = [...ownItems, ...friendPosts]
     .sort((a, b) => {

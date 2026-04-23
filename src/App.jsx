@@ -113,6 +113,7 @@ function fromDbDailyLogs(rows) {
       entertainment: row.entertainment ?? '',
       bestMoment:    row.best_moment   ?? '',
       rating:        row.rating        ?? 0,
+      isPublic:      row.is_public     ?? false,
     }))
 }
 
@@ -135,6 +136,7 @@ function toDbDailyLogs(voyageId, arr) {
     entertainment: day.entertainment || null,
     best_moment:   day.bestMoment    || null,
     rating:        day.rating        || null,
+    is_public:     day.isPublic      ?? false,
   }))
 }
 
@@ -560,7 +562,7 @@ export default function App() {
     if (!voyageId) return
     supabase
       .from('daily_logs')
-      .select('day_number, date, port, weather, highlights, breakfast, lunch, dinner, drink, activity, duration, exc_cost, exc_notes, entertainment, best_moment, rating')
+      .select('day_number, date, port, weather, highlights, breakfast, lunch, dinner, drink, activity, duration, exc_cost, exc_notes, entertainment, best_moment, rating, is_public')
       .eq('voyage_id', voyageId)
       .then(({ data: rows }) => {
         if (!rows) return

@@ -114,20 +114,22 @@ export default function Hero({
           </div>
         )}
 
-        {/* Change banner button */}
-        <button
-          onClick={e => { e.stopPropagation(); onUploadBanner() }}
-          disabled={uploadingBanner}
-          style={{
-            position: 'absolute', bottom: 56, right: 14,
-            background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
-            color: WHITE, border: '1px solid rgba(255,255,255,0.25)', borderRadius: 8,
-            padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
-            fontFamily: FONT_BODY, letterSpacing: '0.04em',
-          }}
-        >
-          📷 {uploadingBanner ? 'Uploading…' : 'Change Banner'}
-        </button>
+        {/* Change banner button — only shown before a banner has been uploaded */}
+        {!profile.bannerUrl && (
+          <button
+            onClick={e => { e.stopPropagation(); onUploadBanner() }}
+            disabled={uploadingBanner}
+            style={{
+              position: 'absolute', bottom: 56, right: 14,
+              background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)',
+              color: WHITE, border: '1px solid rgba(255,255,255,0.25)', borderRadius: 8,
+              padding: '5px 11px', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+              fontFamily: FONT_BODY, letterSpacing: '0.04em',
+            }}
+          >
+            📷 {uploadingBanner ? 'Uploading…' : 'Change Banner'}
+          </button>
+        )}
 
         <Wave />
       </div>

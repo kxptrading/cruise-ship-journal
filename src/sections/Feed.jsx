@@ -44,13 +44,16 @@ const WX_STYLE = {
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact, comments, onAddComment }) {
+function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
   const w = useW()
   const [animating, setAnimating]     = useState(null)
   const [hoveredReaction, setHovered] = useState(null)
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText]   = useState('')
   const [submitting, setSubmitting]     = useState(false)
+  const [editingId, setEditingId]       = useState(null)   // id of comment being edited
+  const [editText, setEditText]         = useState('')
+  const [saving, setSaving]             = useState(false)
   const commentInputRef = useRef(null)
 
   const handleReactClick = (id) => {
@@ -66,6 +69,15 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
     setCommentText('')
     setSubmitting(false)
     commentInputRef.current?.focus()
+  }
+
+  const handleSaveEdit = async (commentId) => {
+    if (!editText.trim() || saving) return
+    setSaving(true)
+    await onEditComment?.(commentId, editText.trim())
+    setEditingId(null)
+    setEditText('')
+    setSaving(false)
   }
   const { dayIndex, resolvedPort, date, highlights, bestMoment, weather,
           breakfast, lunch, dinner, drink, activity, rating, photo } = item
@@ -318,37 +330,98 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
           {/* Existing comments */}
           {(comments?.length || 0) > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-              {comments.map(c => (
-                <div key={c.id} style={{ display: 'flex', gap: 9 }}>
-                  {/* Author avatar */}
-                  <div style={{
-                    width: 30, height: 30, borderRadius: '50%',
-                    background: NAVY2, flexShrink: 0,
-                    overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    {c.authorAvatar
-                      ? <img src={c.authorAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      : <span style={{ fontSize: 10, fontWeight: 700, color: WHITE }}>{c.authorInitials}</span>
-                    }
-                  </div>
-                  {/* Bubble */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
+              {comments.map(c => {
+                const isOwn    = c.user_id === userId
+                const isEditing = editingId === c.id
+                return (
+                  <div key={c.id} style={{ display: 'flex', gap: 9 }}>
+                    {/* Author avatar */}
                     <div style={{
-                      background: WHITE, border: `1px solid ${BORDER}`,
-                      borderRadius: '4px 14px 14px 14px',
-                      padding: '8px 12px', display: 'inline-block', maxWidth: '100%',
+                      width: 30, height: 30, borderRadius: '50%',
+                      background: NAVY2, flexShrink: 0,
+                      overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      <div style={{ fontSize: 12, fontWeight: 700, color: NAVY2, marginBottom: 3 }}>{c.authorName}</div>
-                      <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{c.body}</div>
+                      {c.authorAvatar
+                        ? <img src={c.authorAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ fontSize: 10, fontWeight: 700, color: WHITE }}>{c.authorInitials}</span>
+                      }
                     </div>
-                    <div style={{ fontSize: 10, color: MUTED, marginTop: 4, paddingLeft: 4 }}>
-                      {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                      {' · '}
-                      {new Date(c.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+
+                    {/* Bubble */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {isEditing ? (
+                        /* ── Edit mode ── */
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'flex-end' }}>
+                          <textarea
+                            value={editText}
+                            onChange={e => setEditText(e.target.value)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(c.id) }
+                              if (e.key === 'Escape') { setEditingId(null); setEditText('') }
+                            }}
+                            autoFocus
+                            rows={2}
+                            style={{
+                              flex: 1, border: `1.5px solid ${NAVY}`, borderRadius: 12,
+                              padding: '7px 12px', fontSize: 13, fontFamily: 'inherit',
+                              resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT,
+                            }}
+                          />
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                            <button
+                              onClick={() => handleSaveEdit(c.id)}
+                              disabled={!editText.trim() || saving}
+                              style={{
+                                background: NAVY, color: WHITE, border: 'none',
+                                borderRadius: 8, padding: '5px 10px', fontSize: 11,
+                                fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY,
+                                opacity: !editText.trim() || saving ? 0.5 : 1,
+                              }}
+                            >{saving ? '…' : 'Save'}</button>
+                            <button
+                              onClick={() => { setEditingId(null); setEditText('') }}
+                              style={{
+                                background: 'none', color: MUTED, border: `1px solid ${BORDER}`,
+                                borderRadius: 8, padding: '5px 10px', fontSize: 11,
+                                fontWeight: 600, cursor: 'pointer', fontFamily: FONT_BODY,
+                              }}
+                            >Cancel</button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* ── Read mode ── */
+                        <div style={{
+                          background: WHITE, border: `1px solid ${BORDER}`,
+                          borderRadius: '4px 14px 14px 14px',
+                          padding: '8px 12px', display: 'inline-block', maxWidth: '100%',
+                        }}>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: NAVY2, marginBottom: 3 }}>{c.authorName}</div>
+                          <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{c.body}</div>
+                        </div>
+                      )}
+
+                      <div style={{ fontSize: 10, color: MUTED, marginTop: 4, paddingLeft: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span>
+                          {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          {' · '}
+                          {new Date(c.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                        {isOwn && !isEditing && (
+                          <button
+                            onClick={() => { setEditingId(c.id); setEditText(c.body) }}
+                            style={{
+                              background: 'none', border: 'none', padding: 0,
+                              fontSize: 10, color: MUTED, cursor: 'pointer',
+                              fontFamily: FONT_BODY, fontWeight: 700,
+                              textDecoration: 'underline',
+                            }}
+                          >Edit</button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
@@ -777,6 +850,19 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         [key]: (prev[key] || []).map(c => c.id === tempId ? { ...c, id: data.id } : c),
       }))
     }
+  }
+
+  // ── Edit an existing comment ──────────────────────────────────────────
+  const handleEditComment = async (commentId, newBody) => {
+    // Optimistic update
+    setCommentsMap(prev => {
+      const next = { ...prev }
+      for (const key of Object.keys(next)) {
+        next[key] = next[key].map(c => c.id === commentId ? { ...c, body: newBody } : c)
+      }
+      return next
+    })
+    await supabase.from('comments').update({ body: newBody }).eq('id', commentId)
   }
 
   // ── Toggle a reaction — radio behaviour (one per post) ───────────────
@@ -1252,6 +1338,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               onReact={(rid) => handleReact(item.voyageId, item.dayNumber, rid)}
               comments={commentsMap[`${item.voyageId}-${item.dayNumber}`] || []}
               onAddComment={(body) => handleAddComment(item.voyageId, item.dayNumber, body)}
+              onEditComment={handleEditComment}
+              userId={userId}
             />
           ))}
 

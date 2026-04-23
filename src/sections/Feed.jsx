@@ -45,15 +45,28 @@ const WX_STYLE = {
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact }) {
+function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact, comments, onAddComment }) {
   const w = useW()
   const [animating, setAnimating]     = useState(null)
   const [hoveredReaction, setHovered] = useState(null)
+  const [showComments, setShowComments] = useState(false)
+  const [commentText, setCommentText]   = useState('')
+  const [submitting, setSubmitting]     = useState(false)
+  const commentInputRef = useRef(null)
 
   const handleReactClick = (id) => {
     setAnimating(id)
     setTimeout(() => setAnimating(null), 320)
     onReact?.(id)
+  }
+
+  const handleSubmitComment = async () => {
+    if (!commentText.trim() || submitting) return
+    setSubmitting(true)
+    await onAddComment?.(commentText.trim())
+    setCommentText('')
+    setSubmitting(false)
+    commentInputRef.current?.focus()
   }
   const { dayIndex, resolvedPort, date, highlights, bestMoment, weather,
           breakfast, lunch, dinner, drink, activity, rating, photo } = item
@@ -210,8 +223,8 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
         )}
       </div>
 
-      {/* ── Reactions bar ──────────────────────────────────────────────────── */}
-      <div style={{ padding: '10px 16px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 4 }}>
+      {/* ── Reactions + comment toggle bar ─────────────────────────────────── */}
+      <div style={{ padding: '10px 16px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 4, alignItems: 'center' }}>
         {REACTIONS.map(r => {
           const rd         = reactions?.[r.id] || { count: 0, mine: false }
           const isAnimating = animating === r.id
@@ -275,7 +288,117 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
             </div>
           )
         })}
+
+        {/* Comment toggle — right-aligned */}
+        <button
+          onClick={() => {
+            setShowComments(s => {
+              if (!s) setTimeout(() => commentInputRef.current?.focus(), 60)
+              return !s
+            })
+          }}
+          style={{
+            marginLeft: 'auto', background: 'none',
+            border: `1.5px solid ${showComments ? NAVY : BORDER}`,
+            borderRadius: 14, padding: '8px 12px',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
+            color: showComments ? NAVY : MUTED,
+            fontFamily: FONT_BODY, fontSize: 12, fontWeight: 700,
+            transition: 'border-color 0.15s, color 0.15s',
+          }}
+        >
+          <span style={{ fontSize: 15 }}>💬</span>
+          {(comments?.length || 0) > 0 ? comments.length : 'Comment'}
+        </button>
       </div>
+
+      {/* ── Comments thread ─────────────────────────────────────────────────── */}
+      {showComments && (
+        <div style={{ borderTop: `1px solid ${BORDER}`, padding: '14px 16px 16px', background: '#FAFAFA' }}>
+
+          {/* Existing comments */}
+          {(comments?.length || 0) > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
+              {comments.map(c => (
+                <div key={c.id} style={{ display: 'flex', gap: 9 }}>
+                  {/* Author avatar */}
+                  <div style={{
+                    width: 30, height: 30, borderRadius: '50%',
+                    background: NAVY2, flexShrink: 0,
+                    overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {c.authorAvatar
+                      ? <img src={c.authorAvatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      : <span style={{ fontSize: 10, fontWeight: 700, color: WHITE }}>{c.authorInitials}</span>
+                    }
+                  </div>
+                  {/* Bubble */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{
+                      background: WHITE, border: `1px solid ${BORDER}`,
+                      borderRadius: '4px 14px 14px 14px',
+                      padding: '8px 12px', display: 'inline-block', maxWidth: '100%',
+                    }}>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: NAVY2, marginBottom: 3 }}>{c.authorName}</div>
+                      <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{c.body}</div>
+                    </div>
+                    <div style={{ fontSize: 10, color: MUTED, marginTop: 4, paddingLeft: 4 }}>
+                      {new Date(c.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                      {' · '}
+                      {new Date(c.created_at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* New comment input */}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+            <div style={{
+              width: 30, height: 30, borderRadius: '50%',
+              background: NAVY2, flexShrink: 0, overflow: 'hidden',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {(author ? author.avatarUrl : avatarUrl)
+                ? <img src={author ? author.avatarUrl : avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontSize: 10, fontWeight: 700, color: WHITE }}>{author ? author.initials : initials}</span>
+              }
+            </div>
+            <textarea
+              ref={commentInputRef}
+              value={commentText}
+              onChange={e => setCommentText(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment() }
+              }}
+              placeholder="Write a comment…"
+              rows={1}
+              style={{
+                flex: 1, border: `1px solid ${BORDER}`, borderRadius: 18,
+                padding: '7px 14px', fontSize: 13, fontFamily: 'inherit',
+                resize: 'none', outline: 'none', lineHeight: 1.5,
+                color: TEXT, background: WHITE,
+                transition: 'border-color 0.15s',
+              }}
+              onFocus={e => { e.target.style.borderColor = NAVY }}
+              onBlur={e => { e.target.style.borderColor = BORDER }}
+            />
+            <button
+              onClick={handleSubmitComment}
+              disabled={!commentText.trim() || submitting}
+              style={{
+                width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                background: commentText.trim() ? NAVY : BORDER,
+                color: commentText.trim() ? WHITE : MUTED,
+                border: 'none', cursor: commentText.trim() ? 'pointer' : 'default',
+                fontSize: 16, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.15s, color 0.15s',
+              }}
+            >↑</button>
+          </div>
+        </div>
+      )}
 
       {/* ── Card footer: view full day link (own posts only) ────────────────── */}
       {onViewDay && (
@@ -297,9 +420,10 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const voyageId = useVoyageId()
   const userId   = useUserId()
 
-  // Own profile — avatar and initials for post card attribution
-  const [avatarUrl, setAvatarUrl]       = useState('')
-  const [userInitials, setUserInitials] = useState('?')
+  // Own profile — avatar, name and initials for post card attribution
+  const [avatarUrl, setAvatarUrl]         = useState('')
+  const [userInitials, setUserInitials]   = useState('?')
+  const [userDisplayName, setUserDisplayName] = useState('Cruiser')
 
   // Friend posts — daily log entries from accepted friends, merged into the feed
   const [friendPosts, setFriendPosts] = useState([])
@@ -324,6 +448,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         if (!data) return
         if (data.avatar_url) setAvatarUrl(data.avatar_url)
         setUserInitials(toInitials(data))
+        setUserDisplayName(data.display_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Cruiser')
       })
   }, [userId])
 
@@ -444,6 +569,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
   // Reactions — keyed by `${voyageId}-${dayNumber}`, value is { [reactionId]: { count, mine } }
   const [reactionsMap, setReactionsMap] = useState({})
+
+  // Comments — keyed by `${voyageId}-${dayNumber}`, value is array of comment objects
+  const [commentsMap, setCommentsMap] = useState({})
 
   // Photos keyed by day index — loads the first photo for each day in the
   // background after the feed renders, then triggers a re-render to show them.
@@ -590,6 +718,80 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         setReactionsMap(map)
       })
   }, [feedItems.length, userId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Load comments for all visible posts ──────────────────────────────
+  useEffect(() => {
+    if (!feedItems.length || !userId) return
+    const voyageIds = [...new Set(feedItems.map(i => i.voyageId).filter(Boolean))]
+    if (!voyageIds.length) return
+
+    async function loadComments() {
+      const { data: rows } = await supabase
+        .from('comments')
+        .select('id, voyage_id, day_number, user_id, body, created_at')
+        .in('voyage_id', voyageIds)
+        .order('created_at', { ascending: true })
+
+      if (!rows?.length) return
+
+      const commenterIds = [...new Set(rows.map(r => r.user_id))]
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, avatar_url')
+        .in('user_id', commenterIds)
+
+      const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]))
+
+      const map = {}
+      rows.forEach(r => {
+        const key = `${r.voyage_id}-${r.day_number}`
+        if (!map[key]) map[key] = []
+        const profile = profileMap[r.user_id] || {}
+        const name  = profile.display_name || 'Cruiser'
+        const words = name.trim().split(/\s+/).filter(Boolean)
+        const inits = words.length >= 2
+          ? (words[0][0] + words[words.length - 1][0]).toUpperCase()
+          : (words[0] || '?').slice(0, 2).toUpperCase()
+        map[key].push({
+          id: r.id, user_id: r.user_id,
+          body: r.body, created_at: r.created_at,
+          authorName: name, authorAvatar: profile.avatar_url || '', authorInitials: inits,
+        })
+      })
+      setCommentsMap(map)
+    }
+
+    loadComments()
+  }, [feedItems.length, userId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Add a comment ──────────────────────────────────────────────────────
+  const handleAddComment = async (postVoyageId, dayNumber, body) => {
+    if (!userId || !postVoyageId || !body.trim()) return
+    const key = `${postVoyageId}-${dayNumber}`
+
+    // Optimistic update
+    const tempId = `temp-${Date.now()}`
+    const tempComment = {
+      id: tempId, user_id: userId, body,
+      created_at: new Date().toISOString(),
+      authorName: userDisplayName, authorAvatar: avatarUrl, authorInitials: userInitials,
+    }
+    setCommentsMap(prev => ({ ...prev, [key]: [...(prev[key] || []), tempComment] }))
+
+    const { data, error } = await supabase
+      .from('comments')
+      .insert({ voyage_id: postVoyageId, day_number: dayNumber, user_id: userId, body })
+      .select('id')
+      .single()
+
+    if (data && !error) {
+      // Replace temp with server-assigned id
+      setCommentsMap(prev => ({
+        ...prev,
+        [key]: (prev[key] || []).map(c => c.id === tempId ? { ...c, id: data.id } : c),
+      }))
+    }
+  }
 
   // ── Toggle a reaction — radio behaviour (one per post) ───────────────
   // Selecting a new reaction first removes any existing one from this user.
@@ -1064,6 +1266,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               author={item.author}
               reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
               onReact={(rid) => handleReact(item.voyageId, item.dayNumber, rid)}
+              comments={commentsMap[`${item.voyageId}-${item.dayNumber}`] || []}
+              onAddComment={(body) => handleAddComment(item.voyageId, item.dayNumber, body)}
             />
           ))}
 

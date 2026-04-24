@@ -407,6 +407,7 @@ export default function App() {
       supabase.from('profiles')
         .update({ theme: id })
         .eq('user_id', uid)
+        .then()
     }
   }
   const [section, setSection]         = useState('dashboard')

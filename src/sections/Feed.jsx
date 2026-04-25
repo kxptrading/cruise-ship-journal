@@ -14,7 +14,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, BP, sty, FONT_DISPLAY, FONT_BODY, SECTION_COLORS } from '../constants'
 import { useW, useVoyageId, useUserId } from '../context'
 import { Donut, Stars } from '../components/ui'
-import { getPhotos } from '../lib/photoStorage'
+import { getPhotos, addPhoto } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
 import { getTimeOfDay, getTimeGradient, getVignetteRGB } from '../lib/atmosphere'
 
@@ -805,7 +805,10 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const [composeDay, setComposeDay]       = useState('')
   const [composeText, setComposeText]     = useState('')
   const [composeRating, setComposeRating] = useState(0)
-  const textRef = useRef(null)
+  const [composeImage, setComposeImage]         = useState(null)   // File
+  const [composeImagePreview, setComposeImagePreview] = useState('') // object URL
+  const textRef      = useRef(null)
+  const imageInputRef = useRef(null)
 
   // Load the first photo for every day that has a daily log entry.
   useEffect(() => {
@@ -1038,7 +1041,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   }
 
   // ── Composer submit ───────────────────────────────────────────────────────
-  const handlePost = () => {
+  const handlePost = async () => {
     const idx = parseInt(composeDay, 10)
     if (!composeText.trim() || isNaN(idx) || idx < 0 || idx >= dailyLogs.length) return
     const updated = [...dailyLogs]
@@ -1049,11 +1052,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       ...(composeRating > 0 ? { rating: composeRating } : {}),
     }
     onChange(updated)
+    // Upload image if one was attached
+    if (composeImage && voyageId && userId) {
+      try {
+        await addPhoto(idx + 1, composeImage, { voyageId, userId })
+      } catch (_) { /* non-fatal — post still goes through */ }
+    }
     if (wasFirst && showToast) showToast(`Day ${idx + 1} logged! ⚓`)
     setComposing(false)
     setComposeText('')
     setComposeRating(0)
     setComposeDay('')
+    if (composeImagePreview) URL.revokeObjectURL(composeImagePreview)
+    setComposeImage(null)
+    setComposeImagePreview('')
   }
 
   const handleComposeOpen = () => {
@@ -1150,6 +1162,38 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                 />
               </div>
 
+              {/* Image preview */}
+              {composeImagePreview && (
+                <div style={{ position: 'relative', marginTop: 10, borderRadius: 12, overflow: 'hidden', display: 'inline-block' }}>
+                  <img src={composeImagePreview} alt="Preview" style={{ maxHeight: 180, maxWidth: '100%', display: 'block', borderRadius: 12 }} />
+                  <button
+                    onClick={() => { URL.revokeObjectURL(composeImagePreview); setComposeImage(null); setComposeImagePreview('') }}
+                    style={{
+                      position: 'absolute', top: 6, right: 6,
+                      background: 'rgba(0,0,0,0.55)', color: WHITE, border: 'none',
+                      borderRadius: '50%', width: 24, height: 24,
+                      fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}
+                  >✕</button>
+                </div>
+              )}
+
+              {/* Hidden file input */}
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  if (composeImagePreview) URL.revokeObjectURL(composeImagePreview)
+                  setComposeImage(file)
+                  setComposeImagePreview(URL.createObjectURL(file))
+                  e.target.value = ''
+                }}
+              />
+
               {/* Composer toolbar */}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
@@ -1174,12 +1218,30 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                   </div>
                   {/* Star rating */}
                   <Stars value={composeRating} onChange={setComposeRating} />
+                  {/* Add image */}
+                  <button
+                    onClick={() => imageInputRef.current?.click()}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      background: composeImage ? 'var(--t-bg)' : 'none',
+                      border: `1px solid ${composeImage ? 'var(--t-primary)' : BORDER}`,
+                      borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
+                      fontSize: 13, fontFamily: FONT_BODY,
+                      color: composeImage ? 'var(--t-primary)' : MUTED,
+                    }}
+                  >
+                    📷 {composeImage ? 'Change' : 'Add Image'}
+                  </button>
                 </div>
 
                 {/* Action buttons */}
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
-                    onClick={() => { setComposing(false); setComposeText(''); setComposeRating(0); setComposeDay('') }}
+                    onClick={() => {
+                      setComposing(false); setComposeText(''); setComposeRating(0); setComposeDay('')
+                      if (composeImagePreview) URL.revokeObjectURL(composeImagePreview)
+                      setComposeImage(null); setComposeImagePreview('')
+                    }}
                     style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '7px 16px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}
                   >
                     Cancel

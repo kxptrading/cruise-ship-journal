@@ -27,7 +27,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
     <div style={{
       flexShrink: 0,
       height: 64,
-      background: 'linear-gradient(90deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)',
+      background: '#1C2B3A',
       display: 'flex', alignItems: 'center',
       padding: '0 16px',
       gap: 8,

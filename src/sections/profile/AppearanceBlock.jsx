@@ -7,7 +7,7 @@ import { THEMES } from '../../themes'
 
 const GROUPS = [
   { label: 'Blues',   ids: ['ocean', 'indigo', 'periwinkle', 'violet'] },
-  { label: 'Reds',    ids: ['rose', 'coral', 'blush'] },
+  { label: 'Reds',    ids: ['rose', 'coral', 'blush', 'bubblegum'] },
   { label: 'Greens',  ids: ['emerald', 'teal', 'sage', 'forest'] },
   { label: 'Orange',  ids: ['sunset', 'peach', 'tangerine', 'terracotta'] },
   { label: 'Yellow',  ids: ['gold', 'lemon', 'amber', 'saffron'] },

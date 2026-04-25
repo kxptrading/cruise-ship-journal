@@ -216,6 +216,21 @@ export const THEMES = {
     },
   },
 
+  bubblegum: {
+    id:    'bubblegum',
+    name:  'Bubblegum',
+    emoji: '🩷',
+    vars: {
+      '--t-primary':     '#F472B6',
+      '--t-primary-dk':  '#BE185D',
+      '--t-primary-mid': '#EC4899',
+      '--t-primary-lt':  '#FBCFE8',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#FDF2F8',
+      '--t-btn-shadow':  'rgba(244,114,182,0.35)',
+    },
+  },
+
   forest: {
     id:    'forest',
     name:  'Forest',

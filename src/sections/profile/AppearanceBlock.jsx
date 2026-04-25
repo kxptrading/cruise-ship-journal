@@ -6,10 +6,10 @@ import { WHITE, BORDER, NAVY2, MUTED, FONT_DISPLAY, FONT_BODY } from '../../cons
 import { THEMES } from '../../themes'
 
 const GROUPS = [
-  { label: 'Blues',   ids: ['ocean', 'indigo', 'periwinkle'] },
-  { label: 'Reds',    ids: ['rose', 'coral', 'blush', 'violet'] },
-  { label: 'Greens',  ids: ['emerald', 'teal', 'sage'] },
-  { label: 'Orange',  ids: ['sunset', 'peach'] },
+  { label: 'Blues',   ids: ['ocean', 'indigo', 'periwinkle', 'violet'] },
+  { label: 'Reds',    ids: ['rose', 'coral', 'blush'] },
+  { label: 'Greens',  ids: ['emerald', 'teal', 'sage', 'forest'] },
+  { label: 'Orange',  ids: ['sunset', 'peach', 'tangerine', 'terracotta'] },
   { label: 'Yellow',  ids: ['gold', 'lemon', 'amber', 'saffron'] },
 ]
 

@@ -186,6 +186,51 @@ export const THEMES = {
     },
   },
 
+  tangerine: {
+    id:    'tangerine',
+    name:  'Tangerine',
+    emoji: '🍊',
+    vars: {
+      '--t-primary':     '#EA580C',
+      '--t-primary-dk':  '#9A3412',
+      '--t-primary-mid': '#C2410C',
+      '--t-primary-lt':  '#FB923C',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#FFF7ED',
+      '--t-btn-shadow':  'rgba(234,88,12,0.35)',
+    },
+  },
+
+  terracotta: {
+    id:    'terracotta',
+    name:  'Terracotta',
+    emoji: '🏺',
+    vars: {
+      '--t-primary':     '#C2693A',
+      '--t-primary-dk':  '#8C3A1A',
+      '--t-primary-mid': '#A8552C',
+      '--t-primary-lt':  '#E09A72',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#FDF3EE',
+      '--t-btn-shadow':  'rgba(194,105,58,0.35)',
+    },
+  },
+
+  forest: {
+    id:    'forest',
+    name:  'Forest',
+    emoji: '🌲',
+    vars: {
+      '--t-primary':     '#16A34A',
+      '--t-primary-dk':  '#14532D',
+      '--t-primary-mid': '#15803D',
+      '--t-primary-lt':  '#86EFAC',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#F0FDF4',
+      '--t-btn-shadow':  'rgba(22,163,74,0.35)',
+    },
+  },
+
   gold: {
     id:    'gold',
     name:  'Gold',

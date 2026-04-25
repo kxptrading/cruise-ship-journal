@@ -14,6 +14,7 @@ import { applyTheme, getSavedTheme, THEMES } from './themes'
 import { db } from './storage'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
+import TopNav  from './components/TopNav'
 import AuthScreen from './components/AuthScreen'
 import { SvgIcon, Toast } from './components/ui'
 import Feed           from './sections/Feed'
@@ -893,34 +894,14 @@ export default function App() {
     <WCtx.Provider value={winW}>
       <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
-        {/* ── Mobile/tablet topbar ────────────────────────────────────────────
-            position:fixed anchors the bar to the visual viewport so iOS
-            keyboard appearance, address-bar hide/show, and layout reflows
-            cannot push it off screen. A matching spacer div preserves the
-            52px gap in the document flow so content doesn't slide under it. */}
-        {isOverlay && (
-          <>
-          <div style={{ height: topbarHeight, flexShrink: 0 }} aria-hidden="true" />
-          <div style={{
-            position: 'fixed', top: 0, left: 0, right: 0,
-            height: topbarHeight, zIndex: 200,
-            background: WHITE, borderBottom: `1px solid ${BORDER}`,
-            display: 'flex', alignItems: 'center', gap: 14, padding: '0 16px',
-            boxShadow: '0 1px 8px rgba(0,0,0,0.06)',
-          }}>
-            <button onClick={() => setSidebarOpen(true)}
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, cursor: 'pointer', flexShrink: 0 }}>
-              <SvgIcon d={IC.menu} size={18} color={NAVY} />
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, flexShrink: 0 }} />
-              <span style={{ fontSize: 14, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {currentLabel}
-              </span>
-            </div>
-          </div>
-          </>
-        )}
+        {/* ── Top navigation banner — always visible, full width ─────────── */}
+        <TopNav
+          section={section}
+          onNav={navClick}
+          isOverlay={isOverlay}
+          isMobile={isMobile}
+          onMenuOpen={() => setSidebarOpen(true)}
+        />
 
         {/* ── Body row: sidebar + scrollable content ──────────────────────────
             flex: 1 + overflow: hidden ensures this row fills the remaining

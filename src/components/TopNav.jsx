@@ -26,7 +26,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
   return (
     <div style={{
       flexShrink: 0,
-      height: 56,
+      height: 64,
       background: 'linear-gradient(90deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)',
       display: 'flex', alignItems: 'center',
       padding: '0 16px',
@@ -54,10 +54,10 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           onClick={() => onNav('dashboard')}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          <span style={{ fontSize: 20 }}>⚓</span>
+          <span style={{ fontSize: 26 }}>⚓</span>
           {!isMobile && (
             <span style={{
-              fontSize: 16, fontWeight: 400, color: WHITE,
+              fontSize: 20, fontWeight: 400, color: WHITE,
               fontFamily: FONT_DISPLAY, letterSpacing: '0.02em',
               whiteSpace: 'nowrap',
             }}>
@@ -71,7 +71,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       <div style={{ flex: 1 }} />
 
       {/* ── Right: social nav links ────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 4 : 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8 }}>
         {TOP_NAV_ITEMS.map(({ id, label, icon }) => {
           const active = section === id
           return (
@@ -80,22 +80,22 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               onClick={() => onNav(id)}
               style={{
                 display: 'flex', alignItems: 'center',
-                gap: isMobile ? 0 : 6,
+                gap: isMobile ? 0 : 8,
                 background: active ? 'rgba(255,255,255,0.2)' : 'transparent',
                 border: `1px solid ${active ? 'rgba(255,255,255,0.35)' : 'transparent'}`,
                 borderRadius: 20,
-                padding: isMobile ? '6px 10px' : '6px 14px',
+                padding: isMobile ? '7px 12px' : '8px 18px',
                 cursor: 'pointer',
                 color: active ? WHITE : 'rgba(255,255,255,0.65)',
                 fontFamily: FONT_BODY,
-                fontSize: 13, fontWeight: active ? 700 : 500,
+                fontSize: 15, fontWeight: active ? 700 : 500,
                 transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                 whiteSpace: 'nowrap',
               }}
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
-              <span style={{ fontSize: isMobile ? 17 : 14, lineHeight: 1 }}>{icon}</span>
+              <span style={{ fontSize: isMobile ? 22 : 20, lineHeight: 1 }}>{icon}</span>
               {!isMobile && <span>{label}</span>}
             </button>
           )

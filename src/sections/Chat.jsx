@@ -506,21 +506,28 @@ export default function Chat() {
       }
     }
 
-    const { data: conv } = await supabase
+    // Generate ID client-side so we can insert members before any SELECT.
+    // If we used .insert().select() on conversations, the RLS SELECT policy
+    // would fail because the member record doesn't exist yet.
+    const convId = crypto.randomUUID()
+
+    const { error: convErr } = await supabase
       .from('conversations')
-      .insert({ type, name: groupName || null, created_by: userId })
-      .select('id, type, name, created_at').single()
+      .insert({ id: convId, type, name: groupName || null, created_by: userId })
 
-    if (!conv) { setCreating(false); return }
+    if (convErr) { console.error('conversation insert failed', convErr); setCreating(false); return }
 
-    await supabase.from('conversation_members').insert(
-      [userId, ...selectedIds].map(uid => ({ conversation_id: conv.id, user_id: uid }))
-    )
+    const { error: memberErr } = await supabase
+      .from('conversation_members')
+      .insert([userId, ...selectedIds].map(uid => ({ conversation_id: convId, user_id: uid })))
 
-    // Enrich and prepend to list
+    if (memberErr) { console.error('member insert failed', memberErr); setCreating(false); return }
+
+    // Build enriched object locally — no re-fetch needed
     const otherUser = type === 'direct' ? friends.find(f => f.userId === selectedIds[0]) : null
     const newConv = {
-      ...conv,
+      id: convId, type, name: groupName || null,
+      created_at: new Date().toISOString(),
       displayName:    type === 'group' ? (groupName || 'Group Chat') : (otherUser?.name || 'Cruiser'),
       otherUser:      otherUser ? { name: otherUser.name, avatarUrl: otherUser.avatarUrl } : null,
       members:        [userId, ...selectedIds],
@@ -529,8 +536,17 @@ export default function Chat() {
       unreadCount:    0,
     }
 
+    // Ensure friend profiles are in memberProfiles so their names show in the thread
+    const freshProfiles = {}
+    selectedIds.forEach(id => {
+      const f = friends.find(x => x.userId === id)
+      if (f) freshProfiles[id] = { name: f.name, avatarUrl: f.avatarUrl }
+    })
+    if (Object.keys(freshProfiles).length)
+      setMemberProfiles(prev => ({ ...prev, ...freshProfiles }))
+
     setConversations(prev => [newConv, ...prev])
-    setActiveConvId(conv.id)
+    setActiveConvId(convId)
     setShowNewChat(false)
     setCreating(false)
   }

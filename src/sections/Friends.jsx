@@ -14,8 +14,21 @@ import { PgHdr } from '../components/ui'
 import { useUserId, useW } from '../context'
 
 // ── Avatar bubble ─────────────────────────────────────────────────────────────
-function Avatar({ name, size = 40, bg = NAVY }) {
+function Avatar({ name, avatarUrl, size = 40, bg = NAVY }) {
   const initials = (name || '?').slice(0, 2).toUpperCase()
+  if (avatarUrl) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        style={{
+          width: size, height: size, borderRadius: '50%',
+          objectFit: 'cover', flexShrink: 0,
+          border: `2px solid ${BORDER}`,
+        }}
+      />
+    )
+  }
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -88,7 +101,7 @@ export default function Friends() {
     if (peerIds.length > 0) {
       const { data: profiles } = await supabase
         .from('profiles')
-        .select('user_id, email, display_name')
+        .select('user_id, email, display_name, avatar_url')
         .in('user_id', peerIds)
       ;(profiles || []).forEach(p => { profileMap[p.user_id] = p })
     }
@@ -98,6 +111,7 @@ export default function Friends() {
       userId:      r.from_user_id,
       displayName: profileMap[r.from_user_id]?.display_name || 'Unknown',
       email:       profileMap[r.from_user_id]?.email        || '',
+      avatarUrl:   profileMap[r.from_user_id]?.avatar_url   || '',
     })))
 
     setFriends(accepted.map(r => {
@@ -107,6 +121,7 @@ export default function Friends() {
         userId:      peerId,
         displayName: profileMap[peerId]?.display_name || 'Unknown',
         email:       profileMap[peerId]?.email        || '',
+        avatarUrl:   profileMap[peerId]?.avatar_url   || '',
       }
     }))
 
@@ -124,7 +139,7 @@ export default function Friends() {
 
     const { data } = await supabase
       .from('profiles')
-      .select('user_id, email, display_name')
+      .select('user_id, email, display_name, avatar_url')
       .ilike('display_name', `%${q}%`)
       .neq('user_id', currentUserId)
       .limit(8)
@@ -215,7 +230,7 @@ export default function Friends() {
               const rel = getRelationship(profile.user_id)
               return (
                 <div key={profile.user_id} style={{ ...card, marginBottom: 8, background: LIGHT }}>
-                  <Avatar name={profile.display_name} bg={avatarColor(profile.user_id)} />
+                  <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} bg={avatarColor(profile.user_id)} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{profile.display_name || 'Unknown'}</div>
                     <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{profile.email}</div>
@@ -249,7 +264,7 @@ export default function Friends() {
           </div>
           {incoming.map(req => (
             <div key={req.requestId} style={card}>
-              <Avatar name={req.displayName} bg={avatarColor(req.userId)} />
+              <Avatar name={req.displayName} avatarUrl={req.avatarUrl} bg={avatarColor(req.userId)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{req.displayName}</div>
                 <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{req.email}</div>
@@ -302,7 +317,7 @@ export default function Friends() {
 
         {friends.map(f => (
           <div key={f.requestId} style={card}>
-            <Avatar name={f.displayName} bg={avatarColor(f.userId)} />
+            <Avatar name={f.displayName} avatarUrl={f.avatarUrl} bg={avatarColor(f.userId)} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{f.displayName}</div>
               <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{f.email}</div>

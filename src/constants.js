@@ -77,6 +77,7 @@ export const NAV = [
   { id: 'dashboard',     label: 'Feed',               icon: '🧭' },
   { id: 'userprofile',   label: 'My Profile',         icon: '👤' },
   { id: 'friends',       label: 'Friends',            icon: '👥' },
+  { id: 'chat',          label: 'Messages',           icon: '💬' },
   { id: 'daily',         label: 'Daily Log',          icon: '📅' },
   { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },
   { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },

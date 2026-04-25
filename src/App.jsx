@@ -32,6 +32,7 @@ import Highlights     from './sections/Highlights'
 import PackingList    from './sections/PackingList'
 import Notes          from './sections/Notes'
 import Friends        from './sections/Friends'
+import Chat           from './sections/Chat'
 import UserProfile    from './sections/UserProfile'
 
 // ── DB ↔ app shape converters for the voyage section ─────────────────────────
@@ -967,6 +968,7 @@ export default function App() {
               {section === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
               {section === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
               {section === 'friends'       && <Friends />}
+              {section === 'chat'          && <Chat />}
               {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} />}
             </div>
             </div>

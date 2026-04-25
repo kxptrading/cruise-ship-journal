@@ -185,6 +185,66 @@ export const THEMES = {
       '--t-btn-shadow':  'rgba(232,149,109,0.35)',
     },
   },
+
+  gold: {
+    id:    'gold',
+    name:  'Gold',
+    emoji: '✨',
+    vars: {
+      '--t-primary':     '#D97706',
+      '--t-primary-dk':  '#92400E',
+      '--t-primary-mid': '#B45309',
+      '--t-primary-lt':  '#FCD34D',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#FFFBEB',
+      '--t-btn-shadow':  'rgba(217,119,6,0.35)',
+    },
+  },
+
+  lemon: {
+    id:    'lemon',
+    name:  'Lemon',
+    emoji: '🍋',
+    vars: {
+      '--t-primary':     '#CA8A04',
+      '--t-primary-dk':  '#713F12',
+      '--t-primary-mid': '#A16207',
+      '--t-primary-lt':  '#FDE047',
+      '--t-accent':      '#D97706',
+      '--t-bg':          '#FEFCE8',
+      '--t-btn-shadow':  'rgba(202,138,4,0.35)',
+    },
+  },
+
+  amber: {
+    id:    'amber',
+    name:  'Amber',
+    emoji: '🟡',
+    vars: {
+      '--t-primary':     '#F59E0B',
+      '--t-primary-dk':  '#B45309',
+      '--t-primary-mid': '#D97706',
+      '--t-primary-lt':  '#FDE68A',
+      '--t-accent':      '#EF4444',
+      '--t-bg':          '#FFFBEB',
+      '--t-btn-shadow':  'rgba(245,158,11,0.35)',
+    },
+  },
+
+  saffron: {
+    id:    'saffron',
+    name:  'Saffron',
+    emoji: '🌻',
+    vars: {
+      '--t-primary':     '#EAB308',
+      '--t-primary-dk':  '#854D0E',
+      '--t-primary-mid': '#CA8A04',
+      '--t-primary-lt':  '#FEF08A',
+      '--t-accent':      '#F97316',
+      '--t-bg':          '#FEFCE8',
+      '--t-btn-shadow':  'rgba(234,179,8,0.35)',
+    },
+  },
 }
 
 // Apply a theme's CSS variables to :root

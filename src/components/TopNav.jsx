@@ -23,14 +23,20 @@ const TOP_NAV_ITEMS = [
 ]
 
 export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile }) {
+  const logoH   = isMobile ? 42 : 70
+  const barH    = isMobile ? 58 : 80
+  const iconSz  = isMobile ? 18 : 20
+  const btnPad  = isMobile ? '5px 9px' : '8px 18px'
+  const navGap  = isMobile ? 2 : 8
+
   return (
     <div style={{
       flexShrink: 0,
-      height: 80,
+      height: barH,
       background: 'var(--t-primary)',
       display: 'flex', alignItems: 'center',
-      padding: '0 16px',
-      gap: 8,
+      padding: isMobile ? '0 8px' : '0 16px',
+      gap: isMobile ? 4 : 8,
       borderBottom: '1px solid rgba(255,255,255,0.08)',
       boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
       zIndex: 100,
@@ -38,15 +44,15 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
     }}>
 
       {/* ── Left: hamburger (mobile) + brand ───────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexShrink: 0 }}>
         {isOverlay && (
           <button
             onClick={onMenuOpen}
             style={{
               background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)',
-              borderRadius: 8, width: 34, height: 34,
+              borderRadius: 8, width: 30, height: 30,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 16,
+              cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 14,
             }}
           >☰</button>
         )}
@@ -54,7 +60,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           onClick={() => onNav('dashboard')}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          <img src="/logo.svg" alt="Cruise Log" style={{ height: 70, width: 'auto' }} />
+          <img src="/logo.svg" alt="Cruise Log" style={{ height: logoH, width: 'auto' }} />
           {!isMobile && (
             <span style={{
               fontSize: 20, fontWeight: 400, color: WHITE,
@@ -71,7 +77,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       <div style={{ flex: 1 }} />
 
       {/* ── Right: social nav links ────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: navGap }}>
         {TOP_NAV_ITEMS.map(({ id, label, icon }) => {
           const active = section === id
           return (
@@ -84,7 +90,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
                 background: active ? 'rgba(255,255,255,0.2)' : 'transparent',
                 border: `1px solid ${active ? 'rgba(255,255,255,0.35)' : 'transparent'}`,
                 borderRadius: 20,
-                padding: isMobile ? '7px 12px' : '8px 18px',
+                padding: btnPad,
                 cursor: 'pointer',
                 color: active ? WHITE : 'rgba(255,255,255,0.65)',
                 fontFamily: FONT_BODY,
@@ -95,7 +101,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
-              <span style={{ fontSize: isMobile ? 22 : 20, lineHeight: 1 }}>{icon}</span>
+              <span style={{ fontSize: iconSz, lineHeight: 1 }}>{icon}</span>
               {!isMobile && <span>{label}</span>}
             </button>
           )

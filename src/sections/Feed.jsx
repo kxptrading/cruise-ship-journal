@@ -486,98 +486,24 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
   )
 }
 
-// ── Shared lerp helper ───────────────────────────────────────────────────────
-const lerp = (a, b, t) => a + (b - a) * t
-
 // ── VoyageHero ────────────────────────────────────────────────────────────────
-// Isolated scroll-animated hero. Keeping scroll state inside this component
-// means only it re-renders on scroll — not the entire Feed with all its cards.
-// Direct DOM manipulation via refs + requestAnimationFrame gives silky 60fps.
+// Static hero banner — scrolls naturally with the page, no animation.
 function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav }) {
-  const heroWrapRef = useRef(null)
-  const expandedRef = useRef(null)
-  const coverRef    = useRef(null)
-  const waveRef     = useRef(null)
-  const ring1Ref    = useRef(null)
-  const ring2Ref    = useRef(null)
-  const moonRef     = useRef(null)
-  const vignetteRef = useRef(null)
-  const rafRef      = useRef(null)
-
-  const HERO_H_FULL = w < BP.mobile ? 210 : 250
-
-  useEffect(() => {
-    const hero = heroWrapRef.current
-    if (!hero) return
-    let parent = hero.parentElement
-    while (parent) {
-      const { overflowY } = getComputedStyle(parent)
-      if (overflowY === 'auto' || overflowY === 'scroll') break
-      parent = parent.parentElement
-    }
-    if (!parent) return
-
-    const [vr, vg, vb] = getVignetteRGB(timeOfDay)
-
-    const update = () => {
-      const scrollY = Math.min(parent.scrollTop, 200)
-      const p = scrollY / 200
-      const heroH          = lerp(HERO_H_FULL, 0, p)
-      const heroOpacity    = Math.max(0, 1 - p * 1.4)
-      const expandedOpacity = Math.max(0, 1 - p * 1.6)
-
-      const el = heroWrapRef.current
-      if (!el) return
-      el.style.height       = `${heroH}px`
-      el.style.opacity      = heroOpacity
-      el.style.marginBottom = heroH > 4 ? '16px' : '0'
-      el.style.borderRadius = `${lerp(20, 14, p)}px`
-      el.style.boxShadow    = `0 ${lerp(10, 0, p)}px ${lerp(40, 0, p)}px rgba(3,105,161,${lerp(0.3, 0, p)})`
-
-      if (expandedRef.current) {
-        expandedRef.current.style.opacity      = expandedOpacity
-        expandedRef.current.style.transform    = `translateY(${lerp(0, 8, p)}px)`
-        expandedRef.current.style.pointerEvents = p > 0.35 ? 'none' : 'auto'
-      }
-      if (coverRef.current)    coverRef.current.style.opacity    = Math.max(0, 1 - p * 1.8)
-      if (waveRef.current)     waveRef.current.style.opacity     = expandedOpacity
-      if (ring1Ref.current)    ring1Ref.current.style.opacity    = expandedOpacity
-      if (ring2Ref.current)    ring2Ref.current.style.opacity    = expandedOpacity
-      if (moonRef.current)     moonRef.current.style.opacity     = expandedOpacity
-      if (vignetteRef.current) {
-        const a = lerp(0.55, 0.78, p)
-        vignetteRef.current.style.background = `linear-gradient(to bottom, rgba(${vr},${vg},${vb},0.0) 0%, rgba(${vr},${vg},${vb},${a}) 100%)`
-      }
-    }
-
-    const handler = () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-      rafRef.current = requestAnimationFrame(update)
-    }
-
-    parent.addEventListener('scroll', handler, { passive: true })
-    return () => {
-      parent.removeEventListener('scroll', handler)
-      if (rafRef.current) cancelAnimationFrame(rafRef.current)
-    }
-  }, [HERO_H_FULL, timeOfDay]) // eslint-disable-line react-hooks/exhaustive-deps
-
+  const HERO_H = w < BP.mobile ? 210 : 250
   const tg = getTimeGradient(timeOfDay)
   const [vr, vg, vb] = getVignetteRGB(timeOfDay)
 
   return (
-    <div ref={heroWrapRef} style={{
-      position: 'sticky', top: 0, zIndex: 50,
-      height: HERO_H_FULL, borderRadius: 20,
-      marginBottom: 16, overflow: 'hidden', opacity: 1,
-      willChange: 'height, opacity',
+    <div style={{
+      position: 'relative',
+      height: HERO_H, borderRadius: 20,
+      marginBottom: 16, overflow: 'hidden',
       boxShadow: '0 10px 40px rgba(3,105,161,0.3)',
     }}>
       {/* Background gradient */}
       <div style={{
         position: 'absolute', inset: 0,
         background: tg || 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 50%, var(--t-primary) 100%)',
-        transition: 'background 3s ease',
       }} />
 
       {/* Night sky */}
@@ -590,55 +516,46 @@ function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, 
               animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s`,
             }} />
           ))}
-          <div ref={moonRef} className="moon-icon" style={{
-            position: 'absolute', top: 14, right: 58, fontSize: 28, opacity: 1, pointerEvents: 'none',
-          }}>🌙</div>
+          <div className="moon-icon" style={{ position: 'absolute', top: 14, right: 58, fontSize: 28, pointerEvents: 'none' }}>🌙</div>
         </>
       )}
 
       {/* Cover photo */}
       {voyage.coverPhotoUrl && (
-        <img ref={coverRef} src={voyage.coverPhotoUrl} alt="Voyage cover" style={{
-          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block', opacity: 1,
+        <img src={voyage.coverPhotoUrl} alt="Voyage cover" style={{
+          position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block',
         }} />
       )}
 
       {/* Vignette */}
-      <div ref={vignetteRef} style={{
+      <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: `linear-gradient(to bottom, rgba(${vr},${vg},${vb},0.0) 0%, rgba(${vr},${vg},${vb},0.55) 100%)`,
+        background: `linear-gradient(to bottom, rgba(${vr},${vg},${vb},0.0) 0%, rgba(${vr},${vg},${vb},0.6) 100%)`,
       }} />
 
       {/* Decorative rings */}
       {!voyage.coverPhotoUrl && (
         <>
-          <div ref={ring1Ref} style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.13)', pointerEvents: 'none' }} />
-          <div ref={ring2Ref} style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.08)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.13)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.08)', pointerEvents: 'none' }} />
         </>
       )}
 
-      {/* Animated waves */}
-      <div ref={waveRef} style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', lineHeight: 0, pointerEvents: 'none' }}>
-        <svg className="hero-wave-1" viewBox="0 0 1440 60" preserveAspectRatio="none"
-          style={{ width: '150%', height: 38, display: 'block', marginLeft: '-10%' }}>
+      {/* Waves */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', lineHeight: 0, pointerEvents: 'none' }}>
+        <svg className="hero-wave-1" viewBox="0 0 1440 60" preserveAspectRatio="none" style={{ width: '150%', height: 38, display: 'block', marginLeft: '-10%' }}>
           <path d="M0,40 C240,0 480,60 720,30 C960,0 1200,50 1440,20 L1440,60 L0,60 Z" fill="rgba(255,255,255,0.07)" />
         </svg>
-        <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none"
-          style={{ position: 'absolute', bottom: 0, width: '150%', height: 24, display: 'block', marginLeft: '-10%' }}>
+        <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none" style={{ position: 'absolute', bottom: 0, width: '150%', height: 24, display: 'block', marginLeft: '-10%' }}>
           <path d="M0,20 C300,40 600,0 900,20 C1100,35 1280,10 1440,20 L1440,40 L0,40 Z" fill="rgba(255,255,255,0.05)" />
         </svg>
-        <svg className="hero-wave-3" viewBox="0 0 1440 30" preserveAspectRatio="none"
-          style={{ position: 'absolute', bottom: 0, width: '160%', height: 16, display: 'block', marginLeft: '-5%' }}>
+        <svg className="hero-wave-3" viewBox="0 0 1440 30" preserveAspectRatio="none" style={{ position: 'absolute', bottom: 0, width: '160%', height: 16, display: 'block', marginLeft: '-5%' }}>
           <path d="M0,15 C200,30 500,0 800,15 C1050,28 1300,5 1440,15 L1440,30 L0,30 Z" fill="rgba(255,255,255,0.03)" />
         </svg>
       </div>
 
-      {/* Expanded content */}
-      <div ref={expandedRef} style={{
-        position: 'absolute', bottom: 0, left: 0, right: 0,
-        padding: `0 ${w < BP.mobile ? 18 : 28}px 20px`,
-        opacity: 1,
-      }}>
+      {/* Content */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: `0 ${w < BP.mobile ? 18 : 28}px 20px` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
           <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(245,158,11,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>⚓</div>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.13em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY }}>

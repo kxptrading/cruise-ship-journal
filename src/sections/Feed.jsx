@@ -947,19 +947,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       {/* ── Voyage hero — full-bleed banner that morphs to a compact bar ─── */}
       {(() => {
         const HERO_H_FULL = w < BP.mobile ? 210 : 250
-        const HERO_H_MIN  = 62
+        const HERO_H_MIN  = 0
         const heroH = lerp(HERO_H_FULL, HERO_H_MIN, p)
-        // Expanded layer fades out in first half of scroll; condensed fades in second half
-        const expandedOpacity  = Math.max(0, 1 - p * 2.2)
-        const condensedOpacity = Math.max(0, (p - 0.45) * 2.2)
+        // Fade out the expanded content as user scrolls; condensed bar never shows (hero fully disappears)
+        const expandedOpacity  = Math.max(0, 1 - p * 1.6)
+        const condensedOpacity = 0
 
         return (
           <div ref={heroRef} style={{
             position: 'sticky', top: 0, zIndex: 50,
             height: heroH,
             borderRadius: lerp(20, 14, p),
-            marginBottom: 16, overflow: 'hidden',
-            boxShadow: `0 ${lerp(10, 2, p)}px ${lerp(40, 10, p)}px rgba(3,105,161,${lerp(0.3, 0.12, p)})`,
+            marginBottom: heroH > 0 ? 16 : 0, overflow: 'hidden',
+            opacity: Math.max(0, 1 - p * 1.4),
+            boxShadow: `0 ${lerp(10, 0, p)}px ${lerp(40, 0, p)}px rgba(3,105,161,${lerp(0.3, 0, p)})`,
           }}>
 
             {/* ── Background: time-of-day gradient (falls back to theme) ─────── */}

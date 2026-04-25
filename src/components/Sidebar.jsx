@@ -42,7 +42,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
         <div style={{ padding: '22px 20px 18px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.02em' }}>
-              ⚓ Cruise Log
+              Cruise Log
             </div>
             <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 3, letterSpacing: '0.09em', textTransform: 'uppercase', fontFamily: FONT_BODY }}>
               A Journal for Every Voyage

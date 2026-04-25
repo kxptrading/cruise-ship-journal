@@ -26,7 +26,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
   return (
     <div style={{
       flexShrink: 0,
-      height: 160,
+      height: 80,
       background: 'var(--t-primary)',
       display: 'flex', alignItems: 'center',
       padding: '0 16px',
@@ -54,7 +54,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           onClick={() => onNav('dashboard')}
           style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
         >
-          <img src="/logo.svg" alt="Cruise Log" style={{ height: 150, width: 'auto' }} />
+          <img src="/logo.svg" alt="Cruise Log" style={{ height: 70, width: 'auto' }} />
           {!isMobile && (
             <span style={{
               fontSize: 20, fontWeight: 400, color: WHITE,

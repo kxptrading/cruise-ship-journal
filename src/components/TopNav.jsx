@@ -27,7 +27,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
     <div style={{
       flexShrink: 0,
       height: 64,
-      background: '#1C2B3A',
+      background: 'var(--t-primary)',
       display: 'flex', alignItems: 'center',
       padding: '0 16px',
       gap: 8,

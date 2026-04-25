@@ -1197,6 +1197,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               {/* Composer toolbar */}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+                  {/* Add image */}
+                  <button
+                    onClick={() => imageInputRef.current?.click()}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 5,
+                      background: composeImage ? 'var(--t-bg)' : 'none',
+                      border: `1px solid ${composeImage ? 'var(--t-primary)' : BORDER}`,
+                      borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
+                      fontSize: 13, fontFamily: FONT_BODY,
+                      color: composeImage ? 'var(--t-primary)' : MUTED,
+                    }}
+                  >
+                    📷 {composeImage ? 'Change' : 'Add Image'}
+                  </button>
                   {/* Day picker */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 11, color: MUTED, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Day</span>
@@ -1218,20 +1232,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                   </div>
                   {/* Star rating */}
                   <Stars value={composeRating} onChange={setComposeRating} />
-                  {/* Add image */}
-                  <button
-                    onClick={() => imageInputRef.current?.click()}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      background: composeImage ? 'var(--t-bg)' : 'none',
-                      border: `1px solid ${composeImage ? 'var(--t-primary)' : BORDER}`,
-                      borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
-                      fontSize: 13, fontFamily: FONT_BODY,
-                      color: composeImage ? 'var(--t-primary)' : MUTED,
-                    }}
-                  >
-                    📷 {composeImage ? 'Change' : 'Add Image'}
-                  </button>
                 </div>
 
                 {/* Action buttons */}

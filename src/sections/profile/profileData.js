@@ -61,10 +61,6 @@ export const PREFERENCES = [
   { icon: '📏', key: 'Units',             value: 'Metric'              },
 ]
 
-// ── Settings rows (SettingsBlock card) ────────────────────────────────────────
-export const SETTINGS = [
-  { emoji: '📕', title: 'Export all journals',   sub: 'Download as PDF',            color: ROSE  },
-  { emoji: '💾', title: 'Download raw data',     sub: 'JSON backup',                color: NAVY2 },
-  { emoji: '🔒', title: 'Privacy',               sub: 'Friends can see my Feed',    color: PLUM  },
-  { emoji: '🔔', title: 'Notifications',          sub: 'Daily reminder at 21:00',   color: GOLD  },
-]
+// Note: Settings rows moved to SettingsBlock.jsx — each action now has live
+// handlers (PDF export, JSON download, privacy toggle, notification toggle)
+// and no longer uses a static data array.

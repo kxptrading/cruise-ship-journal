@@ -19,16 +19,128 @@ import { supabase } from '../../lib/supabase'
 import { WHITE, BORDER, NAVY2, GOLD, MUTED, CREAM, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { useW } from '../../context'
 
-// Badge definitions — shape only, earned computed at runtime
+// ── Badge tooltip ─────────────────────────────────────────────────────────────
+// Absolutely-positioned dark card that floats above a badge on hover.
+// Shows the badge name, how to earn it, and earned/locked status.
+// `position: relative` on the parent badge card keeps it anchored.
+function BadgeTooltip({ badge }) {
+  const TEAL_EARN = '#34D399'
+
+  return (
+    <div
+      role="tooltip"
+      style={{
+        position: 'absolute',
+        // Float above the badge card with a small gap
+        bottom: 'calc(100% + 10px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        zIndex: 100,
+        width: 188,
+        background: NAVY2,
+        borderRadius: 12,
+        padding: '12px 14px',
+        pointerEvents: 'none',   // never block mouse events on underlying cards
+        boxShadow: '0 10px 28px rgba(0,0,0,0.3)',
+      }}
+    >
+      {/* Badge name */}
+      <div style={{
+        fontSize: 12, fontWeight: 700, color: WHITE,
+        fontFamily: FONT_BODY, marginBottom: 5, lineHeight: 1.3,
+      }}>
+        {badge.emoji} {badge.name}
+      </div>
+
+      {/* How to earn label */}
+      <div style={{
+        fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)',
+        textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4,
+        fontFamily: FONT_BODY,
+      }}>
+        How to earn
+      </div>
+
+      {/* Description */}
+      <div style={{
+        fontSize: 12, color: 'rgba(255,255,255,0.75)',
+        lineHeight: 1.55, fontFamily: FONT_BODY, marginBottom: 10,
+      }}>
+        {badge.howTo}
+      </div>
+
+      {/* Earned / locked status pill */}
+      <div style={{
+        display: 'inline-flex', alignItems: 'center', gap: 5,
+        fontSize: 10, fontWeight: 700,
+        color: badge.earned ? TEAL_EARN : 'rgba(255,255,255,0.35)',
+        background: badge.earned ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.05)',
+        border: `1px solid ${badge.earned ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.1)'}`,
+        borderRadius: 20, padding: '3px 9px',
+        fontFamily: FONT_BODY,
+      }}>
+        {badge.earned ? '✓ Earned' : '🔒 Not yet earned'}
+      </div>
+
+      {/* Downward-pointing arrow */}
+      <div style={{
+        position: 'absolute',
+        top: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 0, height: 0,
+        borderLeft: '7px solid transparent',
+        borderRight: '7px solid transparent',
+        borderTop: `7px solid ${NAVY2}`,
+      }} />
+    </div>
+  )
+}
+
+// Badge definitions — shape only, earned computed at runtime.
+// `desc` is the short summary (used in aria-label);
+// `howTo` is the full tooltip explanation shown on hover.
 const BADGE_DEFS = [
-  { key: 'firstLog',     emoji: '📖', name: 'First Log',     desc: 'Logged at least one day',            color: '#0EA5E9' },
-  { key: 'portExplorer', emoji: '📍', name: 'Port Explorer', desc: 'Visited 3 or more ports',            color: '#0D9488' },
-  { key: 'foodie',       emoji: '🍽️', name: 'Foodie',        desc: 'Logged 5 or more meals',             color: '#F43F5E' },
-  { key: 'topRated',     emoji: '⭐', name: 'Top Rated',     desc: 'Average day rating of 4 or above',   color: '#F59E0B' },
-  { key: 'entertained',  emoji: '🎭', name: 'Entertained',   desc: 'Logged 3 or more entertainment entries', color: '#7C3AED' },
-  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     desc: 'Total spend within your budget',     color: '#14293F' },
-  { key: 'photographer', emoji: '📸', name: 'Photographer',  desc: 'Added at least one photo',           color: '#0D9488' },
-  { key: 'fullHouse',    emoji: '🏆', name: 'Full House',    desc: 'Logged every day of the voyage',     color: '#F59E0B' },
+  {
+    key: 'firstLog', emoji: '📖', name: 'First Log', color: '#0EA5E9',
+    desc: 'Logged at least one day',
+    howTo: 'Write your first journal entry in the Daily Log — even a single word in Highlights counts.',
+  },
+  {
+    key: 'portExplorer', emoji: '📍', name: 'Port Explorer', color: '#0D9488',
+    desc: 'Visited 3 or more ports',
+    howTo: 'Add 3 or more port stops (not "At Sea") in your Itinerary section.',
+  },
+  {
+    key: 'foodie', emoji: '🍽️', name: 'Foodie', color: '#F43F5E',
+    desc: 'Logged 5 or more meals',
+    howTo: 'Log 5 or more entries in the Food Log section — each meal, snack, or drink counts.',
+  },
+  {
+    key: 'topRated', emoji: '⭐', name: 'Top Rated', color: '#F59E0B',
+    desc: 'Average day rating of 4 stars or above',
+    howTo: 'Rate your days in the Daily Log. An average of 4 ★ or higher across all rated days earns this badge.',
+  },
+  {
+    key: 'entertained', emoji: '🎭', name: 'Entertained', color: '#7C3AED',
+    desc: 'Logged 3 or more entertainment entries',
+    howTo: 'Add at least 3 shows, events, or activities in the Entertainment Log.',
+  },
+  {
+    key: 'onBudget', emoji: '💰', name: 'On Budget', color: '#14293F',
+    desc: 'Total spend within your budget',
+    howTo: 'Set a budget in the Budget Tracker and keep your total expenses at or below it.',
+  },
+  {
+    key: 'photographer', emoji: '📸', name: 'Photographer', color: '#0D9488',
+    desc: 'Added at least one photo',
+    howTo: 'Upload at least one photo in the Daily Log or via the Feed composer.',
+  },
+  {
+    key: 'fullHouse', emoji: '🏆', name: 'Full House', color: '#F59E0B',
+    desc: 'Logged every day of the voyage',
+    howTo: 'Write a journal entry for every single night of your voyage. Set the total nights in Voyage Details first.',
+  },
 ]
 
 // Compute which badges are earned from queried data
@@ -74,8 +186,10 @@ export default function Badges({ currentVoyage }) {
   const w    = useW()
   const cols = w < 480 ? 2 : w < 700 ? 3 : 4
 
-  const [badges,  setBadges]  = useState(BADGE_DEFS.map(d => ({ ...d, earned: false })))
-  const [loading, setLoading] = useState(false)
+  const [badges,     setBadges]     = useState(BADGE_DEFS.map(d => ({ ...d, earned: false })))
+  const [loading,    setLoading]    = useState(false)
+  // Track which badge card is hovered so we can show its tooltip
+  const [hoveredKey, setHoveredKey] = useState(null)
 
   useEffect(() => {
     if (!currentVoyage?.id) {
@@ -178,7 +292,6 @@ export default function Badges({ currentVoyage }) {
           <div
             key={badge.key}
             tabIndex={0}
-            title={badge.desc}
             style={{
               borderRadius: 14,
               border: badge.earned ? `1px solid ${badge.color}44` : `1px solid ${BORDER}`,
@@ -192,11 +305,17 @@ export default function Badges({ currentVoyage }) {
               cursor: 'default',
               outline: 'none',
               transition: 'box-shadow 0.15s',
+              // overflow must stay visible so the tooltip can float above the card
+              overflow: 'visible',
             }}
-            onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 2px ${badge.color}66` }}
-            onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
+            onMouseEnter={() => setHoveredKey(badge.key)}
+            onMouseLeave={() => setHoveredKey(null)}
+            onFocus={() => setHoveredKey(badge.key)}
+            onBlur={() => setHoveredKey(null)}
             aria-label={`${badge.name}${badge.earned ? ' — earned' : ' — locked'}`}
           >
+            {/* Tooltip — rendered inside the card so it stays anchored via position:relative */}
+            {hoveredKey === badge.key && <BadgeTooltip badge={badge} />}
             {badge.earned && (
               <div style={{
                 position: 'absolute', top: 7, right: 7,

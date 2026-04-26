@@ -26,30 +26,57 @@ export default function Companions({ onNav }) {
 
   useEffect(() => {
     if (!userId) return
-    supabase
-      .from('voyages')
-      .select('id, ship_name, companion_1, companion_2, companion_3, companion_4')
-      .eq('user_id', userId)
-      .then(({ data }) => {
-        if (!data) { setLoading(false); return }
 
-        // Aggregate across all voyages — key by lowercased name to deduplicate
-        const map = {}
-        data.forEach(voyage => {
-          const fields = [voyage.companion_1, voyage.companion_2, voyage.companion_3, voyage.companion_4]
-          fields.filter(Boolean).forEach(raw => {
-            const name = raw.trim()
-            const key  = name.toLowerCase()
-            if (!map[key]) map[key] = { name, voyageCount: 0, ships: [] }
-            map[key].voyageCount++
-            if (voyage.ship_name) map[key].ships.push(voyage.ship_name)
-          })
+    const run = async () => {
+      const { data } = await supabase
+        .from('voyages')
+        .select('id, ship_name, companion_1, companion_2, companion_3, companion_4')
+        .eq('user_id', userId)
+
+      if (!data) { setLoading(false); return }
+
+      // Aggregate across all voyages — key by lowercased name to deduplicate
+      const map = {}
+      data.forEach(voyage => {
+        const fields = [voyage.companion_1, voyage.companion_2, voyage.companion_3, voyage.companion_4]
+        fields.filter(Boolean).forEach(raw => {
+          const name = raw.trim()
+          const key  = name.toLowerCase()
+          if (!map[key]) map[key] = { name, voyageCount: 0, ships: [] }
+          map[key].voyageCount++
+          if (voyage.ship_name) map[key].ships.push(voyage.ship_name)
+        })
+      })
+
+      const sorted = Object.values(map).sort((a, b) => b.voyageCount - a.voyageCount)
+
+      // Look up profile photos — query profiles where display_name matches any
+      // companion name. If a companion is also a registered user with an avatar_url
+      // set, their photo shows instead of the coloured-initials fallback.
+      const names = sorted.map(c => c.name)
+      if (names.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('display_name, avatar_url')
+          .in('display_name', names)
+
+        // Build a quick lookup: lowercased name → avatarUrl
+        const avatarMap = {}
+        ;(profiles ?? []).forEach(p => {
+          if (p.avatar_url) avatarMap[p.display_name.toLowerCase()] = p.avatar_url
         })
 
-        // Sort by most voyages together first
-        setCompanions(Object.values(map).sort((a, b) => b.voyageCount - a.voyageCount))
-        setLoading(false)
-      })
+        // Merge avatar URLs into companion objects
+        sorted.forEach(c => {
+          c.avatarUrl = avatarMap[c.name.toLowerCase()] ?? null
+        })
+      }
+
+      setCompanions(sorted)
+      setLoading(false)
+    }
+
+    run()
   }, [userId])
 
   return (
@@ -116,15 +143,25 @@ export default function Companions({ onNav }) {
                 onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 2px ${color}66` }}
                 onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
               >
-                {/* Avatar bubble */}
+                {/* Avatar bubble — photo if the companion has a registered profile,
+                    otherwise a coloured circle with their initials */}
                 <div style={{
                   width: 50, height: 50, borderRadius: '50%',
                   background: color,
                   boxShadow: `0 3px 10px ${color}55`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   fontFamily: FONT_DISPLAY, fontSize: 17, color: WHITE,
+                  overflow: 'hidden', flexShrink: 0,
                 }}>
-                  {getInitials(c.name)}
+                  {c.avatarUrl ? (
+                    <img
+                      src={c.avatarUrl}
+                      alt={c.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                    />
+                  ) : (
+                    getInitials(c.name)
+                  )}
                 </div>
 
                 {/* Name */}

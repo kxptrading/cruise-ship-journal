@@ -351,7 +351,10 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       </div>
 
       {/* 7. Settings */}
-      <SettingsBlock onSignOut={() => supabase.auth.signOut()} />
+      <SettingsBlock
+        onSignOut={() => supabase.auth.signOut()}
+        displayName={profile.displayName || session?.user?.email?.split('@')[0] || 'My'}
+      />
 
       {/* Hidden file inputs */}
       <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />

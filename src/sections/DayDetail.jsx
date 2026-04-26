@@ -8,23 +8,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from 'react'
-import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, LIGHT, BP, sty, FONT_DISPLAY, FONT_BODY } from '../constants'
+import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, LIGHT, BP, sty, FONT_DISPLAY, FONT_BODY, WX_EMOJI, WX_STYLE } from '../constants'
 import { useW, useVoyageId } from '../context'
 import { getPhotos } from '../lib/photoStorage'
-
-const WX_EMOJI = {
-  Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️',
-  Windy: '💨', Hot: '🌡️', Mild: '🌤️', Cool: '❄️',
-}
-const WX_STYLE = {
-  Sunny:  { background: '#FEF3C7', border: '1px solid #FCD34D', color: '#92400E' },
-  Hot:    { background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B' },
-  Rainy:  { background: '#EFF6FF', border: '1px solid #93C5FD', color: '#1D4ED8' },
-  Cloudy: { background: '#F3F4F6', border: '1px solid #D1D5DB', color: '#374151' },
-  Windy:  { background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' },
-  Mild:   { background: '#F0FDF4', border: '1px solid #86EFAC', color: '#166534' },
-  Cool:   { background: '#EFF6FF', border: '1px solid #BAE6FD', color: '#0369A1' },
-}
 
 export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }) {
   const w        = useW()
@@ -32,12 +18,21 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }) 
   const [photos, setPhotos] = useState([])
   const [lightbox, setLightbox] = useState(null)
 
+  // Load photos using 1-based day_number (dayIndex + 1) to match the photos
+  // table convention — day_number is always stored 1-based, consistent with
+  // daily_logs.day_number and the itinerary.
   useEffect(() => {
     if (!voyageId) return
-    getPhotos(dayIndex, { voyageId }).then(setPhotos).catch(() => setPhotos([]))
+    getPhotos(dayIndex + 1, { voyageId }).then(setPhotos).catch(() => setPhotos([]))
   }, [dayIndex, voyageId])
 
-  const port    = log.port || itinerary[dayIndex]?.port || ''
+  // DailyLog stores "Port" or "Sea" as a category flag, not the actual name.
+  // Skip those generic labels and fall through to the itinerary for the real
+  // port name so the hero heading shows "Barcelona" not "Port".
+  const isGenericLabel = (v) => v === 'Port' || v === 'Sea'
+  const port = (log.port && !isGenericLabel(log.port))
+    ? log.port
+    : (itinerary[dayIndex]?.port || '')
   const date    = log.date
   const weather = log.weather || []
   const meals   = [

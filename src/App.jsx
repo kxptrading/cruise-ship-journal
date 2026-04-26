@@ -436,11 +436,9 @@ export default function App() {
   const budgetIdRef          = useRef(null)
 
   // ── Toast notification state ────────────────────────────────────────────────
+  // showToast is passed to Feed so the quick composer can confirm a logged day.
   const [toast, setToast]   = useState({ message: '', visible: false })
   const toastTimer          = useRef(null)
-  // Refs track whether the first-entry toasts have already been shown this session
-  const toastLoggedRef      = useRef(false)
-  const toastVoyageRef      = useRef(false)
 
   const showToast = (message) => {
     clearTimeout(toastTimer.current)
@@ -665,33 +663,25 @@ export default function App() {
     if (!isOverlay) setSidebarOpen(false)
   }, [isOverlay])
 
-  // ── Toast triggers ──────────────────────────────────────────────────────────
-  // Only fire after data has loaded from Supabase (loaded + voyageId set),
-  // and only once per session to avoid repeat toasts on every render.
-  useEffect(() => {
-    if (!loaded || !voyageId) return
-    if (!toastVoyageRef.current && data.voyage.shipName) {
-      toastVoyageRef.current = true
-      return // suppress on initial load — only fire on actual user input
-    }
-    if (toastVoyageRef.current && data.voyage.shipName) return
-    toastVoyageRef.current = !!data.voyage.shipName
-  }, [data.voyage.shipName])
-
-  useEffect(() => {
-    if (!loaded || !voyageId) return
-    const logged = data.dailyLogs.filter(d => d.highlights || d.bestMoment).length
-    if (!toastLoggedRef.current && logged > 0) {
-      // Suppress on page load — wait for the count to increase
-      toastLoggedRef.current = true
-      return
-    }
-    if (toastLoggedRef.current && logged === 0) toastLoggedRef.current = false
-  }, [data.dailyLogs, loaded, voyageId])
-
   // ── Derived section completion status ──────────────────────────────────────
-  // A Set of section IDs that have meaningful data. Used by Sidebar (dots) and
-  // Feed (journal completion score). Recomputed only when data changes.
+  // A Set of section IDs that have meaningful data. This is the central
+  // cross-section signal consumed by two places:
+  //   • Sidebar — green dot on each nav item that has content
+  //   • Feed compact metrics strip — "Journal Complete N / 12" tile
+  //
+  // Rules: the minimum meaningful content that counts as "started":
+  //   voyage        → any of ship name, cruise line, or departure date
+  //   itinerary     → at least one row exists
+  //   daily         → at least one day with highlights, best moment, or activity
+  //   food          → at least one food log entry
+  //   dining        → at least one restaurant log entry
+  //   entertainment → at least one entertainment log entry
+  //   foodfav       → any favourites field filled
+  //   budget        → budget amount set OR at least one expense item
+  //   shopping      → at least one shopping item
+  //   highlights    → any highlights field filled
+  //   packing       → at least one item checked
+  //   notes         → at least one note with title or content
   const sectionStatus = useMemo(() => {
     const has = new Set()
     if (data.voyage.shipName || data.voyage.cruiseLine || data.voyage.departureDate) has.add('voyage')
@@ -860,7 +850,7 @@ export default function App() {
 
   // ── Layout values derived from viewport width ────────────────────────────────
   const baseFontSize  = isMobile ? 15 : winW < BP.tablet ? 15.5 : 16
-  const mainPad       = isMobile ? '20px 16px' : winW < BP.tablet ? '28px 24px' : '36px 44px'
+  const mainPad       = isMobile ? '16px 10px' : winW < BP.tablet ? '28px 24px' : '36px 44px'
   const topbarHeight  = 52
   const currentLabel  = NAV.find(n => n.id === section)?.label ?? ''
 

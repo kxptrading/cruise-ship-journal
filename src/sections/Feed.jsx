@@ -1,17 +1,38 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/Feed.jsx — Social-style voyage feed (home screen)
+// sections/Feed.jsx — Social-style voyage feed (home screen / "dashboard")
 //
-// Replaces the metrics-only Dashboard with a Facebook-esque scrolling feed.
-// Daily log entries appear as post cards in reverse-chronological order.
+// Renders a Facebook-esque scrolling feed of daily log entries as post cards.
 // A quick composer at the top lets users post highlights without navigating
 // away to the full Daily Log section.
 //
-// Data is read-only for all sections except dailyLogs — the composer calls
-// onChange('dailyLogs', updatedArray) to post a highlight to a day.
+// ── Data flow ─────────────────────────────────────────────────────────────────
+// READS (props, Supabase):
+//   voyage        → hero banner, progress bar, companion pills
+//   itinerary     → resolves port names for cards when log.port is generic
+//   dailyLogs     → own posts (filtered to isPublic === true)
+//   budget        → "Spent" metric in the compact strip
+//   packing       → (not currently shown in strip, reserved)
+//   foodLogs      → (not currently shown in strip, reserved)
+//   diningLog     → (not currently shown in strip, reserved)
+//   sectionStatus → "Journal Complete N / 12" metric
+//   Supabase:     friend connections → friend posts merged into feed
+//   Supabase:     reactions, comments per visible post
+//   Supabase:     own profile avatar + display name
+//
+// WRITES:
+//   onChange(updatedDailyLogs) — the ONLY write; called by the composer to
+//   update a day's highlights, rating, and isPublic flag. All other data
+//   shown here is read-only from its owning section.
+//
+// ── Visibility rule ───────────────────────────────────────────────────────────
+//   A daily log entry only appears as a feed post when `isPublic === true`.
+//   The composer sets this flag on submit. Users can toggle it per-day in the
+//   Daily Log section (the 🌐/🔒 button). Friend posts only appear when
+//   `is_public = true` in the database (enforced by the Supabase query).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, BP, sty, FONT_DISPLAY, FONT_BODY, SECTION_COLORS } from '../constants'
+import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, TEAL, ROSE, CORAL, BP, sty, FONT_DISPLAY, FONT_BODY, SECTION_COLORS, WX_EMOJI, WX_STYLE } from '../constants'
 import { useW, useVoyageId, useUserId } from '../context'
 import { Donut, Stars } from '../components/ui'
 import { getPhotos, addPhoto } from '../lib/photoStorage'
@@ -19,6 +40,8 @@ import { supabase } from '../lib/supabase'
 import { getTimeOfDay, getTimeGradient, getVignetteRGB } from '../lib/atmosphere'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
+// Five emoji reactions — each post card shows this row. Users can pick one
+// reaction per post (radio behaviour); tapping the active reaction deselects it.
 const REACTIONS = [
   { id: 'love',      emoji: '🚢', label: 'Love This' },
   { id: 'epic',      emoji: '🌊', label: 'Epic Memory' },
@@ -26,21 +49,6 @@ const REACTIONS = [
   { id: 'hilarious', emoji: '😂', label: 'Hilarious' },
   { id: 'shot',      emoji: '📸', label: 'Great Shot' },
 ]
-
-// ── Weather chip styles — per-condition colour tinting ───────────────────────
-const WX_EMOJI = {
-  Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️',
-  Windy: '💨', Hot:  '🌡️', Mild:  '🌤️', Cool: '❄️',
-}
-const WX_STYLE = {
-  Sunny:  { background: '#FEF3C7', border: '1px solid #FCD34D', color: '#92400E' },
-  Hot:    { background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B' },
-  Rainy:  { background: '#EFF6FF', border: '1px solid #93C5FD', color: '#1D4ED8' },
-  Cloudy: { background: '#F3F4F6', border: '1px solid #D1D5DB', color: '#374151' },
-  Windy:  { background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' },
-  Mild:   { background: '#F0FDF4', border: '1px solid #86EFAC', color: '#166534' },
-  Cool:   { background: '#EFF6FF', border: '1px solid #BAE6FD', color: '#0369A1' },
-}
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
@@ -811,11 +819,13 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const imageInputRef = useRef(null)
 
   // Load the first photo for every day that has a daily log entry.
+  // Uses 1-based day numbers (i + 1) to match the photos table's day_number
+  // column, which is kept consistent with daily_logs.day_number (also 1-based).
   useEffect(() => {
     if (!dailyLogs.length || !voyageId) return
     Promise.all(
       dailyLogs.map((_, i) =>
-        getPhotos(i, { voyageId })
+        getPhotos(i + 1, { voyageId })
           .then(photos => ({ day: i, photo: photos[0] || null }))
           .catch(() => ({ day: i, photo: null }))
       )
@@ -859,13 +869,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
   // ── Feed items ────────────────────────────────────────────────────────────
   // Own posts merged with friend posts, sorted newest first.
+  //
+  // resolvedPort priority:
+  //   1. log.port — but only when it's an actual place name, not the generic
+  //      "Port" or "Sea" labels stored by the DailyLog section picker
+  //   2. itinerary[i].port — the specific port name entered in Itinerary
+  //   3. Empty string (card will fall back to "Day N")
+  const genericLabel = (v) => v === 'Port' || v === 'Sea'
   const ownItems = dailyLogs
     .map((log, i) => ({
       ...log,
       dayIndex:     i,
       dayNumber:    i + 1,
       voyageId:     voyageId,
-      resolvedPort: log.port || itinerary[i]?.port || '',
+      resolvedPort: (log.port && !genericLabel(log.port)) ? log.port : (itinerary[i]?.port || ''),
       photo:        photosByDay[i] || null,
       author:       null,   // null = own post
     }))
@@ -1050,6 +1067,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       ...updated[idx],
       highlights: composeText.trim(),
       ...(composeRating > 0 ? { rating: composeRating } : {}),
+      // Mark public so the post appears in this user's feed and friends' feeds.
+      // Without this flag the ownItems filter below would silently drop the post.
+      isPublic: true,
     }
     onChange(updated)
     // Upload image if one was attached
@@ -1195,8 +1215,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               />
 
               {/* Composer toolbar */}
-              <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: w < BP.mobile ? 8 : 14, flexWrap: 'wrap' }}>
                   {/* Add image */}
                   <button
                     onClick={() => imageInputRef.current?.click()}

@@ -9,6 +9,18 @@
 //
 // Each function accepts a context object { voyageId, userId } as the last
 // argument, provided by the calling component via useVoyageId() and UserCtx.
+//
+// ⚠️  DAY NUMBERING CONVENTION — IMPORTANT
+// All callers must pass 1-based day numbers (Day 1 = 1, Day 2 = 2, …).
+// This matches the `daily_logs.day_number` and `itinerary.day_number`
+// columns, keeping cross-table JOINs and display logic consistent.
+//
+// Callers:
+//   DailyLog.jsx  → getPhotos(day + 1, …)  and addPhoto(day + 1, …)
+//   DayDetail.jsx → getPhotos(dayIndex + 1, …)
+//   Feed.jsx      → getPhotos(i + 1, …)  and addPhoto(idx + 1, …)
+//   (friend photo cross-reference uses daily_logs.day_number which is already
+//    1-based, so no adjustment is needed on that path)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { supabase } from './supabase'

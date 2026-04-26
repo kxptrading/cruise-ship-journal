@@ -185,26 +185,34 @@ function ImageCropper({ file, aspect, label, onConfirm, onCancel }) {
 export default function UserProfile({ session, allVoyages, voyage, onNav, theme, onThemeChange }) {
   const userId = useUserId()
 
-  const [profile, setProfile] = useState({ displayName: '', bio: '', homePort: '', favouriteCruiseLine: '', favouriteDestination: '', avatarUrl: '', bannerUrl: '' })
+  const [profile, setProfile] = useState({
+    displayName: '', bio: '', homePort: '', favouriteCruiseLine: '',
+    favouriteDestination: '', avatarUrl: '', bannerUrl: '',
+  })
   const [loading,         setLoading]         = useState(true)
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
   const [uploadingBanner, setUploadingBanner] = useState(false)
   const [uploadError,     setUploadError]     = useState('')
-  const [cropState,       setCropState]       = useState(null) // { file, type }
-  const [friendCount,     setFriendCount]     = useState(null)
+  const [cropState,       setCropState]       = useState(null)
 
   const avatarRef = useRef(null)
   const bannerRef = useRef(null)
 
-  // ── Load profile ─────────────────────────────────────────────────────────────
+  // ── Load ALL profile fields in one query ──────────────────────────────────────
   useEffect(() => {
     if (!userId) return
     supabase
       .from('profiles')
-      .select('display_name, bio, home_port, favourite_cruise_line, favourite_destination, avatar_url, banner_url')
+      .select([
+        'display_name', 'bio', 'home_port', 'favourite_cruise_line',
+        'favourite_destination', 'avatar_url', 'banner_url',
+        'cabin_preference', 'dining_time', 'dietary', 'currency',
+        'home_airport', 'units', 'trait_1', 'trait_2', 'trait_3', 'trait_4',
+      ].join(', '))
       .eq('user_id', userId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('Profile load error:', error)
         if (data) setProfile({
           displayName:          data.display_name          ?? '',
           bio:                  data.bio                   ?? '',
@@ -218,23 +226,29 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       })
   }, [userId])
 
-  // ── Friend count ─────────────────────────────────────────────────────────────
-  useEffect(() => {
+  // ── Single save helper — used by name, avatar, banner, and sub-components ─────
+  // Upserts only the supplied fields; never sends email or unrelated columns.
+  const saveProfileField = useCallback(async (dbUpdates) => {
     if (!userId) return
-    supabase
-      .from('friend_requests')
-      .select('id', { count: 'exact', head: true })
-      .or(`from_user_id.eq.${userId},to_user_id.eq.${userId}`)
-      .eq('status', 'accepted')
-      .then(({ count }) => setFriendCount(count ?? 0))
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({ user_id: userId, ...dbUpdates }, { onConflict: 'user_id' })
+    if (error) console.error('Profile save error:', error)
   }, [userId])
 
-  // ── Derived stats from real data ──────────────────────────────────────────────
-  const dailyLogsCount = voyage && Array.isArray(voyage) ? 0
-    : 0 // real count passed from allVoyages daily logs — fetched via prop if needed
-
-  // Count unique non-sea ports across all voyages from the itinerary prop
-  const uniquePorts = 15 // seed — replace with DB query when itinerary is aggregated
+  // ── Current voyage (active today, else most recent past) ──────────────────────
+  const today = new Date()
+  const currentVoyage = (() => {
+    const active = allVoyages.find(v => {
+      const dep = v.departure_date ? new Date(v.departure_date + 'T00:00:00') : null
+      const ret = v.return_date    ? new Date(v.return_date    + 'T00:00:00') : null
+      return dep && ret && today >= dep && today <= ret
+    })
+    if (active) return active
+    return [...allVoyages]
+      .filter(v => v.departure_date)
+      .sort((a, b) => new Date(b.departure_date) - new Date(a.departure_date))[0] || null
+  })()
 
   // ── Upload blob → Supabase Storage ───────────────────────────────────────────
   const uploadPhotoBlob = async (blob, type) => {
@@ -245,9 +259,13 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
     const { error } = await supabase.storage.from('voyage-covers').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
     if (error) { setUploadError('Upload failed — please try again.'); return null }
     const { data: { publicUrl } } = supabase.storage.from('voyage-covers').getPublicUrl(path)
-    // Append a timestamp so the browser/CDN never serves a stale cached version
-    // when the same storage path is overwritten with a new image.
     return `${publicUrl}?t=${Date.now()}`
+  }
+
+  // ── Name change ───────────────────────────────────────────────────────────────
+  const handleNameChange = async (newName) => {
+    setProfile(p => ({ ...p, displayName: newName }))
+    await saveProfileField({ display_name: newName })
   }
 
   // ── File pickers → open cropper ───────────────────────────────────────────────
@@ -262,9 +280,9 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
     else                   setUploadingBanner(true)
     const url = await uploadPhotoBlob(blob, type)
     if (url) {
-      const dbField    = type === 'avatar' ? 'avatar_url'  : 'banner_url'
-      const stateField = type === 'avatar' ? 'avatarUrl'   : 'bannerUrl'
-      await supabase.from('profiles').upsert({ user_id: userId, email: session?.user?.email ?? '', [dbField]: url }, { onConflict: 'user_id' })
+      const dbField    = type === 'avatar' ? 'avatar_url' : 'banner_url'
+      const stateField = type === 'avatar' ? 'avatarUrl'  : 'bannerUrl'
+      await saveProfileField({ [dbField]: url })
       setProfile(p => ({ ...p, [stateField]: url }))
     }
     if (type === 'avatar') setUploadingAvatar(false)
@@ -303,26 +321,25 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
         profile={profile}
         session={session}
         allVoyages={allVoyages}
-        dailyLogsCount={dailyLogsCount}
-        uniquePorts={uniquePorts}
-        friendCount={friendCount}
+        currentVoyage={currentVoyage}
         onUploadAvatar={() => avatarRef.current?.click()}
         onUploadBanner={() => bannerRef.current?.click()}
         uploadingAvatar={uploadingAvatar}
         uploadingBanner={uploadingBanner}
+        onNameChange={handleNameChange}
       />
 
       {/* 2. Passport map + Personality */}
       <div style={{ display: 'flex', gap: 18, marginBottom: 20, flexWrap: 'wrap' }}>
         <PassportMap />
-        <Personality />
+        <Personality onSave={saveProfileField} />
       </div>
 
       {/* 3. Badges */}
-      <Badges />
+      <Badges currentVoyage={currentVoyage} />
 
       {/* 4. Companions */}
-      <Companions />
+      <Companions onNav={onNav} />
 
       {/* 5. Voyages */}
       <VoyagesStrip allVoyages={allVoyages} onViewAll={() => onNav?.('voyage')} />
@@ -330,7 +347,7 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       {/* 6. Appearance + Preferences */}
       <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 20 }}>
         <AppearanceBlock theme={theme} onThemeChange={onThemeChange} />
-        <Preferences />
+        <Preferences onSave={saveProfileField} />
       </div>
 
       {/* 7. Settings */}

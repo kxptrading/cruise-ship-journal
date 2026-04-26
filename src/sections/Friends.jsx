@@ -13,6 +13,8 @@ import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, ROSE
 import { PgHdr } from '../components/ui'
 import { useUserId, useW } from '../context'
 
+
+
 // ── Avatar bubble ─────────────────────────────────────────────────────────────
 function Avatar({ name, avatarUrl, size = 40, bg = NAVY }) {
   const initials = (name || '?').slice(0, 2).toUpperCase()
@@ -55,16 +57,21 @@ function Pill({ label, color }) {
   )
 }
 
-// ── Shared card style ─────────────────────────────────────────────────────────
-const card = {
-  background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`,
-  padding: '18px 20px', marginBottom: 10,
-  display: 'flex', alignItems: 'center', gap: 14,
+// ── Shared card style — built in the component so it can read width ──────────
+function useCard() {
+  const w = useW()
+  return {
+    background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`,
+    padding: w < BP.mobile ? '14px 16px' : '18px 20px', marginBottom: 10,
+    display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap',
+  }
 }
 
 export default function Friends() {
   const currentUserId = useUserId()
   const w             = useW()
+  const card          = useCard()
+  const isMobile      = w < BP.mobile
 
   const [searchQuery, setSearchQuery]      = useState('')
   const [searchResult, setSearchResult]   = useState(null)   // profile[] | 'not_found' | null
@@ -229,7 +236,7 @@ export default function Friends() {
             {searchResult.map(profile => {
               const rel = getRelationship(profile.user_id)
               return (
-                <div key={profile.user_id} style={{ ...card, marginBottom: 8, background: LIGHT }}>
+                <div key={profile.user_id} style={{ ...card, marginBottom: 8, background: LIGHT, flexWrap: 'nowrap' }}>
                   <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} bg={avatarColor(profile.user_id)} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{profile.display_name || 'Unknown'}</div>
@@ -267,14 +274,15 @@ export default function Friends() {
               <Avatar name={req.displayName} avatarUrl={req.avatarUrl} bg={avatarColor(req.userId)} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{req.displayName}</div>
-                <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{req.email}</div>
+                <div style={{ fontSize: 12, color: MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.email}</div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, width: isMobile ? '100%' : 'auto' }}>
                 <button
                   onClick={() => acceptRequest(req.requestId)}
                   style={{
+                    flex: isMobile ? 1 : undefined,
                     background: TEAL, color: WHITE, border: 'none', borderRadius: 8,
-                    padding: '7px 14px', fontSize: 13, fontWeight: 600,
+                    padding: '8px 14px', fontSize: 13, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
@@ -283,9 +291,10 @@ export default function Friends() {
                 <button
                   onClick={() => removeRequest(req.requestId)}
                   style={{
+                    flex: isMobile ? 1 : undefined,
                     background: 'transparent', color: MUTED,
                     border: `1px solid ${BORDER}`, borderRadius: 8,
-                    padding: '7px 14px', fontSize: 13, fontWeight: 600,
+                    padding: '8px 14px', fontSize: 13, fontWeight: 600,
                     cursor: 'pointer', fontFamily: 'inherit',
                   }}
                 >
@@ -320,21 +329,23 @@ export default function Friends() {
             <Avatar name={f.displayName} avatarUrl={f.avatarUrl} bg={avatarColor(f.userId)} />
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{f.displayName}</div>
-              <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{f.email}</div>
+              <div style={{ fontSize: 12, color: MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.email}</div>
             </div>
-            <Pill label="Friend" color={TEAL} />
-            <button
-              onClick={() => removeRequest(f.requestId)}
-              style={{
-                background: 'transparent', color: MUTED,
-                border: `1px solid ${BORDER}`, borderRadius: 8,
-                padding: '6px 12px', fontSize: 12,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-              title="Remove friend"
-            >
-              Remove
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+              <Pill label="Friend" color={TEAL} />
+              <button
+                onClick={() => removeRequest(f.requestId)}
+                style={{
+                  background: 'transparent', color: MUTED,
+                  border: `1px solid ${BORDER}`, borderRadius: 8,
+                  padding: '6px 12px', fontSize: 12,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+                title="Remove friend"
+              >
+                Remove
+              </button>
+            </div>
           </div>
         ))}
       </div>

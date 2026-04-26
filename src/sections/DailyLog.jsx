@@ -78,10 +78,12 @@ export default function DailyLog({ data, onChange, itinerary, voyage }) {
   // Update a single field on the current day without mutating the array
   const set = (f, v) => { const u = [...data]; u[day] = { ...log, [f]: v }; onChange(u) }
 
-  // Load photos from Supabase whenever the active day or voyage changes
+  // Load photos using 1-based day_number (day + 1) so the query matches the
+  // value stored in the photos table. Convention: photos.day_number is always
+  // 1-based to align with daily_logs.day_number and the itinerary.
   useEffect(() => {
     if (!voyageId) return
-    getPhotos(day, { voyageId }).then(setPhotos).catch(() => setPhotos([]))
+    getPhotos(day + 1, { voyageId }).then(setPhotos).catch(() => setPhotos([]))
   }, [day, voyageId])
 
   const handleUpload = async (e) => {
@@ -89,7 +91,8 @@ export default function DailyLog({ data, onChange, itinerary, voyage }) {
     if (!files.length || !voyageId || !userId) return
     setUploading(true)
     for (const file of files) {
-      const photo = await addPhoto(day, file, { voyageId, userId })
+      // Upload with 1-based day_number (day + 1) to match photos table convention
+      const photo = await addPhoto(day + 1, file, { voyageId, userId })
       setPhotos(prev => [...prev, photo])
     }
     setUploading(false)
@@ -170,7 +173,13 @@ export default function DailyLog({ data, onChange, itinerary, voyage }) {
           </div>
         </div>
 
-        {/* Date and port fields — port pre-fills from itinerary but can be overridden */}
+        {/* Date + day-type picker.
+            IMPORTANT: the port select stores "Port" or "Sea" as a category flag
+            (did we dock or not?), NOT the actual port name. The real port name
+            comes from Itinerary — Feed and DayDetail both use:
+              (log.port && log.port !== 'Port' && log.port !== 'Sea')
+                ? log.port : itinerary[i].port
+            so that generic labels don't override the specific itinerary entry. */}
         <Row2>
           <Fld label="Date" half><Inp type="date" value={log.date} onChange={v => set('date', v)} /></Fld>
           <Fld label="Port / Sea" half>

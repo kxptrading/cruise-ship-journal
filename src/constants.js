@@ -1,9 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// constants.js — Design tokens, icons, navigation, and shared styles
+// constants.js — Design tokens, icons, navigation, and shared data
 //
 // Single source of truth for every visual and structural decision in the app.
 // Importing from here (rather than hardcoding values in components) means a
 // colour or spacing change only needs to happen in one place.
+//
+// Contents:
+//   NAVY / NAVY2 / GOLD / CREAM — theme-aware CSS variable aliases
+//   WHITE / BORDER / TEXT / MUTED / LIGHT — neutral fixed colours
+//   TEAL / ROSE / PLUM / CORAL           — semantic accent colours
+//   SECTION_COLORS                         — per-section accent map
+//   FONT_DISPLAY / FONT_BODY              — typography stacks
+//   BP                                     — responsive breakpoints (px)
+//   IC                                     — SVG icon path strings
+//   NAV                                    — sidebar navigation items
+//   WX_EMOJI / WX_STYLE                   — weather chip data (Feed + DayDetail)
+//   sty                                    — shared inline style objects
 // ─────────────────────────────────────────────────────────────────────────────
 
 // ── Colour palette ────────────────────────────────────────────────────────────
@@ -21,7 +33,9 @@ export const LIGHT  = '#F9FAFB'               // Alternating rows, box backgroun
 export const TEAL   = '#10B981'               // Ports, positive metrics (fixed)
 export const ROSE   = '#F97316'               // Ratings, emotional metrics (fixed)
 export const PLUM   = '#8B5CF6'               // Packing, completion metrics (fixed)
-export const CORAL  = '#F97316'               // Pull-quotes, highlights (fixed)
+// CORAL is an alias for ROSE — both are the same warm orange used for
+// excursion highlights, best-moment pull-quotes, and emotional accents.
+export const CORAL  = ROSE
 
 // ── Per-section accent colours ────────────────────────────────────────────────
 // Used to tint section header bars, PgHdr underlines, and completion dots.
@@ -87,6 +101,24 @@ export const NAV = [
   { id: 'packing',       label: 'Packing List',       icon: '🧳' },
   { id: 'notes',         label: 'Notes',              icon: '📝' },
 ]
+
+// ── Weather chip data ─────────────────────────────────────────────────────────
+// Shared by Feed.jsx and DayDetail.jsx so both components show identical chips.
+// WX_EMOJI maps a condition name to an emoji; WX_STYLE provides the tinted
+// pill appearance (background, border, text) for each condition.
+export const WX_EMOJI = {
+  Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️',
+  Windy: '💨', Hot: '🌡️', Mild: '🌤️', Cool: '❄️',
+}
+export const WX_STYLE = {
+  Sunny:  { background: '#FEF3C7', border: '1px solid #FCD34D', color: '#92400E' },
+  Hot:    { background: '#FEE2E2', border: '1px solid #FCA5A5', color: '#991B1B' },
+  Rainy:  { background: '#EFF6FF', border: '1px solid #93C5FD', color: '#1D4ED8' },
+  Cloudy: { background: '#F3F4F6', border: '1px solid #D1D5DB', color: '#374151' },
+  Windy:  { background: '#F1F5F9', border: '1px solid #CBD5E1', color: '#334155' },
+  Mild:   { background: '#F0FDF4', border: '1px solid #86EFAC', color: '#166534' },
+  Cool:   { background: '#EFF6FF', border: '1px solid #BAE6FD', color: '#0369A1' },
+}
 
 // ── Shared component styles ───────────────────────────────────────────────────
 // Reusable style objects applied to common UI elements. Kept here so padding,

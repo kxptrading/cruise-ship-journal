@@ -40,17 +40,7 @@ export const TRAITS = [
   { name: 'Trivia Enthusiast',      sub: 'Top of the leaderboard or it didn\'t happen', color: TEAL },
 ]
 
-// ── Achievement badges (Badges card) ─────────────────────────────────────────
-export const BADGES = [
-  { emoji: '🌊', name: 'First Voyage',     earned: true,  color: NAVY  },
-  { emoji: '⚓', name: 'Transatlantic',    earned: true,  color: NAVY2 },
-  { emoji: '🌍', name: 'Ten Ports',        earned: true,  color: TEAL  },
-  { emoji: '⭐', name: 'Five-Star Streak', earned: true,  color: GOLD  },
-  { emoji: '🍽️', name: 'Foodie Captain',   earned: true,  color: ROSE  },
-  { emoji: '🎭', name: 'Entertainer',      earned: false, color: PLUM  },
-  { emoji: '🌙', name: 'Midnight Buffet',  earned: false, color: NAVY2 },
-  { emoji: '🧭', name: 'World Cruiser',    earned: false, color: TEAL  },
-]
+// Note: Badge definitions moved to Badges.jsx (computed live from journal data)
 
 // ── Travel companions (Companions card) ───────────────────────────────────────
 export const COMPANIONS = [

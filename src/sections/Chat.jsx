@@ -18,7 +18,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useUserId, useW } from '../context'
-import { NAVY, NAVY2, WHITE, BORDER, TEXT, MUTED, GOLD, FONT_BODY, FONT_DISPLAY } from '../constants'
+import { NAVY, NAVY2, WHITE, BORDER, TEXT, MUTED, GOLD, FONT_BODY, FONT_DISPLAY, BP } from '../constants'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function fmtTime(ts) {
@@ -281,7 +281,9 @@ function NewChatModal({ friends, onCreate, onClose, creating }) {
 export default function Chat() {
   const userId = useUserId()
   const w      = useW()
-  const isMobile = w < 768
+  // Switch to single-panel layout below tablet breakpoint so the conversation
+  // list and thread don't compete for horizontal space on narrow screens.
+  const isMobile = w < BP.tablet
 
   const [conversations,  setConversations]  = useState([])
   const [activeConvId,   setActiveConvId]   = useState(null)

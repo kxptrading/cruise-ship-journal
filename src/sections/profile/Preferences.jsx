@@ -1,63 +1,213 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/Preferences.jsx — Auto-fill preferences for new voyages
+// profile/Preferences.jsx — Editable travel preferences
+//
+// Each row shows the current value as static text. Clicking the row switches
+// the value to an inline dropdown. Selecting an option saves immediately and
+// returns the row to its static display.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { WHITE, BORDER, NAVY2, MUTED, LIGHT, TEXT, FONT_DISPLAY, FONT_BODY } from '../../constants'
-import { PREFERENCES } from './profileData'
+import { useState, useEffect, useRef } from 'react'
+import { supabase } from '../../lib/supabase'
+import { useUserId } from '../../context'
+import { WHITE, BORDER, NAVY2, MUTED, LIGHT, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 
-export default function Preferences() {
+
+const PREFS = [
+  {
+    key:   'cabin_preference',
+    label: 'Cabin preference',
+    icon:  '🛏️',
+    options: ['Inside', 'Oceanview', 'Balcony · mid-ship', 'Balcony · aft', 'Balcony · forward', 'Suite', 'No preference'],
+  },
+  {
+    key:   'dining_time',
+    label: 'Dining time',
+    icon:  '🍽️',
+    options: ['Early · 18:00', 'Early · 18:30', 'Standard · 19:00', 'Standard · 19:30', 'Late · 20:00', 'Late · 20:30', 'Anytime dining'],
+  },
+  {
+    key:   'dietary',
+    label: 'Dietary',
+    icon:  '🥗',
+    options: ['No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-free', 'Halal', 'Kosher', 'Nut allergy', 'Dairy-free'],
+  },
+  {
+    key:   'currency',
+    label: 'Default currency',
+    icon:  '💰',
+    options: ['GBP (£)', 'USD ($)', 'EUR (€)', 'AUD (A$)', 'CAD (C$)', 'JPY (¥)', 'CHF', 'NOK', 'SEK', 'DKK'],
+  },
+  {
+    key:   'home_airport',
+    label: 'Home airport',
+    icon:  '🛫',
+    options: [
+      'LHR – London Heathrow', 'LGW – London Gatwick', 'MAN – Manchester',
+      'EDI – Edinburgh', 'BHX – Birmingham', 'BRS – Bristol', 'GLA – Glasgow',
+      'LTN – London Luton', 'STN – London Stansted', 'NCL – Newcastle',
+      'LBA – Leeds Bradford', 'JFK – New York JFK', 'LAX – Los Angeles',
+      'ORD – Chicago O\'Hare', 'MIA – Miami', 'DXB – Dubai', 'SYD – Sydney',
+      'AMS – Amsterdam', 'CDG – Paris Charles de Gaulle', 'FRA – Frankfurt',
+    ],
+  },
+  {
+    key:   'units',
+    label: 'Units',
+    icon:  '📏',
+    options: ['Metric', 'Imperial'],
+  },
+]
+
+const EMPTY = Object.fromEntries(PREFS.map(p => [p.key, '']))
+
+function PrefRow({ pref, value, onSave, isLast }) {
+  const [editing, setEditing] = useState(false)
+  const [saved,   setSaved]   = useState(false)
+  const selectRef = useRef(null)
+
+  // Open the native select as soon as editing starts
+  useEffect(() => {
+    if (editing && selectRef.current) {
+      selectRef.current.focus()
+    }
+  }, [editing])
+
+  const handleChange = async (e) => {
+    const newVal = e.target.value
+    setEditing(false)
+    if (newVal === value) return
+    await onSave(pref.key, newVal)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 1500)
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '11px 4px',
+        borderBottom: isLast ? 'none' : `1px solid ${BORDER}`,
+        cursor: editing ? 'default' : 'pointer',
+        borderRadius: 6,
+        transition: 'background 0.12s',
+      }}
+      onClick={() => { if (!editing) setEditing(true) }}
+      onMouseEnter={e => { if (!editing) e.currentTarget.style.background = LIGHT }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
+    >
+      {/* Icon tile */}
+      <div style={{
+        width: 30, height: 30, borderRadius: 8,
+        background: LIGHT, border: `1px solid ${BORDER}`,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 15, flexShrink: 0,
+      }}>
+        {pref.icon}
+      </div>
+
+      {/* Label */}
+      <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: TEXT, fontWeight: 500, fontFamily: FONT_BODY }}>
+        {pref.label}
+      </div>
+
+      {/* Right side: static value OR inline dropdown */}
+      {editing ? (
+        <select
+          ref={selectRef}
+          defaultValue={value}
+          onChange={handleChange}
+          onBlur={() => setEditing(false)}
+          style={{
+            border: `1px solid var(--t-primary)`,
+            borderRadius: 8,
+            padding: '5px 8px',
+            fontSize: 12,
+            fontFamily: FONT_BODY,
+            fontWeight: 600,
+            color: NAVY2,
+            background: WHITE,
+            outline: 'none',
+            cursor: 'pointer',
+            maxWidth: 180,
+            boxShadow: '0 0 0 2px var(--t-primary)22',
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <option value="">Select…</option>
+          {pref.options.map(opt => (
+            <option key={opt} value={opt}>{opt}</option>
+          ))}
+        </select>
+      ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+          {saved ? (
+            <span style={{ fontSize: 11, color: TEAL, fontWeight: 700 }}>✓ Saved</span>
+          ) : (
+            <span style={{ fontSize: 12, fontWeight: 700, color: value ? NAVY2 : MUTED }}>
+              {value || 'Not set'}
+            </span>
+          )}
+          <span style={{ fontSize: 13, color: MUTED }}>›</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function Preferences({ onSave }) {
+  const userId = useUserId()
+  const [prefs,   setPrefs]   = useState(EMPTY)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!userId) return
+    supabase
+      .from('profiles')
+      .select('cabin_preference, dining_time, dietary, currency, home_airport, units')
+      .eq('user_id', userId)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (error) console.error('Preferences load error:', error)
+        if (data) setPrefs({
+          cabin_preference: data.cabin_preference ?? '',
+          dining_time:      data.dining_time      ?? '',
+          dietary:          data.dietary          ?? '',
+          currency:         data.currency         ?? '',
+          home_airport:     data.home_airport     ?? '',
+          units:            data.units            ?? '',
+        })
+        setLoading(false)
+      })
+  }, [userId])
+
+  const handleSave = async (key, value) => {
+    setPrefs(p => ({ ...p, [key]: value }))
+    await onSave({ [key]: value || null })
+  }
+
   return (
     <div style={{ background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '18px 20px', flex: '1 1 0', minWidth: 0 }}>
 
-      {/* Header */}
       <div style={{ marginBottom: 18 }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>AUTO-FILL FOR NEW VOYAGES</div>
         <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, color: NAVY2, lineHeight: 1 }}>Preferences</h2>
       </div>
 
-      {/* Preference rows */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-        {PREFERENCES.map((pref, i) => (
-          <button
-            key={pref.key}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 12,
-              background: 'none', border: 'none', padding: '11px 4px',
-              borderBottom: i < PREFERENCES.length - 1 ? `1px solid ${BORDER}` : 'none',
-              cursor: 'pointer', textAlign: 'left', width: '100%',
-              borderRadius: 0, outline: 'none', fontFamily: FONT_BODY,
-              transition: 'background 0.12s',
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = LIGHT}
-            onMouseLeave={e => e.currentTarget.style.background = 'none'}
-            onFocus={e => e.currentTarget.style.background = LIGHT}
-            onBlur={e => e.currentTarget.style.background = 'none'}
-          >
-            {/* Icon tile */}
-            <div style={{
-              width: 30, height: 30, borderRadius: 8,
-              background: LIGHT, border: `1px solid ${BORDER}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 15, flexShrink: 0,
-            }}>
-              {pref.icon}
-            </div>
-
-            {/* Label */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 12.5, color: TEXT, fontWeight: 500 }}>{pref.key}</div>
-            </div>
-
-            {/* Value */}
-            <div style={{ fontSize: 12, fontWeight: 700, color: NAVY2, marginRight: 6, textAlign: 'right' }}>
-              {pref.value}
-            </div>
-
-            {/* Chevron */}
-            <div style={{ fontSize: 14, color: MUTED, flexShrink: 0 }}>›</div>
-          </button>
-        ))}
-      </div>
+      {loading ? (
+        <div style={{ fontSize: 13, color: MUTED, padding: '12px 0' }}>Loading…</div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          {PREFS.map((pref, i) => (
+            <PrefRow
+              key={pref.key}
+              pref={pref}
+              value={prefs[pref.key]}
+              onSave={handleSave}
+              isLast={i === PREFS.length - 1}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

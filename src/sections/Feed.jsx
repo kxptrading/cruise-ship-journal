@@ -52,7 +52,7 @@ const REACTIONS = [
 
 // ── Post card ─────────────────────────────────────────────────────────────────
 // Renders a single daily log entry as a social-style post card.
-function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
+function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
   const w = useW()
   const [animating, setAnimating]     = useState(null)
   const [hoveredReaction, setHovered] = useState(null)
@@ -124,7 +124,7 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
           {/* Name + optional ship (friend posts) */}
           <div style={{ minWidth: 0 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {author ? author.name : userDisplayName}
+              {author ? author.name : displayName}
             </div>
             {author?.shipName && (
               <div style={{ fontSize: 11, color: MUTED, marginTop: 1 }}>{author.shipName}</div>
@@ -1321,6 +1321,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               onViewDay={item.author ? null : onViewDay}
               avatarUrl={avatarUrl}
               initials={userInitials}
+              displayName={userDisplayName}
               author={item.author}
               reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
               onReact={(rid) => handleReact(item.voyageId, item.dayNumber, rid)}

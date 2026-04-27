@@ -102,73 +102,72 @@ function PostCard({ item, onViewDay, avatarUrl, initials, author, reactions, onR
   ].filter(Boolean)
 
   return (
-    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', borderTop: `4px solid ${NAVY}`, position: 'relative' }}>
+    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', borderTop: `4px solid ${NAVY}` }}>
 
-      {/* ── Friend attribution banner ─────────────────────────────────────── */}
-      {author && (
-        <div style={{ background: `linear-gradient(135deg, ${NAVY2}08, ${NAVY2}18)`, borderBottom: `1px solid ${BORDER}`, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: '50%', background: NAVY2, overflow: 'hidden', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {author.avatarUrl
-              ? <img src={author.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-              : <span style={{ fontSize: 11, fontWeight: 700, color: WHITE }}>{author.initials}</span>
+      {/* ── Card header: author (left) + day/port/date/rating (right) ──────── */}
+      <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+
+        {/* Left — avatar + name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+          {/* Avatar circle */}
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+            background: NAVY2, border: `2px solid ${BORDER}`,
+            overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {displayAvatar
+              ? <img src={displayAvatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              : <span style={{ fontSize: 14, fontWeight: 700, color: WHITE, fontFamily: FONT_DISPLAY }}>{displayInitials}</span>
             }
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ fontSize: 13, fontWeight: 700, color: NAVY2 }}>{author.name}</span>
-            {author.shipName && <span style={{ fontSize: 12, color: MUTED }}> · {author.shipName}</span>}
-          </div>
-          <span style={{ fontSize: 11, color: MUTED, background: GOLD + '20', borderRadius: 20, padding: '2px 8px', fontWeight: 600 }}>Friend</span>
-        </div>
-      )}
 
-      {/* ── Profile avatar — top-right corner ────────────────────────────── */}
-      <div style={{
-        position: 'absolute', top: author ? 42 : 12, right: 14,
-        width: 36, height: 36, borderRadius: '50%',
-        background: NAVY2, border: `2px solid ${WHITE}`,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-        overflow: 'hidden', flexShrink: 0,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        zIndex: 1,
-      }}>
-        {displayAvatar ? (
-          <img src={displayAvatar} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        ) : (
-          <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif' }}>{displayInitials}</span>
-        )}
-      </div>
-
-      {/* ── Card header: day badge + port + date ──────────────────────────── */}
-      <div style={{ padding: '14px 18px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingRight: 62 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* Day number badge */}
-          <div style={{
-            width: 42, height: 42, borderRadius: '50%', background: NAVY,
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            justifyContent: 'center', flexShrink: 0,
-          }}>
-            <span style={{ fontSize: 8, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1 }}>Day</span>
-            <span style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: 'Georgia,serif', lineHeight: 1.1 }}>{dayIndex + 1}</span>
-          </div>
-          <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: NAVY }}>
-              {resolvedPort || `Day ${dayIndex + 1}`}
+          {/* Name + optional ship (friend posts) */}
+          <div style={{ minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {author ? author.name : userDisplayName}
             </div>
-            {date && (
-              <div style={{ fontSize: 12, color: MUTED, marginTop: 1 }}>
-                {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            {author?.shipName && (
+              <div style={{ fontSize: 11, color: MUTED, marginTop: 1 }}>{author.shipName}</div>
+            )}
+          </div>
+
+          {/* Friend badge */}
+          {author && (
+            <span style={{ fontSize: 10, fontWeight: 700, color: GOLD, background: GOLD + '18', border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '2px 8px', flexShrink: 0 }}>
+              Friend
+            </span>
+          )}
+        </div>
+
+        {/* Right — day badge + port + date + rating */}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
+          {/* Day badge + rating on the same row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{
+              background: NAVY, borderRadius: 20, padding: '3px 10px',
+              display: 'flex', alignItems: 'center', gap: 4,
+            }}>
+              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Day</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: FONT_DISPLAY }}>{dayIndex + 1}</span>
+            </div>
+            {rating > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: GOLD + '18', borderRadius: 20, padding: '3px 8px' }}>
+                <span style={{ color: GOLD, fontSize: 12 }}>★</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: GOLD }}>{rating}.0</span>
               </div>
             )}
           </div>
+          {/* Port */}
+          {resolvedPort && (
+            <div style={{ fontSize: 12, fontWeight: 600, color: NAVY2, textAlign: 'right' }}>{resolvedPort}</div>
+          )}
+          {/* Date */}
+          {date && (
+            <div style={{ fontSize: 11, color: MUTED, textAlign: 'right' }}>
+              {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+            </div>
+          )}
         </div>
-
-        {/* Star rating pill */}
-        {rating > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: GOLD + '18', borderRadius: 20, padding: '4px 10px', flexShrink: 0 }}>
-            <span style={{ color: GOLD, fontSize: 13 }}>★</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: GOLD }}>{rating}.0</span>
-          </div>
-        )}
       </div>
 
       {/* ── Hero photo ─────────────────────────────────────────────────────── */}

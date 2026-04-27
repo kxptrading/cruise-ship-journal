@@ -178,10 +178,13 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
       return
     }
 
+    // Append a timestamp so each upload gets a unique URL — prevents the
+    // browser and Supabase CDN from serving the previous cached image.
     const { data: { publicUrl } } = supabase.storage.from('voyage-covers').getPublicUrl(path)
+    const freshUrl = `${publicUrl}?t=${Date.now()}`
 
-    await supabase.from('voyages').update({ cover_photo_url: publicUrl }).eq('id', voyageId)
-    onCoverPhotoChange(publicUrl)
+    await supabase.from('voyages').update({ cover_photo_url: freshUrl }).eq('id', voyageId)
+    onCoverPhotoChange(freshUrl)
     setUploading(false)
   }
 

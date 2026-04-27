@@ -17,8 +17,24 @@ import { supabase } from '../lib/supabase'
 
 // ── Voyage card ───────────────────────────────────────────────────────────────
 function VoyageCard({ voyage, isActive, onSwitch }) {
-  const nights = voyage.total_nights
+  const nights    = voyage.total_nights
   const dateRange = [voyage.departure_date, voyage.return_date].filter(Boolean).join(' → ')
+
+  // Derive the voyage's real status from its dates
+  const today  = new Date(); today.setHours(0, 0, 0, 0)
+  const dep    = voyage.departure_date ? new Date(voyage.departure_date + 'T00:00:00') : null
+  const ret    = voyage.return_date    ? new Date(voyage.return_date    + 'T00:00:00') : null
+  const status = dep && ret
+    ? (today < dep ? 'upcoming' : today <= ret ? 'sailing' : 'past')
+    : 'no-dates'
+
+  const STATUS_STYLE = {
+    sailing:  { label: 'SAILING NOW', bg: '#DCFCE7', border: '#86EFAC', color: '#15803D' },
+    upcoming: { label: 'UPCOMING',    bg: '#EFF6FF', border: '#93C5FD', color: '#1D4ED8' },
+    past:     { label: 'PAST',        bg: '#F3F4F6', border: '#D1D5DB', color: '#6B7280' },
+    'no-dates': { label: 'SELECTED',  bg: GOLD + '20', border: GOLD + '40', color: GOLD  },
+  }
+  const pill = STATUS_STYLE[status]
 
   return (
     <div style={{
@@ -57,8 +73,8 @@ function VoyageCard({ voyage, isActive, onSwitch }) {
 
       {/* Status / action */}
       {isActive ? (
-        <div style={{ background: GOLD + '20', border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 700, color: GOLD, flexShrink: 0, letterSpacing: '0.04em' }}>
-          ACTIVE
+        <div style={{ background: pill.bg, border: `1px solid ${pill.border}`, borderRadius: 20, padding: '4px 12px', fontSize: 11, fontWeight: 700, color: pill.color, flexShrink: 0, letterSpacing: '0.04em' }}>
+          {pill.label}
         </div>
       ) : (
         <button

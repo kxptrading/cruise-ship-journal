@@ -14,6 +14,10 @@ import { NAVY, NAVY2, GOLD, WHITE, CREAM, BORDER, TEXT, MUTED, TEAL, BP, sty } f
 import { useW } from '../context'
 import { PgHdr, Fld, Row2, Inp } from '../components/ui'
 import { supabase } from '../lib/supabase'
+import ImageCropper from '../components/ImageCropper'
+
+// Cover photo is cropped to a wide banner aspect ratio matching the Feed hero
+const COVER_ASPECT = 840 / 220
 
 // ── Voyage card ───────────────────────────────────────────────────────────────
 function VoyageCard({ voyage, isActive, onSwitch }) {
@@ -155,22 +159,30 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
   const [uploading,   setUploading]   = useState(false)
   const [showNewForm, setShowNewForm] = useState(false)
   const [uploadError, setUploadError] = useState('')
+  // cropFile holds the picked File while the ImageCropper modal is open;
+  // set to null to close the modal.
+  const [cropFile,    setCropFile]    = useState(null)
 
-  // ── Cover photo upload ──────────────────────────────────────────────────────
-  const handleCoverUpload = async (e) => {
+  // ── Cover photo — file picked → open cropper ──────────────────────────────
+  const handleFileSelect = (e) => {
     const file = e.target.files?.[0]
-    if (!file || !voyageId || !session?.user?.id) return
+    e.target.value = ''
+    if (file) setCropFile(file)
+  }
+
+  // ── Cover photo — cropper confirmed → upload blob ─────────────────────────
+  const handleCropConfirm = async (blob) => {
+    setCropFile(null)
+    if (!blob || !voyageId || !session?.user?.id) return
 
     setUploading(true)
     setUploadError('')
-    e.target.value = ''
 
-    const ext  = file.name.split('.').pop().toLowerCase()
-    const path = `${session.user.id}/${voyageId}/cover.${ext}`
+    const path = `${session.user.id}/${voyageId}/cover.jpg`
 
     const { error: uploadErr } = await supabase.storage
       .from('voyage-covers')
-      .upload(path, file, { upsert: true, contentType: file.type })
+      .upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
 
     if (uploadErr) {
       setUploadError('Upload failed — please try again.')
@@ -258,14 +270,25 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
           )}
         </div>
 
-        {/* Hidden file input */}
+        {/* Hidden file input — opens cropper before uploading */}
         <input
           ref={fileRef}
           type="file"
           accept="image/*"
           style={{ display: 'none' }}
-          onChange={handleCoverUpload}
+          onChange={handleFileSelect}
         />
+
+        {/* Crop modal — shown after a file is picked */}
+        {cropFile && (
+          <ImageCropper
+            file={cropFile}
+            aspect={COVER_ASPECT}
+            label="cover photo"
+            onConfirm={handleCropConfirm}
+            onCancel={() => setCropFile(null)}
+          />
+        )}
 
         {uploadError && (
           <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: '#DC2626', marginTop: 8 }}>

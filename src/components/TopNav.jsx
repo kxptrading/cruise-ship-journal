@@ -33,7 +33,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
     <div style={{
       flexShrink: 0,
       height: barH,
-      background: 'var(--t-primary)',
+      background: 'var(--t-primary-dk)',
       display: 'flex', alignItems: 'center',
       padding: isMobile ? '0 8px' : '0 16px',
       gap: isMobile ? 4 : 8,

@@ -882,23 +882,10 @@ export default function App() {
     <VoyageCtx.Provider value={voyageId}>
     <UserCtx.Provider value={session?.user?.id ?? null}>
     <WCtx.Provider value={winW}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
-        {/* ── Top navigation banner — always visible, full width ─────────── */}
-        <TopNav
-          section={section}
-          onNav={navClick}
-          isOverlay={isOverlay}
-          isMobile={isMobile}
-          onMenuOpen={() => setSidebarOpen(true)}
-        />
-
-        {/* ── Body row: sidebar + scrollable content ──────────────────────────
-            flex: 1 + overflow: hidden ensures this row fills the remaining
-            height below the topbar and clips the sidebar/main correctly.   */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-          {/* Sidebar — fixed on desktop, overlay drawer on mobile/tablet */}
+          {/* Sidebar — full height on desktop so it merges seamlessly with the
+              TopNav above the content. On mobile/tablet it becomes a drawer.  */}
           <Sidebar
             section={section}
             onNav={navClick}
@@ -910,6 +897,18 @@ export default function App() {
             voyageName={data.voyage.shipName}
             voyageCount={allVoyages.length}
             sectionStatus={sectionStatus}
+          />
+
+          {/* ── Right column: TopNav + scrollable content ──────────────────── */}
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+
+          {/* ── Top navigation banner ──────────────────────────────────────── */}
+          <TopNav
+            section={section}
+            onNav={navClick}
+            isOverlay={isOverlay}
+            isMobile={isMobile}
+            onMenuOpen={() => setSidebarOpen(true)}
           />
 
           {/* ── Section content ─────────────────────────────────────────────
@@ -945,7 +944,7 @@ export default function App() {
             </div>
           </main>
 
-        </div>
+          </div>{/* end right column */}
       </div>
       <Toast message={toast.message} visible={toast.visible} />
     </WCtx.Provider>

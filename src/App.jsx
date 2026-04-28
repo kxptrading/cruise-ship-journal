@@ -466,7 +466,10 @@ export default function App() {
           })
       }
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      // Clear cached voyage ID on sign-in so a different user on the same
+      // device never accidentally loads another user's voyage.
+      if (event === 'SIGNED_IN') localStorage.removeItem('csj-activeVoyageId')
       setSession(session)
     })
     return () => subscription.unsubscribe()
@@ -489,6 +492,7 @@ export default function App() {
       const { data: rows } = await supabase
         .from('voyages')
         .select(VOYAGE_SELECT)
+        .eq('user_id', session.user.id)
         .order('created_at', { ascending: true })
 
       if (cancelled) return

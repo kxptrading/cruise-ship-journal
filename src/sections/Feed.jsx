@@ -814,8 +814,10 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const [composeRating, setComposeRating] = useState(0)
   const [composeImage, setComposeImage]         = useState(null)   // File
   const [composeImagePreview, setComposeImagePreview] = useState('') // object URL
-  const textRef      = useRef(null)
-  const imageInputRef = useRef(null)
+  const [showImagePicker, setShowImagePicker]   = useState(false)  // popover open
+  const textRef        = useRef(null)
+  const imageInputRef  = useRef(null)
+  const cameraInputRef = useRef(null)
 
   // Load the first photo for every day that has a daily log entry.
   // Uses 1-based day numbers (i + 1) to match the photos table's day_number
@@ -1197,7 +1199,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                 </div>
               )}
 
-              {/* Hidden file input */}
+              {/* Hidden file inputs — gallery picker + camera capture */}
               <input
                 ref={imageInputRef}
                 type="file"
@@ -1212,24 +1214,87 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                   e.target.value = ''
                 }}
               />
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                style={{ display: 'none' }}
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  if (composeImagePreview) URL.revokeObjectURL(composeImagePreview)
+                  setComposeImage(file)
+                  setComposeImagePreview(URL.createObjectURL(file))
+                  e.target.value = ''
+                }}
+              />
 
               {/* Composer toolbar */}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: w < BP.mobile ? 8 : 14, flexWrap: 'wrap' }}>
-                  {/* Add image */}
-                  <button
-                    onClick={() => imageInputRef.current?.click()}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 5,
-                      background: composeImage ? 'var(--t-bg)' : 'none',
-                      border: `1px solid ${composeImage ? 'var(--t-primary)' : BORDER}`,
-                      borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
-                      fontSize: 13, fontFamily: FONT_BODY,
-                      color: composeImage ? 'var(--t-primary)' : MUTED,
-                    }}
-                  >
-                    📷 {composeImage ? 'Change' : 'Add Image'}
-                  </button>
+                  {/* Add image / Take photo — two-option popover */}
+                  <div style={{ position: 'relative' }}>
+                    <button
+                      onClick={() => setShowImagePicker(p => !p)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 5,
+                        background: composeImage ? 'var(--t-bg)' : 'none',
+                        border: `1px solid ${composeImage ? 'var(--t-primary)' : BORDER}`,
+                        borderRadius: 8, padding: '5px 12px', cursor: 'pointer',
+                        fontSize: 13, fontFamily: FONT_BODY,
+                        color: composeImage ? 'var(--t-primary)' : MUTED,
+                      }}
+                    >
+                      📷 {composeImage ? 'Change Photo' : 'Add Photo'}
+                      <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.6 }}>▾</span>
+                    </button>
+
+                    {/* Popover */}
+                    {showImagePicker && (
+                      <>
+                        {/* Click-away backdrop */}
+                        <div
+                          style={{ position: 'fixed', inset: 0, zIndex: 99 }}
+                          onClick={() => setShowImagePicker(false)}
+                        />
+                        <div style={{
+                          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 100,
+                          background: WHITE, border: `1px solid ${BORDER}`,
+                          borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                          overflow: 'hidden', minWidth: 170,
+                        }}>
+                          <button
+                            onClick={() => { setShowImagePicker(false); imageInputRef.current?.click() }}
+                            style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                              background: 'none', border: 'none', padding: '11px 16px',
+                              cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY,
+                              color: TEXT, textAlign: 'left',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#F4F4F2'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            <span style={{ fontSize: 16 }}>🖼️</span> Upload Image
+                          </button>
+                          <div style={{ height: 1, background: BORDER }} />
+                          <button
+                            onClick={() => { setShowImagePicker(false); cameraInputRef.current?.click() }}
+                            style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 10,
+                              background: 'none', border: 'none', padding: '11px 16px',
+                              cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY,
+                              color: TEXT, textAlign: 'left',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.background = '#F4F4F2'}
+                            onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                          >
+                            <span style={{ fontSize: 16 }}>📸</span> Take a Photo
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                   {/* Day picker */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ fontSize: 11, color: MUTED, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Day</span>

@@ -43,8 +43,8 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       position: 'relative',
     }}>
 
-      {/* ── Left: hamburger (mobile) + brand ───────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexShrink: 0 }}>
+      {/* ── Left: hamburger (mobile only) ──────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
         {isOverlay && (
           <button
             onClick={onMenuOpen}
@@ -56,28 +56,18 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
             }}
           >☰</button>
         )}
-        <div
-          onClick={() => onNav('dashboard')}
-          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}
-        >
-          <img src="/logo.svg" alt="Cruise Log" style={{ height: logoH, width: 'auto' }} />
-          {!isMobile && (
-            <span style={{
-              fontSize: 20, fontWeight: 400, color: WHITE,
-              fontFamily: FONT_DISPLAY, letterSpacing: '0.02em',
-              whiteSpace: 'nowrap',
-            }}>
-              Cruise Log
-            </span>
-          )}
-        </div>
       </div>
 
-      {/* ── Spacer ─────────────────────────────────────────────────────────── */}
-      <div style={{ flex: 1 }} />
+      {/* ── Centre: logo ────────────────────────────────────────────────────── */}
+      <div
+        onClick={() => onNav('dashboard')}
+        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
+      >
+        <img src="/logo.svg" alt="Cruise Log" style={{ height: logoH, width: 'auto' }} />
+      </div>
 
       {/* ── Right: social nav links ────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: navGap }}>
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: navGap }}>
         {TOP_NAV_ITEMS.map(({ id, label, icon }) => {
           const active = section === id
           return (

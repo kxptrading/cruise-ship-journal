@@ -96,20 +96,20 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
             return (
               <button key={id} onClick={() => onNav(id)}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
-                  padding: '11px 18px',
+                  display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
+                  padding: '13px 18px',
                   background: active ? 'rgba(255,255,255,0.15)' : 'transparent',
                   color: WHITE,
                   border: 'none',
                   borderLeft: `3px solid ${active ? WHITE : 'transparent'}`,
-                  cursor: 'pointer', fontSize: 15, fontFamily: FONT_BODY, fontWeight: active ? 700 : 500,
+                  cursor: 'pointer', fontSize: 17, fontFamily: FONT_BODY, fontWeight: active ? 700 : 500,
                   transition: 'background 0.15s',
                 }}>
-                <span style={{ fontSize: 15, lineHeight: 1 }}>{icon}</span>
+                <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
                 <span style={{ flex: 1 }}>{label}</span>
                 {/* Gold dot when section has data — gives at-a-glance journal completeness */}
                 {sectionStatus?.has(id) && !active && (
-                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.7, flexShrink: 0 }} />
+                  <span style={{ width: 7, height: 7, borderRadius: '50%', background: GOLD, opacity: 0.7, flexShrink: 0 }} />
                 )}
               </button>
             )

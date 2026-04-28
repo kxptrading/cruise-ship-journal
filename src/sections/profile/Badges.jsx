@@ -73,9 +73,9 @@ function BadgeTooltip({ badge }) {
       <div style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
         fontSize: 10, fontWeight: 700,
-        color: badge.earned ? TEAL_EARN : 'rgba(255,255,255,0.35)',
-        background: badge.earned ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.05)',
-        border: `1px solid ${badge.earned ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.1)'}`,
+        color: badge.earned ? TEAL_EARN : 'rgba(255,255,255,0.75)',
+        background: badge.earned ? 'rgba(52,211,153,0.12)' : 'rgba(255,255,255,0.1)',
+        border: `1px solid ${badge.earned ? 'rgba(52,211,153,0.3)' : 'rgba(255,255,255,0.2)'}`,
         borderRadius: 20, padding: '3px 9px',
         fontFamily: FONT_BODY,
       }}>

@@ -12,6 +12,7 @@ import { supabase } from '../lib/supabase'
 import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, ROSE, BP } from '../constants'
 import { PgHdr } from '../components/ui'
 import { useUserId, useW } from '../context'
+import FriendProfile from './FriendProfile'
 
 
 
@@ -72,6 +73,8 @@ export default function Friends() {
   const w             = useW()
   const card          = useCard()
   const isMobile      = w < BP.mobile
+
+  const [viewingFriend, setViewingFriend]  = useState(null)  // friend object | null
 
   const [searchQuery, setSearchQuery]      = useState('')
   const [searchResult, setSearchResult]   = useState(null)   // profile[] | 'not_found' | null
@@ -189,6 +192,10 @@ export default function Friends() {
   // ── Colours per avatar (simple hash) ─────────────────────────────────────────
   const avatarColors = ['#0EA5E9', '#10B981', '#F59E0B', '#8B5CF6', '#F97316', '#B03060']
   const avatarColor  = (id = '') => avatarColors[id.charCodeAt(0) % avatarColors.length]
+
+  if (viewingFriend) {
+    return <FriendProfile friend={viewingFriend} onBack={() => setViewingFriend(null)} />
+  }
 
   return (
     <div>
@@ -333,6 +340,16 @@ export default function Friends() {
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
               <Pill label="Friend" color={TEAL} />
+              <button
+                onClick={() => setViewingFriend(f)}
+                style={{
+                  background: NAVY2, color: WHITE, border: 'none', borderRadius: 8,
+                  padding: '6px 12px', fontSize: 12, fontWeight: 600,
+                  cursor: 'pointer', fontFamily: 'inherit',
+                }}
+              >
+                View Profile
+              </button>
               <button
                 onClick={() => removeRequest(f.requestId)}
                 style={{

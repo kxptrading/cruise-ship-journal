@@ -95,6 +95,8 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
             const active = section === id
             return (
               <button key={id} onClick={() => onNav(id)}
+                onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+                onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
                   padding: '13px 18px',

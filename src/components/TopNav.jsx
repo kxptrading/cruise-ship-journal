@@ -38,7 +38,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       padding: isMobile ? '0 8px' : '0 16px',
       gap: isMobile ? 4 : 8,
       borderBottom: 'none',
-      boxShadow: '0 2px 12px rgba(0,0,0,0.15)',
+      boxShadow: 'none',
       zIndex: 100,
       position: 'relative',
     }}>

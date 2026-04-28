@@ -140,29 +140,18 @@ function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, r
           )}
         </div>
 
-        {/* Right — day badge + port + date + rating */}
+        {/* Right — day badge + port + date */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 3, flexShrink: 0 }}>
-          {/* Day badge + rating on the same row */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{
-              background: NAVY, borderRadius: 20, padding: '3px 10px',
-              display: 'flex', alignItems: 'center', gap: 4,
-            }}>
-              <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Day</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: FONT_DISPLAY }}>{dayIndex + 1}</span>
-            </div>
-            {rating > 0 && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: GOLD + '18', borderRadius: 20, padding: '3px 8px' }}>
-                <span style={{ color: GOLD, fontSize: 12 }}>★</span>
-                <span style={{ fontSize: 12, fontWeight: 700, color: GOLD }}>{rating}.0</span>
-              </div>
-            )}
+          <div style={{
+            background: NAVY, borderRadius: 20, padding: '3px 10px',
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>Day</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: WHITE, fontFamily: FONT_DISPLAY }}>{dayIndex + 1}</span>
           </div>
-          {/* Port */}
           {resolvedPort && (
             <div style={{ fontSize: 12, fontWeight: 600, color: NAVY2, textAlign: 'right' }}>{resolvedPort}</div>
           )}
-          {/* Date */}
           {date && (
             <div style={{ fontSize: 11, color: MUTED, textAlign: 'right' }}>
               {new Date(date + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
@@ -190,11 +179,21 @@ function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, r
       {/* ── Post body ──────────────────────────────────────────────────────── */}
       <div style={{ padding: '16px 18px' }}>
 
-        {/* Highlights */}
-        {highlights && (
-          <p style={{ margin: '0 0 14px', fontSize: 14, color: TEXT, lineHeight: 1.7 }}>
-            {highlights}
-          </p>
+        {/* Highlights + rating */}
+        {(highlights || rating > 0) && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
+            {highlights && (
+              <p style={{ margin: 0, flex: 1, fontSize: 14, color: TEXT, lineHeight: 1.7 }}>
+                {highlights}
+              </p>
+            )}
+            {rating > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3, background: GOLD + '18', borderRadius: 20, padding: '4px 10px', flexShrink: 0 }}>
+                <span style={{ color: GOLD, fontSize: 13 }}>★</span>
+                <span style={{ fontSize: 13, fontWeight: 700, color: GOLD }}>{rating}.0</span>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Best moment — magazine-style pull quote */}

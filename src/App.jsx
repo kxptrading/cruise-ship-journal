@@ -414,6 +414,7 @@ export default function App() {
   }
   const [section, setSection]         = useState('dashboard')
   const [selectedDay, setSelectedDay] = useState(null)  // day index open in DayDetail
+  const [dailyJumpDay, setDailyJumpDay] = useState(null) // day to open when entering Daily Log
   const [data, setData]               = useState(INIT)
   const [loaded, setLoaded]           = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -845,6 +846,7 @@ export default function App() {
   const navClick = (id) => {
     setSection(id)
     setSelectedDay(null)   // close any open day detail when navigating
+    if (id !== 'daily') setDailyJumpDay(null)  // clear jump target unless going to daily
     if (isOverlay) setSidebarOpen(false)
   }
 
@@ -922,12 +924,12 @@ export default function App() {
                 <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} />
               )}
               {section === 'dashboard' && selectedDay !== null && (
-                <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setSelectedDay(null); navClick('daily') }} />
+                <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
               )}
               {section === 'profile'       && <VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />}
               {section === 'voyage'        && <VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />}
               {section === 'itinerary'     && <Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />}
-              {section === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} />}
+              {section === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={dailyJumpDay ?? 0} />}
               {section === 'food'          && <FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />}
               {section === 'dining'        && <DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />}
               {section === 'entertainment' && <EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />}

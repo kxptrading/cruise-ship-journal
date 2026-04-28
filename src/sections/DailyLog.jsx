@@ -16,14 +16,14 @@ import { useW, useVoyageId, useUserId } from '../context'
 import { PgHdr, Box, Fld, Row2, Inp, TA, Stars } from '../components/ui'
 import { addPhoto, getPhotos, deletePhoto, updateCaption } from '../lib/photoStorage'
 
-export default function DailyLog({ data, onChange, itinerary, voyage }) {
+export default function DailyLog({ data, onChange, itinerary, voyage, initialDay }) {
   const w        = useW()
   const voyageId = useVoyageId()
   const userId   = useUserId()
   const cs       = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
   // day is the zero-based index into the data array (0 = Day 1)
-  const [day, setDay]         = useState(0)
+  const [day, setDay]         = useState(initialDay ?? 0)
   const [photos, setPhotos]   = useState([])
   const [uploading, setUploading] = useState(false)
   const [lightbox, setLightbox]   = useState(null)

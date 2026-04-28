@@ -435,6 +435,8 @@ export default function App() {
   // Stores the budget row's DB id after it's created/loaded so the write path
   // can insert budget_items without an extra SELECT round-trip.
   const budgetIdRef          = useRef(null)
+  const mainScrollRef        = useRef(null)
+  const bounceTimerRef       = useRef(null)
 
   // ── Toast notification state ────────────────────────────────────────────────
   // showToast is passed to Feed so the quick composer can confirm a logged day.
@@ -844,6 +846,26 @@ export default function App() {
     setAllVoyages(prev => prev.map(v => v.id === voyageId ? { ...v, cover_photo_url: url } : v))
   }
 
+  // ── Scroll bounce ────────────────────────────────────────────────────────────
+  // Fires a short translateY animation on the inner content div when the user
+  // reaches the very top or bottom of the main scroll container.
+  const handleMainScroll = (e) => {
+    const el = e.currentTarget
+    const atTop    = el.scrollTop <= 0
+    const atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 1
+    if (!atTop && !atBottom) return
+    const inner = mainScrollRef.current
+    if (!inner) return
+    clearTimeout(bounceTimerRef.current)
+    inner.classList.remove('scroll-bounce-top', 'scroll-bounce-bottom')
+    // Force reflow so removing+re-adding the class always retriggers the animation
+    void inner.offsetWidth
+    inner.classList.add(atTop ? 'scroll-bounce-top' : 'scroll-bounce-bottom')
+    bounceTimerRef.current = setTimeout(() => {
+      inner.classList.remove('scroll-bounce-top', 'scroll-bounce-bottom')
+    }, 400)
+  }
+
   // ── Handle sidebar navigation clicks ────────────────────────────────────────
   // Switches the active section and collapses the sidebar on mobile/tablet
   // after a nav item is tapped.
@@ -921,8 +943,8 @@ export default function App() {
               maxWidth 840 keeps long-form content readable on wide screens.
               Each section receives its slice of data and an onChange handler
               that calls update() to persist the change.                     */}
-          <main style={{ flex: 1, overflowY: 'auto' }}>
-            <div style={{ padding: mainPad }}>
+          <main style={{ flex: 1, overflowY: 'auto' }} onScroll={handleMainScroll}>
+            <div ref={mainScrollRef} style={{ padding: mainPad }}>
             <div style={{ maxWidth: 840, margin: '0 auto' }}>
               {section === 'dashboard' && selectedDay === null && (
                 <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} />

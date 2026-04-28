@@ -38,6 +38,7 @@ import { Donut, Stars } from '../components/ui'
 import { getPhotos, addPhoto } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
 import { getTimeOfDay, getTimeGradient, getVignetteRGB } from '../lib/atmosphere'
+import CameraCapture from '../components/CameraCapture'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
 // Five emoji reactions — each post card shows this row. Users can pick one
@@ -815,9 +816,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const [composeImage, setComposeImage]         = useState(null)   // File
   const [composeImagePreview, setComposeImagePreview] = useState('') // object URL
   const [showImagePicker, setShowImagePicker]   = useState(null)   // null | { top, left }
+  const [showCamera,      setShowCamera]        = useState(false)
   const textRef        = useRef(null)
   const imageInputRef  = useRef(null)
-  const cameraInputRef = useRef(null)
 
   // Load the first photo for every day that has a daily log entry.
   // Uses 1-based day numbers (i + 1) to match the photos table's day_number
@@ -1214,21 +1215,18 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                   e.target.value = ''
                 }}
               />
-              <input
-                ref={cameraInputRef}
-                type="file"
-                accept="image/*"
-                capture="environment"
-                style={{ display: 'none' }}
-                onChange={e => {
-                  const file = e.target.files?.[0]
-                  if (!file) return
-                  if (composeImagePreview) URL.revokeObjectURL(composeImagePreview)
-                  setComposeImage(file)
-                  setComposeImagePreview(URL.createObjectURL(file))
-                  e.target.value = ''
-                }}
-              />
+              {/* Camera capture modal */}
+              {showCamera && (
+                <CameraCapture
+                  onCapture={file => {
+                    if (composeImagePreview) URL.revokeObjectURL(composeImagePreview)
+                    setComposeImage(file)
+                    setComposeImagePreview(URL.createObjectURL(file))
+                    setShowCamera(false)
+                  }}
+                  onCancel={() => setShowCamera(false)}
+                />
+              )}
 
               {/* Composer toolbar */}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
@@ -1282,7 +1280,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                           </button>
                           <div style={{ height: 1, background: BORDER }} />
                           <button
-                            onClick={() => { setShowImagePicker(false); cameraInputRef.current?.click() }}
+                            onClick={() => { setShowImagePicker(false); setShowCamera(true) }}
                             style={{
                               width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                               background: 'none', border: 'none', padding: '11px 16px',

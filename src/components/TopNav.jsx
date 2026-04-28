@@ -43,8 +43,8 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       position: 'relative',
     }}>
 
-      {/* ── Left: hamburger (mobile only) ──────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+      {/* ── Left: hamburger (mobile) + logo ────────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexShrink: 0 }}>
         {isOverlay && (
           <button
             onClick={onMenuOpen}
@@ -56,18 +56,19 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
             }}
           >☰</button>
         )}
+        <img
+          src="/logo.svg"
+          alt="Cruise Log"
+          onClick={() => onNav('dashboard')}
+          style={{ height: logoH, width: 'auto', cursor: 'pointer' }}
+        />
       </div>
 
-      {/* ── Centre: logo ────────────────────────────────────────────────────── */}
-      <div
-        onClick={() => onNav('dashboard')}
-        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', position: 'absolute', left: '50%', transform: 'translateX(-50%)' }}
-      >
-        <img src="/logo.svg" alt="Cruise Log" style={{ height: logoH, width: 'auto' }} />
-      </div>
+      {/* ── Spacer ─────────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1 }} />
 
       {/* ── Right: social nav links ────────────────────────────────────────── */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: navGap }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: navGap }}>
         {TOP_NAV_ITEMS.map(({ id, label, icon }) => {
           const active = section === id
           return (

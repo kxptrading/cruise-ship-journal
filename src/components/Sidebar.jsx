@@ -105,7 +105,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
                   cursor: 'pointer', fontSize: 17, fontFamily: FONT_BODY, fontWeight: active ? 700 : 500,
                   transition: 'background 0.15s',
                 }}>
-                <span style={{ fontSize: 20, lineHeight: 1 }}>{icon}</span>
+                <span style={{ fontSize: 24, lineHeight: 1 }}>{icon}</span>
                 <span style={{ flex: 1 }}>{label}</span>
                 {/* Gold dot when section has data — gives at-a-glance journal completeness */}
                 {sectionStatus?.has(id) && !active && (

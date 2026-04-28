@@ -300,7 +300,7 @@ export default function Badges({ currentVoyage }) {
                 : CREAM,
               padding: '14px 10px',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-              opacity: badge.earned ? 1 : 0.5,
+              opacity: 1,
               position: 'relative',
               cursor: 'default',
               outline: 'none',

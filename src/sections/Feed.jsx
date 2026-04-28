@@ -814,7 +814,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
   const [composeRating, setComposeRating] = useState(0)
   const [composeImage, setComposeImage]         = useState(null)   // File
   const [composeImagePreview, setComposeImagePreview] = useState('') // object URL
-  const [showImagePicker, setShowImagePicker]   = useState(false)  // popover open
+  const [showImagePicker, setShowImagePicker]   = useState(null)   // null | { top, left }
   const textRef        = useRef(null)
   const imageInputRef  = useRef(null)
   const cameraInputRef = useRef(null)
@@ -1233,10 +1233,13 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               {/* Composer toolbar */}
               <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: w < BP.mobile ? 8 : 14, flexWrap: 'wrap' }}>
-                  {/* Add image / Take photo — two-option popover */}
+                  {/* Add image / Take photo — two-option popover (fixed to viewport) */}
                   <div style={{ position: 'relative' }}>
                     <button
-                      onClick={() => setShowImagePicker(p => !p)}
+                      onClick={e => {
+                        const rect = e.currentTarget.getBoundingClientRect()
+                        setShowImagePicker(p => p ? false : { top: rect.bottom + 6, left: rect.left })
+                      }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 5,
                         background: composeImage ? 'var(--t-bg)' : 'none',
@@ -1250,7 +1253,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                       <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.6 }}>▾</span>
                     </button>
 
-                    {/* Popover */}
+                    {/* Popover — fixed to viewport so card overflow never clips it */}
                     {showImagePicker && (
                       <>
                         {/* Click-away backdrop */}
@@ -1259,7 +1262,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
                           onClick={() => setShowImagePicker(false)}
                         />
                         <div style={{
-                          position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 100,
+                          position: 'fixed', top: showImagePicker.top, left: showImagePicker.left, zIndex: 100,
                           background: WHITE, border: `1px solid ${BORDER}`,
                           borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
                           overflow: 'hidden', minWidth: 170,

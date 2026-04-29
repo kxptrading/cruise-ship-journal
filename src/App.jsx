@@ -8,15 +8,16 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { CREAM, NAVY, NAVY2, GOLD, WHITE, BORDER, BP } from './constants'
-import { IC, NAV } from './constants'
+import { NAV } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
-import { applyTheme, getSavedTheme, THEMES } from './themes'
+import { applyTheme, getSavedTheme } from './themes'
 import { db } from './storage'
 import { supabase } from './lib/supabase'
 import Sidebar from './components/Sidebar'
 import TopNav  from './components/TopNav'
 import AuthScreen from './components/AuthScreen'
-import { SvgIcon, Toast } from './components/ui'
+import ErrorBoundary from './components/ErrorBoundary'
+import { Toast } from './components/ui'
 import Feed           from './sections/Feed'
 import DayDetail      from './sections/DayDetail'
 import VoyageProfile  from './sections/VoyageProfile'
@@ -454,7 +455,9 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setAuthChecked(true)
-      // Load theme from DB — overrides the localStorage fallback once we know the user
+      // Load theme from DB — overrides the localStorage fallback once we know the user.
+      // applyTheme() also writes to localStorage immediately so subsequent page loads
+      // use the correct theme before this async call completes (no flash).
       if (session?.user?.id) {
         supabase
           .from('profiles')
@@ -711,79 +714,93 @@ export default function App() {
   // NOTE: Every Supabase call must be awaited or have .then() called.
   // In Supabase JS v2 the query builder is lazy — the HTTP request only fires
   // when the Promise chain is started. Unawaited calls silently do nothing.
+  // ── Sync error helper ────────────────────────────────────────────────────────
+  // Checks a Supabase result and fires a toast if it errored.
+  const syncCheck = useCallback(({ error }) => {
+    if (error) showToast('⚠️ Sync error — changes saved locally but not to the cloud.')
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
   const update = useCallback((key, val) => {
     setData(prev => ({ ...prev, [key]: val }))
     db.set(`csj-${key}`, val)
 
     // Voyage — immediate write, no debounce needed (one row, small payload)
     if (key === 'voyage' && voyageId) {
-      supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId).then(() => {})
+      supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId).then(syncCheck)
     }
 
     // Single-record sections — upsert on every keystroke (tiny payload)
     if (key === 'foodFav' && voyageId) {
-      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val), { onConflict: 'voyage_id' }).then(() => {})
+      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val), { onConflict: 'voyage_id' }).then(syncCheck)
     }
     if (key === 'highlights' && voyageId) {
-      supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' }).then(() => {})
+      supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' }).then(syncCheck)
     }
 
     // Dynamic arrays — debounced delete-all + re-insert to avoid write-per-keystroke
     if (key === 'itinerary' && voyageId) {
       clearTimeout(itineraryTimer.current)
       itineraryTimer.current = setTimeout(async () => {
-        await supabase.from('itinerary').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) await supabase.from('itinerary').insert(toDbItinerary(voyageId, val))
+        const del = await supabase.from('itinerary').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.length > 0) syncCheck(await supabase.from('itinerary').insert(toDbItinerary(voyageId, val)))
       }, 800)
     }
     if (key === 'dailyLogs' && voyageId) {
       clearTimeout(dailyLogsTimer.current)
       dailyLogsTimer.current = setTimeout(async () => {
-        await supabase.from('daily_logs').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) await supabase.from('daily_logs').insert(toDbDailyLogs(voyageId, val))
+        const del = await supabase.from('daily_logs').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.length > 0) syncCheck(await supabase.from('daily_logs').insert(toDbDailyLogs(voyageId, val)))
       }, 800)
     }
     if (key === 'foodLogs' && voyageId) {
       clearTimeout(foodLogsTimer.current)
       foodLogsTimer.current = setTimeout(async () => {
-        await supabase.from('food_logs').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) await supabase.from('food_logs').insert(toDbFoodLogs(voyageId, val))
+        const del = await supabase.from('food_logs').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.length > 0) syncCheck(await supabase.from('food_logs').insert(toDbFoodLogs(voyageId, val)))
       }, 800)
     }
     if (key === 'diningLog' && voyageId) {
       clearTimeout(diningLogTimer.current)
       diningLogTimer.current = setTimeout(async () => {
-        await supabase.from('dining_log').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) await supabase.from('dining_log').insert(toDbDiningLog(voyageId, val))
+        const del = await supabase.from('dining_log').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.length > 0) syncCheck(await supabase.from('dining_log').insert(toDbDiningLog(voyageId, val)))
       }, 800)
     }
     if (key === 'entertainmentLog' && voyageId) {
       clearTimeout(entertainmentTimer.current)
       entertainmentTimer.current = setTimeout(async () => {
-        await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) await supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, val))
+        const del = await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.length > 0) syncCheck(await supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, val)))
       }, 800)
     }
     if (key === 'shopping' && voyageId) {
       clearTimeout(shoppingTimer.current)
       shoppingTimer.current = setTimeout(async () => {
-        await supabase.from('shopping_items').delete().eq('voyage_id', voyageId)
-        if (val.items?.length > 0) await supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, val.items))
+        const del = await supabase.from('shopping_items').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.items?.length > 0) syncCheck(await supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, val.items)))
       }, 800)
     }
     if (key === 'packing' && voyageId) {
       clearTimeout(packingTimer.current)
       packingTimer.current = setTimeout(async () => {
-        await supabase.from('packing_items').delete().eq('voyage_id', voyageId)
+        const del = await supabase.from('packing_items').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
         const rows = toDbPackingItems(voyageId, val)
-        if (rows.length > 0) await supabase.from('packing_items').insert(rows)
+        if (rows.length > 0) syncCheck(await supabase.from('packing_items').insert(rows))
       }, 800)
     }
     if (key === 'notes' && voyageId) {
       clearTimeout(notesTimer.current)
       notesTimer.current = setTimeout(async () => {
-        await supabase.from('notes').delete().eq('voyage_id', voyageId)
-        if (val.length > 0) await supabase.from('notes').insert(toDbNotes(voyageId, val))
+        const del = await supabase.from('notes').delete().eq('voyage_id', voyageId)
+        syncCheck(del)
+        if (val.length > 0) syncCheck(await supabase.from('notes').insert(toDbNotes(voyageId, val)))
       }, 800)
     }
 
@@ -792,20 +809,20 @@ export default function App() {
       clearTimeout(budgetTimer.current)
       budgetTimer.current = setTimeout(async () => {
         const bid = budgetIdRef.current
-        await supabase.from('budget').update({ total_budget: val.budget || null }).eq('id', bid)
-        await supabase.from('budget_items').delete().eq('budget_id', bid)
+        syncCheck(await supabase.from('budget').update({ total_budget: val.budget || null }).eq('id', bid))
+        syncCheck(await supabase.from('budget_items').delete().eq('budget_id', bid))
         if (val.items?.length > 0) {
-          await supabase.from('budget_items').insert(val.items.map(item => ({
+          syncCheck(await supabase.from('budget_items').insert(val.items.map(item => ({
             budget_id: bid,
             date:      item.date     || null,
             item:      item.item     || null,
             category:  item.category || null,
             amount:    item.amount   ? parseFloat(item.amount) : null,
-          })))
+          }))))
         }
       }, 800)
     }
-  }, [voyageId])
+  }, [voyageId, syncCheck])
 
   // ── Switch active voyage ─────────────────────────────────────────────────────
   // Clears all section data and localStorage cache, then sets the new voyageId
@@ -924,6 +941,7 @@ export default function App() {
           <main style={{ flex: 1, overflowY: 'auto' }}>
             <div style={{ padding: mainPad }}>
             <div style={{ maxWidth: 840, margin: '0 auto' }}>
+            <ErrorBoundary>
               {section === 'dashboard' && selectedDay === null && (
                 <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} />
               )}
@@ -946,6 +964,7 @@ export default function App() {
               {section === 'friends'       && <Friends />}
               {section === 'chat'          && <Chat />}
               {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} />}
+            </ErrorBoundary>
             </div>
             </div>
           </main>

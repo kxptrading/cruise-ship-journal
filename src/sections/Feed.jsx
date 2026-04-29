@@ -55,21 +55,66 @@ const REACTIONS = [
 // Renders a single daily log entry as a social-style post card.
 function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
   const w = useW()
-  const [animating, setAnimating]     = useState(null)
-  const [hoveredReaction, setHovered] = useState(null)
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText]   = useState('')
   const [submitting, setSubmitting]     = useState(false)
-  const [editingId, setEditingId]       = useState(null)   // id of comment being edited
+  const [editingId, setEditingId]       = useState(null)
   const [editText, setEditText]         = useState('')
   const [saving, setSaving]             = useState(false)
+  const [pickerOpen, setPickerOpen]     = useState(false)
   const commentInputRef = useRef(null)
+  const longPressTimer  = useRef(null)
+  const pickerRef       = useRef(null)
 
-  const handleReactClick = (id) => {
-    setAnimating(id)
-    setTimeout(() => setAnimating(null), 320)
+  // ── My active reaction (if any) ──────────────────────────────────────────────
+  const myReaction = REACTIONS.find(r => reactions?.[r.id]?.mine)
+
+  // ── Amalgamated reaction summary ──────────────────────────────────────────────
+  // Shows up to 3 emoji bubbles + total count, like Facebook
+  const reactionSummary = REACTIONS
+    .filter(r => (reactions?.[r.id]?.count || 0) > 0)
+    .sort((a, b) => (reactions?.[b.id]?.count || 0) - (reactions?.[a.id]?.count || 0))
+  const totalReactions = reactionSummary.reduce((s, r) => s + (reactions?.[r.id]?.count || 0), 0)
+
+  // ── Long press (mobile) / hover (desktop) to open picker ─────────────────────
+  const openPicker  = () => setPickerOpen(true)
+  const closePicker = () => setPickerOpen(false)
+
+  const handlePressStart = () => {
+    longPressTimer.current = setTimeout(openPicker, 400)
+  }
+  const handlePressEnd = () => {
+    clearTimeout(longPressTimer.current)
+  }
+
+  // Quick tap: toggle existing reaction or open picker if none
+  const handleReactTap = () => {
+    if (pickerOpen) { closePicker(); return }
+    if (myReaction) {
+      onReact?.(myReaction.id) // deselect
+    } else {
+      openPicker()
+    }
+  }
+
+  const handlePickReaction = (id) => {
+    closePicker()
     onReact?.(id)
   }
+
+  // Close picker when clicking outside
+  useEffect(() => {
+    if (!pickerOpen) return
+    const handler = (e) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target)) closePicker()
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      document.removeEventListener('touchstart', handler)
+    }
+  }, [pickerOpen])
 
   const handleSubmitComment = async () => {
     if (!commentText.trim() || submitting) return
@@ -241,71 +286,87 @@ function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, r
         )}
       </div>
 
-      {/* ── Reactions + comment toggle bar ─────────────────────────────────── */}
-      <div style={{ padding: '10px 16px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 4, alignItems: 'center' }}>
-        {REACTIONS.map(r => {
-          const rd         = reactions?.[r.id] || { count: 0, mine: false }
-          const isAnimating = animating === r.id
-          const isHovered   = hoveredReaction === r.id
-          return (
-            <div key={r.id} style={{ position: 'relative', flexShrink: 0 }}>
-              {/* Tooltip — appears above on hover */}
-              {isHovered && (
-                <div style={{
-                  position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%',
-                  transform: 'translateX(-50%)',
-                  background: '#1C2B3A', color: WHITE,
-                  borderRadius: 7, padding: '5px 10px',
-                  fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap',
-                  pointerEvents: 'none', zIndex: 20,
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                }}>
-                  {r.label}
-                  {/* Arrow */}
-                  <div style={{
-                    position: 'absolute', top: '100%', left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 0, height: 0,
-                    borderLeft: '5px solid transparent',
-                    borderRight: '5px solid transparent',
-                    borderTop: '5px solid #1C2B3A',
-                  }} />
-                </div>
-              )}
+      {/* ── Reactions + comment bar ─────────────────────────────────────────── */}
+      <div style={{ padding: '10px 16px 12px', borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 10 }}>
 
-              <button
-                onClick={() => handleReactClick(r.id)}
-                onMouseEnter={() => setHovered(r.id)}
-                onMouseLeave={() => setHovered(null)}
-                style={{
-                  display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
-                  background: rd.mine ? 'var(--t-bg)' : 'transparent',
-                  border: `1.5px solid ${rd.mine ? 'var(--t-primary)' : BORDER}`,
-                  borderRadius: 14, padding: '8px 10px',
-                  cursor: 'pointer', minWidth: 52,
-                  transform: isAnimating ? 'scale(1.2)' : 'scale(1)',
-                  transition: isAnimating
-                    ? 'transform 0.18s cubic-bezier(0.34,1.56,0.64,1)'
-                    : 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
-                  boxShadow: rd.mine ? '0 2px 10px var(--t-btn-shadow)' : isHovered ? '0 3px 10px rgba(0,0,0,0.1)' : 'none',
-                  outline: 'none',
-                }}
-              >
-                <span
-                  className={isHovered ? 'reaction-emoji-hover' : ''}
-                  style={{ fontSize: 26, lineHeight: 1, display: 'block' }}
-                >{r.emoji}</span>
-                {rd.count > 0 && (
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, lineHeight: 1,
-                    color: rd.mine ? 'var(--t-primary)' : MUTED,
-                    transition: 'color 0.15s',
-                  }}>{rd.count}</span>
-                )}
-              </button>
+        {/* React button + long-press picker */}
+        <div ref={pickerRef} style={{ position: 'relative', flexShrink: 0 }}>
+
+          {/* Floating picker — appears above on long press */}
+          {pickerOpen && (
+            <div style={{
+              position: 'absolute', bottom: 'calc(100% + 10px)', left: 0,
+              display: 'flex', gap: 6, alignItems: 'center',
+              background: WHITE, borderRadius: 40,
+              padding: '8px 12px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)',
+              border: `1px solid ${BORDER}`,
+              zIndex: 50,
+              animation: 'reactionPickerIn 0.22s cubic-bezier(0.34,1.56,0.64,1)',
+            }}>
+              {REACTIONS.map(r => (
+                <button
+                  key={r.id}
+                  onClick={() => handlePickReaction(r.id)}
+                  title={r.label}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: 4, borderRadius: '50%',
+                    fontSize: 28, lineHeight: 1,
+                    transition: 'transform 0.15s',
+                    transform: reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.35)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)'}
+                >
+                  {r.emoji}
+                </button>
+              ))}
             </div>
-          )
-        })}
+          )}
+
+          {/* Single react button */}
+          <button
+            onClick={handleReactTap}
+            onMouseDown={handlePressStart}
+            onMouseUp={handlePressEnd}
+            onMouseLeave={handlePressEnd}
+            onTouchStart={handlePressStart}
+            onTouchEnd={handlePressEnd}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: myReaction ? 'var(--t-bg)' : 'transparent',
+              border: `1.5px solid ${myReaction ? 'var(--t-primary)' : BORDER}`,
+              borderRadius: 20, padding: '7px 14px',
+              cursor: 'pointer', fontFamily: FONT_BODY,
+              color: myReaction ? 'var(--t-primary)' : MUTED,
+              fontSize: 13, fontWeight: 700,
+              transition: 'border-color 0.15s, background 0.15s',
+              userSelect: 'none', WebkitUserSelect: 'none',
+            }}
+          >
+            <span style={{ fontSize: 18, lineHeight: 1 }}>
+              {myReaction ? myReaction.emoji : '👍'}
+            </span>
+            {myReaction ? myReaction.label : 'React'}
+          </button>
+        </div>
+
+        {/* Amalgamated reaction summary — emoji stack + count */}
+        {totalReactions > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+            <div style={{ display: 'flex' }}>
+              {reactionSummary.slice(0, 3).map((r, i) => (
+                <span key={r.id} style={{
+                  fontSize: 15, lineHeight: 1,
+                  marginLeft: i === 0 ? 0 : -4,
+                  filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.15))',
+                }}>{r.emoji}</span>
+              ))}
+            </div>
+            <span style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>{totalReactions}</span>
+          </div>
+        )}
 
         {/* Comment toggle — right-aligned */}
         <button
@@ -316,12 +377,12 @@ function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, r
             })
           }}
           style={{
-            marginLeft: 'auto', background: 'none',
+            marginLeft: 'auto', background: 'none', flexShrink: 0,
             border: `1.5px solid ${showComments ? NAVY : BORDER}`,
-            borderRadius: 14, padding: '8px 12px',
+            borderRadius: 20, padding: '7px 14px',
             cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5,
             color: showComments ? NAVY : MUTED,
-            fontFamily: FONT_BODY, fontSize: 12, fontWeight: 700,
+            fontFamily: FONT_BODY, fontSize: 13, fontWeight: 700,
             transition: 'border-color 0.15s, color 0.15s',
           }}
         >

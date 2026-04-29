@@ -25,7 +25,8 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
-import { useUserId } from '../context'
+import { useUserId, useW } from '../context'
+import { BP } from '../constants'
 import { FONT_BODY } from '../constants'
 import ImageCropper from '../components/ImageCropper'
 
@@ -44,7 +45,9 @@ const BANNER_ASPECT = 840 / 220
 
 // ── Root component ────────────────────────────────────────────────────────────
 export default function UserProfile({ session, allVoyages, voyage, onNav, theme, onThemeChange }) {
-  const userId = useUserId()
+  const userId   = useUserId()
+  const w        = useW()
+  const isMobile = w < BP.mobile
 
   const [profile, setProfile] = useState({
     displayName: '', bio: '', homePort: '', favouriteCruiseLine: '',
@@ -191,7 +194,7 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       />
 
       {/* 2. Passport map + Personality */}
-      <div style={{ display: 'flex', gap: 18, marginBottom: 20, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
         <PassportMap />
         <Personality onSave={saveProfileField} />
       </div>
@@ -206,7 +209,7 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       <VoyagesStrip allVoyages={allVoyages} onViewAll={() => onNav?.('voyage')} />
 
       {/* 6. Appearance + Preferences */}
-      <div style={{ display: 'flex', gap: 18, flexWrap: 'wrap', marginBottom: 20 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
         <AppearanceBlock theme={theme} onThemeChange={onThemeChange} />
         <Preferences onSave={saveProfileField} />
       </div>

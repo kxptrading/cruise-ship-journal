@@ -18,7 +18,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { NAVY2, WHITE, BORDER, MUTED, TEAL, GOLD, BP, sty, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { useW, useVoyageId, useUserId } from '../context'
-import { getPhotos } from '../lib/photoStorage'
+import { getPhotos, getSignedUrls } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
 import { getTimeOfDay } from '../lib/atmosphere'
 import PostCard    from './feed/PostCard'
@@ -96,13 +96,12 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         if (!itineraryMap[r.voyage_id]) itineraryMap[r.voyage_id] = {}
         itineraryMap[r.voyage_id][r.day_number] = r.port
       })
+      const photoPaths = (photoRows || []).map(r => r.storage_path)
+      const urlMap = await getSignedUrls(photoPaths)
       const photoMap = {}
       ;(photoRows || []).forEach(r => {
         const key = `${r.voyage_id}-${r.day_number}`
-        if (!photoMap[key]) {
-          const { data: { publicUrl } } = supabase.storage.from('daily-photos').getPublicUrl(r.storage_path)
-          photoMap[key] = { dataUrl: publicUrl, caption: r.caption }
-        }
+        if (!photoMap[key]) photoMap[key] = { dataUrl: urlMap[r.storage_path] || '', caption: r.caption }
       })
 
       const posts = (logs || [])

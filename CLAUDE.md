@@ -14,31 +14,57 @@ good patterns, and learning value over clever abstraction.
 
 ## Current State
 
-We are building in **two phases**:
+**Phase 2 — Production (live)**
 
-### Phase 1 — Prototype (active)
-A single `.jsx` artifact (`cruise_journal.jsx`) running inside Claude's artifact renderer.
-Uses `window.storage` for persistence. All 12 journal sections are built and working.
-No build tooling, no external dependencies, no auth.
+The app is fully deployed and in active use at cruise-ship-journal.vercel.app.
+The prototype phase is complete. All decisions are for the production codebase.
 
-### Phase 2 — Production (planned)
-Full Next.js application with Supabase backend, deployed on Vercel.
-See the Planned Stack section below.
+### Production Stack
 
----
+| Layer | Technology |
+|---|---|
+| Framework | React 18 + Vite 6 (SPA, no SSR) |
+| Language | JavaScript (JSX) — TypeScript is on the roadmap |
+| Styling | CSS-in-JS inline styles + CSS variables for theming |
+| Database | Supabase (PostgreSQL) |
+| Auth | Supabase Auth (email/password) |
+| File Storage | Supabase Storage (`daily-photos` bucket, signed URLs) |
+| Hosting | Vercel (auto-deploy on push to `main`) |
 
-## Planned Production Stack
+### Architecture
 
-| Layer | Technology | Reason |
-|---|---|---|
-| Framework | Next.js 14 (App Router) | Routing, SSR, API routes, great DX |
-| Language | TypeScript | Type safety, better tooling |
-| Styling | Tailwind CSS | Utility-first, consistent with design tokens |
-| State | Zustand | Lightweight global state for journal data |
-| Database | Supabase (PostgreSQL) | Auth + DB + Storage in one |
-| Auth | Supabase Auth | Email/password + social (Google) |
-| File Storage | Supabase Storage | S3-compatible photo uploads |
-| Hosting | Vercel | Zero-config Next.js deployment |
+```
+src/
+  App.jsx                   — layout shell, auth, routing (~220 lines)
+  hooks/useVoyageData.js    — all Supabase data loading + write-through
+  lib/converters.js         — pure DB ↔ app shape converters (22 functions)
+  lib/photoStorage.js       — signed URL photo upload/fetch
+  sections/
+    Feed.jsx                — feed orchestrator
+    feed/PostCard.jsx       — post card, reactions, comments
+    feed/VoyageHero.jsx     — hero banner
+    feed/QuickComposer.jsx  — quick post composer
+    Chat.jsx                — messaging orchestrator
+    chat/ConvItem.jsx       — conversation list row
+    chat/MsgBubble.jsx      — message bubble
+    chat/NewChatModal.jsx   — new DM / group modal
+    chat/helpers.js         — Avatar, GroupIcon, format helpers
+    Friends.jsx + FriendProfile.jsx
+    [12 other journal sections]
+  components/
+    Sidebar.jsx  TopNav.jsx  ErrorBoundary.jsx  AuthScreen.jsx
+    CameraCapture.jsx
+  constants.js              — design tokens (colours, breakpoints, nav)
+  themes.js                 — 20 colour themes, applyTheme(), getSavedTheme()
+  context.js                — WCtx, VoyageCtx, UserCtx, useW(), useVoyageId(), useUserId()
+  storage.js                — localStorage db helper
+```
+
+### Key patterns
+- **Data flow**: `useVoyageData` owns all Supabase reads/writes. Components call `onChange(updatedArray)` which hits `update(key, val)` in the hook.
+- **Write strategy**: `itinerary` + `daily_logs` use debounced upsert on `(voyage_id, day_number)`. All other dynamic arrays use debounced delete-all + reinsert (no natural key).
+- **Theme flash prevention**: `index.html` has an inline `<script>` that applies CSS vars from `localStorage` before React mounts.
+- **Photos**: Signed URLs (1-hour TTL) via `lib/photoStorage.js`. Never use `getPublicUrl`.
 
 ---
 

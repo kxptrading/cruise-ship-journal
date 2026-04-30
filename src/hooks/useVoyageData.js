@@ -274,19 +274,23 @@ export function useVoyageData({ session, showToast }) {
       supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' }).then(syncCheck)
     }
 
-    // Dynamic arrays — debounced delete-all + re-insert
+    // Fixed-position arrays — upsert on (voyage_id, day_number) natural key.
+    // Safer than delete-all+reinsert: no data loss if the debounce fires twice
+    // and the first DELETE races against the second INSERT.
     if (key === 'itinerary' && voyageId) {
       clearTimeout(itineraryTimer.current)
       itineraryTimer.current = setTimeout(async () => {
-        syncCheck(await supabase.from('itinerary').delete().eq('voyage_id', voyageId))
-        if (val.length > 0) syncCheck(await supabase.from('itinerary').insert(toDbItinerary(voyageId, val)))
+        if (val.length > 0) {
+          syncCheck(await supabase.from('itinerary').upsert(toDbItinerary(voyageId, val), { onConflict: 'voyage_id,day_number' }))
+        }
       }, 800)
     }
     if (key === 'dailyLogs' && voyageId) {
       clearTimeout(dailyLogsTimer.current)
       dailyLogsTimer.current = setTimeout(async () => {
-        syncCheck(await supabase.from('daily_logs').delete().eq('voyage_id', voyageId))
-        if (val.length > 0) syncCheck(await supabase.from('daily_logs').insert(toDbDailyLogs(voyageId, val)))
+        if (val.length > 0) {
+          syncCheck(await supabase.from('daily_logs').upsert(toDbDailyLogs(voyageId, val), { onConflict: 'voyage_id,day_number' }))
+        }
       }, 800)
     }
     if (key === 'foodLogs' && voyageId) {

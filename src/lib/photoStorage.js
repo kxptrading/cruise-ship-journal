@@ -26,10 +26,23 @@
 import { supabase } from './supabase'
 
 const BUCKET = 'daily-photos'
+// Signed URL TTL — 1 hour. Long enough to survive a typical session;
+// short enough that a leaked URL becomes useless quickly.
+const SIGNED_URL_TTL = 3600
 
-// Returns the Supabase public URL for a given storage path.
-function publicUrl(path) {
-  return supabase.storage.from(BUCKET).getPublicUrl(path).data.publicUrl
+// Returns a short-lived signed URL for a single storage path.
+async function signedUrl(path) {
+  const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, SIGNED_URL_TTL)
+  return data?.signedUrl || ''
+}
+
+// Returns signed URLs for multiple paths in one round-trip.
+async function signedUrls(paths) {
+  if (!paths.length) return {}
+  const { data } = await supabase.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL)
+  const map = {}
+  ;(data || []).forEach(({ path: p, signedUrl: url }) => { if (p) map[p] = url || '' })
+  return map
 }
 
 // Upload a photo file and insert a metadata row.
@@ -53,7 +66,7 @@ export async function addPhoto(dayNumber, file, { voyageId, userId }, caption = 
 
   if (dbErr) throw dbErr
 
-  return { ...row, dataUrl: publicUrl(path) }
+  return { ...row, dataUrl: await signedUrl(path) }
 }
 
 // Fetch all photos for a given day, ordered oldest-first.
@@ -66,8 +79,14 @@ export async function getPhotos(dayNumber, { voyageId }) {
     .eq('day_number', dayNumber)
     .order('created_at', { ascending: true })
 
-  if (!rows) return []
-  return rows.map(row => ({ ...row, dataUrl: publicUrl(row.storage_path) }))
+  if (!rows?.length) return []
+  const urlMap = await signedUrls(rows.map(r => r.storage_path))
+  return rows.map(row => ({ ...row, dataUrl: urlMap[row.storage_path] || '' }))
+}
+
+// Fetch signed URLs for a batch of storage paths (used by Feed for friend photos).
+export async function getSignedUrls(paths) {
+  return signedUrls(paths)
 }
 
 // Remove a photo from Storage and delete its metadata row.

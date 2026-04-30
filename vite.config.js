@@ -6,4 +6,8 @@ export default defineConfig({
   server: {
     host: true,
   },
+  test: {
+    environment: 'node',
+    include: ['src/**/*.test.js', 'src/**/*.test.jsx'],
+  },
 })

@@ -1,0 +1,34 @@
+{
+  "compilerOptions": {
+    // ── Language ───────────────────────────────────────────────────────────
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+
+    // ── Gradual adoption ───────────────────────────────────────────────────
+    // allowJs + checkJs gives IDE type-checking on existing .jsx/.js files
+    // without requiring a full rename-everything migration.
+    "allowJs": true,
+    "checkJs": false,
+
+    // ── Strictness ─────────────────────────────────────────────────────────
+    // Start with the subset that catches real bugs without noise.
+    "strict": false,
+    "noImplicitAny": false,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+
+    // ── Output (Vite handles bundling — tsc is type-check only) ───────────
+    "noEmit": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

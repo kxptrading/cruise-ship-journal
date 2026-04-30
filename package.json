@@ -2,11 +2,14 @@
   "name": "cruise-ship-log",
   "version": "0.1.0",
   "private": true,
-  "description": "A web-based cruise travel journal — Phase 1 prototype",
+  "description": "A web-based cruise travel journal",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
     "deploy": "npm run build && cp -r dist/* .vercel/output/static/ && vercel deploy --prebuilt --prod --force"
   },
   "dependencies": {
@@ -22,6 +25,9 @@
     "@types/react": "^18.3.1",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "4.5.1",
-    "vite": "6.4.2"
+    "@vitest/ui": "^4.1.5",
+    "typescript": "^6.0.3",
+    "vite": "6.4.2",
+    "vitest": "^4.1.5"
   }
 }

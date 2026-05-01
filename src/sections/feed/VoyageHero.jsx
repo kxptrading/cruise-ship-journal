@@ -89,7 +89,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
       {/* Content */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: `0 ${w < BP.mobile ? 18 : 28}px 20px` }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-          <div style={{ width: 20, height: 20, borderRadius: '50%', background: 'rgba(245,158,11,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10 }}>⚓</div>
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'rgba(245,158,11,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⚓</div>
           <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.13em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY }}>
             {voyage.cruiseLine || 'Cruise Ship Log'}
           </span>

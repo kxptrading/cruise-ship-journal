@@ -23,8 +23,8 @@ const TOP_NAV_ITEMS = [
 ]
 
 export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile }) {
-  const logoH   = isMobile ? 126 : 210
-  const barH    = isMobile ? 140 : 224
+  const logoH   = isMobile ? 42 : 70
+  const barH    = isMobile ? 58 : 80
   const iconSz  = isMobile ? 18 : 20
   const btnPad  = isMobile ? '5px 9px' : '8px 18px'
   const navGap  = isMobile ? 2 : 8

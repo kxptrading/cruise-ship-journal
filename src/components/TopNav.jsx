@@ -35,10 +35,10 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       height: barH,
       background: 'var(--t-primary-dk)',
       display: 'flex', alignItems: 'center',
-      padding: isMobile ? '0 8px' : '0 16px',
+      padding: isMobile ? '0 8px' : '0 20px',
       gap: isMobile ? 4 : 8,
-      borderBottom: 'none',
-      boxShadow: 'none',
+      borderBottom: '1px solid rgba(201,162,39,0.25)',
+      boxShadow: '0 2px 20px rgba(0,0,0,0.3), inset 0 -1px 0 rgba(201,162,39,0.15)',
       zIndex: 100,
       position: 'relative',
     }}>
@@ -77,20 +77,20 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               onClick={() => onNav(id)}
               style={{
                 display: 'flex', alignItems: 'center',
-                gap: isMobile ? 0 : 8,
-                background: active ? 'rgba(255,255,255,0.2)' : 'transparent',
-                border: `1px solid ${active ? 'rgba(255,255,255,0.35)' : 'transparent'}`,
+                gap: isMobile ? 0 : 7,
+                background: active ? 'rgba(201,162,39,0.18)' : 'transparent',
+                border: `1px solid ${active ? 'rgba(201,162,39,0.5)' : 'transparent'}`,
                 borderRadius: 20,
                 padding: btnPad,
                 cursor: 'pointer',
-                color: active ? WHITE : 'rgba(255,255,255,0.65)',
+                color: active ? '#F5D96B' : 'rgba(255,255,255,0.65)',
                 fontFamily: FONT_BODY,
                 fontSize: 15, fontWeight: active ? 700 : 500,
                 transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                 whiteSpace: 'nowrap',
               }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+              onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = WHITE } }}
+              onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.65)' } }}
             >
               <span style={{ fontSize: iconSz, lineHeight: 1 }}>{icon}</span>
               {!isMobile && <span>{label}</span>}

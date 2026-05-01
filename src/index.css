@@ -19,6 +19,26 @@ html, body, #root {
   height: 100%;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
+/* ── Custom scrollbar ─────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(14,165,233,0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(14,165,233,0.45);
+}
+
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -56,11 +76,21 @@ input, textarea, select {
 
 /* ── Feed card hover lift ─────────────────────────────────────────────────── */
 .feed-card {
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .feed-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(14, 165, 233, 0.14);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 36px rgba(14, 165, 233, 0.16), 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Section page-in animation ────────────────────────────────────────────── */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-in {
+  animation: pageIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* ── Primary button hover ─────────────────────────────────────────────────── */

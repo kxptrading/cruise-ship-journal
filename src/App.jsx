@@ -220,7 +220,7 @@ export default function App() {
           />
 
           <main style={{ flex: 1, overflowY: 'auto' }}>
-            <div style={{ padding: mainPad }}>
+            <div key={section} className="page-in" style={{ padding: mainPad }}>
             <div style={{ maxWidth: 840, margin: '0 auto' }}>
             <ErrorBoundary>
               {section === 'dashboard' && selectedDay === null && (

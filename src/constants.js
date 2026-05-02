@@ -125,7 +125,7 @@ export const WX_STYLE = {
 // radius, and colour decisions are consistent across every section.
 export const sty = {
   // White card with rounded corners — the primary content container
-  card: { background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '22px 24px', marginBottom: 18 },
+  card: { background: WHITE, borderRadius: 22, border: 'none', padding: '24px 26px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 24px rgba(0,0,0,0.07)' },
   // Standard text input / select styling.
   // fontSize is 16px — iOS Safari auto-zooms any input with font-size < 16px,
   // so this must stay at 16px or above to prevent unwanted zoom on mobile.

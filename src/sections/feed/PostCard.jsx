@@ -101,9 +101,9 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
   ].filter(Boolean)
 
   return (
-    <div className="feed-card" style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', position: 'relative' }}>
+    <div className="feed-card" style={{ background: WHITE, border: 'none', borderRadius: 24, overflow: 'hidden', position: 'relative', boxShadow: '0 2px 8px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.07)' }}>
       {/* Gradient accent strip */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg, var(--t-primary-dk) 0%, var(--t-primary) 60%, var(--t-accent) 100%)', zIndex: 1, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: 'linear-gradient(90deg, var(--t-primary-dk) 0%, var(--t-primary) 60%, var(--t-accent) 100%)', zIndex: 1, pointerEvents: 'none' }} />
 
       {/* ── Card header: author (left) + day/port/date/rating (right) ──────── */}
       <div style={{ padding: '16px 16px 12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
@@ -411,7 +411,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
 
       {/* ── Card footer: view full day link (own posts only) ────────────────── */}
       {onViewDay && (
-        <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: 'rgba(14,165,233,0.04)', display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ padding: '10px 18px', borderTop: `1px solid ${BORDER}`, background: '#FAFAFA', display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={() => onViewDay(dayIndex)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: NAVY2, fontFamily: FONT_BODY, fontWeight: 700, padding: 0 }}>

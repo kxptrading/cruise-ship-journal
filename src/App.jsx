@@ -167,7 +167,7 @@ export default function App() {
 
   // ── Layout values ───────────────────────────────────────────────────────────
   const baseFontSize = isMobile ? 15 : winW < BP.tablet ? 15.5 : 16
-  const mainPad      = isMobile ? '16px 10px' : winW < BP.tablet ? '28px 24px' : '36px 44px'
+  const mainPad      = isMobile ? '20px 12px' : winW < BP.tablet ? '32px 28px' : '44px 52px'
 
   // ── Loading / auth screens ──────────────────────────────────────────────────
   if (!authChecked) return (
@@ -221,7 +221,7 @@ export default function App() {
 
           <main style={{ flex: 1, overflowY: 'auto' }}>
             <div key={section} className="page-in" style={{ padding: mainPad }}>
-            <div style={{ maxWidth: 840, margin: '0 auto' }}>
+            <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary>
               {section === 'dashboard' && selectedDay === null && (
                 <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} />

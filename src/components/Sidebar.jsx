@@ -44,7 +44,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
             <div style={{ fontSize: 19, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1.2 }}>
               Cruise Log
             </div>
-            <div style={{ fontSize: 9, color: GOLD, marginTop: 5, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, opacity: 0.8 }}>
+            <div style={{ fontSize: 9, color: WHITE, marginTop: 5, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, opacity: 0.6 }}>
               A Journal for Every Voyage
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
 
         {/* ── Nav ── */}
         <nav style={{ flex: 1, padding: '16px 0 8px' }}>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.22)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 10px' }}>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 10px' }}>
             Your Journal
           </div>
           {NAV.map(({ id, label, icon }) => {
@@ -103,14 +103,14 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
                   display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left',
                   padding: '10px 18px 10px 14px',
                   background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
-                  color: active ? GOLD : 'rgba(255,255,255,0.72)',
+                  color: WHITE,
                   border: 'none',
                   borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
                   cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY, fontWeight: active ? 700 : 400,
                   transition: 'background 0.15s, color 0.15s',
                   letterSpacing: '0.01em',
                 }}>
-                <span style={{ fontSize: 18, lineHeight: 1, opacity: active ? 1 : 0.65 }}>{icon}</span>
+                <span style={{ fontSize: 18, lineHeight: 1, opacity: active ? 1 : 0.75 }}>{icon}</span>
                 <span style={{ flex: 1 }}>{label}</span>
                 {sectionStatus?.has(id) && !active && (
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />
@@ -123,14 +123,14 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
         {/* ── Footer ── */}
         <div style={{ padding: '14px 16px 18px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           {user && (
-            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 2, letterSpacing: '0.01em' }}>
+            <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 2, letterSpacing: '0.01em' }}>
               {user.email}
             </div>
           )}
           <button onClick={onSignOut}
-            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.38)' }}
-            style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 9, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.38)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', transition: 'background 0.15s, color 0.15s', display: 'flex', alignItems: 'center', gap: 8, letterSpacing: '0.01em' }}>
+            onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = WHITE }}
+            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.75)' }}
+            style={{ width: '100%', background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 9, padding: '8px 12px', fontSize: 12, color: 'rgba(255,255,255,0.75)', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left', transition: 'background 0.15s, color 0.15s', display: 'flex', alignItems: 'center', gap: 8, letterSpacing: '0.01em' }}>
             <span style={{ fontSize: 13, opacity: 0.7 }}>↪</span>
             Sign out
           </button>

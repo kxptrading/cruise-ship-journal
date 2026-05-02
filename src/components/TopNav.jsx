@@ -71,15 +71,15 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
                 borderRadius: 20,
                 padding: btnPad,
                 cursor: 'pointer',
-                color: active ? '#F5D96B' : 'rgba(255,255,255,0.6)',
+                color: WHITE,
                 fontFamily: FONT_BODY,
                 fontSize: 14, fontWeight: active ? 600 : 400,
                 transition: 'all 0.18s ease',
                 whiteSpace: 'nowrap',
                 letterSpacing: '0.01em',
               }}
-              onMouseEnter={e => { if (!active) { e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; e.currentTarget.style.color = WHITE } }}
-              onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.6)' } }}
+              onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
+              onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
               <span style={{ fontSize: isMobile ? 18 : 16, lineHeight: 1 }}>{icon}</span>
               {!isMobile && <span>{label}</span>}

@@ -37,8 +37,9 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
         } : {}),
       }}>
 
-        {/* ── Header ── */}
-        <div style={{ padding: '24px 20px 20px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        {/* ── Header — height matches TopNav (58px desktop / 48px mobile) so the
+            two elements form one seamless band across the top of the screen. ── */}
+        <div style={{ height: 58, minHeight: 58, padding: '0 20px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'var(--t-primary-dk)' }}>
           <div>
             <div style={{ fontSize: 19, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1.2 }}>
               Cruise Log

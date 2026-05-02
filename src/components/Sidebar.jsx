@@ -9,7 +9,7 @@
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { NAV } from '../constants'
 
-const SIDEBAR_BG = '#0F172A'
+const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
 
 export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus }) {
   return (

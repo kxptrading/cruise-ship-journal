@@ -26,7 +26,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       padding: isMobile ? '0 10px' : '0 22px',
       gap: isMobile ? 4 : 8,
       borderBottom: 'none',
-      boxShadow: '0 2px 20px rgba(0,0,0,0.25)',
+      boxShadow: 'none',
       zIndex: 200,
       position: 'sticky',
       top: 0,

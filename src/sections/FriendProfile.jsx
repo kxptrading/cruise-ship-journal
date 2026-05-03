@@ -9,6 +9,39 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, FONT_DISPLAY, FONT_BODY } from '../constants'
 
+// ── Badge definitions (mirrors Badges.jsx) ────────────────────────────────────
+const BADGE_DEFS = [
+  { key: 'firstLog',     emoji: '📖', name: 'First Log',     color: '#0EA5E9', howTo: 'Write your first journal entry in the Daily Log.' },
+  { key: 'portExplorer', emoji: '📍', name: 'Port Explorer', color: '#0D9488', howTo: 'Add 3 or more port stops (not "At Sea") in the Itinerary.' },
+  { key: 'foodie',       emoji: '🍽️', name: 'Foodie',        color: '#F43F5E', howTo: 'Log 5 or more entries in the Food Log.' },
+  { key: 'topRated',     emoji: '⭐', name: 'Top Rated',     color: '#F59E0B', howTo: 'Achieve an average day rating of 4 ★ or higher.' },
+  { key: 'entertained',  emoji: '🎭', name: 'Entertained',   color: '#7C3AED', howTo: 'Add at least 3 entries in the Entertainment Log.' },
+  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     color: '#14293F', howTo: 'Keep total spend at or below the set budget.' },
+  { key: 'photographer', emoji: '📸', name: 'Photographer',  color: '#0D9488', howTo: 'Upload at least one photo.' },
+  { key: 'fullHouse',    emoji: '🏆', name: 'Full House',    color: '#F59E0B', howTo: 'Log every single night of the voyage.' },
+]
+
+function computeBadges(dailyData, itinData, foodCount, entertainCount, budgetRow, budgetItemsData, photoCount, totalNights) {
+  const earned = {}
+  earned.firstLog     = (dailyData?.length ?? 0) >= 1
+  const realPorts     = (itinData ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim()))
+  earned.portExplorer = realPorts.length >= 3
+  earned.foodie       = (foodCount ?? 0) >= 5
+  const ratings       = (dailyData ?? []).map(r => r.rating).filter(v => v > 0)
+  const avg           = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0
+  earned.topRated     = avg >= 4
+  earned.entertained  = (entertainCount ?? 0) >= 3
+  if (budgetRow?.total_budget && (budgetItemsData?.length ?? 0) > 0) {
+    const spent = (budgetItemsData ?? []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
+    earned.onBudget = spent <= parseFloat(budgetRow.total_budget)
+  } else {
+    earned.onBudget = false
+  }
+  earned.photographer = (photoCount ?? 0) >= 1
+  earned.fullHouse    = totalNights > 0 && (dailyData?.length ?? 0) >= totalNights
+  return BADGE_DEFS.map(def => ({ ...def, earned: earned[def.key] ?? false }))
+}
+
 const BANNER_H    = 220
 const AVATAR_SIZE = 84
 const AVATAR_BORDER = 4
@@ -80,10 +113,13 @@ function VoyageCard({ voyage }) {
 
 // ── Root component ────────────────────────────────────────────────────────────
 export default function FriendProfile({ friend, onBack }) {
-  const [profile,  setProfile]  = useState(null)
-  const [voyages,  setVoyages]  = useState([])
-  const [stats,    setStats]    = useState({ portCount: null, daysLogged: null })
-  const [loading,  setLoading]  = useState(true)
+  const [profile,    setProfile]    = useState(null)
+  const [voyages,    setVoyages]    = useState([])
+  const [stats,      setStats]      = useState({ portCount: null, daysLogged: null })
+  const [badges,     setBadges]     = useState(BADGE_DEFS.map(d => ({ ...d, earned: false })))
+  const [allPorts,   setAllPorts]   = useState([])
+  const [hoveredKey, setHoveredKey] = useState(null)
+  const [loading,    setLoading]    = useState(true)
 
   // ── Fetch profile + voyages ───────────────────────────────────────────────
   useEffect(() => {
@@ -109,15 +145,53 @@ export default function FriendProfile({ friend, onBack }) {
       const rows = voyageRows || []
       setVoyages(rows)
 
-      // Stats for most recent voyage
       const recentVoyage = rows[0]
       if (recentVoyage?.id) {
-        const [itinRes, logsRes] = await Promise.all([
-          supabase.from('itinerary').select('port').eq('voyage_id', recentVoyage.id),
-          supabase.from('daily_logs').select('id', { count: 'exact', head: true }).eq('voyage_id', recentVoyage.id),
+        const voyageId = recentVoyage.id
+
+        // Stat strip + badge data — all in parallel
+        const [itinRes, logsRes, foodRes, entertainRes, budgetRes, photoRes] = await Promise.all([
+          supabase.from('itinerary').select('port').eq('voyage_id', voyageId),
+          supabase.from('daily_logs').select('id, rating', { count: 'exact' }).eq('voyage_id', voyageId),
+          supabase.from('food_logs').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
+          supabase.from('entertainment_log').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
+          supabase.from('budget').select('id, total_budget').eq('voyage_id', voyageId).maybeSingle(),
+          supabase.from('photos').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
         ])
+
+        let budgetItemsData = []
+        if (budgetRes.data?.id) {
+          const { data } = await supabase.from('budget_items').select('amount').eq('budget_id', budgetRes.data.id)
+          budgetItemsData = data ?? []
+        }
+
         const ports = (itinRes.data ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim()))
         setStats({ portCount: ports.length, daysLogged: logsRes.count ?? 0 })
+        setBadges(computeBadges(
+          logsRes.data ?? [], itinRes.data ?? [],
+          foodRes.count ?? 0, entertainRes.count ?? 0,
+          budgetRes.data, budgetItemsData,
+          photoRes.count ?? 0, parseInt(recentVoyage.total_nights) || 0,
+        ))
+      }
+
+      // All ports across every voyage — deduplicated
+      if (rows.length > 0) {
+        const voyageIds = rows.map(v => v.id)
+        const { data: allItinRows } = await supabase
+          .from('itinerary')
+          .select('port, voyage_id')
+          .in('voyage_id', voyageIds)
+        const seen = new Set()
+        const unique = []
+        ;(allItinRows ?? []).forEach(r => {
+          const p = r.port?.trim()
+          if (p && !/^at sea$/i.test(p) && !seen.has(p.toLowerCase())) {
+            seen.add(p.toLowerCase())
+            unique.push(p)
+          }
+        })
+        setAllPorts(unique.sort())
       }
 
       setLoading(false)
@@ -288,6 +362,86 @@ export default function FriendProfile({ friend, onBack }) {
               </div>
               <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
                 {voyages.map(v => <VoyageCard key={v.id} voyage={v} />)}
+              </div>
+            </div>
+          )}
+
+          {/* ── Badges ─────────────────────────────────────────────────────── */}
+          {voyages.length > 0 && (
+            <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div>
+                  <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>VOYAGE ACHIEVEMENTS</div>
+                  <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 20, color: NAVY2, lineHeight: 1 }}>Badges</h2>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                  <span style={{ fontFamily: FONT_DISPLAY, fontSize: 18, color: GOLD }}>{badges.filter(b => b.earned).length}</span>
+                  <span style={{ fontSize: 12, color: MUTED }}>of {badges.length} earned</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: MUTED, marginBottom: 16 }}>
+                🚢 {voyages[0]?.ship_name || 'Most recent voyage'}
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
+                {badges.map(badge => (
+                  <div
+                    key={badge.key}
+                    style={{
+                      borderRadius: 12,
+                      border: badge.earned ? `1px solid ${badge.color}44` : `1px solid ${BORDER}`,
+                      background: badge.earned ? `linear-gradient(135deg, ${badge.color}0F, ${badge.color}22)` : CREAM,
+                      padding: '12px 8px',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
+                      position: 'relative', overflow: 'visible',
+                    }}
+                    onMouseEnter={() => setHoveredKey(badge.key)}
+                    onMouseLeave={() => setHoveredKey(null)}
+                  >
+                    {hoveredKey === badge.key && (
+                      <div style={{
+                        position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
+                        zIndex: 100, width: 170, background: NAVY2, borderRadius: 10, padding: '10px 12px',
+                        pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
+                      }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: WHITE, marginBottom: 4 }}>{badge.emoji} {badge.name}</div>
+                        <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{badge.howTo}</div>
+                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: badge.earned ? '#34D399' : 'rgba(255,255,255,0.5)' }}>
+                          {badge.earned ? '✓ Earned' : '🔒 Not yet earned'}
+                        </div>
+                        <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: `6px solid ${NAVY2}` }} />
+                      </div>
+                    )}
+                    {badge.earned && (
+                      <div style={{ position: 'absolute', top: 6, right: 6, width: 13, height: 13, borderRadius: '50%', background: badge.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, color: WHITE, fontWeight: 700 }}>✓</div>
+                    )}
+                    <span style={{ fontSize: 26, filter: badge.earned ? 'none' : 'grayscale(1)' }}>{badge.emoji}</span>
+                    <span style={{ fontFamily: FONT_BODY, fontSize: 10, fontWeight: 700, color: badge.earned ? NAVY2 : MUTED, textAlign: 'center', lineHeight: 1.3 }}>{badge.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── Ports Visited ───────────────────────────────────────────────── */}
+          {allPorts.length > 0 && (
+            <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 20 }}>
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>DESTINATIONS</div>
+                <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 20, color: NAVY2, lineHeight: 1 }}>
+                  Ports Visited · <span style={{ color: GOLD }}>{allPorts.length}</span>
+                </h2>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {allPorts.map(port => (
+                  <span key={port} style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    background: `${NAVY}08`, border: `1px solid ${BORDER}`,
+                    borderRadius: 20, padding: '5px 12px',
+                    fontSize: 12, fontWeight: 600, color: NAVY2,
+                  }}>
+                    📍 {port}
+                  </span>
+                ))}
               </div>
             </div>
           )}

@@ -6,8 +6,8 @@ import { WHITE, BORDER, NAVY2, MUTED, FONT_DISPLAY, FONT_BODY } from '../../cons
 import { THEMES } from '../../themes'
 
 const GROUPS = [
-  { label: 'Blues',   ids: ['ocean', 'indigo', 'periwinkle', 'midnight', 'cobalt', 'steel'] },
-  { label: 'Purples', ids: ['violet', 'lavender'] },
+  { label: 'Blues',   ids: ['ocean', 'midnight', 'cobalt', 'steel'] },
+  { label: 'Purples', ids: ['violet', 'lavender', 'indigo', 'periwinkle'] },
   { label: 'Reds',    ids: ['rose', 'coral', 'blush', 'bubblegum'] },
   { label: 'Greens',  ids: ['emerald', 'teal', 'sage', 'forest'] },
   { label: 'Orange',  ids: ['sunset', 'peach', 'tangerine', 'terracotta'] },

@@ -69,7 +69,7 @@ export default function AppearanceBlock({ theme, onThemeChange }) {
             <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>
               {group.label}
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${group.ids.length}, 1fr)`, gap: 8 }}>
               {group.ids.map(id => {
                 const t = THEMES[id]
                 if (!t) return null

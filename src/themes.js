@@ -81,6 +81,66 @@ export const THEMES = {
     },
   },
 
+  lavender: {
+    id:    'lavender',
+    name:  'Lavender',
+    emoji: '🪻',
+    vars: {
+      '--t-primary':     '#C084FC',
+      '--t-primary-dk':  '#7E22CE',
+      '--t-primary-mid': '#A855F7',
+      '--t-primary-lt':  '#E9D5FF',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#FAF5FF',
+      '--t-btn-shadow':  'rgba(192,132,252,0.35)',
+    },
+  },
+
+  midnight: {
+    id:    'midnight',
+    name:  'Midnight',
+    emoji: '🌙',
+    vars: {
+      '--t-primary':     '#1D4ED8',
+      '--t-primary-dk':  '#1E2B6F',
+      '--t-primary-mid': '#1E3A8A',
+      '--t-primary-lt':  '#93C5FD',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#EFF6FF',
+      '--t-btn-shadow':  'rgba(29,78,216,0.35)',
+    },
+  },
+
+  cobalt: {
+    id:    'cobalt',
+    name:  'Cobalt',
+    emoji: '💙',
+    vars: {
+      '--t-primary':     '#3B82F6',
+      '--t-primary-dk':  '#1D4ED8',
+      '--t-primary-mid': '#2563EB',
+      '--t-primary-lt':  '#BFDBFE',
+      '--t-accent':      '#FBBF24',
+      '--t-bg':          '#EFF6FF',
+      '--t-btn-shadow':  'rgba(59,130,246,0.35)',
+    },
+  },
+
+  steel: {
+    id:    'steel',
+    name:  'Steel Blue',
+    emoji: '🩵',
+    vars: {
+      '--t-primary':     '#5B8DB8',
+      '--t-primary-dk':  '#2D5F8A',
+      '--t-primary-mid': '#4A7CA8',
+      '--t-primary-lt':  '#A8C9E0',
+      '--t-accent':      '#F59E0B',
+      '--t-bg':          '#F0F7FD',
+      '--t-btn-shadow':  'rgba(91,141,184,0.35)',
+    },
+  },
+
   coral: {
     id:    'coral',
     name:  'Coral',

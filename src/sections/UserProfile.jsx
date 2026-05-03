@@ -44,7 +44,7 @@ import AppearanceBlock  from './profile/AppearanceBlock'
 const BANNER_ASPECT = 840 / 220
 
 // ── Root component ────────────────────────────────────────────────────────────
-export default function UserProfile({ session, allVoyages, voyage, onNav, theme, onThemeChange }) {
+export default function UserProfile({ session, allVoyages, voyage, onNav, theme, onThemeChange, onAgeChange }) {
   const userId   = useUserId()
   const w        = useW()
   const isMobile = w < BP.mobile
@@ -69,7 +69,7 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       .from('profiles')
       .select([
         'display_name', 'bio', 'home_port', 'favourite_cruise_line',
-        'favourite_destination', 'avatar_url', 'banner_url',
+        'favourite_destination', 'avatar_url', 'banner_url', 'age',
         'cabin_preference', 'dining_time', 'dietary', 'currency',
         'home_airport', 'units', 'trait_1', 'trait_2', 'trait_3', 'trait_4',
       ].join(', '))
@@ -77,15 +77,19 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       .maybeSingle()
       .then(({ data, error }) => {
         if (error) console.error('Profile load error:', error)
-        if (data) setProfile({
-          displayName:          data.display_name          ?? '',
-          bio:                  data.bio                   ?? '',
-          homePort:             data.home_port             ?? '',
-          favouriteCruiseLine:  data.favourite_cruise_line ?? '',
-          favouriteDestination: data.favourite_destination ?? '',
-          avatarUrl:            data.avatar_url            ?? '',
-          bannerUrl:            data.banner_url            ?? '',
-        })
+        if (data) {
+          setProfile({
+            displayName:          data.display_name          ?? '',
+            bio:                  data.bio                   ?? '',
+            homePort:             data.home_port             ?? '',
+            favouriteCruiseLine:  data.favourite_cruise_line ?? '',
+            favouriteDestination: data.favourite_destination ?? '',
+            avatarUrl:            data.avatar_url            ?? '',
+            bannerUrl:            data.banner_url            ?? '',
+            age:                  data.age                   ?? null,
+          })
+          if (data.age != null) onAgeChange?.(data.age)
+        }
         setLoading(false)
       })
   }, [userId])
@@ -210,7 +214,7 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
 
       {/* 6. Appearance + Preferences */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
-        <AppearanceBlock theme={theme} onThemeChange={onThemeChange} />
+        <AppearanceBlock theme={theme} onThemeChange={onThemeChange} age={profile.age} onAgeChange={async (age) => { setProfile(p => ({ ...p, age })); onAgeChange?.(age); await saveProfileField({ age }) }} />
         <Preferences onSave={saveProfileField} />
       </div>
 

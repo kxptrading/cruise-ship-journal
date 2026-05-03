@@ -56,6 +56,10 @@ export default function App() {
   // ── Theme ───────────────────────────────────────────────────────────────────
   const [theme, setTheme] = useState(getSavedTheme)
 
+  // ── Age gate — null means not set, treated as adult ─────────────────────────
+  const [userAge, setUserAge] = useState(null)
+  const isAdult = userAge === null || userAge >= 18
+
   // Apply the persisted theme immediately on first render (localStorage fallback)
   useEffect(() => { applyTheme(theme) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -92,11 +96,12 @@ export default function App() {
       if (session?.user?.id) {
         supabase
           .from('profiles')
-          .select('theme')
+          .select('theme, age')
           .eq('user_id', session.user.id)
           .maybeSingle()
           .then(({ data }) => {
             if (data?.theme) { applyTheme(data.theme); setTheme(data.theme) }
+            if (data?.age != null) setUserAge(data.age)
           })
       }
     })
@@ -208,6 +213,7 @@ export default function App() {
           voyageName={data.voyage.shipName}
           voyageCount={allVoyages.length}
           sectionStatus={sectionStatus}
+          isAdult={isAdult}
         />
 
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -237,14 +243,14 @@ export default function App() {
               {section === 'dining'        && <DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />}
               {section === 'entertainment' && <EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />}
               {section === 'foodfav'       && <FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />}
-              {section === 'budget'        && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}
+              {section === 'budget'        && isAdult && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}
               {section === 'shopping'      && <ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />}
               {section === 'highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
               {section === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
               {section === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
               {section === 'friends'       && <Friends />}
               {section === 'chat'          && <Chat />}
-              {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} />}
+              {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />}
             </ErrorBoundary>
             </div>
             </div>

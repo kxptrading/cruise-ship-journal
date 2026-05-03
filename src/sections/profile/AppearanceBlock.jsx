@@ -2,7 +2,8 @@
 // profile/AppearanceBlock.jsx — Theme selector card on the Profile page
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { WHITE, BORDER, NAVY2, MUTED, FONT_DISPLAY, FONT_BODY } from '../../constants'
+import { useState } from 'react'
+import { WHITE, BORDER, NAVY2, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { THEMES } from '../../themes'
 
 const GROUPS = [
@@ -52,7 +53,22 @@ function ThemeSwatch({ t, active, onThemeChange }) {
   )
 }
 
-export default function AppearanceBlock({ theme, onThemeChange }) {
+export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange }) {
+  const [ageInput, setAgeInput] = useState('')
+  const [ageSaved, setAgeSaved] = useState(false)
+
+  const handleAgeBlur = () => {
+    const n = parseInt(ageInput)
+    if (!ageInput) return
+    if (!isNaN(n) && n >= 1 && n <= 120) {
+      onAgeChange?.(n)
+      setAgeSaved(true)
+      setTimeout(() => setAgeSaved(false), 1500)
+    }
+  }
+
+  const isAdult = age === null || age >= 18
+
   return (
     <div style={{ background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '18px 20px', flex: '1 1 0', minWidth: 0 }}>
 
@@ -60,6 +76,33 @@ export default function AppearanceBlock({ theme, onThemeChange }) {
       <div style={{ marginBottom: 18 }}>
         <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>PERSONALISATION</div>
         <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, color: NAVY2, lineHeight: 1 }}>Appearance</h2>
+      </div>
+
+      {/* Age / profile type */}
+      <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Profile Type</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: isAdult ? 'rgba(14,165,233,0.08)' : 'rgba(139,92,246,0.08)', border: `1px solid ${isAdult ? 'rgba(14,165,233,0.3)' : 'rgba(139,92,246,0.3)'}`, borderRadius: 20, padding: '4px 14px' }}>
+            <span style={{ fontSize: 15 }}>{isAdult ? '🧑' : '🧒'}</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: NAVY2 }}>{isAdult ? 'Adult' : 'Junior'}</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <input
+              type="number"
+              min="1" max="120"
+              placeholder={age ?? 'Age'}
+              value={ageInput}
+              onChange={e => setAgeInput(e.target.value)}
+              onBlur={handleAgeBlur}
+              onKeyDown={e => { if (e.key === 'Enter') { e.target.blur() } }}
+              style={{ width: 72, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 10px', fontSize: 13, fontFamily: FONT_BODY, color: TEXT, outline: 'none', textAlign: 'center' }}
+            />
+            {ageSaved && <span style={{ fontSize: 11, fontWeight: 700, color: TEAL }}>✓ Saved</span>}
+          </div>
+          {age !== null && !isAdult && (
+            <span style={{ fontSize: 11, color: MUTED }}>Budget tracking is hidden for Junior profiles.</span>
+          )}
+        </div>
       </div>
 
       {/* Grouped theme swatches */}

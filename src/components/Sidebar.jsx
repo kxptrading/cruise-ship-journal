@@ -11,7 +11,7 @@ import { NAV } from '../constants'
 
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
 
-export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus }) {
+export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult }) {
   return (
     <>
       {isOverlay && isOpen && (
@@ -93,7 +93,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 10px' }}>
             Your Journal
           </div>
-          {NAV.map(({ id, label, icon }) => {
+          {NAV.filter(({ id }) => id !== 'budget' || isAdult).map(({ id, label, icon }) => {
             const active = section === id
             return (
               <button key={id} onClick={() => onNav(id)}

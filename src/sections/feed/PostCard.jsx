@@ -20,7 +20,7 @@ export const REACTIONS = [
   { id: 'shot',      emoji: '📸', label: 'Great Shot' },
 ]
 
-export default function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
+export default function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, onViewProfile, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
   const w = useW()
   const [showComments, setShowComments] = useState(false)
   const [commentText, setCommentText]   = useState('')
@@ -121,7 +121,12 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
             }
           </div>
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              onClick={onViewProfile || undefined}
+              style={{ fontSize: 14, fontWeight: 700, color: NAVY2, lineHeight: 1.2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: onViewProfile ? 'pointer' : 'default', display: 'inline-block' }}
+              onMouseEnter={e => { if (onViewProfile) e.currentTarget.style.textDecoration = 'underline' }}
+              onMouseLeave={e => { e.currentTarget.style.textDecoration = 'none' }}
+            >
               {author ? author.name : displayName}
             </div>
             {author?.shipName && (

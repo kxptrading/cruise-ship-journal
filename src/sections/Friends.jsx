@@ -68,13 +68,13 @@ function useCard() {
   }
 }
 
-export default function Friends() {
+export default function Friends({ initialFriend = null, onClearInitialFriend }) {
   const currentUserId = useUserId()
   const w             = useW()
   const card          = useCard()
   const isMobile      = w < BP.mobile
 
-  const [viewingFriend, setViewingFriend]  = useState(null)  // friend object | null
+  const [viewingFriend, setViewingFriend]  = useState(initialFriend)  // friend object | null
 
   const [searchQuery, setSearchQuery]      = useState('')
   const [searchResult, setSearchResult]   = useState(null)   // profile[] | 'not_found' | null
@@ -194,7 +194,7 @@ export default function Friends() {
   const avatarColor  = (id = '') => avatarColors[id.charCodeAt(0) % avatarColors.length]
 
   if (viewingFriend) {
-    return <FriendProfile friend={viewingFriend} onBack={() => setViewingFriend(null)} />
+    return <FriendProfile friend={viewingFriend} onBack={() => { setViewingFriend(null); onClearInitialFriend?.() }} />
   }
 
   return (

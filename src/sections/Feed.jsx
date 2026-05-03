@@ -26,7 +26,7 @@ import VoyageHero  from './feed/VoyageHero'
 import QuickComposer from './feed/QuickComposer'
 
 // ── Feed ──────────────────────────────────────────────────────────────────────
-export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast, onViewDay }) {
+export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast, onViewDay, onViewProfile }) {
   const w        = useW()
   const voyageId = useVoyageId()
   const userId   = useUserId()
@@ -128,6 +128,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             rating:       log.rating,
             photo:        photoMap[`${log.voyage_id}-${log.day_number}`] || null,
             author: {
+              userId:    profile.user_id,
               name:      profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Cruiser',
               avatarUrl: profile.avatar_url || '',
               initials:  toInitials(profile),
@@ -449,6 +450,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               initials={userInitials}
               displayName={userDisplayName}
               author={item.author}
+              onViewProfile={item.author ? () => onViewProfile?.(item.author) : null}
               reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
               onReact={(rid) => handleReact(item.voyageId, item.dayNumber, rid)}
               comments={commentsMap[`${item.voyageId}-${item.dayNumber}`] || []}

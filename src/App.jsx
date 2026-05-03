@@ -75,6 +75,7 @@ export default function App() {
   const [selectedDay,  setSelectedDay]  = useState(null)
   const [dailyJumpDay, setDailyJumpDay] = useState(null)
   const [sidebarOpen,  setSidebarOpen]  = useState(false)
+  const [feedFriend,   setFeedFriend]   = useState(null) // friend to view when nav'd from feed
 
   // ── Toast ───────────────────────────────────────────────────────────────────
   const [toast, setToast] = useState({ message: '', visible: false })
@@ -230,7 +231,7 @@ export default function App() {
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary>
               {section === 'dashboard' && selectedDay === null && (
-                <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} />
+                <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} onViewProfile={(author) => { setFeedFriend({ userId: author.userId, displayName: author.name, avatarUrl: author.avatarUrl }); navClick('friends') }} />
               )}
               {section === 'dashboard' && selectedDay !== null && (
                 <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
@@ -248,7 +249,7 @@ export default function App() {
               {section === 'highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
               {section === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
               {section === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
-              {section === 'friends'       && <Friends />}
+              {section === 'friends'       && <Friends initialFriend={feedFriend} onClearInitialFriend={() => setFeedFriend(null)} />}
               {section === 'chat'          && <Chat />}
               {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />}
             </ErrorBoundary>

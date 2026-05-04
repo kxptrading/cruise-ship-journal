@@ -155,7 +155,9 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                 <button
                   onClick={e => {
                     const rect = e.currentTarget.getBoundingClientRect()
-                    setShowImagePicker(p => p ? null : { top: rect.bottom + 6, left: rect.left })
+                    const menuW = 178
+                    const safeLeft = Math.min(rect.left, Math.max(8, window.innerWidth - menuW - 8))
+                    setShowImagePicker(p => p ? null : { top: rect.bottom + 6, left: safeLeft })
                   }}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 5,

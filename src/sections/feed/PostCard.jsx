@@ -236,10 +236,11 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
           {pickerOpen && (
             <div style={{
               position: 'absolute', bottom: 'calc(100% + 10px)', left: 0,
-              display: 'flex', gap: 6, alignItems: 'center',
+              display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap',
               background: WHITE, borderRadius: 40, padding: '8px 12px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.10)',
               border: `1px solid ${BORDER}`, zIndex: 50,
+              maxWidth: 'calc(100vw - 32px)',
               animation: 'reactionPickerIn 0.22s cubic-bezier(0.34,1.56,0.64,1)',
             }}>
               {REACTIONS.map(r => (
@@ -347,7 +348,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                               if (e.key === 'Escape') { setEditingId(null); setEditText('') }
                             }}
                             autoFocus rows={2}
-                            style={{ flex: 1, border: `1.5px solid ${NAVY}`, borderRadius: 12, padding: '7px 12px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT }}
+                            style={{ flex: 1, border: `1.5px solid ${NAVY}`, borderRadius: 12, padding: '7px 12px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT, boxSizing: 'border-box', minWidth: 0 }}
                           />
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                             <button onClick={() => handleSaveEdit(c.id)} disabled={!editText.trim() || saving}
@@ -361,7 +362,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                           </div>
                         </div>
                       ) : (
-                        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: '4px 14px 14px 14px', padding: '8px 12px', display: 'inline-block', maxWidth: '100%' }}>
+                        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: '4px 14px 14px 14px', padding: '8px 12px', display: 'block', maxWidth: '100%', wordBreak: 'break-word' }}>
                           <div style={{ fontSize: 12, fontWeight: 700, color: NAVY2, marginBottom: 3 }}>{c.authorName}</div>
                           <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{c.body}</div>
                         </div>
@@ -401,7 +402,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment() } }}
               placeholder="Write a comment…"
               rows={1}
-              style={{ flex: 1, border: `1px solid ${BORDER}`, borderRadius: 18, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT, background: WHITE, transition: 'border-color 0.15s' }}
+              style={{ flex: 1, border: `1px solid ${BORDER}`, borderRadius: 18, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT, background: WHITE, transition: 'border-color 0.15s', boxSizing: 'border-box', minWidth: 0 }}
               onFocus={e => { e.target.style.borderColor = NAVY }}
               onBlur={e => { e.target.style.borderColor = BORDER }}
             />

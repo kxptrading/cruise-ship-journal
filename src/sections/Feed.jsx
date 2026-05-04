@@ -422,7 +422,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           <div style={{ fontSize: 24, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>
             Your voyage feed is empty
           </div>
-          <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.7, maxWidth: 380, margin: '0 auto 24px' }}>
+          <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.7, maxWidth: 'min(380px, 100%)', margin: '0 auto 24px' }}>
             {dailyLogs.length === 0
               ? 'Add your first day in the Daily Log, then come back here to post your highlights.'
               : 'You\'ve got days added — write some highlights and they\'ll appear here as posts.'}

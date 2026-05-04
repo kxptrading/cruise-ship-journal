@@ -226,7 +226,7 @@ export default function App() {
             onMenuOpen={() => setSidebarOpen(true)}
           />
 
-          <main style={{ flex: 1, overflowY: 'auto' }}>
+          <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             <div key={section} className="page-in" style={{ padding: mainPad }}>
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary>

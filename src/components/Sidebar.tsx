@@ -1,9 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// components/Sidebar.jsx — Navigation sidebar
-//
-// On desktop (isOverlay = false) the sidebar sits permanently to the left of
-// the main content. On tablet and mobile it becomes a drawer that slides in
-// from the left over a darkened backdrop, controlled by isOpen / onClose.
+// components/Sidebar.tsx — Navigation sidebar
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
@@ -11,24 +7,29 @@ import { NAV } from '../constants'
 
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
 
-export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult }) {
+interface Props {
+  section:       string
+  onNav:         (id: string) => void
+  isOverlay:     boolean
+  isOpen:        boolean
+  onClose:       () => void
+  user:          { email?: string } | null
+  onSignOut:     () => void
+  voyageName:    string | null
+  voyageCount:   number
+  sectionStatus: Set<string> | null | undefined
+  isAdult:       boolean
+}
+
+export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult }: Props) {
   return (
     <>
       {isOverlay && isOpen && (
-        <div
-          onClick={onClose}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 999, backdropFilter: 'blur(4px)' }}
-        />
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 999, backdropFilter: 'blur(4px)' }} />
       )}
-
       <aside style={{
-        width: 240,
-        background: SIDEBAR_BG,
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        overflowY: 'auto',
-        borderRight: 'none',
+        width: 240, background: SIDEBAR_BG, flexShrink: 0,
+        display: 'flex', flexDirection: 'column', overflowY: 'auto', borderRight: 'none',
         ...(isOverlay ? {
           position: 'fixed', left: 0, top: 0, height: '100vh', zIndex: 1000,
           transform: isOpen ? 'translateX(0)' : 'translateX(-240px)',
@@ -36,38 +37,20 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
           boxShadow: isOpen ? '8px 0 40px rgba(0,0,0,0.5)' : 'none',
         } : {}),
       }}>
-
-        {/* ── Header — height matches TopNav (58px desktop / 48px mobile) so the
-            two elements form one seamless band across the top of the screen. ── */}
         <div style={{ height: 58, minHeight: 58, padding: '0 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0, background: 'var(--t-primary-dk)' }}>
           <div>
-            <div style={{ fontSize: 19, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1.2 }}>
-              Cruise Log
-            </div>
-            <div style={{ fontSize: 9, color: WHITE, marginTop: 5, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, opacity: 0.6 }}>
-              A Journal for Every Voyage
-            </div>
+            <div style={{ fontSize: 19, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1.2 }}>Cruise Log</div>
+            <div style={{ fontSize: 9, color: WHITE, marginTop: 5, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, opacity: 0.6 }}>A Journal for Every Voyage</div>
           </div>
           {isOverlay && (
-            <button onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginLeft: 8, marginTop: 2, fontSize: 18, color: 'rgba(255,255,255,0.5)' }}>
-              ×
-            </button>
+            <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, marginLeft: 8, marginTop: 2, fontSize: 18, color: 'rgba(255,255,255,0.5)' }}>×</button>
           )}
         </div>
 
-        {/* ── Voyage pill ── */}
         <div style={{ padding: '14px 12px 4px' }}>
           <button
             onClick={() => onNav('profile')}
-            style={{
-              width: '100%',
-              background: section === 'profile' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)',
-              border: `1px solid ${section === 'profile' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)'}`,
-              borderRadius: 12, padding: '9px 13px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              fontFamily: FONT_BODY, transition: 'background 0.18s, border-color 0.18s',
-            }}
+            style={{ width: '100%', background: section === 'profile' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${section === 'profile' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 12, padding: '9px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: FONT_BODY, transition: 'background 0.18s, border-color 0.18s' }}
             onMouseEnter={e => { if (section !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
             onMouseLeave={e => { if (section !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
           >
@@ -79,37 +62,22 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
               {voyageCount > 1 && (
-                <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '1px 7px', fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>
-                  {voyageCount}
-                </span>
+                <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '1px 7px', fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{voyageCount}</span>
               )}
               <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', fontWeight: 300 }}>›</span>
             </div>
           </button>
         </div>
 
-        {/* ── Nav ── */}
         <nav style={{ flex: 1, padding: '16px 0 8px' }}>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 10px' }}>
-            Your Journal
-          </div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 10px' }}>Your Journal</div>
           {NAV.filter(({ id }) => id !== 'budget' || isAdult).map(({ id, label, icon }) => {
             const active = section === id
             return (
               <button key={id} onClick={() => onNav(id)}
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left',
-                  padding: '10px 18px 10px 14px',
-                  background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
-                  color: WHITE,
-                  border: 'none',
-                  borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
-                  cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY, fontWeight: active ? 700 : 400,
-                  transition: 'background 0.15s, color 0.15s',
-                  letterSpacing: '0.01em',
-                }}>
+                style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left', padding: '10px 18px 10px 14px', background: active ? 'rgba(201,162,39,0.12)' : 'transparent', color: WHITE, border: 'none', borderLeft: `3px solid ${active ? GOLD : 'transparent'}`, cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY, fontWeight: active ? 700 : 400, transition: 'background 0.15s, color 0.15s', letterSpacing: '0.01em' }}>
                 <span style={{ fontSize: 18, lineHeight: 1, opacity: active ? 1 : 0.75 }}>{icon}</span>
                 <span style={{ flex: 1 }}>{label}</span>
                 {sectionStatus?.has(id) && !active && (
@@ -120,7 +88,6 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
           })}
         </nav>
 
-        {/* ── Footer ── */}
         <div style={{ padding: '14px 16px 18px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
           {user && (
             <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 2, letterSpacing: '0.01em' }}>

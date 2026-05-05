@@ -1,24 +1,30 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// components/ui.jsx — Shared primitive UI components
-//
-// Small, single-purpose building blocks used across all section pages.
-// Every component here reads the viewport width via useW() so it can adapt
-// its own sizing without needing the parent to pass a width prop.
+// components/ui.tsx — Shared primitive UI components
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { NAVY, NAVY2, GOLD, BORDER, TEXT, MUTED, LIGHT, WHITE, CREAM, FONT_DISPLAY, FONT_BODY } from '../constants'
+import type { CSSProperties, ReactNode } from 'react'
+import { NAVY2, GOLD, BORDER, MUTED, LIGHT, WHITE, CREAM, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { sty } from '../constants'
 import { BP } from '../constants'
 import { useW } from '../context'
 
-// Uppercase micro-label rendered above form fields.
-export const Lbl = ({ c }) => <label style={sty.lbl}>{c}</label>
+interface LblProps    { c: ReactNode }
+interface InpProps    { value: string; onChange: (v: string) => void; placeholder?: string; type?: string; style?: CSSProperties }
+interface TAProps     { value: string; onChange: (v: string) => void; placeholder?: string; rows?: number }
+interface FldProps    { label: string; children: ReactNode; half?: boolean }
+interface Row2Props   { children: ReactNode }
+interface BoxProps    { title: string; children: ReactNode; color?: string; emoji?: string }
+interface StarsProps  { value: number; onChange: (n: number) => void }
+interface PgHdrProps  { title: string; sub?: string; icon?: ReactNode }
+interface SvgProps    { d: string; size?: number; color?: string; weight?: number }
+interface DonutProps  { pct?: number; size?: number; color?: string; bg?: string; thick?: number }
+interface MetricProps { icon: string; value: string | number; label: string; sub?: string; color: string; pct?: number; ring?: number; alert?: boolean }
+interface ToastProps  { message: string; visible: boolean }
 
-// Controlled text input. Applies the shared sty.inp style and normalises the
-// value to an empty string when undefined so React never switches from
-// uncontrolled to controlled mode.
-export const Inp = ({ value, onChange, placeholder, type = 'text', style = {} }) => (
+export const Lbl = ({ c }: LblProps) => <label style={sty.lbl}>{c}</label>
+
+export const Inp = ({ value, onChange, placeholder, type = 'text', style = {} }: InpProps) => (
   <input
     type={type}
     value={value || ''}
@@ -28,9 +34,7 @@ export const Inp = ({ value, onChange, placeholder, type = 'text', style = {} })
   />
 )
 
-// Multi-line textarea with the same base styling as Inp. resize: vertical lets
-// users expand it; lineHeight 1.7 keeps long journal entries readable.
-export const TA = ({ value, onChange, placeholder, rows = 4 }) => (
+export const TA = ({ value, onChange, placeholder, rows = 4 }: TAProps) => (
   <textarea
     value={value || ''}
     onChange={e => onChange(e.target.value)}
@@ -40,19 +44,14 @@ export const TA = ({ value, onChange, placeholder, rows = 4 }) => (
   />
 )
 
-// Form field wrapper — adds a bottom margin and optionally sets flex: 1 so
-// it can grow equally inside a Row2 layout.
-export const Fld = ({ label, children, half }) => (
+export const Fld = ({ label, children, half }: FldProps) => (
   <div style={{ marginBottom: 16, flex: half ? '1' : undefined }}>
     <Lbl c={label} />
     {children}
   </div>
 )
 
-// Two-column row for side-by-side form fields. Stacks to a single column on
-// mobile so narrow screens stay usable. Children should use the half prop on
-// Fld to flex-grow into the available space.
-export const Row2 = ({ children }) => {
+export const Row2 = ({ children }: Row2Props) => {
   const w = useW()
   return (
     <div style={{ display: 'flex', flexDirection: w < BP.mobile ? 'column' : 'row', gap: 16 }}>
@@ -61,10 +60,7 @@ export const Row2 = ({ children }) => {
   )
 }
 
-// Section box — a titled grouping block used inside cards. Coloured header bar
-// (defaults to NAVY) with a LIGHT background body. Pass a `color` prop to tint
-// the header to the section's accent colour.
-export const Box = ({ title, children, color, emoji }) => (
+export const Box = ({ title, children, color, emoji }: BoxProps) => (
   <div style={{ borderRadius: 12, marginBottom: 20, overflow: 'hidden', border: `1px solid ${BORDER}` }}>
     <div style={{ background: color || NAVY2, color: WHITE, padding: '8px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', borderRadius: '12px 12px 0 0', fontFamily: FONT_BODY }}>
       {emoji && <span style={{ marginRight: 6 }}>{emoji}</span>}{title}
@@ -73,11 +69,9 @@ export const Box = ({ title, children, color, emoji }) => (
   </div>
 )
 
-// Interactive 5-star rating. Clicking a star triggers a scale-pulse animation
-// (defined in index.css as .star-pulse) for a tactile feel.
-export const Stars = ({ value, onChange }) => {
-  const [pulse, setPulse] = useState(null)
-  const click = (n) => {
+export const Stars = ({ value, onChange }: StarsProps) => {
+  const [pulse, setPulse] = useState<number | null>(null)
+  const click = (n: number) => {
     onChange(n)
     setPulse(n)
     setTimeout(() => setPulse(null), 300)
@@ -95,9 +89,7 @@ export const Stars = ({ value, onChange }) => {
   )
 }
 
-// Page heading with an amber underline bar. Font size steps down at mobile and
-// tablet breakpoints. The sub prop is optional supporting copy shown below.
-export const PgHdr = ({ title, sub, icon }) => {
+export const PgHdr = ({ title, sub, icon }: PgHdrProps) => {
   const w = useW()
   const h1Size = w < BP.mobile ? 30 : 36
   return (
@@ -106,33 +98,24 @@ export const PgHdr = ({ title, sub, icon }) => {
         {icon && <span style={{ marginRight: 10 }}>{icon}</span>}{title}
       </h1>
       {sub && <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600 }}>{sub}</p>}
-      {/* Amber accent bar beneath the title */}
       <div style={{ height: 4, background: GOLD, width: 56, marginTop: 10, borderRadius: 2 }} />
     </div>
   )
 }
 
-// Renders a single SVG icon from an IC path string. Uses stroke (not fill) so
-// icons match the line-art aesthetic of the design system.
-export const SvgIcon = ({ d, size = 18, color = 'currentColor', weight = 2 }) => (
+export const SvgIcon = ({ d, size = 18, color = 'currentColor', weight = 2 }: SvgProps) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round">
     <path d={d} />
   </svg>
 )
 
-// SVG donut/ring chart. Used in metric cards and the dashboard hero.
-// pct (0–100) controls how much of the ring is filled. The ring is drawn with
-// two stacked circles — one for the track, one for the fill — using
-// strokeDasharray to clip the fill arc.
-export const Donut = ({ pct = 0, size = 64, color = GOLD, bg = '#E8E4DB', thick = 6 }) => {
+export const Donut = ({ pct = 0, size = 64, color = GOLD, bg = '#E8E4DB', thick = 6 }: DonutProps) => {
   const r    = (size / 2) - thick
   const circ = 2 * Math.PI * r
   const dash = Math.max(0, Math.min(100, pct) / 100) * circ
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Background track */}
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={bg} strokeWidth={thick} />
-      {/* Filled arc — rotated -90° so it starts at the top */}
       <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={color} strokeWidth={thick}
         strokeDasharray={`${dash} ${circ}`} strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`} />
@@ -140,16 +123,12 @@ export const Donut = ({ pct = 0, size = 64, color = GOLD, bg = '#E8E4DB', thick 
   )
 }
 
-// Summary card used in the Dashboard metrics grid. Shows an icon badge, a
-// large display-font value, an uppercase label, optional supporting text, and
-// optionally either a progress bar (pct) or a donut ring (ring).
-export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert }) => {
+export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert }: MetricProps) => {
   const w      = useW()
   const valSize = w < BP.tablet ? 22 : 24
   const cs     = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
   return (
-    <div style={{ ...cs, marginBottom: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: 148, background: `linear-gradient(135deg, ${WHITE} 60%, ${color}15 100%)` }}>
-      {/* Top row: icon badge (left) + optional donut ring (right) */}
+    <div style={{ ...cs, marginBottom: 0, display: 'flex', flexDirection: 'column' as const, justifyContent: 'space-between', minHeight: 148, background: `linear-gradient(135deg, ${WHITE} 60%, ${color}15 100%)` }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{ width: 40, height: 40, borderRadius: 12, background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon.length <= 4
@@ -159,14 +138,12 @@ export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert })
         {ring !== undefined && (
           <div style={{ position: 'relative', flexShrink: 0 }}>
             <Donut pct={ring} size={52} color={alert ? '#DC2626' : color} thick={5} bg={BORDER} />
-            {/* Percentage label centred inside the ring */}
             <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, color: alert ? '#DC2626' : color }}>
               {ring}%
             </div>
           </div>
         )}
       </div>
-      {/* Bottom section: large value, label, sub-text, optional progress bar */}
       <div>
         <div style={{ fontSize: valSize, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1, marginBottom: 3 }}>{value}</div>
         <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8, fontFamily: FONT_BODY }}>{label}</div>
@@ -181,20 +158,14 @@ export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert })
   )
 }
 
-// Fixed-position toast notification. Renders at the bottom-centre of the
-// viewport. Fades in via CSS animation; the parent controls visibility.
-export const Toast = ({ message, visible }) => {
+export const Toast = ({ message, visible }: ToastProps) => {
   if (!message) return null
   return (
     <div style={{
-      position: 'fixed', bottom: 32, left: '50%',
-      transform: 'translateX(-50%)',
-      background: NAVY, color: WHITE,
-      borderRadius: 10, padding: '12px 26px',
-      fontSize: 14, fontWeight: 600,
-      boxShadow: '0 6px 24px rgba(0,0,0,0.22)',
-      zIndex: 9999, pointerEvents: 'none',
-      whiteSpace: 'nowrap',
+      position: 'fixed', bottom: 32, left: '50%', transform: 'translateX(-50%)',
+      background: NAVY2, color: WHITE, borderRadius: 10, padding: '12px 26px',
+      fontSize: 14, fontWeight: 600, boxShadow: '0 6px 24px rgba(0,0,0,0.22)',
+      zIndex: 9999, pointerEvents: 'none', whiteSpace: 'nowrap',
       animation: visible ? 'toastIn 0.3s ease forwards' : 'toastOut 0.3s ease forwards',
       letterSpacing: '0.01em',
     }}>

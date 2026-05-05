@@ -1,24 +1,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// components/ErrorBoundary.jsx — Top-level React error boundary
-//
-// Wraps the section router. If any section throws during render, this catches
-// it and shows a friendly fallback instead of a blank screen.
+// components/ErrorBoundary.tsx — Top-level React error boundary
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { Component } from 'react'
-import { NAVY, GOLD, CREAM, MUTED, WHITE, BORDER } from '../constants'
+import type { ReactNode, ErrorInfo } from 'react'
+import { NAVY, MUTED, WHITE, BORDER } from '../constants'
 
-export default class ErrorBoundary extends Component {
-  constructor(props) {
+interface Props {
+  children: ReactNode
+}
+
+interface State {
+  hasError: boolean
+  error:    Error | null
+}
+
+export default class ErrorBoundary extends Component<Props, State> {
+  constructor(props: Props) {
     super(props)
     this.state = { hasError: false, error: null }
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): State {
     return { hasError: true, error }
   }
 
-  componentDidCatch(error, info) {
+  componentDidCatch(error: Error, info: ErrorInfo): void {
     console.error('[ErrorBoundary] Caught error:', error, info)
   }
 
@@ -36,10 +43,7 @@ export default class ErrorBoundary extends Component {
           boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
         }}>
           <div style={{ fontSize: 40, marginBottom: 16 }}>⚓</div>
-          <h2 style={{
-            margin: '0 0 10px', fontFamily: 'Georgia, serif',
-            fontSize: 22, color: NAVY,
-          }}>
+          <h2 style={{ margin: '0 0 10px', fontFamily: 'Georgia, serif', fontSize: 22, color: NAVY }}>
             Something went adrift
           </h2>
           <p style={{ margin: '0 0 24px', fontSize: 14, color: MUTED, lineHeight: 1.6 }}>
@@ -49,19 +53,14 @@ export default class ErrorBoundary extends Component {
             <pre style={{
               textAlign: 'left', fontSize: 11, color: '#B03060',
               background: '#FFF0F3', borderRadius: 8, padding: '12px 14px',
-              overflow: 'auto', marginBottom: 24,
-              border: '1px solid #FECACA',
+              overflow: 'auto', marginBottom: 24, border: '1px solid #FECACA',
             }}>
               {this.state.error.message}
             </pre>
           )}
           <button
             onClick={() => window.location.reload()}
-            style={{
-              background: NAVY, color: WHITE, border: 'none',
-              borderRadius: 8, padding: '10px 24px',
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-            }}
+            style={{ background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
           >
             Reload Page
           </button>

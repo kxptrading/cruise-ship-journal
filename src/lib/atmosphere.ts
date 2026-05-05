@@ -1,9 +1,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// lib/atmosphere.js — Time-of-day theming + ship horn sound
+// lib/atmosphere.ts — Time-of-day theming + ship horn sound
 // ─────────────────────────────────────────────────────────────────────────────
 
-// Return the current atmospheric period based on the local hour
-export function getTimeOfDay() {
+export type TimeOfDay = 'dawn' | 'day' | 'sunset' | 'night'
+
+export function getTimeOfDay(): TimeOfDay {
   const h = new Date().getHours()
   if (h >= 5  && h < 9)  return 'dawn'
   if (h >= 9  && h < 18) return 'day'
@@ -11,9 +12,7 @@ export function getTimeOfDay() {
   return 'night'
 }
 
-// Hero background gradient per period.
-// Returns null during 'day' so the active theme colours are used instead.
-export function getTimeGradient(tod) {
+export function getTimeGradient(tod: TimeOfDay): string | null {
   switch (tod) {
     case 'dawn':
       return 'linear-gradient(160deg, #FFDDE1 0%, #FAB8B8 25%, #FFD4A1 65%, #FFF3CD 100%)'
@@ -22,12 +21,11 @@ export function getTimeGradient(tod) {
     case 'night':
       return 'linear-gradient(160deg, #0A0A1A 0%, #0D1B3E 45%, #162447 75%, #0A1628 100%)'
     default:
-      return null // use CSS theme vars
+      return null
   }
 }
 
-// Vignette overlay colour [r, g, b] — tinted to match the period
-export function getVignetteRGB(tod) {
+export function getVignetteRGB(tod: TimeOfDay): [number, number, number] {
   switch (tod) {
     case 'dawn':   return [180, 60,  60]
     case 'sunset': return [100, 30,  10]
@@ -36,12 +34,10 @@ export function getVignetteRGB(tod) {
   }
 }
 
-// ── Ship foghorn via Web Audio API ────────────────────────────────────────────
-// Two detuned sawtooth oscillators → low-pass filter → envelope.
-// No audio file required — everything synthesised in the browser.
-export function playShipHorn() {
+export function playShipHorn(): void {
   try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext as typeof AudioContext | undefined
     if (!AudioCtx) return
     const ctx = new AudioCtx()
 
@@ -50,33 +46,31 @@ export function playShipHorn() {
     const filter = ctx.createBiquadFilter()
     const gain   = ctx.createGain()
 
-    // Low-pass filter gives the horn its bassy, muddy character
     filter.type            = 'lowpass'
     filter.frequency.value = 550
     filter.Q.value         = 3
 
-    osc1.type          = 'sawtooth'
-    osc1.frequency.value = 87   // ≈ F2 — classic ship horn pitch
-    osc2.type          = 'sawtooth'
-    osc2.frequency.value = 90   // slightly detuned for thickness
+    osc1.type            = 'sawtooth'
+    osc1.frequency.value = 87
+    osc2.type            = 'sawtooth'
+    osc2.frequency.value = 90
 
     osc1.connect(filter)
     osc2.connect(filter)
     filter.connect(gain)
     gain.connect(ctx.destination)
 
-    // Envelope: slow attack → hold → slow release
     const t = ctx.currentTime
     gain.gain.setValueAtTime(0, t)
-    gain.gain.linearRampToValueAtTime(0.45, t + 0.25)   // attack
-    gain.gain.setValueAtTime(0.42, t + 2.0)              // hold
-    gain.gain.linearRampToValueAtTime(0, t + 2.7)        // release
+    gain.gain.linearRampToValueAtTime(0.45, t + 0.25)
+    gain.gain.setValueAtTime(0.42, t + 2.0)
+    gain.gain.linearRampToValueAtTime(0, t + 2.7)
 
     osc1.start(t); osc2.start(t)
     osc1.stop(t + 3); osc2.stop(t + 3)
 
     setTimeout(() => ctx.close(), 4000)
-  } catch (e) {
+  } catch (_e) {
     // Audio unavailable — fail silently
   }
 }

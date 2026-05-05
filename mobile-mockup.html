@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruise Journal Mobile Mockup</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+
+    .device {
+      width: 390px;
+      height: 844px;
+      background: #000;
+      border-radius: 50px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 28px;
+      background: #000;
+      border-radius: 0 0 40px 40px;
+      z-index: 10;
+    }
+
+    .screen {
+      flex: 1;
+      background: #FAFAFA;
+      border-radius: 40px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .status-bar {
+      background: #FAFAFA;
+      padding: 8px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      font-weight: 600;
+      color: #000;
+      margin-top: 8px;
+    }
+
+    .header {
+      background: #FAFAFA;
+      color: #000;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #E5E5E5;
+    }
+
+    .header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.41px;
+    }
+
+    .header-icon {
+      width: 32px;
+      height: 32px;
+      background: #F0F0F0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    .content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 0;
+      padding-bottom: 60px;
+    }
+
+    /* Scrollbar styling */
+    .content::-webkit-scrollbar {
+      width: 4px;
+    }
+    .content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .content::-webkit-scrollbar-thumb {
+      background: #CCC;
+      border-radius: 2px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #FF6B6B 0%, #FF8E72 100%);
+      padding: 24px 16px;
+      color: #FFF;
+      margin: 0;
+      border-radius: 0;
+    }
+
+    .hero-ship-name {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero-meta {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.9);
+      margin-bottom: 20px;
+      line-height: 1.4;
+      font-weight: 500;
+    }
+
+    .progress-ring {
+      width: 70px;
+      height: 70px;
+      position: relative;
+    }
+
+    .progress-ring svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+    }
+
+    .progress-ring-text-large {
+      font-size: 24px;
+      font-weight: 700;
+      color: #FFF;
+    }
+
+    .progress-ring-text-small {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.85);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .metrics-section {
+      padding: 16px;
+    }
+
+    .metrics-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .metric-card {
+      background: #FFF;
+      border: 1px solid #E5E5E5;
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+      min-height: 110px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-icon {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .metric-icon.coral { background: #FFE5E0; color: #FF6B6B; }
+    .metric-icon.blue { background: #E3F2FD; color: #2196F3; }
+    .metric-icon.purple { background: #F3E5F5; color: #9C27B0; }
+    .metric-icon.teal { background: #E0F2F1; color: #009688; }
+
+    .metric-value {
+      font-size: 26px;
+      font-weight: 700;
+      color: #000;
+      margin-top: 4px;
+      letter-spacing: -0.5px;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: #999;
+      margin-top: 6px;
+    }
+
+    .bottom-nav {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #FFF;
+      border-top: 1px solid #E5E5E5;
+      padding: 6px 0 20px 0;
+      display: flex;
+      justify-content: space-around;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom));
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 0;
+      text-decoration: none;
+      color: #999;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 11px;
+      font-weight: 500;
+      flex: 1;
+    }
+
+    .nav-item.active {
+      color: #FF6B6B;
+    }
+
+    .nav-item-icon {
+      font-size: 24px;
+      margin-bottom: 4px;
+    }
+
+    @media (max-height: 600px) {
+      .device {
+        transform: scale(0.8);
+        transform-origin: top center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="device">
+  <div class="notch"></div>
+
+  <div class="screen">
+    <div class="status-bar">
+      <span>9:41</span>
+      <span>●●●●●</span>
+    </div>
+
+    <div class="header">
+      <h1>Cruise Journal</h1>
+      <div class="header-icon">⚙️</div>
+    </div>
+
+    <div class="content">
+      <!-- Hero Section -->
+      <div class="hero">
+        <div class="hero-ship-name">Harmony</div>
+        <div class="hero-meta">
+          Royal Caribbean · Cabin 9204<br>
+          Apr 25 – May 2, 2026
+        </div>
+
+        <div class="progress-ring">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="54" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"/>
+            <circle cx="60" cy="60" r="54" fill="none" stroke="#FFF" stroke-width="8"
+              stroke-dasharray="169.65 226.19" stroke-linecap="round"/>
+          </svg>
+          <div class="progress-ring-text">
+            <div class="progress-ring-text-large">5</div>
+            <div class="progress-ring-text-small">Days logged</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Metrics Section -->
+      <div class="metrics-section">
+        <div class="metrics-header">Quick Stats</div>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-icon teal">⚓</div>
+            <div>
+              <div class="metric-value">8</div>
+              <div class="metric-label">Ports</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon coral">🍽</div>
+            <div>
+              <div class="metric-value">24</div>
+              <div class="metric-label">Dining</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon purple">🎒</div>
+            <div>
+              <div class="metric-value">75%</div>
+              <div class="metric-label">Packed</div>
+            </div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-icon blue">💰</div>
+            <div>
+              <div class="metric-value">£1.2K</div>
+              <div class="metric-label">Spent</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="height: 20px;"></div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+      <div class="nav-item active">
+        <div class="nav-item-icon">📊</div>
+        <div>Home</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-item-icon">🚢</div>
+        <div>Voyage</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-item-icon">🗺️</div>
+        <div>Daily</div>
+      </div>
+      <div class="nav-item">
+        <div class="nav-item-icon">📝</div>
+        <div>More</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

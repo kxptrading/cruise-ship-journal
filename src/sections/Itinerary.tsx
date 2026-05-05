@@ -1,30 +1,29 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/Itinerary.jsx — Port-by-port voyage itinerary
-//
-// A visual timeline of every day's port (or sea day), followed by an editable
-// table for dates, arrival, and departure times.
-//
-// Timeline dot colours:
-//   TEAL  — date is in the past (already visited)
-//   GOLD  — today
-//   NAVY  — future / no date set
+// sections/Itinerary.tsx — Port-by-port voyage itinerary
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NAVY, WHITE, LIGHT, BORDER, TEXT, GOLD, MUTED, TEAL, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr } from '../components/ui'
+import type { ItineraryDay } from '../types'
 
-export default function Itinerary({ data, onChange }) {
+interface Props {
+  data:     ItineraryDay[]
+  onChange: (updated: ItineraryDay[]) => void
+}
+
+export default function Itinerary({ data, onChange }: Props) {
   const w  = useW()
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
-  const add    = () => onChange([...data, {}])
-  const del    = (i) => onChange(data.filter((_, idx) => idx !== i))
-  const setDay = (i, f, v) => { const u = [...data]; u[i] = { ...u[i], [f]: v }; onChange(u) }
+  const add    = () => onChange([...data, { date: '', port: '', arrive: '', depart: '' }])
+  const del    = (i: number) => onChange(data.filter((_, idx) => idx !== i))
+  const setDay = (i: number, f: keyof ItineraryDay, v: string) => {
+    const u = [...data]; u[i] = { ...u[i], [f]: v }; onChange(u)
+  }
 
-  // ── Timeline dot colour ────────────────────────────────────────────────────
   const today = new Date(); today.setHours(0, 0, 0, 0)
-  const dotColor = (day) => {
+  const dotColor = (day: ItineraryDay): string => {
     if (!day.date) return NAVY
     const d = new Date(day.date + 'T00:00:00')
     if (d < today) return TEAL
@@ -32,14 +31,13 @@ export default function Itinerary({ data, onChange }) {
     return NAVY
   }
 
-  const isAtSea = (day) => !day.port || day.port.toLowerCase().includes('sea')
+  const isAtSea = (day: ItineraryDay) => !day.port || day.port.toLowerCase().includes('sea')
 
   return (
     <div>
       <PgHdr icon="🗺️" title="Itinerary Overview" sub="Add each day of your voyage as you go" />
 
       {data.length === 0 ? (
-        /* Empty state */
         <div style={{ ...cs, textAlign: 'center', padding: '56px 32px', color: MUTED }}>
           <div style={{ fontSize: 48, marginBottom: 14 }}>⚓</div>
           <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>
@@ -52,7 +50,6 @@ export default function Itinerary({ data, onChange }) {
         </div>
       ) : (
         <>
-          {/* ── Port timeline ──────────────────────────────────────────────── */}
           <div style={{ ...cs, overflowX: 'auto', paddingBottom: 20 }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 20 }}>
               Journey Map
@@ -66,19 +63,10 @@ export default function Itinerary({ data, onChange }) {
 
                 return (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', flex: 1, minWidth: 80 }}>
-                    {/* Dot + connector line */}
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
-                      {/* Day number */}
-                      <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '0.05em' }}>
-                        D{i + 1}
-                      </div>
-
-                      {/* Timeline track row */}
+                      <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, marginBottom: 5, letterSpacing: '0.05em' }}>D{i + 1}</div>
                       <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
-                        {/* Left line (hidden for first item) */}
                         <div style={{ flex: 1, height: 2, background: i === 0 ? 'transparent' : BORDER }} />
-
-                        {/* Dot */}
                         <div style={{
                           width: atSea ? 10 : 14,
                           height: atSea ? 10 : 14,
@@ -88,12 +76,8 @@ export default function Itinerary({ data, onChange }) {
                           flexShrink: 0,
                           boxShadow: !atSea && color === GOLD ? '0 0 0 3px rgba(201,162,39,0.25)' : 'none',
                         }} />
-
-                        {/* Right line (hidden for last item) */}
                         <div style={{ flex: 1, height: 2, background: i === data.length - 1 ? 'transparent' : BORDER }} />
                       </div>
-
-                      {/* Port label */}
                       <div style={{
                         marginTop: 8, fontSize: 10, color: atSea ? MUTED : color,
                         fontWeight: atSea ? 400 : 700, textAlign: 'center',
@@ -108,7 +92,6 @@ export default function Itinerary({ data, onChange }) {
               })}
             </div>
 
-            {/* Legend */}
             <div style={{ display: 'flex', gap: 16, marginTop: 18, flexWrap: 'wrap' }}>
               {[{ color: TEAL, label: 'Visited' }, { color: GOLD, label: 'Today' }, { color: NAVY, label: 'Upcoming' }].map(l => (
                 <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
@@ -119,7 +102,6 @@ export default function Itinerary({ data, onChange }) {
             </div>
           </div>
 
-          {/* ── Editable table ─────────────────────────────────────────────── */}
           <div style={cs}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
@@ -146,11 +128,11 @@ export default function Itinerary({ data, onChange }) {
                       </td>
                       <td style={{ padding: w < BP.mobile ? '6px 6px' : '6px 10px' }}>
                         <input type="time" value={day.arrive || ''} onChange={e => setDay(i, 'arrive', e.target.value)}
-                          style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, width: w < BP.mobile ? 80 : 'auto' }} />
+                          style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, width: w < BP.mobile ? 80 : undefined }} />
                       </td>
                       <td style={{ padding: w < BP.mobile ? '6px 6px' : '6px 10px' }}>
                         <input type="time" value={day.depart || ''} onChange={e => setDay(i, 'depart', e.target.value)}
-                          style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, width: w < BP.mobile ? 80 : 'auto' }} />
+                          style={{ border: 'none', background: 'transparent', fontSize: 12, color: TEXT, width: w < BP.mobile ? 80 : undefined }} />
                       </td>
                       <td style={{ padding: '6px 6px', textAlign: 'center' }}>
                         <button onClick={() => del(i)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', fontSize: 18, lineHeight: 1 }}>×</button>

@@ -1,15 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/Chat.jsx — WhatsApp-style messaging orchestrator
-//
-// Layout:
-//   Desktop — two-panel: conversation list (320px) | message thread (flex 1)
-//   Mobile  — single panel: list → tap to open thread → back to return
-//
-// Sub-components (src/sections/chat/):
-//   ConvItem      — conversation list row
-//   MsgBubble     — individual message bubble
-//   NewChatModal  — friend picker for new DM / group chat
-//   helpers.js    — Avatar, GroupIcon, fmtTime, fmtFull, fmtDateLabel, getInitials
+// sections/Chat.tsx — WhatsApp-style messaging orchestrator
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useCallback } from 'react'
@@ -21,26 +11,61 @@ import MsgBubble     from './chat/MsgBubble'
 import NewChatModal  from './chat/NewChatModal'
 import { Avatar, GroupIcon, fmtDateLabel } from './chat/helpers'
 
+interface MemberProfile {
+  name:      string
+  avatarUrl: string
+}
+
+interface Message {
+  id:           string
+  user_id:      string
+  body:         string
+  created_at:   string
+}
+
+interface Conversation {
+  id:             string
+  type:           string
+  name:           string | null
+  created_at:     string
+  displayName:    string
+  otherUser:      MemberProfile | null
+  members:        string[]
+  otherMemberIds: string[]
+  lastMessage:    Message | null
+  unreadCount:    number
+}
+
+interface FriendItem {
+  userId:    string
+  name:      string
+  avatarUrl: string
+}
+
+type DateSeparatorItem = { type: 'date'; label: string; key: string }
+type MessageItem       = { type: 'msg';  data: Message }
+type FeedRow           = DateSeparatorItem | MessageItem
+
 export default function Chat() {
-  const userId  = useUserId()
-  const w       = useW()
+  const userId   = useUserId()
+  const w        = useW()
   const isMobile = w < BP.tablet
 
-  const [conversations,  setConversations]  = useState([])
-  const [activeConvId,   setActiveConvId]   = useState(null)
-  const [messages,       setMessages]       = useState([])
-  const [memberProfiles, setMemberProfiles] = useState({})
-  const [loading,        setLoading]        = useState(true)
-  const [msgLoading,     setMsgLoading]     = useState(false)
-  const [newMsg,         setNewMsg]         = useState('')
-  const [sending,        setSending]        = useState(false)
-  const [showNewChat,    setShowNewChat]     = useState(false)
-  const [friends,        setFriends]        = useState([])
-  const [creating,       setCreating]       = useState(false)
+  const [conversations,  setConversations]  = useState<Conversation[]>([])
+  const [activeConvId,   setActiveConvId]   = useState<string | null>(null)
+  const [messages,       setMessages]       = useState<Message[]>([])
+  const [memberProfiles, setMemberProfiles] = useState<Record<string, MemberProfile>>({})
+  const [loading,        setLoading]        = useState<boolean>(true)
+  const [msgLoading,     setMsgLoading]     = useState<boolean>(false)
+  const [newMsg,         setNewMsg]         = useState<string>('')
+  const [sending,        setSending]        = useState<boolean>(false)
+  const [showNewChat,    setShowNewChat]     = useState<boolean>(false)
+  const [friends,        setFriends]        = useState<FriendItem[]>([])
+  const [creating,       setCreating]       = useState<boolean>(false)
 
-  const channelRef     = useRef(null)
-  const messagesEndRef = useRef(null)
-  const inputRef       = useRef(null)
+  const channelRef     = useRef<ReturnType<typeof supabase.channel> | null>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef       = useRef<HTMLTextAreaElement>(null)
 
   const activeConv = conversations.find(c => c.id === activeConvId) || null
 
@@ -48,7 +73,6 @@ export default function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Load accepted friends (for new chat modal) ────────────────────────────
   useEffect(() => {
     if (!userId) return
     async function load() {
@@ -59,13 +83,15 @@ export default function Chat() {
         .eq('status', 'accepted')
 
       if (!reqs?.length) return
-      const ids = reqs.map(r => r.from_user_id === userId ? r.to_user_id : r.from_user_id)
+      const ids = reqs.map((r: { from_user_id: string; to_user_id: string }) =>
+        r.from_user_id === userId ? r.to_user_id : r.from_user_id
+      )
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
         .in('user_id', ids)
 
-      setFriends((profiles || []).map(p => ({
+      setFriends((profiles || []).map((p: { user_id: string; display_name?: string | null; avatar_url?: string | null }) => ({
         userId:    p.user_id,
         name:      p.display_name || 'Cruiser',
         avatarUrl: p.avatar_url   || '',
@@ -74,7 +100,6 @@ export default function Chat() {
     load()
   }, [userId])
 
-  // ── Load conversations ────────────────────────────────────────────────────
   const loadConversations = useCallback(async () => {
     if (!userId) return
     setLoading(true)
@@ -86,8 +111,8 @@ export default function Chat() {
 
     if (!memberships?.length) { setLoading(false); return }
 
-    const convIds     = memberships.map(m => m.conversation_id)
-    const lastReadMap = Object.fromEntries(memberships.map(m => [m.conversation_id, m.last_read_at]))
+    const convIds     = memberships.map((m: { conversation_id: string; last_read_at: string | null }) => m.conversation_id)
+    const lastReadMap = Object.fromEntries(memberships.map((m: { conversation_id: string; last_read_at: string | null }) => [m.conversation_id, m.last_read_at]))
 
     const [{ data: convs }, { data: allMembers }, { data: recentMsgs }] = await Promise.all([
       supabase.from('conversations').select('id, type, name, created_at').in('id', convIds),
@@ -98,43 +123,45 @@ export default function Chat() {
         .limit(300),
     ])
 
-    const memberUserIds = [...new Set((allMembers || []).map(m => m.user_id))]
+    const memberUserIds = [...new Set((allMembers || []).map((m: { user_id: string }) => m.user_id))]
     const { data: profiles } = await supabase
       .from('profiles').select('user_id, display_name, avatar_url').in('user_id', memberUserIds)
 
-    const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, {
+    const profileMap: Record<string, MemberProfile> = Object.fromEntries((profiles || []).map((p: { user_id: string; display_name?: string | null; avatar_url?: string | null }) => [p.user_id, {
       name:      p.display_name || 'Cruiser',
       avatarUrl: p.avatar_url   || '',
     }]))
     setMemberProfiles(profileMap)
 
-    const lastMsgMap = {}
-    ;(recentMsgs || []).forEach(m => { if (!lastMsgMap[m.conversation_id]) lastMsgMap[m.conversation_id] = m })
+    const lastMsgMap: Record<string, Message> = {}
+    ;(recentMsgs || []).forEach((m: Message & { conversation_id: string }) => {
+      if (!lastMsgMap[m.conversation_id]) lastMsgMap[m.conversation_id] = m
+    })
 
-    const unreadMap = {}
-    ;(recentMsgs || []).forEach(m => {
+    const unreadMap: Record<string, number> = {}
+    ;(recentMsgs || []).forEach((m: Message & { conversation_id: string }) => {
       if (m.user_id === userId) return
       const lr = lastReadMap[m.conversation_id]
       if (!lr || new Date(m.created_at) > new Date(lr))
         unreadMap[m.conversation_id] = (unreadMap[m.conversation_id] || 0) + 1
     })
 
-    const membersByConv = {}
-    ;(allMembers || []).forEach(m => {
+    const membersByConv: Record<string, string[]> = {}
+    ;(allMembers || []).forEach((m: { conversation_id: string; user_id: string }) => {
       if (!membersByConv[m.conversation_id]) membersByConv[m.conversation_id] = []
       membersByConv[m.conversation_id].push(m.user_id)
     })
 
-    const enriched = (convs || []).map(conv => {
+    const enriched: Conversation[] = (convs || []).map((conv: { id: string; type: string; name: string | null; created_at: string }) => {
       const members     = membersByConv[conv.id] || []
       const otherIds    = members.filter(id => id !== userId)
       const otherUser   = conv.type === 'direct' && otherIds.length === 1 ? profileMap[otherIds[0]] : null
       const displayName = conv.type === 'group' ? (conv.name || 'Group Chat') : (otherUser?.name || 'Unknown')
       return { ...conv, displayName, otherUser, members, otherMemberIds: otherIds, lastMessage: lastMsgMap[conv.id] || null, unreadCount: unreadMap[conv.id] || 0 }
-    }).sort((a, b) => {
+    }).sort((a: Conversation, b: Conversation) => {
       const ta = a.lastMessage?.created_at || a.created_at
       const tb = b.lastMessage?.created_at || b.created_at
-      return new Date(tb) - new Date(ta)
+      return new Date(tb).getTime() - new Date(ta).getTime()
     })
 
     setConversations(enriched)
@@ -143,7 +170,6 @@ export default function Chat() {
 
   useEffect(() => { loadConversations() }, [loadConversations])
 
-  // ── Open a conversation ───────────────────────────────────────────────────
   useEffect(() => {
     if (!activeConvId) return
     if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null }
@@ -172,7 +198,7 @@ export default function Chat() {
     const ch = supabase
       .channel(`chat:${activeConvId}`)
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${activeConvId}` },
-        ({ new: msg }) => {
+        ({ new: msg }: { new: Message }) => {
           setMessages(prev => prev.some(m => m.id === msg.id) ? prev : [...prev, msg])
           setConversations(prev => prev.map(c => c.id === activeConvId ? { ...c, lastMessage: msg } : c))
         }
@@ -183,12 +209,11 @@ export default function Chat() {
     return () => { if (channelRef.current) { supabase.removeChannel(channelRef.current); channelRef.current = null } }
   }, [activeConvId, userId])
 
-  // ── Send ──────────────────────────────────────────────────────────────────
   const handleSend = async () => {
     if (!newMsg.trim() || sending || !activeConvId) return
     const body   = newMsg.trim()
     const tempId = `temp-${Date.now()}`
-    const tempMsg = { id: tempId, user_id: userId, body, created_at: new Date().toISOString() }
+    const tempMsg: Message = { id: tempId, user_id: userId!, body, created_at: new Date().toISOString() }
 
     setNewMsg('')
     setSending(true)
@@ -199,13 +224,12 @@ export default function Chat() {
       .insert({ conversation_id: activeConvId, user_id: userId, body })
       .select('id, user_id, body, created_at').single()
 
-    if (data) setMessages(prev => prev.map(m => m.id === tempId ? data : m))
+    if (data) setMessages(prev => prev.map(m => m.id === tempId ? data as Message : m))
     setSending(false)
     inputRef.current?.focus()
   }
 
-  // ── Create conversation ───────────────────────────────────────────────────
-  const handleCreate = async (selectedIds, groupName) => {
+  const handleCreate = async (selectedIds: string[], groupName: string | null) => {
     setCreating(true)
     const type = selectedIds.length > 1 ? 'group' : 'direct'
 
@@ -218,20 +242,20 @@ export default function Chat() {
     const { error: convErr } = await supabase.from('conversations').insert({ id: convId, type, name: groupName || null, created_by: userId })
     if (convErr) { console.error('conversation insert failed', convErr); setCreating(false); return }
 
-    const { error: memberErr } = await supabase.from('conversation_members').insert([userId, ...selectedIds].map(uid => ({ conversation_id: convId, user_id: uid })))
+    const { error: memberErr } = await supabase.from('conversation_members').insert([userId!, ...selectedIds].map(uid => ({ conversation_id: convId, user_id: uid })))
     if (memberErr) { console.error('member insert failed', memberErr); setCreating(false); return }
 
     const otherUser = type === 'direct' ? friends.find(f => f.userId === selectedIds[0]) : null
-    const newConv = {
+    const newConv: Conversation = {
       id: convId, type, name: groupName || null, created_at: new Date().toISOString(),
       displayName:    type === 'group' ? (groupName || 'Group Chat') : (otherUser?.name || 'Cruiser'),
       otherUser:      otherUser ? { name: otherUser.name, avatarUrl: otherUser.avatarUrl } : null,
-      members:        [userId, ...selectedIds],
+      members:        [userId!, ...selectedIds],
       otherMemberIds: selectedIds,
       lastMessage:    null, unreadCount: 0,
     }
 
-    const freshProfiles = {}
+    const freshProfiles: Record<string, MemberProfile> = {}
     selectedIds.forEach(id => {
       const f = friends.find(x => x.userId === id)
       if (f) freshProfiles[id] = { name: f.name, avatarUrl: f.avatarUrl }
@@ -244,9 +268,8 @@ export default function Chat() {
     setCreating(false)
   }
 
-  // ── Date separators ───────────────────────────────────────────────────────
-  function withDateSeparators(msgs) {
-    const out = []; let lastDate = null
+  function withDateSeparators(msgs: Message[]): FeedRow[] {
+    const out: FeedRow[] = []; let lastDate: string | null = null
     msgs.forEach((m, idx) => {
       const d = new Date(m.created_at).toDateString()
       if (d !== lastDate) { out.push({ type: 'date', label: fmtDateLabel(m.created_at), key: `d-${idx}` }); lastDate = d }
@@ -256,12 +279,11 @@ export default function Chat() {
   }
 
   const showList   = !isMobile || !activeConvId
-  const showThread = !isMobile ||  activeConvId
+  const showThread = !isMobile ||  !!activeConvId
 
   return (
     <div style={{ fontFamily: FONT_BODY }}>
 
-      {/* Page header */}
       {(!isMobile || !activeConvId) && (
         <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
@@ -279,10 +301,8 @@ export default function Chat() {
         </div>
       )}
 
-      {/* Chat shell */}
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, overflow: 'hidden', display: 'flex', height: isMobile ? 'calc(100dvh - 140px)' : '76vh', minHeight: 480 }}>
 
-        {/* ── Conversation list ─────────────────────────────────────────── */}
         {showList && (
           <div style={{ width: isMobile ? '100%' : 320, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column' }}>
             <div style={{ padding: '12px 14px', borderBottom: `1px solid ${BORDER}` }}>
@@ -304,14 +324,13 @@ export default function Chat() {
                 </div>
               ) : (
                 conversations.map(conv => (
-                  <ConvItem key={conv.id} conv={conv} active={conv.id === activeConvId} userId={userId} onClick={() => setActiveConvId(conv.id)} />
+                  <ConvItem key={conv.id} conv={conv} active={conv.id === activeConvId} userId={userId ?? ''} onClick={() => setActiveConvId(conv.id)} />
                 ))
               )}
             </div>
           </div>
         )}
 
-        {/* ── Message thread ────────────────────────────────────────────── */}
         {showThread && (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
             {!activeConvId ? (
@@ -322,7 +341,6 @@ export default function Chat() {
               </div>
             ) : (
               <>
-                {/* Thread header */}
                 <div style={{ padding: '12px 18px', borderBottom: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0, background: 'linear-gradient(to right, var(--t-bg), white)' }}>
                   {isMobile && (
                     <button onClick={() => setActiveConvId(null)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: NAVY, padding: '0 4px 0 0', lineHeight: 1 }}>←</button>
@@ -338,7 +356,6 @@ export default function Chat() {
                   </div>
                 </div>
 
-                {/* Messages */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {msgLoading ? (
                     <div style={{ textAlign: 'center', color: MUTED, fontSize: 13, marginTop: 48 }}>Loading messages…</div>
@@ -356,10 +373,10 @@ export default function Chat() {
                           </div>
                         )
                       }
-                      const m         = item.data
-                      const isOwn     = m.user_id === userId
-                      const author    = memberProfiles[m.user_id] || { name: 'Unknown', avatarUrl: '' }
-                      const prevMsg   = messages[messages.findIndex(x => x.id === m.id) - 1]
+                      const m          = item.data
+                      const isOwn      = m.user_id === userId
+                      const author     = memberProfiles[m.user_id] || { name: 'Unknown', avatarUrl: '' }
+                      const prevMsg    = messages[messages.findIndex(x => x.id === m.id) - 1]
                       const showAuthor = !isOwn && activeConv?.type === 'group' && (!prevMsg || prevMsg.user_id !== m.user_id)
                       return (
                         <MsgBubble key={m.id} msg={m} isOwn={isOwn} showAuthor={showAuthor} authorName={author.name} authorAvatar={author.avatarUrl} />
@@ -369,7 +386,6 @@ export default function Chat() {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Input bar */}
                 <div style={{ padding: '10px 14px', borderTop: `1px solid ${BORDER}`, display: 'flex', gap: 10, alignItems: 'flex-end', background: '#FAFAFA', flexShrink: 0 }}>
                   <textarea
                     ref={inputRef}

@@ -1,16 +1,50 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/FriendProfile.jsx — Read-only profile view for a friend
-//
-// Fetches the friend's profile and voyages from Supabase and renders a
-// read-only version of their profile — no edit controls, no settings.
+// sections/FriendProfile.tsx — Read-only profile view for a friend
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, FONT_DISPLAY, FONT_BODY } from '../constants'
 
-// ── Badge definitions (mirrors Badges.jsx) ────────────────────────────────────
-const BADGE_DEFS = [
+interface BadgeDef {
+  key:   string
+  emoji: string
+  name:  string
+  color: string
+  howTo: string
+}
+
+interface Badge extends BadgeDef {
+  earned: boolean
+}
+
+interface VoyageRow {
+  id:              string
+  ship_name:       string | null
+  cruise_line:     string | null
+  departure_date:  string | null
+  return_date:     string | null
+  total_nights:    number | string | null
+  cover_photo_url: string | null
+}
+
+interface ProfileData {
+  display_name?:         string | null
+  bio?:                  string | null
+  home_port?:            string | null
+  favourite_cruise_line?: string | null
+  avatar_url?:           string | null
+  banner_url?:           string | null
+  created_at?:           string | null
+}
+
+interface FriendProp {
+  userId:       string
+  displayName?: string | null
+  avatarUrl?:   string | null
+}
+
+const BADGE_DEFS: BadgeDef[] = [
   { key: 'firstLog',     emoji: '📖', name: 'First Log',     color: '#0EA5E9', howTo: 'Write your first journal entry in the Daily Log.' },
   { key: 'portExplorer', emoji: '📍', name: 'Port Explorer', color: '#0D9488', howTo: 'Add 3 or more port stops (not "At Sea") in the Itinerary.' },
   { key: 'foodie',       emoji: '🍽️', name: 'Foodie',        color: '#F43F5E', howTo: 'Log 5 or more entries in the Food Log.' },
@@ -21,19 +55,28 @@ const BADGE_DEFS = [
   { key: 'fullHouse',    emoji: '🏆', name: 'Full House',    color: '#F59E0B', howTo: 'Log every single night of the voyage.' },
 ]
 
-function computeBadges(dailyData, itinData, foodCount, entertainCount, budgetRow, budgetItemsData, photoCount, totalNights) {
-  const earned = {}
+function computeBadges(
+  dailyData:       { rating?: number | null }[] | null,
+  itinData:        { port?: string | null }[] | null,
+  foodCount:       number | null,
+  entertainCount:  number | null,
+  budgetRow:       { total_budget?: string | number | null } | null,
+  budgetItemsData: { amount?: string | number | null }[] | null,
+  photoCount:      number | null,
+  totalNights:     number,
+): Badge[] {
+  const earned: Record<string, boolean> = {}
   earned.firstLog     = (dailyData?.length ?? 0) >= 1
   const realPorts     = (itinData ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim()))
   earned.portExplorer = realPorts.length >= 3
   earned.foodie       = (foodCount ?? 0) >= 5
-  const ratings       = (dailyData ?? []).map(r => r.rating).filter(v => v > 0)
+  const ratings       = (dailyData ?? []).map(r => r.rating).filter((v): v is number => typeof v === 'number' && v > 0)
   const avg           = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0
   earned.topRated     = avg >= 4
   earned.entertained  = (entertainCount ?? 0) >= 3
   if (budgetRow?.total_budget && (budgetItemsData?.length ?? 0) > 0) {
-    const spent = (budgetItemsData ?? []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
-    earned.onBudget = spent <= parseFloat(budgetRow.total_budget)
+    const spent = (budgetItemsData ?? []).reduce((s, i) => s + (parseFloat(String(i.amount)) || 0), 0)
+    earned.onBudget = spent <= parseFloat(String(budgetRow.total_budget))
   } else {
     earned.onBudget = false
   }
@@ -46,29 +89,19 @@ const BANNER_H    = 220
 const AVATAR_SIZE = 84
 const AVATAR_BORDER = 4
 
-// ── Wave SVG (matches Hero.jsx) ───────────────────────────────────────────────
 function Wave() {
   return (
-    <svg
-      viewBox="0 0 1440 48"
-      preserveAspectRatio="none"
-      style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: 48, display: 'block', pointerEvents: 'none' }}
-    >
+    <svg viewBox="0 0 1440 48" preserveAspectRatio="none" style={{ position: 'absolute', bottom: 0, left: 0, right: 0, width: '100%', height: 48, display: 'block', pointerEvents: 'none' }}>
       <path d="M0,24 C240,48 480,8 720,28 C960,48 1200,12 1440,24 L1440,48 L0,48 Z" fill="white" opacity="0.13" />
       <path d="M0,36 C360,16 720,44 1080,30 C1260,24 1350,38 1440,36 L1440,48 L0,48 Z" fill="white" opacity="0.07" />
     </svg>
   )
 }
 
-// ── Stat cell ─────────────────────────────────────────────────────────────────
-function StatCell({ emoji, value, label, border }) {
+interface StatCellProps { emoji: string; value: string | number; label: string; border: boolean }
+function StatCell({ emoji, value, label, border }: StatCellProps) {
   return (
-    <div style={{
-      flex: 1, minWidth: 0,
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      padding: '12px 8px',
-      borderLeft: border ? '1px solid rgba(255,255,255,0.18)' : 'none',
-    }}>
+    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 8px', borderLeft: border ? '1px solid rgba(255,255,255,0.18)' : 'none' }}>
       <div style={{ fontSize: 18, marginBottom: 3 }}>{emoji}</div>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: 22, color: GOLD, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3, textAlign: 'center' }}>{label}</div>
@@ -76,52 +109,43 @@ function StatCell({ emoji, value, label, border }) {
   )
 }
 
-// ── Compact voyage card ───────────────────────────────────────────────────────
-function VoyageCard({ voyage }) {
+function VoyageCard({ voyage }: { voyage: VoyageRow }) {
   const dep = voyage.departure_date
     ? new Date(voyage.departure_date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : null
-
   return (
-    <div style={{
-      background: voyage.cover_photo_url ? 'transparent' : `${NAVY}08`,
-      border: `1px solid ${BORDER}`, borderRadius: 12,
-      overflow: 'hidden', minWidth: 160, flexShrink: 0,
-      position: 'relative',
-    }}>
-      {voyage.cover_photo_url && (
+    <div style={{ background: voyage.cover_photo_url ? 'transparent' : `${NAVY}08`, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden', minWidth: 160, flexShrink: 0, position: 'relative' }}>
+      {voyage.cover_photo_url ? (
         <div style={{ height: 90, overflow: 'hidden', position: 'relative' }}>
           <img src={voyage.cover_photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45))' }} />
         </div>
-      )}
-      {!voyage.cover_photo_url && (
+      ) : (
         <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🚢</div>
       )}
       <div style={{ padding: '10px 12px' }}>
-        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: NAVY2, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {voyage.ship_name || 'Unnamed Voyage'}
-        </div>
+        <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: NAVY2, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{voyage.ship_name || 'Unnamed Voyage'}</div>
         {dep && <div style={{ fontSize: 11, color: MUTED }}>{dep}</div>}
-        {voyage.total_nights && (
-          <div style={{ fontSize: 11, color: MUTED }}>{voyage.total_nights} nights</div>
-        )}
+        {voyage.total_nights && <div style={{ fontSize: 11, color: MUTED }}>{voyage.total_nights} nights</div>}
       </div>
     </div>
   )
 }
 
-// ── Root component ────────────────────────────────────────────────────────────
-export default function FriendProfile({ friend, onBack }) {
-  const [profile,    setProfile]    = useState(null)
-  const [voyages,    setVoyages]    = useState([])
-  const [stats,      setStats]      = useState({ portCount: null, daysLogged: null })
-  const [badges,     setBadges]     = useState(BADGE_DEFS.map(d => ({ ...d, earned: false })))
-  const [allPorts,   setAllPorts]   = useState([])
-  const [hoveredKey, setHoveredKey] = useState(null)
-  const [loading,    setLoading]    = useState(true)
+interface Props {
+  friend: FriendProp
+  onBack: () => void
+}
 
-  // ── Fetch profile + voyages ───────────────────────────────────────────────
+export default function FriendProfile({ friend, onBack }: Props) {
+  const [profile,    setProfile]    = useState<ProfileData | null>(null)
+  const [voyages,    setVoyages]    = useState<VoyageRow[]>([])
+  const [stats,      setStats]      = useState<{ portCount: number | null; daysLogged: number | null }>({ portCount: null, daysLogged: null })
+  const [badges,     setBadges]     = useState<Badge[]>(BADGE_DEFS.map(d => ({ ...d, earned: false })))
+  const [allPorts,   setAllPorts]   = useState<string[]>([])
+  const [hoveredKey, setHoveredKey] = useState<string | null>(null)
+  const [loading,    setLoading]    = useState<boolean>(true)
+
   useEffect(() => {
     if (!friend?.userId) return
 
@@ -129,27 +153,17 @@ export default function FriendProfile({ friend, onBack }) {
       setLoading(true)
 
       const [{ data: profileData }, { data: voyageRows }] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('display_name, bio, home_port, favourite_cruise_line, avatar_url, banner_url, created_at')
-          .eq('user_id', friend.userId)
-          .maybeSingle(),
-        supabase
-          .from('voyages')
-          .select('id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url')
-          .eq('user_id', friend.userId)
-          .order('departure_date', { ascending: false }),
+        supabase.from('profiles').select('display_name, bio, home_port, favourite_cruise_line, avatar_url, banner_url, created_at').eq('user_id', friend.userId).maybeSingle(),
+        supabase.from('voyages').select('id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url').eq('user_id', friend.userId).order('departure_date', { ascending: false }),
       ])
 
       setProfile(profileData || {})
-      const rows = voyageRows || []
+      const rows: VoyageRow[] = voyageRows || []
       setVoyages(rows)
 
       const recentVoyage = rows[0]
       if (recentVoyage?.id) {
         const voyageId = recentVoyage.id
-
-        // Stat strip + badge data — all in parallel
         const [itinRes, logsRes, foodRes, entertainRes, budgetRes, photoRes] = await Promise.all([
           supabase.from('itinerary').select('port').eq('voyage_id', voyageId),
           supabase.from('daily_logs').select('id, rating', { count: 'exact' }).eq('voyage_id', voyageId),
@@ -159,32 +173,28 @@ export default function FriendProfile({ friend, onBack }) {
           supabase.from('photos').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
         ])
 
-        let budgetItemsData = []
+        let budgetItemsData: { amount?: string | null }[] = []
         if (budgetRes.data?.id) {
           const { data } = await supabase.from('budget_items').select('amount').eq('budget_id', budgetRes.data.id)
           budgetItemsData = data ?? []
         }
 
-        const ports = (itinRes.data ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim()))
+        const ports = (itinRes.data ?? []).filter((r: { port?: string | null }) => r.port && !/^at sea$/i.test(r.port.trim()))
         setStats({ portCount: ports.length, daysLogged: logsRes.count ?? 0 })
         setBadges(computeBadges(
           logsRes.data ?? [], itinRes.data ?? [],
           foodRes.count ?? 0, entertainRes.count ?? 0,
           budgetRes.data, budgetItemsData,
-          photoRes.count ?? 0, parseInt(recentVoyage.total_nights) || 0,
+          photoRes.count ?? 0, parseInt(String(recentVoyage.total_nights)) || 0,
         ))
       }
 
-      // All ports across every voyage — deduplicated
       if (rows.length > 0) {
         const voyageIds = rows.map(v => v.id)
-        const { data: allItinRows } = await supabase
-          .from('itinerary')
-          .select('port, voyage_id')
-          .in('voyage_id', voyageIds)
-        const seen = new Set()
-        const unique = []
-        ;(allItinRows ?? []).forEach(r => {
+        const { data: allItinRows } = await supabase.from('itinerary').select('port, voyage_id').in('voyage_id', voyageIds)
+        const seen = new Set<string>()
+        const unique: string[] = []
+        ;(allItinRows ?? []).forEach((r: { port?: string | null }) => {
           const p = r.port?.trim()
           if (p && !/^at sea$/i.test(p) && !seen.has(p.toLowerCase())) {
             seen.add(p.toLowerCase())
@@ -200,7 +210,6 @@ export default function FriendProfile({ friend, onBack }) {
     load()
   }, [friend?.userId])
 
-  // ── Derived values ────────────────────────────────────────────────────────
   const displayName = profile?.display_name || friend?.displayName || 'Cruiser'
   const initials = (() => {
     const words = displayName.trim().split(/\s+/).filter(Boolean)
@@ -208,9 +217,9 @@ export default function FriendProfile({ friend, onBack }) {
     return words[0].slice(0, 2).toUpperCase()
   })()
 
-  const avatarUrl  = profile?.avatar_url || friend?.avatarUrl || ''
-  const bannerUrl  = profile?.banner_url || ''
-  const totalNights = voyages.reduce((sum, v) => sum + (parseInt(v.total_nights) || 0), 0)
+  const avatarUrl   = profile?.avatar_url || friend?.avatarUrl || ''
+  const bannerUrl   = profile?.banner_url || ''
+  const totalNights = voyages.reduce((sum, v) => sum + (parseInt(String(v.total_nights)) || 0), 0)
 
   const today = new Date()
   const currentVoyage = voyages.find(v => {
@@ -227,146 +236,78 @@ export default function FriendProfile({ friend, onBack }) {
 
   return (
     <div style={{ fontFamily: FONT_BODY }}>
-
-      {/* ── Back button ────────────────────────────────────────────────────── */}
-      <button
-        onClick={onBack}
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 8,
-          background: 'transparent', border: `1px solid ${BORDER}`,
-          borderRadius: 8, padding: '8px 14px', cursor: 'pointer',
-          fontSize: 13, fontWeight: 600, color: MUTED,
-          fontFamily: FONT_BODY, marginBottom: 20,
-        }}
-      >
+      <button onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: MUTED, fontFamily: FONT_BODY, marginBottom: 20 }}>
         ← Back to Friends
       </button>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: MUTED, fontSize: 14 }}>
-          Loading profile…
-        </div>
+        <div style={{ textAlign: 'center', padding: '60px 20px', color: MUTED, fontSize: 14 }}>Loading profile…</div>
       ) : (
         <>
-          {/* ── Hero card ──────────────────────────────────────────────────── */}
           <div style={{ borderRadius: 24, overflow: 'hidden', marginBottom: 20 }}>
-
-            {/* Banner */}
-            <div style={{
-              height: BANNER_H,
-              background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary) 55%, var(--t-primary-lt) 100%)',
-              position: 'relative', overflow: 'hidden',
-            }}>
-              {bannerUrl && (
-                <img src={bannerUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-              )}
+            <div style={{ height: BANNER_H, background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary) 55%, var(--t-primary-lt) 100%)', position: 'relative', overflow: 'hidden' }}>
+              {bannerUrl && <img src={bannerUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />}
               <div style={{ position: 'absolute', top: -40, right: -40, width: 180, height: 180, borderRadius: '50%', background: `${GOLD}22`, pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', top: 20, right: 60, width: 100, height: 100, borderRadius: '50%', background: `${GOLD}14`, pointerEvents: 'none' }} />
               <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(3,105,161,0.55) 100%)', pointerEvents: 'none' }} />
               <Wave />
             </div>
 
-            {/* White card */}
             <div style={{ background: WHITE, padding: '0 28px 24px', position: 'relative' }}>
-
-              {/* Avatar + name row */}
               <div style={{ display: 'flex', alignItems: 'flex-end', gap: 18, marginBottom: 18, flexWrap: 'wrap' }}>
-
-                {/* Avatar */}
                 <div style={{ marginTop: -(AVATAR_SIZE / 2 + AVATAR_BORDER), flexShrink: 0 }}>
-                  <div style={{
-                    width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: '50%',
-                    border: `${AVATAR_BORDER}px solid ${WHITE}`,
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.22)', overflow: 'hidden',
-                    background: 'linear-gradient(135deg, #F59E0B, #F97316)',
-                    flexShrink: 0,
-                  }}>
+                  <div style={{ width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: '50%', border: `${AVATAR_BORDER}px solid ${WHITE}`, boxShadow: '0 4px 20px rgba(0,0,0,0.22)', overflow: 'hidden', background: 'linear-gradient(135deg, #F59E0B, #F97316)', flexShrink: 0 }}>
                     {avatarUrl ? (
                       <img src={avatarUrl} alt="Avatar" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                     ) : (
-                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_DISPLAY, fontSize: 32, color: WHITE }}>
-                        {initials}
-                      </div>
+                      <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: FONT_DISPLAY, fontSize: 32, color: WHITE }}>{initials}</div>
                     )}
                   </div>
                 </div>
 
-                {/* Name + meta */}
                 <div style={{ flex: 1, minWidth: 0, paddingBottom: 4 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(3,105,161,0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 6 }}>
-                    CAPTAIN'S LOG
-                  </div>
-                  <h1 style={{ margin: '0 0 8px', fontFamily: FONT_DISPLAY, fontSize: 30, color: NAVY2, lineHeight: 1.05 }}>
-                    {displayName}
-                  </h1>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(3,105,161,0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 6 }}>CAPTAIN'S LOG</div>
+                  <h1 style={{ margin: '0 0 8px', fontFamily: FONT_DISPLAY, fontSize: 30, color: NAVY2, lineHeight: 1.05 }}>{displayName}</h1>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     {currentVoyage?.ship_name && (
-                      <span style={{
-                        display: 'inline-flex', alignItems: 'center', gap: 6,
-                        fontSize: 12, fontWeight: 700,
-                        color: isActivelySailing ? '#15803D' : MUTED,
-                        background: isActivelySailing ? '#DCFCE7' : '#F3F4F6',
-                        border: `1px solid ${isActivelySailing ? '#86EFAC' : BORDER}`,
-                        borderRadius: 20, padding: '4px 12px',
-                      }}>
-                        {isActivelySailing && (
-                          <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 0 2px #86EFAC' }} />
-                        )}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: isActivelySailing ? '#15803D' : MUTED, background: isActivelySailing ? '#DCFCE7' : '#F3F4F6', border: `1px solid ${isActivelySailing ? '#86EFAC' : BORDER}`, borderRadius: 20, padding: '4px 12px' }}>
+                        {isActivelySailing && <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 0 2px #86EFAC' }} />}
                         🚢 {currentVoyage.ship_name}
                         {!isActivelySailing && currentVoyage.departure_date && (
-                          <span style={{ fontWeight: 400, opacity: 0.75 }}>
-                            · {new Date(currentVoyage.departure_date + 'T00:00:00').getFullYear()}
-                          </span>
+                          <span style={{ fontWeight: 400, opacity: 0.75 }}>· {new Date(currentVoyage.departure_date + 'T00:00:00').getFullYear()}</span>
                         )}
                       </span>
                     )}
                     {profile?.home_port && <span style={{ fontSize: 12, color: MUTED }}>📍 {profile.home_port}</span>}
                     {profile?.favourite_cruise_line && (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, background: `${GOLD}18`, border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '2px 9px' }}>
-                        ✨ {profile.favourite_cruise_line}
-                      </span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, background: `${GOLD}18`, border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '2px 9px' }}>✨ {profile.favourite_cruise_line}</span>
                     )}
                   </div>
                 </div>
               </div>
 
-              {/* Bio */}
               {profile?.bio && (
-                <p style={{ margin: '0 0 18px', fontSize: 14, color: TEXT, lineHeight: 1.7, fontStyle: 'italic', borderLeft: `3px solid ${GOLD}`, paddingLeft: 14 }}>
-                  "{profile.bio}"
-                </p>
+                <p style={{ margin: '0 0 18px', fontSize: 14, color: TEXT, lineHeight: 1.7, fontStyle: 'italic', borderLeft: `3px solid ${GOLD}`, paddingLeft: 14 }}>"{profile.bio}"</p>
               )}
 
-              {/* Stat strip */}
-              <div style={{
-                display: 'flex',
-                background: 'rgba(3,105,161,0.72)',
-                backdropFilter: 'blur(12px)',
-                borderRadius: 14,
-                border: '1px solid rgba(255,255,255,0.18)',
-                overflow: 'hidden',
-              }}>
-                <StatCell emoji="🚢" value={voyages.length}          label="Voyages"     border={false} />
+              <div style={{ display: 'flex', background: 'rgba(3,105,161,0.72)', backdropFilter: 'blur(12px)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.18)', overflow: 'hidden' }}>
+                <StatCell emoji="🚢" value={voyages.length}          label="Voyages"      border={false} />
                 <StatCell emoji="🌙" value={totalNights || '—'}       label="Total Nights" border={true} />
-                <StatCell emoji="📍" value={stats.portCount ?? '—'}   label="Ports"       border={true} />
-                <StatCell emoji="📖" value={stats.daysLogged ?? '—'}  label="Days Logged" border={true} />
+                <StatCell emoji="📍" value={stats.portCount ?? '—'}   label="Ports"        border={true} />
+                <StatCell emoji="📖" value={stats.daysLogged ?? '—'}  label="Days Logged"  border={true} />
               </div>
             </div>
           </div>
 
-          {/* ── Voyages ────────────────────────────────────────────────────── */}
           {voyages.length > 0 && (
             <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 20 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>
-                Voyages · {voyages.length}
-              </div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 16 }}>Voyages · {voyages.length}</div>
               <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
                 {voyages.map(v => <VoyageCard key={v.id} voyage={v} />)}
               </div>
             </div>
           )}
 
-          {/* ── Badges ─────────────────────────────────────────────────────── */}
           {voyages.length > 0 && (
             <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -379,35 +320,19 @@ export default function FriendProfile({ friend, onBack }) {
                   <span style={{ fontSize: 12, color: MUTED }}>of {badges.length} earned</span>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: MUTED, marginBottom: 16 }}>
-                🚢 {voyages[0]?.ship_name || 'Most recent voyage'}
-              </div>
+              <div style={{ fontSize: 11, color: MUTED, marginBottom: 16 }}>🚢 {voyages[0]?.ship_name || 'Most recent voyage'}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {badges.map(badge => (
-                  <div
-                    key={badge.key}
-                    style={{
-                      borderRadius: 12,
-                      border: badge.earned ? `1px solid ${badge.color}44` : `1px solid ${BORDER}`,
-                      background: badge.earned ? `linear-gradient(135deg, ${badge.color}0F, ${badge.color}22)` : CREAM,
-                      padding: '12px 8px',
-                      display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7,
-                      position: 'relative', overflow: 'visible',
-                    }}
+                  <div key={badge.key}
+                    style={{ borderRadius: 12, border: badge.earned ? `1px solid ${badge.color}44` : `1px solid ${BORDER}`, background: badge.earned ? `linear-gradient(135deg, ${badge.color}0F, ${badge.color}22)` : CREAM, padding: '12px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 7, position: 'relative', overflow: 'visible' }}
                     onMouseEnter={() => setHoveredKey(badge.key)}
                     onMouseLeave={() => setHoveredKey(null)}
                   >
                     {hoveredKey === badge.key && (
-                      <div style={{
-                        position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)',
-                        zIndex: 100, width: 170, background: NAVY2, borderRadius: 10, padding: '10px 12px',
-                        pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.28)',
-                      }}>
+                      <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: 170, background: NAVY2, borderRadius: 10, padding: '10px 12px', pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.28)' }}>
                         <div style={{ fontSize: 11, fontWeight: 700, color: WHITE, marginBottom: 4 }}>{badge.emoji} {badge.name}</div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{badge.howTo}</div>
-                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: badge.earned ? '#34D399' : 'rgba(255,255,255,0.5)' }}>
-                          {badge.earned ? '✓ Earned' : '🔒 Not yet earned'}
-                        </div>
+                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: badge.earned ? '#34D399' : 'rgba(255,255,255,0.5)' }}>{badge.earned ? '✓ Earned' : '🔒 Not yet earned'}</div>
                         <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: `6px solid ${NAVY2}` }} />
                       </div>
                     )}
@@ -422,23 +347,15 @@ export default function FriendProfile({ friend, onBack }) {
             </div>
           )}
 
-          {/* ── Ports Visited ───────────────────────────────────────────────── */}
           {allPorts.length > 0 && (
             <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '20px 24px', marginBottom: 20 }}>
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>DESTINATIONS</div>
-                <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 20, color: NAVY2, lineHeight: 1 }}>
-                  Ports Visited · <span style={{ color: GOLD }}>{allPorts.length}</span>
-                </h2>
+                <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 20, color: NAVY2, lineHeight: 1 }}>Ports Visited · <span style={{ color: GOLD }}>{allPorts.length}</span></h2>
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {allPorts.map(port => (
-                  <span key={port} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    background: `${NAVY}08`, border: `1px solid ${BORDER}`,
-                    borderRadius: 20, padding: '5px 12px',
-                    fontSize: 12, fontWeight: 600, color: NAVY2,
-                  }}>
+                  <span key={port} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${NAVY}08`, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: NAVY2 }}>
                     📍 {port}
                   </span>
                 ))}
@@ -446,7 +363,6 @@ export default function FriendProfile({ friend, onBack }) {
             </div>
           )}
 
-          {/* ── Empty state if no public data ──────────────────────────────── */}
           {voyages.length === 0 && !profile?.bio && (
             <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '32px 24px', textAlign: 'center' }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>⚓</div>

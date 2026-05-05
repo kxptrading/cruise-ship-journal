@@ -1,18 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/Feed.jsx — Social-style voyage feed (home screen / "dashboard")
-//
-// Orchestrates the feed: loads own profile, friends' posts, reactions,
-// comments, and photos, then renders them through sub-components.
-//
-// Sub-components:
-//   VoyageHero    — hero banner with time-of-day atmosphere
-//   QuickComposer — "What happened today?" composer
-//   PostCard      — individual daily-log post card (reactions + comments)
-//
-// ── Data flow ─────────────────────────────────────────────────────────────────
-// READS:  voyage, itinerary, dailyLogs, budget, sectionStatus (props)
-//         + Supabase: friends, friend posts, reactions, comments, own profile
-// WRITES: onChange(updatedDailyLogs) — only from QuickComposer
+// sections/Feed.tsx — Social-style voyage feed (home screen)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useMemo } from 'react'
@@ -21,27 +8,52 @@ import { useW, useVoyageId, useUserId } from '../context'
 import { getPhotos, getSignedUrls } from '../lib/photoStorage'
 import { supabase } from '../lib/supabase'
 import { getTimeOfDay } from '../lib/atmosphere'
-import PostCard    from './feed/PostCard'
-import VoyageHero  from './feed/VoyageHero'
+import PostCard      from './feed/PostCard'
+import VoyageHero   from './feed/VoyageHero'
 import QuickComposer from './feed/QuickComposer'
+import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedItem, FeedAuthor, ReactionsMap, CommentsMap, Comment } from '../types'
+import type { TimeOfDay } from '../lib/atmosphere'
 
-// ── Feed ──────────────────────────────────────────────────────────────────────
-export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog, sectionStatus, onChange, onNav, showToast, onViewDay, onViewProfile }) {
+interface Star {
+  id:       number | string
+  x:        number
+  y:        number
+  size:     number
+  delay:    number
+  duration: number
+}
+
+interface Props {
+  voyage:        Voyage
+  itinerary:     ItineraryDay[]
+  dailyLogs:     DailyLog[]
+  budget:        Budget
+  packing:       Packing
+  foodLogs:      FoodLog[]
+  diningLog:     DiningEntry[]
+  sectionStatus?: Set<string>
+  onChange:      (updated: DailyLog[]) => void
+  onNav:         (section: string) => void
+  showToast?:    (msg: string) => void
+  onViewDay?:    (dayIndex: number) => void
+  onViewProfile?: (author: FeedAuthor) => void
+}
+
+function toInitials(data: { display_name?: string | null; first_name?: string | null; last_name?: string | null } | null | undefined): string {
+  const name  = data?.display_name || `${data?.first_name || ''} ${data?.last_name || ''}`.trim() || '?'
+  const words = name.trim().split(/\s+/).filter(Boolean)
+  if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
+  return (words[0] || '?').slice(0, 2).toUpperCase()
+}
+
+export default function Feed({ voyage, itinerary, dailyLogs, budget, packing: _packing, foodLogs: _foodLogs, diningLog: _diningLog, sectionStatus, onChange, onNav, showToast, onViewDay, onViewProfile }: Props) {
   const w        = useW()
   const voyageId = useVoyageId()
   const userId   = useUserId()
 
-  // ── Own profile ───────────────────────────────────────────────────────────
-  const [avatarUrl,       setAvatarUrl]       = useState('')
-  const [userInitials,    setUserInitials]    = useState('?')
-  const [userDisplayName, setUserDisplayName] = useState('Cruiser')
-
-  const toInitials = (data) => {
-    const name  = data?.display_name || `${data?.first_name || ''} ${data?.last_name || ''}`.trim() || '?'
-    const words = name.trim().split(/\s+/).filter(Boolean)
-    if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
-    return (words[0] || '?').slice(0, 2).toUpperCase()
-  }
+  const [avatarUrl,       setAvatarUrl]       = useState<string>('')
+  const [userInitials,    setUserInitials]     = useState<string>('?')
+  const [userDisplayName, setUserDisplayName]  = useState<string>('Cruiser')
 
   useEffect(() => {
     if (!userId) return
@@ -50,7 +62,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       .select('avatar_url, display_name, first_name, last_name')
       .eq('user_id', userId)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data }: { data: { avatar_url?: string | null; display_name?: string | null; first_name?: string | null; last_name?: string | null } | null }) => {
         if (!data) return
         if (data.avatar_url) setAvatarUrl(data.avatar_url)
         setUserInitials(toInitials(data))
@@ -58,8 +70,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       })
   }, [userId])
 
-  // ── Friend posts ──────────────────────────────────────────────────────────
-  const [friendPosts, setFriendPosts] = useState([])
+  const [friendPosts, setFriendPosts] = useState<FeedItem[]>([])
 
   useEffect(() => {
     if (!userId) return
@@ -73,14 +84,16 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
       if (!requests?.length) return
 
-      const friendIds = requests.map(r => r.from_user_id === userId ? r.to_user_id : r.from_user_id)
+      const friendIds = requests.map((r: { from_user_id: string; to_user_id: string }) =>
+        r.from_user_id === userId ? r.to_user_id : r.from_user_id
+      )
 
       const [{ data: profiles }, { data: voyages }] = await Promise.all([
         supabase.from('profiles').select('user_id, display_name, first_name, last_name, avatar_url').in('user_id', friendIds),
         supabase.from('voyages').select('id, user_id, ship_name').in('user_id', friendIds),
       ])
 
-      const voyageIds = (voyages || []).map(v => v.id)
+      const voyageIds = (voyages || []).map((v: { id: string }) => v.id)
       if (!voyageIds.length) return
 
       const [{ data: logs }, { data: itineraryRows }, { data: photoRows }] = await Promise.all([
@@ -89,51 +102,63 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         supabase.from('photos').select('voyage_id, day_number, storage_path, caption').in('voyage_id', voyageIds),
       ])
 
-      const profileMap   = Object.fromEntries((profiles || []).map(p => [p.user_id, p]))
-      const voyageMap    = Object.fromEntries((voyages  || []).map(v => [v.id, v]))
-      const itineraryMap = {}
-      ;(itineraryRows || []).forEach(r => {
+      type ProfileRow = { user_id: string; display_name?: string | null; first_name?: string | null; last_name?: string | null; avatar_url?: string | null }
+      type VoyageRow  = { id: string; user_id: string; ship_name?: string | null }
+      type ItinRow    = { voyage_id: string; day_number: number; port?: string | null }
+      type PhotoRow   = { voyage_id: string; day_number: number; storage_path: string; caption?: string | null }
+      type LogRow     = { voyage_id: string; day_number: number; date?: string | null; port?: string | null; highlights?: string | null; best_moment?: string | null; weather?: string[] | null; breakfast?: string | null; lunch?: string | null; dinner?: string | null; drink?: string | null; activity?: string | null; rating?: number | null }
+
+      const profileMap = Object.fromEntries((profiles || []).map((p: ProfileRow) => [p.user_id, p]))
+      const voyageMap  = Object.fromEntries((voyages  || []).map((v: VoyageRow)  => [v.id, v]))
+      const itineraryMap: Record<string, Record<number, string>> = {}
+      ;(itineraryRows || []).forEach((r: ItinRow) => {
         if (!itineraryMap[r.voyage_id]) itineraryMap[r.voyage_id] = {}
-        itineraryMap[r.voyage_id][r.day_number] = r.port
+        if (r.port) itineraryMap[r.voyage_id][r.day_number] = r.port
       })
-      const photoPaths = (photoRows || []).map(r => r.storage_path)
-      const urlMap = await getSignedUrls(photoPaths)
-      const photoMap = {}
-      ;(photoRows || []).forEach(r => {
+      const photoPaths = (photoRows || []).map((r: PhotoRow) => r.storage_path)
+      const urlMap     = await getSignedUrls(photoPaths)
+      const photoMap: Record<string, { dataUrl: string; caption: string }> = {}
+      ;(photoRows || []).forEach((r: PhotoRow) => {
         const key = `${r.voyage_id}-${r.day_number}`
-        if (!photoMap[key]) photoMap[key] = { dataUrl: urlMap[r.storage_path] || '', caption: r.caption }
+        if (!photoMap[key]) photoMap[key] = { dataUrl: urlMap[r.storage_path] || '', caption: r.caption || '' }
       })
 
-      const posts = (logs || [])
-        .filter(log => log.highlights || log.best_moment || log.activity || log.rating)
-        .map(log => {
-          const v       = voyageMap[log.voyage_id] || {}
-          const profile = profileMap[v.user_id]    || {}
+      const posts: FeedItem[] = (logs || [])
+        .filter((log: LogRow) => log.highlights || log.best_moment || log.activity || log.rating)
+        .map((log: LogRow) => {
+          const v       = voyageMap[log.voyage_id] as VoyageRow || {}
+          const profile = profileMap[v.user_id] as ProfileRow   || {}
           const port    = log.port || itineraryMap[log.voyage_id]?.[log.day_number] || ''
+          const author: FeedAuthor = {
+            userId:    profile.user_id,
+            name:      profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Cruiser',
+            avatarUrl: profile.avatar_url || '',
+            initials:  toInitials(profile),
+            shipName:  v.ship_name || '',
+          }
           return {
             dayIndex:     log.day_number - 1,
             dayNumber:    log.day_number,
             voyageId:     log.voyage_id,
-            date:         log.date,
-            port:         log.port,
+            date:         log.date || '',
+            port:         log.port || '',
             resolvedPort: port,
-            highlights:   log.highlights,
-            bestMoment:   log.best_moment,
+            highlights:   log.highlights || '',
+            bestMoment:   log.best_moment || '',
             weather:      log.weather || [],
-            breakfast:    log.breakfast,
-            lunch:        log.lunch,
-            dinner:       log.dinner,
-            drink:        log.drink,
-            activity:     log.activity,
-            rating:       log.rating,
+            breakfast:    log.breakfast || '',
+            lunch:        log.lunch || '',
+            dinner:       log.dinner || '',
+            drink:        log.drink || '',
+            activity:     log.activity || '',
+            duration:     '',
+            excCost:      '',
+            excNotes:     '',
+            entertainment: '',
+            rating:       log.rating || 0,
+            isPublic:     true,
             photo:        photoMap[`${log.voyage_id}-${log.day_number}`] || null,
-            author: {
-              userId:    profile.user_id,
-              name:      profile.display_name || `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Cruiser',
-              avatarUrl: profile.avatar_url || '',
-              initials:  toInitials(profile),
-              shipName:  v.ship_name || '',
-            },
+            author,
           }
         })
 
@@ -143,32 +168,28 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     loadFriendFeeds()
   }, [userId])
 
-  // ── Atmosphere ────────────────────────────────────────────────────────────
-  const [timeOfDay, setTimeOfDay] = useState(getTimeOfDay)
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(getTimeOfDay)
 
   useEffect(() => {
     const t = setInterval(() => setTimeOfDay(getTimeOfDay()), 60_000)
     return () => clearInterval(t)
   }, [])
 
-  const stars = useMemo(() =>
+  const stars = useMemo<Star[]>(() =>
     Array.from({ length: 70 }, (_, i) => ({
-      id:          i,
-      x:           Math.random() * 100,
-      y:           Math.random() * 85,
-      size:        Math.random() * 2.5 + 0.8,
-      delay:       Math.random() * 4,
-      duration:    Math.random() * 2.5 + 1.8,
-      baseOpacity: Math.random() * 0.5 + 0.3,
+      id:       i,
+      x:        Math.random() * 100,
+      y:        Math.random() * 85,
+      size:     Math.random() * 2.5 + 0.8,
+      delay:    Math.random() * 4,
+      duration: Math.random() * 2.5 + 1.8,
     })), []
   )
 
-  // ── Reactions & comments ──────────────────────────────────────────────────
-  const [reactionsMap, setReactionsMap] = useState({})
-  const [commentsMap,  setCommentsMap]  = useState({})
+  const [reactionsMap, setReactionsMap] = useState<ReactionsMap>({})
+  const [commentsMap,  setCommentsMap]  = useState<CommentsMap>({})
 
-  // ── Photos (own days) ─────────────────────────────────────────────────────
-  const [photosByDay, setPhotosByDay] = useState({})
+  const [photosByDay, setPhotosByDay] = useState<Record<number, { dataUrl: string; caption: string }>>({})
 
   useEffect(() => {
     if (!dailyLogs.length || !voyageId) return
@@ -179,60 +200,56 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
           .catch(() => ({ day: i, photo: null }))
       )
     ).then(results => {
-      const map = {}
+      const map: Record<number, { dataUrl: string; caption: string }> = {}
       results.forEach(({ day, photo }) => { if (photo) map[day] = photo })
       setPhotosByDay(map)
     })
   }, [dailyLogs.length, voyageId])
 
-  // ── Metrics ───────────────────────────────────────────────────────────────
   const spent      = (budget.items || []).reduce((s, i) => s + (parseFloat(i.amount) || 0), 0)
-  const budgetAmt  = parseFloat(budget.budget) || 0
+  const budgetAmt  = parseFloat(String(budget.budget)) || 0
   const budgetOver = budgetAmt > 0 && spent > budgetAmt
   const nights     = parseInt(voyage.totalNights) || itinerary.length || 0
   const ports      = itinerary.filter(d => d.port && d.port.trim() && d.port.toLowerCase() !== 'at sea').length
   const logged     = dailyLogs.filter(d => d.highlights || d.bestMoment).length
 
-  // ── Voyage progress ───────────────────────────────────────────────────────
   const voyageNights = parseInt(voyage.totalNights) || 0
   const today        = new Date()
   const depDate      = voyage.departureDate ? new Date(voyage.departureDate) : null
-  const rawDay       = (depDate && voyageNights > 0) ? Math.floor((today - depDate) / 86400000) + 1 : null
+  const rawDay       = (depDate && voyageNights > 0) ? Math.floor((today.getTime() - depDate.getTime()) / 86400000) + 1 : null
   const voyageOver   = rawDay !== null && rawDay > voyageNights
   const currentDay   = rawDay !== null ? Math.max(1, Math.min(voyageNights, rawDay)) : null
-  const voyagePct    = rawDay !== null ? (voyageOver ? 100 : Math.round((currentDay / voyageNights) * 100)) : null
-  const daysLeft     = voyageOver ? 0 : (currentDay ? Math.max(0, voyageNights - currentDay) : null)
+  const voyagePct    = rawDay !== null ? (voyageOver ? 100 : Math.round((currentDay! / voyageNights) * 100)) : null
+  const daysLeft     = voyageOver ? 0 : (currentDay ? Math.max(0, voyageNights - currentDay) : 0)
 
-  const [barPct, setBarPct] = useState(0)
+  const [barPct, setBarPct] = useState<number>(0)
   useEffect(() => {
-    const t = setTimeout(() => setBarPct(voyagePct || 0), 120)
-    return () => clearTimeout(t)
+    const t = window.setTimeout(() => setBarPct(voyagePct || 0), 120)
+    return () => window.clearTimeout(t)
   }, [voyagePct])
 
-  // ── Feed items ────────────────────────────────────────────────────────────
-  const genericLabel = (v) => v === 'Port' || v === 'Sea'
-  const ownItems = dailyLogs
+  const genericLabel = (v: string | undefined) => v === 'Port' || v === 'Sea'
+  const ownItems: FeedItem[] = dailyLogs
     .map((log, i) => ({
       ...log,
       dayIndex:     i,
       dayNumber:    i + 1,
-      voyageId,
+      voyageId:     voyageId || '',
       resolvedPort: (log.port && !genericLabel(log.port)) ? log.port : (itinerary[i]?.port || ''),
       photo:        photosByDay[i] || null,
       author:       null,
     }))
     .filter(log => log.isPublic && (log.highlights || log.bestMoment || log.activity || log.photo))
 
-  const feedItems = [...ownItems, ...friendPosts].sort((a, b) => {
-    const da = a.date ? new Date(a.date) : null
-    const db = b.date ? new Date(b.date) : null
+  const feedItems: FeedItem[] = [...ownItems, ...friendPosts].sort((a, b) => {
+    const da = a.date ? new Date(a.date).getTime() : null
+    const db = b.date ? new Date(b.date).getTime() : null
     if (da && db) return db - da
     if (da) return -1
     if (db) return 1
     return b.dayIndex - a.dayIndex
   })
 
-  // ── Load reactions ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!feedItems.length || !userId) return
     const ids = [...new Set(feedItems.map(i => i.voyageId).filter(Boolean))]
@@ -241,9 +258,9 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       .from('reactions')
       .select('voyage_id, day_number, reaction, user_id')
       .in('voyage_id', ids)
-      .then(({ data }) => {
+      .then(({ data }: { data: { voyage_id: string; day_number: number; reaction: string; user_id: string }[] | null }) => {
         if (!data) return
-        const map = {}
+        const map: ReactionsMap = {}
         data.forEach(row => {
           const key = `${row.voyage_id}-${row.day_number}`
           if (!map[key]) map[key] = {}
@@ -255,7 +272,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
       })
   }, [feedItems.length, userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Load comments ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!feedItems.length || !userId) return
     const ids = [...new Set(feedItems.map(i => i.voyageId).filter(Boolean))]
@@ -270,18 +286,20 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
 
       if (!rows?.length) return
 
-      const commenterIds = [...new Set(rows.map(r => r.user_id))]
+      type CommentRow = { id: string; voyage_id: string; day_number: number; user_id: string; body: string; created_at: string }
+      const commenterIds = [...new Set(rows.map((r: CommentRow) => r.user_id))]
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, display_name, avatar_url')
         .in('user_id', commenterIds)
 
-      const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]))
-      const map = {}
-      rows.forEach(r => {
-        const key  = `${r.voyage_id}-${r.day_number}`
+      type ProfileRow = { user_id: string; display_name?: string | null; avatar_url?: string | null }
+      const profileMap = Object.fromEntries((profiles || []).map((p: ProfileRow) => [p.user_id, p]))
+      const map: CommentsMap = {}
+      rows.forEach((r: CommentRow) => {
+        const key   = `${r.voyage_id}-${r.day_number}`
         if (!map[key]) map[key] = []
-        const prof  = profileMap[r.user_id] || {}
+        const prof  = profileMap[r.user_id] as ProfileRow || {}
         const name  = prof.display_name || 'Cruiser'
         const words = name.trim().split(/\s+/).filter(Boolean)
         const inits = words.length >= 2
@@ -295,30 +313,27 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     loadComments()
   }, [feedItems.length, userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Add comment ───────────────────────────────────────────────────────────
-  const handleAddComment = async (postVoyageId, dayNumber, body) => {
+  const handleAddComment = async (postVoyageId: string, dayNumber: number, body: string) => {
     if (!userId || !postVoyageId || !body.trim()) return
-    const key     = `${postVoyageId}-${dayNumber}`
-    const tempId  = `temp-${Date.now()}`
-    const tempComment = { id: tempId, user_id: userId, body, created_at: new Date().toISOString(), authorName: userDisplayName, authorAvatar: avatarUrl, authorInitials: userInitials }
+    const key      = `${postVoyageId}-${dayNumber}`
+    const tempId   = `temp-${Date.now()}`
+    const tempComment: Comment = { id: tempId, user_id: userId, body, created_at: new Date().toISOString(), authorName: userDisplayName, authorAvatar: avatarUrl, authorInitials: userInitials }
     setCommentsMap(prev => ({ ...prev, [key]: [...(prev[key] || []), tempComment] }))
 
     const { data, error } = await supabase
       .from('comments')
       .insert({ voyage_id: postVoyageId, day_number: dayNumber, user_id: userId, body })
-      .select('id')
-      .single()
+      .select('id').single()
 
     if (data && !error) {
       setCommentsMap(prev => ({
         ...prev,
-        [key]: (prev[key] || []).map(c => c.id === tempId ? { ...c, id: data.id } : c),
+        [key]: (prev[key] || []).map(c => c.id === tempId ? { ...c, id: (data as { id: string }).id } : c),
       }))
     }
   }
 
-  // ── Edit comment ──────────────────────────────────────────────────────────
-  const handleEditComment = async (commentId, newBody) => {
+  const handleEditComment = async (commentId: string, newBody: string) => {
     setCommentsMap(prev => {
       const next = { ...prev }
       for (const key of Object.keys(next)) {
@@ -329,8 +344,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     await supabase.from('comments').update({ body: newBody }).eq('id', commentId)
   }
 
-  // ── Toggle reaction ───────────────────────────────────────────────────────
-  const handleReact = async (postVoyageId, dayNumber, reactionId) => {
+  const handleReact = async (postVoyageId: string, dayNumber: number, reactionId: string) => {
     if (!userId || !postVoyageId) return
     const key           = `${postVoyageId}-${dayNumber}`
     const postReactions = reactionsMap[key] || {}
@@ -358,7 +372,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
     }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div>
       <VoyageHero
@@ -367,14 +380,13 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         timeOfDay={timeOfDay} stars={stars} onNav={onNav}
       />
 
-      {/* ── Compact metrics strip ─────────────────────────────────────────── */}
       {(() => {
         const completedCount = sectionStatus?.size || 0
         const totalSections  = 12
         const metrics = [
-          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged',     color: NAVY2,                                           nav: 'daily' },
-          { icon: '📍', value: ports > 0 ? String(ports) : '—',                                          label: 'Ports',            color: TEAL,                                            nav: 'itinerary' },
-          { icon: '💳', value: spent > 0 ? `£${spent.toFixed(0)}` : '£—',                               label: budgetOver ? 'Over Budget!' : 'Spent', color: budgetOver ? '#DC2626' : TEAL, nav: 'budget' },
+          { icon: '📖', value: nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—', label: 'Days Logged',     color: NAVY2,                                              nav: 'daily' },
+          { icon: '📍', value: ports > 0 ? String(ports) : '—',                                          label: 'Ports',            color: TEAL,                                               nav: 'itinerary' },
+          { icon: '💳', value: spent > 0 ? `£${spent.toFixed(0)}` : '£—',                               label: budgetOver ? 'Over Budget!' : 'Spent', color: budgetOver ? '#DC2626' : TEAL,  nav: 'budget' },
           { icon: '🏆', value: `${completedCount} / ${totalSections}`,                                   label: 'Journal Complete', color: completedCount === totalSections ? '#22C55E' : NAVY2, nav: 'highlights' },
         ]
         return (
@@ -383,13 +395,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
               <button
                 key={m.label}
                 onClick={() => onNav(m.nav)}
-                style={{
-                  background: `linear-gradient(135deg, ${WHITE} 60%, ${m.color}18 100%)`,
-                  border: `1px solid ${BORDER}`, borderRadius: 16,
-                  padding: w < BP.mobile ? '10px 8px' : '12px 14px',
-                  textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit',
-                  transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
-                }}
+                style={{ background: `linear-gradient(135deg, ${WHITE} 60%, ${m.color}18 100%)`, border: `1px solid ${BORDER}`, borderRadius: 16, padding: w < BP.mobile ? '10px 8px' : '12px 14px', textAlign: 'center', cursor: 'pointer', fontFamily: 'inherit', transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease' }}
                 onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 6px 18px ${m.color}28`; e.currentTarget.style.borderColor = `${m.color}55` }}
                 onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'none'; e.currentTarget.style.borderColor = BORDER }}
               >
@@ -402,7 +408,6 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         )
       })()}
 
-      {/* ── Quick composer ────────────────────────────────────────────────── */}
       {dailyLogs.length > 0 && (
         <QuickComposer
           dailyLogs={dailyLogs}
@@ -415,27 +420,19 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
         />
       )}
 
-      {/* ── Feed ─────────────────────────────────────────────────────────── */}
       {feedItems.length === 0 ? (
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 14 }}>🌊</div>
-          <div style={{ fontSize: 24, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>
-            Your voyage feed is empty
-          </div>
+          <div style={{ fontSize: 24, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>Your voyage feed is empty</div>
           <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.7, maxWidth: 'min(380px, 100%)', margin: '0 auto 24px' }}>
             {dailyLogs.length === 0
               ? 'Add your first day in the Daily Log, then come back here to post your highlights.'
-              : 'You\'ve got days added — write some highlights and they\'ll appear here as posts.'}
+              : "You've got days added — write some highlights and they'll appear here as posts."}
           </div>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => onNav('daily')} className="btn-primary" style={{ ...sty.btn, fontSize: 13, padding: '9px 20px' }}>
-              Open Daily Log →
-            </button>
+            <button onClick={() => onNav('daily')} className="btn-primary" style={{ ...sty.btn, fontSize: 13, padding: '9px 20px' }}>Open Daily Log →</button>
             {dailyLogs.length === 0 && (
-              <button onClick={() => onNav('itinerary')}
-                style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
-                Set Up Itinerary
-              </button>
+              <button onClick={() => onNav('itinerary')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>Set Up Itinerary</button>
             )}
           </div>
         </div>
@@ -445,25 +442,22 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, packing, fo
             <PostCard
               key={i}
               item={item}
-              onViewDay={item.author ? null : onViewDay}
+              onViewDay={item.author ? undefined : onViewDay}
               avatarUrl={avatarUrl}
               initials={userInitials}
               displayName={userDisplayName}
               author={item.author}
-              onViewProfile={item.author ? () => onViewProfile?.(item.author) : null}
+              onViewProfile={item.author ? () => onViewProfile?.(item.author!) : undefined}
               reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
-              onReact={(rid) => handleReact(item.voyageId, item.dayNumber, rid)}
+              onReact={(rid: string) => handleReact(item.voyageId, item.dayNumber, rid)}
               comments={commentsMap[`${item.voyageId}-${item.dayNumber}`] || []}
-              onAddComment={(body) => handleAddComment(item.voyageId, item.dayNumber, body)}
+              onAddComment={(body: string) => handleAddComment(item.voyageId, item.dayNumber, body)}
               onEditComment={handleEditComment}
-              userId={userId}
+              userId={userId ?? undefined}
             />
           ))}
           <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
-            <button
-              onClick={() => onNav('daily')}
-              style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}
-            >
+            <button onClick={() => onNav('daily')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
               Open Daily Log for full details →
             </button>
           </div>

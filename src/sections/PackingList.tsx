@@ -1,57 +1,48 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/PackingList.jsx — Pre-departure packing checklist
-//
-// A fixed list of 24 items organised into four categories. Checking an item
-// stores its name in the data object under that category key. Unchecking
-// removes it. The progress bar and "Items Packed" Dashboard metric are both
-// driven by the count of checked items vs the fixed total of 24.
-//
-// Data is stored under "csj-packing" as { [categoryName]: string[] } where
-// each array contains the names of checked items in that category.
+// sections/PackingList.tsx — Pre-departure packing checklist
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NAVY, GOLD, MUTED, TEXT, BORDER, TEAL, ROSE, PLUM, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr } from '../components/ui'
+import type { Packing } from '../types'
 
-// Fixed item list — 4 categories × 6 items = 24 total.
-// The Dashboard hardcodes 24 as the total; update both if this list changes.
-const CATS = {
+const CATS: Record<string, string[]> = {
   'DOCUMENTS & ESSENTIALS': ['Passport / ID', 'Boarding pass', 'Travel insurance', 'Credit cards / cash', 'Phone & charger', 'Medication'],
   'CLOTHING':               ['Swimsuits', 'Casual daywear', 'Formal night outfit', 'Light jacket', 'Walking shoes', 'Flip flops'],
   'TOILETRIES & HEALTH':    ['Sunscreen SPF 50+', 'After-sun lotion', 'Seasickness remedy', 'Hand sanitiser', 'Insect repellent', 'First aid basics'],
   'ENTERTAINMENT & EXTRAS': ['Book / e-reader', 'Journal & pen', 'Camera', 'Binoculars', 'Water bottle', 'Lanyard for card'],
 }
 
-// Unique accent colour per category — applied as a left border strip on each card
-const CAT_COLOR = {
+const CAT_COLOR: Record<string, string> = {
   'DOCUMENTS & ESSENTIALS': TEAL,
   'CLOTHING':               ROSE,
   'TOILETRIES & HEALTH':    PLUM,
   'ENTERTAINMENT & EXTRAS': GOLD,
 }
 
-export default function PackingList({ data, onChange }) {
-  const w = useW()
+interface Props {
+  data:     Packing
+  onChange: (updated: Packing) => void
+}
+
+export default function PackingList({ data, onChange }: Props) {
+  const w  = useW()
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
-  // Toggle an item: add it to the category array if unchecked, remove if checked
-  const toggle = (cat, item) => {
+  const toggle = (cat: string, item: string) => {
     const checked = data[cat] || []
     onChange({ ...data, [cat]: checked.includes(item) ? checked.filter(x => x !== item) : [...checked, item] })
   }
 
-  // Overall progress across all categories
   const allItems     = Object.values(CATS).flat()
   const checkedItems = Object.values(data || {}).flat()
   const pct          = allItems.length > 0 ? Math.round((checkedItems.length / allItems.length) * 100) : 0
 
   return (
     <div>
-      {/* Sub-heading shows current count dynamically */}
       <PgHdr icon="🧳" title="Packing Checklist" sub={`${checkedItems.length} of ${allItems.length} items packed`} />
 
-      {/* Overall progress bar — turns green at 100% */}
       <div style={{ ...cs, marginBottom: 18 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 13, color: MUTED }}>Packing progress</span>
@@ -62,30 +53,28 @@ export default function PackingList({ data, onChange }) {
         </div>
       </div>
 
-      {/* One card per category — each gets a unique accent colour on the left edge */}
       {Object.entries(CATS).map(([cat, items]) => {
-        const accent = CAT_COLOR[cat] || NAVY
+        const accent  = CAT_COLOR[cat] || NAVY
         const checked = (data[cat] || []).length
         return (
-        <div key={cat} style={{ ...cs, borderLeft: `4px solid ${accent}`, paddingLeft: w < BP.mobile ? 14 : 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
-            <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{cat}</h3>
-            <span style={{ fontSize: 11, color: MUTED }}>{checked} / {items.length}</span>
+          <div key={cat} style={{ ...cs, borderLeft: `4px solid ${accent}`, paddingLeft: w < BP.mobile ? 14 : 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <h3 style={{ margin: 0, fontSize: 11, fontWeight: 700, color: accent, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{cat}</h3>
+              <span style={{ fontSize: 11, color: MUTED }}>{checked} / {items.length}</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: w < BP.mobile ? '10px 16px' : '10px 32px' }}>
+              {items.map(item => {
+                const done = (data[cat] || []).includes(item)
+                return (
+                  <label key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={done} onChange={() => toggle(cat, item)}
+                      style={{ accentColor: accent, width: 16, height: 16, flexShrink: 0 }} />
+                    <span style={{ fontSize: 14, color: done ? MUTED : TEXT, textDecoration: done ? 'line-through' : 'none' }}>{item}</span>
+                  </label>
+                )
+              })}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: w < BP.mobile ? '10px 16px' : '10px 32px' }}>
-            {items.map(item => {
-              const done = (data[cat] || []).includes(item)
-              return (
-                <label key={item} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                  <input type="checkbox" checked={done} onChange={() => toggle(cat, item)}
-                    style={{ accentColor: accent, width: 16, height: 16, flexShrink: 0 }} />
-                  {/* Checked items are muted and struck through */}
-                  <span style={{ fontSize: 14, color: done ? MUTED : TEXT, textDecoration: done ? 'line-through' : 'none' }}>{item}</span>
-                </label>
-              )
-            })}
-          </div>
-        </div>
         )
       })}
     </div>

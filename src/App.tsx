@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// App.jsx — Root application component
+// App.tsx — Root application component
 //
 // Responsible for:
 //   • Auth session lifecycle + theme persistence
@@ -9,12 +9,11 @@
 //   • Wiring the useVoyageData hook into the section renderer
 //
 // All Supabase data loading and write-through lives in useVoyageData.
-// All DB ↔ app shape conversion lives in lib/converters.js.
+// All DB ↔ app shape conversion lives in lib/converters.ts.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { CREAM, NAVY, BP } from './constants'
-import { NAV } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
 import { applyTheme, getSavedTheme } from './themes'
 import { supabase } from './lib/supabase'
@@ -42,6 +41,21 @@ import Notes            from './sections/Notes'
 import Friends          from './sections/Friends'
 import Chat             from './sections/Chat'
 import UserProfile      from './sections/UserProfile'
+import type { Session } from '@supabase/supabase-js'
+
+// Shape passed from Feed's onViewProfile into Friends as initialFriend
+interface FeedFriend {
+  requestId:   string
+  userId:      string
+  displayName: string
+  email:       string
+  avatarUrl:   string
+}
+
+interface ToastState {
+  message: string
+  visible: boolean
+}
 
 export default function App() {
   // ── Responsive layout flags ─────────────────────────────────────────────────
@@ -50,20 +64,20 @@ export default function App() {
   const isMobile  = winW < BP.mobile
 
   // ── Auth ────────────────────────────────────────────────────────────────────
-  const [session,      setSession]      = useState(null)
-  const [authChecked,  setAuthChecked]  = useState(false)
+  const [session,     setSession]     = useState<Session | null>(null)
+  const [authChecked, setAuthChecked] = useState<boolean>(false)
 
   // ── Theme ───────────────────────────────────────────────────────────────────
-  const [theme, setTheme] = useState(getSavedTheme)
+  const [theme, setTheme] = useState<string>(getSavedTheme)
 
   // ── Age gate — null means not set, treated as adult ─────────────────────────
-  const [userAge, setUserAge] = useState(null)
+  const [userAge, setUserAge] = useState<number | null>(null)
   const isAdult = userAge === null || userAge >= 18
 
   // Apply the persisted theme immediately on first render (localStorage fallback)
   useEffect(() => { applyTheme(theme) }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const switchTheme = (id) => {
+  const switchTheme = (id: string) => {
     applyTheme(id)
     setTheme(id)
     const uid = session?.user?.id
@@ -71,46 +85,47 @@ export default function App() {
   }
 
   // ── Navigation state ────────────────────────────────────────────────────────
-  const [section,      setSection]      = useState('dashboard')
-  const [selectedDay,  setSelectedDay]  = useState(null)
-  const [dailyJumpDay, setDailyJumpDay] = useState(null)
-  const [sidebarOpen,  setSidebarOpen]  = useState(false)
-  const [feedFriend,   setFeedFriend]   = useState(null) // friend to view when nav'd from feed
+  const [section,      setSection]      = useState<string>('dashboard')
+  const [selectedDay,  setSelectedDay]  = useState<number | null>(null)
+  const [dailyJumpDay, setDailyJumpDay] = useState<number | null>(null)
+  const [sidebarOpen,  setSidebarOpen]  = useState<boolean>(false)
+  const [feedFriend,   setFeedFriend]   = useState<FeedFriend | null>(null)
 
   // ── Toast ───────────────────────────────────────────────────────────────────
-  const [toast, setToast] = useState({ message: '', visible: false })
-  let toastTimer = null
+  const [toast, setToast]   = useState<ToastState>({ message: '', visible: false })
+  const toastTimer           = useRef<number | null>(null)
 
-  const showToast = (message) => {
-    clearTimeout(toastTimer)
+  const showToast = (message: string) => {
+    if (toastTimer.current !== null) window.clearTimeout(toastTimer.current)
     setToast({ message, visible: true })
-    toastTimer = setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
+    toastTimer.current = window.setTimeout(() => setToast(t => ({ ...t, visible: false })), 3000)
   }
 
   // ── Auth session lifecycle ──────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      setSession(s)
       setAuthChecked(true)
       // Load theme from DB — applyTheme() also writes localStorage immediately
       // so subsequent loads use the correct theme before this resolves (no flash).
-      if (session?.user?.id) {
+      if (s?.user?.id) {
         supabase
           .from('profiles')
           .select('theme, age')
-          .eq('user_id', session.user.id)
+          .eq('user_id', s.user.id)
           .maybeSingle()
-          .then(({ data }) => {
-            if (data?.theme) { applyTheme(data.theme); setTheme(data.theme) }
-            if (data?.age != null) setUserAge(data.age)
+          .then((res) => {
+            const d = res.data as { theme?: string | null; age?: number | null } | null
+            if (d?.theme) { applyTheme(d.theme); setTheme(d.theme) }
+            if (d?.age != null) setUserAge(d.age)
           })
       }
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, s) => {
       // Clear cached voyage ID on sign-in so a different user on the same
       // device never accidentally loads another user's voyage.
       if (event === 'SIGNED_IN') localStorage.removeItem('csj-activeVoyageId')
-      setSession(session)
+      setSession(s)
     })
     return () => subscription.unsubscribe()
   }, [])
@@ -133,7 +148,7 @@ export default function App() {
   } = useVoyageData({ session, showToast })
 
   // Wrap switchVoyage to also reset navigation state
-  const switchVoyage = (newId) => {
+  const switchVoyage = (newId: string) => {
     switchVoyageData(newId)
     setSection('dashboard')
     setSelectedDay(null)
@@ -141,13 +156,15 @@ export default function App() {
   }
 
   // Wrap createVoyage to inject session.user.id
-  const createVoyage = (partial = {}) => createVoyageData(session.user.id, partial)
+  const createVoyage = async (partial: Record<string, unknown> = {}): Promise<void> => {
+    await createVoyageData(session!.user.id, partial)
+  }
 
   // ── Section completion status ───────────────────────────────────────────────
   // A Set of section IDs that have meaningful data — used by Sidebar (dots)
   // and Feed (journal completion score).
   const sectionStatus = useMemo(() => {
-    const has = new Set()
+    const has = new Set<string>()
     if (data.voyage.shipName || data.voyage.cruiseLine || data.voyage.departureDate) has.add('voyage')
     if (data.itinerary.length > 0) has.add('itinerary')
     if (data.dailyLogs.some(d => d.highlights || d.bestMoment || d.activity)) has.add('daily')
@@ -164,7 +181,7 @@ export default function App() {
   }, [data])
 
   // ── Navigation handler ──────────────────────────────────────────────────────
-  const navClick = (id) => {
+  const navClick = (id: string) => {
     setSection(id)
     setSelectedDay(null)
     if (id !== 'daily') setDailyJumpDay(null)
@@ -231,7 +248,24 @@ export default function App() {
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary>
               {section === 'dashboard' && selectedDay === null && (
-                <Feed voyage={data.voyage} itinerary={data.itinerary} dailyLogs={data.dailyLogs} budget={data.budget} packing={data.packing} foodLogs={data.foodLogs} diningLog={data.diningLog} sectionStatus={sectionStatus} onChange={v => update('dailyLogs', v)} onNav={navClick} showToast={showToast} onViewDay={setSelectedDay} onViewProfile={(author) => { setFeedFriend({ userId: author.userId, displayName: author.name, avatarUrl: author.avatarUrl }); navClick('friends') }} />
+                <Feed
+                  voyage={data.voyage}
+                  itinerary={data.itinerary}
+                  dailyLogs={data.dailyLogs}
+                  budget={data.budget}
+                  packing={data.packing}
+                  foodLogs={data.foodLogs}
+                  diningLog={data.diningLog}
+                  sectionStatus={sectionStatus}
+                  onChange={v => update('dailyLogs', v)}
+                  onNav={navClick}
+                  showToast={showToast}
+                  onViewDay={setSelectedDay}
+                  onViewProfile={(author) => {
+                    setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
+                    navClick('friends')
+                  }}
+                />
               )}
               {section === 'dashboard' && selectedDay !== null && (
                 <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />

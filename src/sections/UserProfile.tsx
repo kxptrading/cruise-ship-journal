@@ -1,68 +1,71 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/UserProfile.jsx — Profile page root
-//
-// Fetches real profile data from Supabase, keeps avatar/banner upload with the
-// interactive ImageCropper, then delegates rendering to sub-components:
-//
-//   Hero            — banner, avatar, stat strip
-//   PassportMap     — world map with port pins
-//   Personality     — cruise DNA trait rows
-//   Badges          — achievement badge grid
-//   Companions      — scrollable shipmate cards
-//   VoyagesStrip    — compact voyage cards
-//   Preferences     — auto-fill preference rows
-//   SettingsBlock   — export actions + sign-out
-//
-// Where to plug in live data
-// ──────────────────────────
-// • Badges: replace BADGES in profileData.js with a Supabase query on a
-//   `user_badges` table; same shape { emoji, name, earned, color }.
-// • Companions: replace COMPANIONS with a query joining friend_requests +
-//   profiles; same shape { initials, name, relation, voyages, color }.
-// • Preferences: replace PREFERENCES with user preferences from a DB table.
-// • Traits: derive from journal data or store in a `user_traits` table.
+// sections/UserProfile.tsx — Profile page root
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useUserId, useW } from '../context'
-import { BP } from '../constants'
-import { FONT_BODY } from '../constants'
+import { BP, FONT_BODY } from '../constants'
 import ImageCropper from '../components/ImageCropper'
+import type { Session } from '@supabase/supabase-js'
+import type { VoyageListRow, Voyage } from '../types'
 
-import Hero          from './profile/Hero'
-import PassportMap   from './profile/PassportMap'
-import Personality   from './profile/Personality'
-import Badges        from './profile/Badges'
-import Companions    from './profile/Companions'
-import VoyagesStrip  from './profile/VoyagesStrip'
+import Hero         from './profile/Hero'
+import PassportMap  from './profile/PassportMap'
+import Personality  from './profile/Personality'
+import Badges       from './profile/Badges'
+import Companions   from './profile/Companions'
+import VoyagesStrip from './profile/VoyagesStrip'
 import Preferences      from './profile/Preferences'
 import SettingsBlock    from './profile/SettingsBlock'
 import AppearanceBlock  from './profile/AppearanceBlock'
 
-// Cover photo / banner aspect ratio — 840×220px output
 const BANNER_ASPECT = 840 / 220
 
-// ── Root component ────────────────────────────────────────────────────────────
-export default function UserProfile({ session, allVoyages, voyage, onNav, theme, onThemeChange, onAgeChange }) {
+interface UserProfileState {
+  displayName:          string
+  bio:                  string
+  homePort:             string
+  favouriteCruiseLine:  string
+  favouriteDestination: string
+  avatarUrl:            string
+  bannerUrl:            string
+  age:                  number | null
+}
+
+interface CropState {
+  file: File
+  type: 'avatar' | 'banner'
+}
+
+interface Props {
+  session:       Session | null
+  allVoyages:    VoyageListRow[]
+  voyage:        Voyage
+  onNav:         (section: string) => void
+  theme:         string
+  onThemeChange: (id: string) => void
+  onAgeChange?:  (age: number) => void
+}
+
+export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, onAgeChange }: Props) {
   const userId   = useUserId()
   const w        = useW()
   const isMobile = w < BP.mobile
 
-  const [profile, setProfile] = useState({
+  const [profile, setProfile] = useState<UserProfileState>({
     displayName: '', bio: '', homePort: '', favouriteCruiseLine: '',
-    favouriteDestination: '', avatarUrl: '', bannerUrl: '',
+    favouriteDestination: '', avatarUrl: '', bannerUrl: '', age: null,
   })
-  const [loading,         setLoading]         = useState(true)
-  const [uploadingAvatar, setUploadingAvatar] = useState(false)
-  const [uploadingBanner, setUploadingBanner] = useState(false)
-  const [uploadError,     setUploadError]     = useState('')
-  const [cropState,       setCropState]       = useState(null)
+  const [loading,         setLoading]         = useState<boolean>(true)
+  const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
+  const [uploadingBanner, setUploadingBanner] = useState<boolean>(false)
+  const [uploadError,     setUploadError]     = useState<string>('')
+  const [cropState,       setCropState]       = useState<CropState | null>(null)
 
-  const avatarRef = useRef(null)
-  const bannerRef = useRef(null)
+  const avatarRef = useRef<HTMLInputElement>(null)
+  const bannerRef = useRef<HTMLInputElement>(null)
 
-  // ── Load ALL profile fields in one query ──────────────────────────────────────
   useEffect(() => {
     if (!userId) return
     supabase
@@ -75,28 +78,28 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
       ].join(', '))
       .eq('user_id', userId)
       .maybeSingle()
-      .then(({ data, error }) => {
+      .then((res) => {
+        const { error } = res
+        const data = res.data as Record<string, unknown> | null
         if (error) console.error('Profile load error:', error)
         if (data) {
           setProfile({
-            displayName:          data.display_name          ?? '',
-            bio:                  data.bio                   ?? '',
-            homePort:             data.home_port             ?? '',
-            favouriteCruiseLine:  data.favourite_cruise_line ?? '',
-            favouriteDestination: data.favourite_destination ?? '',
-            avatarUrl:            data.avatar_url            ?? '',
-            bannerUrl:            data.banner_url            ?? '',
-            age:                  data.age                   ?? null,
+            displayName:          (data.display_name          as string)  ?? '',
+            bio:                  (data.bio                   as string)  ?? '',
+            homePort:             (data.home_port             as string)  ?? '',
+            favouriteCruiseLine:  (data.favourite_cruise_line as string)  ?? '',
+            favouriteDestination: (data.favourite_destination as string)  ?? '',
+            avatarUrl:            (data.avatar_url            as string)  ?? '',
+            bannerUrl:            (data.banner_url            as string)  ?? '',
+            age:                  (data.age                   as number | null) ?? null,
           })
-          if (data.age != null) onAgeChange?.(data.age)
+          if (data.age != null) onAgeChange?.(data.age as number)
         }
         setLoading(false)
       })
-  }, [userId])
+  }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Single save helper — used by name, avatar, banner, and sub-components ─────
-  // Upserts only the supplied fields; never sends email or unrelated columns.
-  const saveProfileField = useCallback(async (dbUpdates) => {
+  const saveProfileField = useCallback(async (dbUpdates: Record<string, unknown>) => {
     if (!userId) return
     const { error } = await supabase
       .from('profiles')
@@ -104,7 +107,6 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
     if (error) console.error('Profile save error:', error)
   }, [userId])
 
-  // ── Current voyage (active today, else most recent past) ──────────────────────
   const today = new Date()
   const currentVoyage = (() => {
     const active = allVoyages.find(v => {
@@ -115,11 +117,10 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
     if (active) return active
     return [...allVoyages]
       .filter(v => v.departure_date)
-      .sort((a, b) => new Date(b.departure_date) - new Date(a.departure_date))[0] || null
+      .sort((a, b) => new Date(b.departure_date!).getTime() - new Date(a.departure_date!).getTime())[0] || null
   })()
 
-  // ── Upload blob → Supabase Storage ───────────────────────────────────────────
-  const uploadPhotoBlob = async (blob, type) => {
+  const uploadPhotoBlob = async (blob: Blob, type: 'avatar' | 'banner'): Promise<string | null> => {
     if (!blob || !userId) return null
     setUploadError('')
     if (blob.size > 10 * 1024 * 1024) { setUploadError('Image must be under 10 MB.'); return null }
@@ -130,18 +131,22 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
     return `${publicUrl}?t=${Date.now()}`
   }
 
-  // ── Name change ───────────────────────────────────────────────────────────────
-  const handleNameChange = async (newName) => {
+  const handleNameChange = async (newName: string) => {
     setProfile(p => ({ ...p, displayName: newName }))
     await saveProfileField({ display_name: newName })
   }
 
-  // ── File pickers → open cropper ───────────────────────────────────────────────
-  const handleAvatarFileSelect = e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setCropState({ file: f, type: 'avatar' }) }
-  const handleBannerFileSelect = e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) setCropState({ file: f, type: 'banner' }) }
+  const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; e.target.value = ''
+    if (f) setCropState({ file: f, type: 'avatar' })
+  }
+  const handleBannerFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]; e.target.value = ''
+    if (f) setCropState({ file: f, type: 'banner' })
+  }
 
-  // ── Cropper confirmed ─────────────────────────────────────────────────────────
-  const handleCropConfirm = async (blob) => {
+  const handleCropConfirm = async (blob: Blob | null) => {
+    if (!blob || !cropState) return
     const { type } = cropState
     setCropState(null)
     if (type === 'avatar') setUploadingAvatar(true)
@@ -166,7 +171,6 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
   return (
     <div style={{ fontFamily: FONT_BODY }}>
 
-      {/* Cropper modal */}
       {cropState && (
         <ImageCropper
           file={cropState.file}
@@ -177,14 +181,12 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
         />
       )}
 
-      {/* Upload error */}
       {uploadError && (
         <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, padding: '10px 16px', fontSize: 13, color: '#DC2626', marginBottom: 16 }}>
           {uploadError}
         </div>
       )}
 
-      {/* 1. Hero */}
       <Hero
         profile={profile}
         session={session}
@@ -197,34 +199,36 @@ export default function UserProfile({ session, allVoyages, voyage, onNav, theme,
         onNameChange={handleNameChange}
       />
 
-      {/* 2. Passport map + Personality */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
         <PassportMap />
         <Personality onSave={saveProfileField} />
       </div>
 
-      {/* 3. Badges */}
       <Badges currentVoyage={currentVoyage} />
 
-      {/* 4. Companions */}
       <Companions onNav={onNav} />
 
-      {/* 5. Voyages */}
       <VoyagesStrip allVoyages={allVoyages} onViewAll={() => onNav?.('voyage')} />
 
-      {/* 6. Appearance + Preferences */}
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
-        <AppearanceBlock theme={theme} onThemeChange={onThemeChange} age={profile.age} onAgeChange={async (age) => { setProfile(p => ({ ...p, age })); onAgeChange?.(age); await saveProfileField({ age }) }} />
+        <AppearanceBlock
+          theme={theme}
+          onThemeChange={onThemeChange}
+          age={profile.age}
+          onAgeChange={async (age: number) => {
+            setProfile(p => ({ ...p, age }))
+            onAgeChange?.(age)
+            await saveProfileField({ age })
+          }}
+        />
         <Preferences onSave={saveProfileField} />
       </div>
 
-      {/* 7. Settings */}
       <SettingsBlock
         onSignOut={() => supabase.auth.signOut()}
         displayName={profile.displayName || session?.user?.email?.split('@')[0] || 'My'}
       />
 
-      {/* Hidden file inputs */}
       <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />
       <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerFileSelect} />
     </div>

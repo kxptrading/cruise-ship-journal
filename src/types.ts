@@ -197,6 +197,7 @@ export interface VoyageListRow {
 // ── Feed / social ─────────────────────────────────────────────────────────────
 
 export interface FeedAuthor {
+  userId?:   string
   name:      string
   avatarUrl: string
   initials:  string

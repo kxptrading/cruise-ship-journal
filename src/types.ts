@@ -237,3 +237,13 @@ export interface Comment {
 
 /** keyed by `${voyageId}-${dayNumber}` */
 export type CommentsMap = Record<string, Comment[]>
+
+// ── Photo record (Supabase Storage + photos table) ────────────────────────────
+
+export interface PhotoRecord {
+  id:           string
+  storage_path: string
+  caption:      string
+  created_at:   string
+  dataUrl:      string
+}

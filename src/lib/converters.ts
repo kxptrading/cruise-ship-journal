@@ -1,19 +1,155 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// lib/converters.js — Pure DB ↔ app shape converters
-//
-// Each pair of functions translates between Supabase snake_case row shapes and
-// the camelCase objects the React components work with. All functions are pure
-// (no side-effects, no imports) so they're trivial to unit-test.
-//
-// Naming convention:
-//   fromDb*(row | rows)         → app shape
-//   toDb*(voyageId, appVal)     → DB row / rows ready for insert/upsert
+// lib/converters.ts — Pure DB ↔ app shape converters
 // ─────────────────────────────────────────────────────────────────────────────
+
+import type {
+  Voyage, ItineraryDay, DailyLog, FoodLog, DiningEntry, EntertainmentEntry,
+  FoodFavourites, Highlights, Budget, BudgetItem, Shopping, ShoppingItem,
+  Packing, Note,
+} from '../types'
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Inline DB row types — one per domain. These reflect the actual Postgres
+// column names and nullable types. They are not exported (consumers use the
+// app-level types from types.ts).
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface VoyageRow {
+  ship_name?:         string | null
+  cruise_line?:       string | null
+  cabin?:             string | null
+  deck?:              string | null
+  departure_date?:    string | null
+  return_date?:       string | null
+  departure_port?:    string | null
+  total_nights?:      number | null
+  companion_1?:       string | null
+  companion_2?:       string | null
+  companion_3?:       string | null
+  companion_4?:       string | null
+  emergency_contact?: string | null
+  phone?:             string | null
+  guest_services?:    string | null
+  muster_station?:    string | null
+  dining_time?:       string | null
+  cover_photo_url?:   string | null
+}
+
+interface ItineraryRow {
+  day_number: number
+  date?:      string | null
+  port?:      string | null
+  arrive?:    string | null
+  depart?:    string | null
+}
+
+interface DailyLogRow {
+  day_number?:    number
+  date?:          string | null
+  port?:          string | null
+  weather?:       string[] | null
+  highlights?:    string | null
+  breakfast?:     string | null
+  lunch?:         string | null
+  dinner?:        string | null
+  drink?:         string | null
+  activity?:      string | null
+  duration?:      string | null
+  exc_cost?:      string | null
+  exc_notes?:     string | null
+  entertainment?: string | null
+  best_moment?:   string | null
+  rating?:        number | null
+  is_public?:     boolean | null
+}
+
+interface FoodLogRow {
+  day?:           string | number | null
+  date?:          string | null
+  meal_type?:     string | null
+  port?:          string | null
+  venue?:         string | null
+  what_i_had?:    string | null
+  standout?:      string | null
+  drinks?:        string | null
+  tasting_notes?: string | null
+  rating?:        number | null
+  cost?:          string | null
+  order_again?:   string | null
+}
+
+interface DiningLogRow {
+  venue?:   string | null
+  date?:    string | null
+  meal?:    string | null
+  ordered?: string | null
+  rating?:  number | null
+  notes?:   string | null
+}
+
+interface EntertainmentRow {
+  day?:        number | null
+  date?:       string | null
+  name?:       string | null
+  type?:       string | null
+  venue?:      string | null
+  performers?: string | null
+  duration?:   string | null
+  rating?:     number | null
+  notes?:      string | null
+}
+
+interface FoodFavRow {
+  best?:       string | null
+  buffet?:     string | null
+  specialty?:  string | null
+  surprising?: string | null
+  recreate?:   string | null
+  regret?:     string | null
+}
+
+interface HighlightsRow {
+  port?:       string | null
+  meal?:       string | null
+  funny?:      string | null
+  view?:       string | null
+  friends?:    string | null
+  first_time?: string | null
+  moment?:     string | null
+}
+
+interface BudgetRow {
+  total_budget?: number | string | null
+}
+
+interface BudgetItemRow {
+  date?:     string | null
+  item?:     string | null
+  category?: string | null
+  amount?:   number | null
+}
+
+interface ShoppingRow {
+  item?: string | null
+  port?: string | null
+  cost?: number | null
+}
+
+interface PackingRow {
+  category?: string | null
+  item?:     string | null
+  checked?:  boolean | null
+}
+
+interface NoteRow {
+  title?:   string | null
+  content?: string | null
+}
 
 
 // ── Voyage ────────────────────────────────────────────────────────────────────
 
-export function fromDbVoyage(row) {
+export function fromDbVoyage(row: VoyageRow): Voyage {
   return {
     shipName:         row.ship_name         ?? '',
     cruiseLine:       row.cruise_line       ?? '',
@@ -36,7 +172,7 @@ export function fromDbVoyage(row) {
   }
 }
 
-export function toDbVoyage(v) {
+export function toDbVoyage(v: Voyage) {
   return {
     ship_name:         v.shipName         || null,
     cruise_line:       v.cruiseLine       || null,
@@ -61,10 +197,8 @@ export function toDbVoyage(v) {
 
 
 // ── Itinerary ─────────────────────────────────────────────────────────────────
-// arrive/depart come back from Postgres as HH:MM:SS — slice to HH:MM to match
-// <input type="time">.
 
-export function fromDbItinerary(rows) {
+export function fromDbItinerary(rows: ItineraryRow[]): ItineraryDay[] {
   return [...rows]
     .sort((a, b) => a.day_number - b.day_number)
     .map(row => ({
@@ -75,7 +209,7 @@ export function fromDbItinerary(rows) {
     }))
 }
 
-export function toDbItinerary(voyageId, arr) {
+export function toDbItinerary(voyageId: string, arr: ItineraryDay[]) {
   return arr.map((day, i) => ({
     voyage_id:  voyageId,
     day_number: i + 1,
@@ -88,12 +222,10 @@ export function toDbItinerary(voyageId, arr) {
 
 
 // ── Daily Logs ────────────────────────────────────────────────────────────────
-// exc_cost/exc_notes/best_moment are the DB column names;
-// excCost/excNotes/bestMoment are the camelCase app names.
 
-export function fromDbDailyLogs(rows) {
+export function fromDbDailyLogs(rows: DailyLogRow[]): DailyLog[] {
   return [...rows]
-    .sort((a, b) => a.day_number - b.day_number)
+    .sort((a, b) => (a.day_number ?? 0) - (b.day_number ?? 0))
     .map(row => ({
       date:          row.date          ?? '',
       port:          row.port          ?? '',
@@ -114,7 +246,7 @@ export function fromDbDailyLogs(rows) {
     }))
 }
 
-export function toDbDailyLogs(voyageId, arr) {
+export function toDbDailyLogs(voyageId: string, arr: DailyLog[]) {
   return arr.map((day, i) => ({
     voyage_id:     voyageId,
     day_number:    i + 1,
@@ -139,12 +271,10 @@ export function toDbDailyLogs(voyageId, arr) {
 
 
 // ── Food Logs ─────────────────────────────────────────────────────────────────
-// DB uses meal_type / what_i_had / tasting_notes / order_again;
-// app uses meal / what / notes / orderAgain.
 
-export function fromDbFoodLogs(rows) {
+export function fromDbFoodLogs(rows: FoodLogRow[]): FoodLog[] {
   return rows.map(r => ({
-    day:        r.day           ?? '',
+    day:        r.day != null ? String(r.day) : '',
     date:       r.date          ?? '',
     meal:       r.meal_type     ?? '',
     port:       r.port          ?? '',
@@ -159,7 +289,7 @@ export function fromDbFoodLogs(rows) {
   }))
 }
 
-export function toDbFoodLogs(voyageId, arr) {
+export function toDbFoodLogs(voyageId: string, arr: FoodLog[]) {
   return arr.map(m => ({
     voyage_id:     voyageId,
     day:           m.day        || null,
@@ -179,9 +309,8 @@ export function toDbFoodLogs(voyageId, arr) {
 
 
 // ── Dining Log ────────────────────────────────────────────────────────────────
-// Column names match app field names exactly — no renaming needed.
 
-export function fromDbDiningLog(rows) {
+export function fromDbDiningLog(rows: DiningLogRow[]): DiningEntry[] {
   return rows.map(r => ({
     venue:   r.venue   ?? '',
     date:    r.date    ?? '',
@@ -192,7 +321,7 @@ export function fromDbDiningLog(rows) {
   }))
 }
 
-export function toDbDiningLog(voyageId, arr) {
+export function toDbDiningLog(voyageId: string, arr: DiningEntry[]) {
   return arr.map(r => ({
     voyage_id: voyageId,
     venue:     r.venue   || null,
@@ -206,9 +335,8 @@ export function toDbDiningLog(voyageId, arr) {
 
 
 // ── Entertainment Log ─────────────────────────────────────────────────────────
-// day is stored as integer in DB; app treats it as a string.
 
-export function fromDbEntertainmentLog(rows) {
+export function fromDbEntertainmentLog(rows: EntertainmentRow[]): EntertainmentEntry[] {
   return rows.map(r => ({
     day:        r.day != null ? String(r.day) : '',
     date:       r.date        ?? '',
@@ -222,7 +350,7 @@ export function fromDbEntertainmentLog(rows) {
   }))
 }
 
-export function toDbEntertainmentLog(voyageId, arr) {
+export function toDbEntertainmentLog(voyageId: string, arr: EntertainmentEntry[]) {
   return arr.map(e => ({
     voyage_id:  voyageId,
     day:        e.day ? parseInt(e.day, 10) : null,
@@ -239,9 +367,8 @@ export function toDbEntertainmentLog(voyageId, arr) {
 
 
 // ── Food Favourites ───────────────────────────────────────────────────────────
-// Single record per voyage. Direct 1-to-1 column mapping.
 
-export function fromDbFoodFav(row) {
+export function fromDbFoodFav(row: FoodFavRow | null | undefined): Partial<FoodFavourites> {
   if (!row) return {}
   return {
     best:       row.best       ?? '',
@@ -253,7 +380,7 @@ export function fromDbFoodFav(row) {
   }
 }
 
-export function toDbFoodFav(voyageId, v) {
+export function toDbFoodFav(voyageId: string, v: Partial<FoodFavourites>) {
   return {
     voyage_id:  voyageId,
     best:       v.best       || null,
@@ -267,9 +394,8 @@ export function toDbFoodFav(voyageId, v) {
 
 
 // ── Highlights ────────────────────────────────────────────────────────────────
-// Single record per voyage. firstTime ↔ first_time.
 
-export function fromDbHighlights(row) {
+export function fromDbHighlights(row: HighlightsRow | null | undefined): Partial<Highlights> {
   if (!row) return {}
   return {
     port:      row.port       ?? '',
@@ -282,7 +408,7 @@ export function fromDbHighlights(row) {
   }
 }
 
-export function toDbHighlights(voyageId, v) {
+export function toDbHighlights(voyageId: string, v: Partial<Highlights>) {
   return {
     voyage_id:  voyageId,
     port:       v.port      || null,
@@ -297,13 +423,11 @@ export function toDbHighlights(voyageId, v) {
 
 
 // ── Budget ────────────────────────────────────────────────────────────────────
-// budget row (total_budget) + budget_items array.
-// amount is numeric in DB; stored as string in app for input binding.
 
-export function fromDbBudget(budgetRow, itemRows) {
+export function fromDbBudget(budgetRow: BudgetRow | null | undefined, itemRows: BudgetItemRow[]): Budget {
   return {
     budget: budgetRow?.total_budget ?? '',
-    items:  (itemRows || []).map(r => ({
+    items:  (itemRows || []).map((r): BudgetItem => ({
       date:     r.date     ?? '',
       item:     r.item     ?? '',
       category: r.category ?? '',
@@ -314,11 +438,10 @@ export function fromDbBudget(budgetRow, itemRows) {
 
 
 // ── Shopping ──────────────────────────────────────────────────────────────────
-// Wrapped { items: [] } shape. cost is numeric in DB.
 
-export function fromDbShopping(rows) {
+export function fromDbShopping(rows: ShoppingRow[]): Shopping {
   return {
-    items: rows.map(r => ({
+    items: rows.map((r): ShoppingItem => ({
       item: r.item ?? '',
       port: r.port ?? '',
       cost: r.cost != null ? String(r.cost) : '',
@@ -326,7 +449,7 @@ export function fromDbShopping(rows) {
   }
 }
 
-export function toDbShoppingItems(voyageId, arr) {
+export function toDbShoppingItems(voyageId: string, arr: ShoppingItem[]) {
   return arr.map(i => ({
     voyage_id: voyageId,
     item:      i.item || null,
@@ -337,19 +460,18 @@ export function toDbShoppingItems(voyageId, arr) {
 
 
 // ── Packing ───────────────────────────────────────────────────────────────────
-// { [category]: string[] } of checked item names.
-// DB stores one row per checked item; unchecked items are hardcoded in the UI.
 
-export function fromDbPacking(rows) {
-  const result = {}
+export function fromDbPacking(rows: PackingRow[]): Packing {
+  const result: Packing = {}
   rows.filter(r => r.checked).forEach(r => {
-    if (!result[r.category]) result[r.category] = []
-    result[r.category].push(r.item)
+    const cat = r.category ?? ''
+    if (!result[cat]) result[cat] = []
+    result[cat].push(r.item ?? '')
   })
   return result
 }
 
-export function toDbPackingItems(voyageId, obj) {
+export function toDbPackingItems(voyageId: string, obj: Packing) {
   return Object.entries(obj).flatMap(([cat, items]) =>
     items.map(item => ({ voyage_id: voyageId, category: cat, item, checked: true }))
   )
@@ -357,13 +479,12 @@ export function toDbPackingItems(voyageId, obj) {
 
 
 // ── Notes ─────────────────────────────────────────────────────────────────────
-// Dynamic array of { title, content } objects.
 
-export function fromDbNotes(rows) {
+export function fromDbNotes(rows: NoteRow[]): Note[] {
   return rows.map(r => ({ title: r.title ?? '', content: r.content ?? '' }))
 }
 
-export function toDbNotes(voyageId, arr) {
+export function toDbNotes(voyageId: string, arr: Note[]) {
   return arr.map(n => ({
     voyage_id: voyageId,
     title:     n.title   || null,

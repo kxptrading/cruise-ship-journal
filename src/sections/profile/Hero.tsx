@@ -1,22 +1,18 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/Hero.jsx — Full-bleed banner, circular avatar, and stat strip
-//
-// Layout (top → bottom):
-//   1. 260px gradient banner with decorative circles + wave
-//   2. Avatar overlapping the banner edge, name block, next-voyage block
-//   3. Frosted 4-column stat strip (scoped to current voyage)
+// profile/Hero.tsx — Full-bleed banner, circular avatar, and stat strip
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from 'react'
+import type { KeyboardEvent } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
-import { NAVY, NAVY2, GOLD, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY } from '../../constants'
+import { NAVY2, GOLD, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { useW } from '../../context'
 
 const BANNER_H      = 260
 const AVATAR_SIZE   = 92
 const AVATAR_BORDER = 4
 
-// ── Wave SVG drawn along the banner's bottom edge ─────────────────────────────
 function Wave() {
   return (
     <svg
@@ -30,9 +26,15 @@ function Wave() {
   )
 }
 
-// ── Single stat cell in the frosted strip ─────────────────────────────────────
-function StatCell({ emoji, value, label, border }) {
-  const w = useW()
+interface StatCellProps {
+  emoji:  string
+  value:  string | number
+  label:  string
+  border: boolean
+}
+
+function StatCell({ emoji, value, label, border }: StatCellProps) {
+  const w  = useW()
   const sm = w < 400
   return (
     <div style={{
@@ -48,20 +50,42 @@ function StatCell({ emoji, value, label, border }) {
   )
 }
 
-export default function Hero({
-  profile, session, allVoyages,
-  currentVoyage,
-  onUploadAvatar, onUploadBanner,
-  uploadingAvatar, uploadingBanner,
-  onNameChange,
-}) {
+export interface UserProfile {
+  displayName?:          string
+  bannerUrl?:            string | null
+  avatarUrl?:            string | null
+  homePort?:             string
+  bio?:                  string
+  favouriteCruiseLine?:  string
+}
+
+interface CurrentVoyage {
+  id:              string
+  ship_name?:      string | null
+  departure_date?: string | null
+  return_date?:    string | null
+  total_nights?:   number | string | null
+}
+
+interface Props {
+  profile:         UserProfile
+  session:         Session | null
+  allVoyages:      CurrentVoyage[]
+  currentVoyage:   CurrentVoyage | null | undefined
+  onUploadAvatar:  () => void
+  onUploadBanner:  () => void
+  uploadingAvatar: boolean
+  uploadingBanner: boolean
+  onNameChange?:   (name: string) => void
+}
+
+export default function Hero({ profile, session, allVoyages, currentVoyage, onUploadAvatar, onUploadBanner, uploadingAvatar, uploadingBanner, onNameChange }: Props) {
   const w        = useW()
   const isMobile = w < 640
 
-  // ── Name editing ──────────────────────────────────────────────────────────────
-  const [editingName, setEditingName] = useState(false)
-  const [nameInput,   setNameInput]   = useState('')
-  const nameInputRef = useRef(null)
+  const [editingName, setEditingName] = useState<boolean>(false)
+  const [nameInput,   setNameInput]   = useState<string>('')
+  const nameInputRef = useRef<HTMLInputElement>(null)
 
   const commitName = () => {
     const trimmed = nameInput.trim()
@@ -69,9 +93,8 @@ export default function Hero({
     setEditingName(false)
   }
 
-  // ── Voyage-scoped stats ───────────────────────────────────────────────────────
-  const [portCount,  setPortCount]  = useState(null)
-  const [daysLogged, setDaysLogged] = useState(null)
+  const [portCount,  setPortCount]  = useState<number | null>(null)
+  const [daysLogged, setDaysLogged] = useState<number | null>(null)
 
   useEffect(() => {
     if (!currentVoyage?.id) { setPortCount(null); setDaysLogged(null); return }
@@ -80,24 +103,22 @@ export default function Hero({
       supabase.from('itinerary').select('port').eq('voyage_id', id),
       supabase.from('daily_logs').select('id', { count: 'exact', head: true }).eq('voyage_id', id),
     ]).then(([itinRes, logsRes]) => {
-      const ports = (itinRes.data ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim()))
+      const ports = (itinRes.data ?? []).filter((r: { port: string }) => r.port && !/^at sea$/i.test(r.port.trim()))
       setPortCount(ports.length)
       setDaysLogged(logsRes.count ?? 0)
     })
   }, [currentVoyage?.id])
 
-  // ── Derived display values ────────────────────────────────────────────────────
-  const displayName  = profile.displayName || session?.user?.email?.split('@')[0] || 'Cruiser'
+  const displayName = profile.displayName || session?.user?.email?.split('@')[0] || 'Cruiser'
   const initials = (() => {
     const words = displayName.trim().split(/\s+/).filter(Boolean)
     if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
     return words[0].slice(0, 2).toUpperCase()
   })()
 
-  const totalVoyages  = allVoyages.length
-  const voyageNights  = parseInt(currentVoyage?.total_nights) || null
+  const totalVoyages = allVoyages.length
+  const voyageNights = parseInt(String(currentVoyage?.total_nights)) || null
 
-  // Is the current voyage actively sailing right now?
   const todayTs = Date.now()
   const isActivelySailing = currentVoyage && (() => {
     const dep = currentVoyage.departure_date ? new Date(currentVoyage.departure_date + 'T00:00:00').getTime() : null
@@ -105,10 +126,9 @@ export default function Hero({
     return dep && ret && todayTs >= dep && todayTs <= ret
   })()
 
-  // Next upcoming voyage (different from current)
   const nextVoyage = allVoyages
     .filter(v => v.departure_date && new Date(v.departure_date + 'T00:00:00') > new Date())
-    .sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date))[0]
+    .sort((a, b) => new Date(a.departure_date!).getTime() - new Date(b.departure_date!).getTime())[0]
 
   const memberSince = session?.user?.created_at
     ? new Date(session.user.created_at).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
@@ -159,7 +179,6 @@ export default function Hero({
       {/* ── White card below banner ──────────────────────────────────────── */}
       <div style={{ background: WHITE, padding: isMobile ? '0 16px 20px' : '0 28px 24px', position: 'relative' }}>
 
-        {/* Avatar + name row */}
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
 
           {/* Avatar */}
@@ -193,13 +212,12 @@ export default function Hero({
               CAPTAIN'S LOG
             </div>
 
-            {/* Name — inline edit */}
             {editingName ? (
               <input
                 ref={nameInputRef}
                 value={nameInput}
                 onChange={e => setNameInput(e.target.value)}
-                onKeyDown={e => { if (e.key === 'Enter') commitName(); if (e.key === 'Escape') setEditingName(false) }}
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') commitName(); if (e.key === 'Escape') setEditingName(false) }}
                 onBlur={commitName}
                 autoFocus
                 style={{
@@ -231,10 +249,7 @@ export default function Hero({
               </div>
             )}
 
-            {/* Meta row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 6, flexWrap: 'wrap' }}>
-
-              {/* Currently sailing status */}
               {currentVoyage?.ship_name && (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 6,
@@ -268,7 +283,7 @@ export default function Hero({
 
           {/* Next Voyage block */}
           {nextVoyage && !isMobile && (
-            <div style={{ background: `${NAVY}12`, border: `1px solid ${NAVY}30`, borderRadius: 14, padding: '10px 16px', textAlign: 'right', flexShrink: 0 }}>
+            <div style={{ background: `${'#1B3A5C'}12`, border: `1px solid ${'#1B3A5C'}30`, borderRadius: 14, padding: '10px 16px', textAlign: 'right', flexShrink: 0 }}>
               <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4 }}>Next Voyage</div>
               <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: NAVY2, marginBottom: 2 }}>
                 {nextVoyage.ship_name || 'TBC'}
@@ -289,9 +304,8 @@ export default function Hero({
           </p>
         )}
 
-        {/* ── Frosted stat strip — all stats scoped to current voyage ────── */}
+        {/* ── Frosted stat strip ────────────────────────────────────────────── */}
         {w < 400 ? (
-          // 2×2 grid on very small screens
           <div style={{
             display: 'grid', gridTemplateColumns: '1fr 1fr',
             background: 'rgba(3,105,161,0.72)',
@@ -300,10 +314,10 @@ export default function Hero({
             border: '1px solid rgba(255,255,255,0.18)',
             overflow: 'hidden',
           }}>
-            <StatCell emoji="🚢" value={totalVoyages}         label="My Voyages" border={false} />
-            <StatCell emoji="🌙" value={voyageNights ?? '—'}  label="Nights"     border={true}  />
-            <StatCell emoji="📍" value={portCount    ?? '—'}  label="Ports"      border={false} />
-            <StatCell emoji="📖" value={daysLogged   ?? '—'}  label="Days Logged" border={true} />
+            <StatCell emoji="🚢" value={totalVoyages}         label="My Voyages"  border={false} />
+            <StatCell emoji="🌙" value={voyageNights ?? '—'}  label="Nights"      border={true}  />
+            <StatCell emoji="📍" value={portCount    ?? '—'}  label="Ports"       border={false} />
+            <StatCell emoji="📖" value={daysLogged   ?? '—'}  label="Days Logged" border={true}  />
           </div>
         ) : (
           <div style={{
@@ -314,14 +328,13 @@ export default function Hero({
             border: '1px solid rgba(255,255,255,0.18)',
             overflow: 'hidden',
           }}>
-            <StatCell emoji="🚢" value={totalVoyages}         label="My Voyages" border={false} />
-            <StatCell emoji="🌙" value={voyageNights ?? '—'}  label="Nights"     border={true}  />
-            <StatCell emoji="📍" value={portCount    ?? '—'}  label="Ports"      border={true}  />
-            <StatCell emoji="📖" value={daysLogged   ?? '—'}  label="Days Logged" border={true} />
+            <StatCell emoji="🚢" value={totalVoyages}         label="My Voyages"  border={false} />
+            <StatCell emoji="🌙" value={voyageNights ?? '—'}  label="Nights"      border={true}  />
+            <StatCell emoji="📍" value={portCount    ?? '—'}  label="Ports"       border={true}  />
+            <StatCell emoji="📖" value={daysLogged   ?? '—'}  label="Days Logged" border={true}  />
           </div>
         )}
 
-        {/* Voyage scope note */}
         {currentVoyage && (
           <div style={{ marginTop: 8, fontSize: 10, color: MUTED, textAlign: 'right' }}>
             Nights · Ports · Days Logged shown for {currentVoyage.ship_name || 'current voyage'}

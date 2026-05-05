@@ -1,8 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/Companions.jsx — Horizontally scrollable travel companion cards
-//
-// Queries companion_1..4 from every voyage belonging to the current user,
-// deduplicates by name, and counts how many voyages each person appears in.
+// profile/Companions.tsx — Horizontally scrollable travel companion cards
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from 'react'
@@ -11,18 +8,31 @@ import { useUserId } from '../../context'
 import { WHITE, BORDER, NAVY2, MUTED, LIGHT, FONT_DISPLAY, FONT_BODY } from '../../constants'
 
 const COLORS = ['#0EA5E9', '#10B981', '#F59E0B', '#8B5CF6', '#F97316', '#EC4899', '#14B8A6', '#6366F1']
-const colorFor = (name) => COLORS[(name.charCodeAt(0) + name.length) % COLORS.length]
 
-function getInitials(name) {
+const colorFor = (name: string): string =>
+  COLORS[(name.charCodeAt(0) + name.length) % COLORS.length]
+
+function getInitials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean)
   if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
   return words[0].slice(0, 2).toUpperCase()
 }
 
-export default function Companions({ onNav }) {
+interface CompanionEntry {
+  name:       string
+  voyageCount: number
+  ships:      string[]
+  avatarUrl?: string | null
+}
+
+interface Props {
+  onNav?: (id: string) => void
+}
+
+export default function Companions({ onNav }: Props) {
   const userId = useUserId()
-  const [companions, setCompanions] = useState([])
-  const [loading,    setLoading]    = useState(true)
+  const [companions, setCompanions] = useState<CompanionEntry[]>([])
+  const [loading,    setLoading]    = useState<boolean>(true)
 
   useEffect(() => {
     if (!userId) return
@@ -35,12 +45,11 @@ export default function Companions({ onNav }) {
 
       if (!data) { setLoading(false); return }
 
-      // Aggregate across all voyages — key by lowercased name to deduplicate
-      const map = {}
-      data.forEach(voyage => {
+      const map: Record<string, CompanionEntry> = {}
+      data.forEach((voyage: { companion_1?: string | null; companion_2?: string | null; companion_3?: string | null; companion_4?: string | null; ship_name?: string | null }) => {
         const fields = [voyage.companion_1, voyage.companion_2, voyage.companion_3, voyage.companion_4]
         fields.filter(Boolean).forEach(raw => {
-          const name = raw.trim()
+          const name = raw!.trim()
           const key  = name.toLowerCase()
           if (!map[key]) map[key] = { name, voyageCount: 0, ships: [] }
           map[key].voyageCount++
@@ -50,9 +59,6 @@ export default function Companions({ onNav }) {
 
       const sorted = Object.values(map).sort((a, b) => b.voyageCount - a.voyageCount)
 
-      // Look up profile photos — query profiles where display_name matches any
-      // companion name. If a companion is also a registered user with an avatar_url
-      // set, their photo shows instead of the coloured-initials fallback.
       const names = sorted.map(c => c.name)
       if (names.length > 0) {
         const { data: profiles } = await supabase
@@ -60,13 +66,11 @@ export default function Companions({ onNav }) {
           .select('display_name, avatar_url')
           .in('display_name', names)
 
-        // Build a quick lookup: lowercased name → avatarUrl
-        const avatarMap = {}
-        ;(profiles ?? []).forEach(p => {
+        const avatarMap: Record<string, string> = {}
+        ;(profiles ?? []).forEach((p: { display_name: string; avatar_url?: string | null }) => {
           if (p.avatar_url) avatarMap[p.display_name.toLowerCase()] = p.avatar_url
         })
 
-        // Merge avatar URLs into companion objects
         sorted.forEach(c => {
           c.avatarUrl = avatarMap[c.name.toLowerCase()] ?? null
         })
@@ -82,7 +86,6 @@ export default function Companions({ onNav }) {
   return (
     <div style={{ background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '18px 20px', marginBottom: 20 }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>SHIPMATES</div>
@@ -90,11 +93,7 @@ export default function Companions({ onNav }) {
         </div>
         <button
           onClick={() => onNav?.('voyage')}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 12, fontWeight: 700, color: NAVY2,
-            fontFamily: FONT_BODY, padding: '4px 0',
-          }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, padding: '4px 0' }}
         >
           Edit in Voyage Details →
         </button>
@@ -143,39 +142,26 @@ export default function Companions({ onNav }) {
                 onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 2px ${color}66` }}
                 onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
               >
-                {/* Avatar bubble — photo if the companion has a registered profile,
-                    otherwise a coloured circle with their initials */}
                 <div style={{
                   width: 50, height: 50, borderRadius: '50%',
                   background: color,
                   boxShadow: `0 3px 10px ${color}55`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: FONT_DISPLAY, fontSize: 17, color: WHITE,
+                  fontFamily: FONT_DISPLAY, fontSize: 17, color: '#FFFFFF',
                   overflow: 'hidden', flexShrink: 0,
                 }}>
                   {c.avatarUrl ? (
-                    <img
-                      src={c.avatarUrl}
-                      alt={c.name}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
+                    <img src={c.avatarUrl} alt={c.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   ) : (
                     getInitials(c.name)
                   )}
                 </div>
 
-                {/* Name */}
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: NAVY2, textAlign: 'center', lineHeight: 1.3, fontFamily: FONT_BODY, maxWidth: 110, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {c.name}
                 </div>
 
-                {/* Voyage count pill */}
-                <div style={{
-                  fontSize: 10, fontWeight: 700, color,
-                  background: `${color}14`,
-                  borderRadius: 20, padding: '3px 10px',
-                  fontFamily: FONT_BODY, whiteSpace: 'nowrap',
-                }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color, background: `${color}14`, borderRadius: 20, padding: '3px 10px', fontFamily: FONT_BODY, whiteSpace: 'nowrap' }}>
                   {c.voyageCount} {c.voyageCount === 1 ? 'voyage' : 'voyages'}
                 </div>
               </div>

@@ -2,11 +2,24 @@ import { useState } from 'react'
 import { NAVY, WHITE, BORDER, TEXT, MUTED, FONT_BODY } from '../../constants'
 import { Avatar } from './helpers'
 
-export default function NewChatModal({ friends, onCreate, onClose, creating }) {
-  const [selected,  setSelected]  = useState([])
-  const [groupName, setGroupName] = useState('')
+interface Friend {
+  userId:    string
+  avatarUrl?: string | null
+  name:      string
+}
 
-  const toggle   = (id) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
+interface Props {
+  friends:  Friend[]
+  onCreate: (selectedIds: string[], groupName: string | null) => void
+  onClose:  () => void
+  creating: boolean
+}
+
+export default function NewChatModal({ friends, onCreate, onClose, creating }: Props) {
+  const [selected,  setSelected]  = useState<string[]>([])
+  const [groupName, setGroupName] = useState<string>('')
+
+  const toggle   = (id: string) => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const isGroup  = selected.length > 1
   const canStart = selected.length > 0 && (!isGroup || groupName.trim())
 

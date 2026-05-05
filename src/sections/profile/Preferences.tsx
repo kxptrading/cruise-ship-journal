@@ -1,84 +1,55 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/Preferences.jsx — Editable travel preferences
-//
-// Each row shows the current value as static text. Clicking the row switches
-// the value to an inline dropdown. Selecting an option saves immediately and
-// returns the row to its static display.
+// profile/Preferences.tsx — Editable travel preferences
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from 'react'
+import type { ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useUserId } from '../../context'
 import { WHITE, BORDER, NAVY2, MUTED, LIGHT, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 
+interface PrefDef {
+  key:     string
+  label:   string
+  icon:    string
+  options: string[]
+}
 
-const PREFS = [
-  {
-    key:   'cabin_preference',
-    label: 'Cabin preference',
-    icon:  '🛏️',
-    options: ['Inside', 'Oceanview', 'Balcony · mid-ship', 'Balcony · aft', 'Balcony · forward', 'Suite', 'No preference'],
-  },
-  {
-    key:   'dining_time',
-    label: 'Dining time',
-    icon:  '🍽️',
-    options: ['Early · 18:00', 'Early · 18:30', 'Standard · 19:00', 'Standard · 19:30', 'Late · 20:00', 'Late · 20:30', 'Anytime dining'],
-  },
-  {
-    key:   'dietary',
-    label: 'Dietary',
-    icon:  '🥗',
-    options: ['No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-free', 'Halal', 'Kosher', 'Nut allergy', 'Dairy-free'],
-  },
-  {
-    key:   'currency',
-    label: 'Default currency',
-    icon:  '💰',
-    options: ['GBP (£)', 'USD ($)', 'EUR (€)', 'AUD (A$)', 'CAD (C$)', 'JPY (¥)', 'CHF', 'NOK', 'SEK', 'DKK'],
-  },
-  {
-    key:   'home_airport',
-    label: 'Home airport',
-    icon:  '🛫',
-    options: [
-      'LHR – London Heathrow', 'LGW – London Gatwick', 'MAN – Manchester',
-      'EDI – Edinburgh', 'BHX – Birmingham', 'BRS – Bristol', 'GLA – Glasgow',
-      'LTN – London Luton', 'STN – London Stansted', 'NCL – Newcastle',
-      'LBA – Leeds Bradford', 'JFK – New York JFK', 'LAX – Los Angeles',
-      'ORD – Chicago O\'Hare', 'MIA – Miami', 'DXB – Dubai', 'SYD – Sydney',
-      'AMS – Amsterdam', 'CDG – Paris Charles de Gaulle', 'FRA – Frankfurt',
-    ],
-  },
-  {
-    key:   'units',
-    label: 'Units',
-    icon:  '📏',
-    options: ['Metric', 'Imperial'],
-  },
+const PREFS: PrefDef[] = [
+  { key: 'cabin_preference', label: 'Cabin preference', icon: '🛏️', options: ['Inside', 'Oceanview', 'Balcony · mid-ship', 'Balcony · aft', 'Balcony · forward', 'Suite', 'No preference'] },
+  { key: 'dining_time',      label: 'Dining time',       icon: '🍽️', options: ['Early · 18:00', 'Early · 18:30', 'Standard · 19:00', 'Standard · 19:30', 'Late · 20:00', 'Late · 20:30', 'Anytime dining'] },
+  { key: 'dietary',          label: 'Dietary',           icon: '🥗', options: ['No restrictions', 'Vegetarian', 'Vegan', 'Pescatarian', 'Gluten-free', 'Halal', 'Kosher', 'Nut allergy', 'Dairy-free'] },
+  { key: 'currency',         label: 'Default currency',  icon: '💰', options: ['GBP (£)', 'USD ($)', 'EUR (€)', 'AUD (A$)', 'CAD (C$)', 'JPY (¥)', 'CHF', 'NOK', 'SEK', 'DKK'] },
+  { key: 'home_airport',     label: 'Home airport',      icon: '🛫', options: ['LHR – London Heathrow', 'LGW – London Gatwick', 'MAN – Manchester', 'EDI – Edinburgh', 'BHX – Birmingham', 'BRS – Bristol', 'GLA – Glasgow', 'LTN – London Luton', 'STN – London Stansted', 'NCL – Newcastle', 'LBA – Leeds Bradford', 'JFK – New York JFK', 'LAX – Los Angeles', 'ORD – Chicago O\'Hare', 'MIA – Miami', 'DXB – Dubai', 'SYD – Sydney', 'AMS – Amsterdam', 'CDG – Paris Charles de Gaulle', 'FRA – Frankfurt'] },
+  { key: 'units',            label: 'Units',             icon: '📏', options: ['Metric', 'Imperial'] },
 ]
 
-const EMPTY = Object.fromEntries(PREFS.map(p => [p.key, '']))
+type PrefValues = Record<string, string>
+const EMPTY: PrefValues = Object.fromEntries(PREFS.map(p => [p.key, '']))
 
-function PrefRow({ pref, value, onSave, isLast }) {
-  const [editing, setEditing] = useState(false)
-  const [saved,   setSaved]   = useState(false)
-  const selectRef = useRef(null)
+interface PrefRowProps {
+  pref:    PrefDef
+  value:   string
+  onSave:  (key: string, value: string) => Promise<void>
+  isLast:  boolean
+}
 
-  // Open the native select as soon as editing starts
+function PrefRow({ pref, value, onSave, isLast }: PrefRowProps) {
+  const [editing, setEditing] = useState<boolean>(false)
+  const [saved,   setSaved]   = useState<boolean>(false)
+  const selectRef = useRef<HTMLSelectElement>(null)
+
   useEffect(() => {
-    if (editing && selectRef.current) {
-      selectRef.current.focus()
-    }
+    if (editing && selectRef.current) selectRef.current.focus()
   }, [editing])
 
-  const handleChange = async (e) => {
+  const handleChange = async (e: ChangeEvent<HTMLSelectElement>) => {
     const newVal = e.target.value
     setEditing(false)
     if (newVal === value) return
     await onSave(pref.key, newVal)
     setSaved(true)
-    setTimeout(() => setSaved(false), 1500)
+    window.setTimeout(() => setSaved(false), 1500)
   }
 
   return (
@@ -95,22 +66,14 @@ function PrefRow({ pref, value, onSave, isLast }) {
       onMouseEnter={e => { if (!editing) e.currentTarget.style.background = LIGHT }}
       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
     >
-      {/* Icon tile */}
-      <div style={{
-        width: 30, height: 30, borderRadius: 8,
-        background: LIGHT, border: `1px solid ${BORDER}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        fontSize: 15, flexShrink: 0,
-      }}>
+      <div style={{ width: 30, height: 30, borderRadius: 8, background: LIGHT, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>
         {pref.icon}
       </div>
 
-      {/* Label */}
       <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: TEXT, fontWeight: 500, fontFamily: FONT_BODY }}>
         {pref.label}
       </div>
 
-      {/* Right side: static value OR inline dropdown */}
       {editing ? (
         <select
           ref={selectRef}
@@ -118,18 +81,10 @@ function PrefRow({ pref, value, onSave, isLast }) {
           onChange={handleChange}
           onBlur={() => setEditing(false)}
           style={{
-            border: `1px solid var(--t-primary)`,
-            borderRadius: 8,
-            padding: '5px 8px',
-            fontSize: 12,
-            fontFamily: FONT_BODY,
-            fontWeight: 600,
-            color: NAVY2,
-            background: WHITE,
-            outline: 'none',
-            cursor: 'pointer',
-            maxWidth: 180,
-            boxShadow: '0 0 0 2px var(--t-primary)22',
+            border: `1px solid var(--t-primary)`, borderRadius: 8,
+            padding: '5px 8px', fontSize: 12, fontFamily: FONT_BODY,
+            fontWeight: 600, color: NAVY2, background: WHITE, outline: 'none',
+            cursor: 'pointer', maxWidth: 180, boxShadow: '0 0 0 2px var(--t-primary)22',
           }}
           onClick={e => e.stopPropagation()}
         >
@@ -154,10 +109,14 @@ function PrefRow({ pref, value, onSave, isLast }) {
   )
 }
 
-export default function Preferences({ onSave }) {
+interface Props {
+  onSave: (patch: Record<string, string | null>) => Promise<void>
+}
+
+export default function Preferences({ onSave }: Props) {
   const userId = useUserId()
-  const [prefs,   setPrefs]   = useState(EMPTY)
-  const [loading, setLoading] = useState(true)
+  const [prefs,   setPrefs]   = useState<PrefValues>(EMPTY)
+  const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
     if (!userId) return
@@ -169,18 +128,18 @@ export default function Preferences({ onSave }) {
       .then(({ data, error }) => {
         if (error) console.error('Preferences load error:', error)
         if (data) setPrefs({
-          cabin_preference: data.cabin_preference ?? '',
-          dining_time:      data.dining_time      ?? '',
-          dietary:          data.dietary          ?? '',
-          currency:         data.currency         ?? '',
-          home_airport:     data.home_airport     ?? '',
-          units:            data.units            ?? '',
+          cabin_preference: (data as PrefValues).cabin_preference ?? '',
+          dining_time:      (data as PrefValues).dining_time      ?? '',
+          dietary:          (data as PrefValues).dietary          ?? '',
+          currency:         (data as PrefValues).currency         ?? '',
+          home_airport:     (data as PrefValues).home_airport     ?? '',
+          units:            (data as PrefValues).units            ?? '',
         })
         setLoading(false)
       })
   }, [userId])
 
-  const handleSave = async (key, value) => {
+  const handleSave = async (key: string, value: string) => {
     setPrefs(p => ({ ...p, [key]: value }))
     await onSave({ [key]: value || null })
   }

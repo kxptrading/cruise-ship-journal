@@ -1,18 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/feed/PostCard.jsx — Single daily-log post card
-//
-// Renders one feed entry: header (author + day badge), optional hero photo,
-// post body (highlights, best moment, activity, weather, meals), the reaction
-// bar (long-press picker + amalgamated summary), and the collapsible comment
-// thread.
+// sections/feed/PostCard.tsx — Single daily-log post card
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from 'react'
+import type { KeyboardEvent } from 'react'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, CORAL, FONT_DISPLAY, FONT_BODY, WX_EMOJI, WX_STYLE } from '../../constants'
 import { useW } from '../../context'
+import type { FeedItem, FeedAuthor, ReactionState, Comment } from '../../types'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
-export const REACTIONS = [
+interface Reaction {
+  id:    string
+  emoji: string
+  label: string
+}
+
+export const REACTIONS: Reaction[] = [
   { id: 'love',      emoji: '🚢', label: 'Love This' },
   { id: 'epic',      emoji: '🌊', label: 'Epic Memory' },
   { id: 'wish',      emoji: '🍹', label: 'Wish I Was There' },
@@ -20,18 +23,34 @@ export const REACTIONS = [
   { id: 'shot',      emoji: '📸', label: 'Great Shot' },
 ]
 
-export default function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, onViewProfile, reactions, onReact, comments, onAddComment, onEditComment, userId }) {
+interface Props {
+  item:           FeedItem
+  onViewDay?:     (dayIndex: number) => void
+  avatarUrl?:     string | null
+  initials?:      string
+  displayName?:   string
+  author?:        FeedAuthor | null
+  onViewProfile?: () => void
+  reactions?:     Record<string, ReactionState> | null
+  onReact?:       (id: string) => void
+  comments?:      Comment[]
+  onAddComment?:  (text: string) => Promise<void>
+  onEditComment?: (commentId: string, text: string) => Promise<void>
+  userId?:        string
+}
+
+export default function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, onViewProfile, reactions, onReact, comments, onAddComment, onEditComment, userId }: Props) {
   const w = useW()
-  const [showComments, setShowComments] = useState(false)
-  const [commentText, setCommentText]   = useState('')
-  const [submitting, setSubmitting]     = useState(false)
-  const [editingId, setEditingId]       = useState(null)
-  const [editText, setEditText]         = useState('')
-  const [saving, setSaving]             = useState(false)
-  const [pickerOpen, setPickerOpen]     = useState(false)
-  const commentInputRef = useRef(null)
-  const longPressTimer  = useRef(null)
-  const pickerRef       = useRef(null)
+  const [showComments, setShowComments] = useState<boolean>(false)
+  const [commentText, setCommentText]   = useState<string>('')
+  const [submitting, setSubmitting]     = useState<boolean>(false)
+  const [editingId, setEditingId]       = useState<string | null>(null)
+  const [editText, setEditText]         = useState<string>('')
+  const [saving, setSaving]             = useState<boolean>(false)
+  const [pickerOpen, setPickerOpen]     = useState<boolean>(false)
+  const commentInputRef = useRef<HTMLTextAreaElement>(null)
+  const longPressTimer  = useRef<number | null>(null)
+  const pickerRef       = useRef<HTMLDivElement>(null)
 
   // ── My active reaction (if any) ──────────────────────────────────────────────
   const myReaction = REACTIONS.find(r => reactions?.[r.id]?.mine)
@@ -46,20 +65,20 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
   const openPicker  = () => setPickerOpen(true)
   const closePicker = () => setPickerOpen(false)
 
-  const handlePressStart = () => { longPressTimer.current = setTimeout(openPicker, 400) }
-  const handlePressEnd   = () => { clearTimeout(longPressTimer.current) }
+  const handlePressStart = () => { longPressTimer.current = window.setTimeout(openPicker, 400) }
+  const handlePressEnd   = () => { if (longPressTimer.current !== null) { clearTimeout(longPressTimer.current); longPressTimer.current = null } }
 
   const handleReactTap = () => {
     if (pickerOpen) { closePicker(); return }
     if (myReaction) { onReact?.(myReaction.id) } else { openPicker() }
   }
 
-  const handlePickReaction = (id) => { closePicker(); onReact?.(id) }
+  const handlePickReaction = (id: string) => { closePicker(); onReact?.(id) }
 
   useEffect(() => {
     if (!pickerOpen) return
-    const handler = (e) => {
-      if (pickerRef.current && !pickerRef.current.contains(e.target)) closePicker()
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) closePicker()
     }
     document.addEventListener('mousedown', handler)
     document.addEventListener('touchstart', handler)
@@ -78,7 +97,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
     commentInputRef.current?.focus()
   }
 
-  const handleSaveEdit = async (commentId) => {
+  const handleSaveEdit = async (commentId: string) => {
     if (!editText.trim() || saving) return
     setSaving(true)
     await onEditComment?.(commentId, editText.trim())
@@ -98,7 +117,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
     lunch     && { icon: '🥗', text: lunch },
     dinner    && { icon: '🍝', text: dinner },
     drink     && { icon: '🍷', text: drink },
-  ].filter(Boolean)
+  ].filter(Boolean) as { icon: string; text: string }[]
 
   return (
     <div className="feed-card" style={{ background: WHITE, border: 'none', borderRadius: 24, overflow: 'hidden', position: 'relative', boxShadow: '0 2px 8px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.07)' }}>
@@ -254,8 +273,8 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                     transition: 'transform 0.15s',
                     transform: reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)',
                   }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.35)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)'}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.35)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)' }}
                 >
                   {r.emoji}
                 </button>
@@ -302,7 +321,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
         <button
           onClick={() => {
             setShowComments(s => {
-              if (!s) setTimeout(() => commentInputRef.current?.focus(), 60)
+              if (!s) window.setTimeout(() => commentInputRef.current?.focus(), 60)
               return !s
             })
           }}
@@ -317,7 +336,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
           }}
         >
           <span style={{ fontSize: 15 }}>💬</span>
-          {(comments?.length || 0) > 0 ? comments.length : 'Comment'}
+          {(comments?.length || 0) > 0 ? comments!.length : 'Comment'}
         </button>
       </div>
 
@@ -326,7 +345,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
         <div style={{ borderTop: `1px solid ${BORDER}`, padding: '14px 16px 16px', background: '#FAFAFA' }}>
           {(comments?.length || 0) > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 14 }}>
-              {comments.map(c => {
+              {comments!.map(c => {
                 const isOwn     = c.user_id === userId
                 const isEditing = editingId === c.id
                 return (
@@ -343,7 +362,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                           <textarea
                             value={editText}
                             onChange={e => setEditText(e.target.value)}
-                            onKeyDown={e => {
+                            onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
                               if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit(c.id) }
                               if (e.key === 'Escape') { setEditingId(null); setEditText('') }
                             }}
@@ -391,7 +410,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <div style={{ width: 30, height: 30, borderRadius: '50%', background: NAVY2, flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {(author ? author.avatarUrl : avatarUrl)
-                ? <img src={author ? author.avatarUrl : avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ? <img src={author ? author.avatarUrl : avatarUrl!} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                 : <span style={{ fontSize: 10, fontWeight: 700, color: WHITE }}>{author ? author.initials : initials}</span>
               }
             </div>
@@ -399,7 +418,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
               ref={commentInputRef}
               value={commentText}
               onChange={e => setCommentText(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment() } }}
+              onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment() } }}
               placeholder="Write a comment…"
               rows={1}
               style={{ flex: 1, border: `1px solid ${BORDER}`, borderRadius: 18, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT, background: WHITE, transition: 'border-color 0.15s', boxSizing: 'border-box', minWidth: 0 }}

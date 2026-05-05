@@ -1,17 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/Personality.jsx — Editable cruise personality traits
-//
-// Four trait slots, each click-to-edit with a dropdown of predefined options.
-// Selecting a trait auto-fills its description and saves to Supabase.
+// profile/Personality.tsx — Editable cruise personality traits
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef } from 'react'
+import type { ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useUserId } from '../../context'
 import { WHITE, BORDER, NAVY2, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 
-// Predefined personality options — name maps to a description
-const TRAIT_OPTIONS = [
+interface TraitOption {
+  name: string
+  sub:  string
+}
+
+const TRAIT_OPTIONS: TraitOption[] = [
   { name: 'Balcony Lover',          sub: 'Sea views every morning, no exceptions' },
   { name: 'Excursion Maximalist',   sub: 'Every port, every adventure, every time' },
   { name: 'Formal Night Regular',   sub: 'Black tie? Already packed. Twice.' },
@@ -19,22 +21,22 @@ const TRAIT_OPTIONS = [
   { name: 'Buffet Strategist',      sub: 'First in line, last to leave' },
   { name: 'Sea Day Champion',       sub: 'Nothing beats a day with nowhere to be' },
   { name: 'Port Collector',         sub: 'Ticking off destinations one gangway at a time' },
-  { name: 'Spa Devotee',           sub: 'Thermal suite, hot stone, repeat' },
-  { name: 'Casino Regular',        sub: 'One more hand — then bed' },
+  { name: 'Spa Devotee',            sub: 'Thermal suite, hot stone, repeat' },
+  { name: 'Casino Regular',         sub: 'One more hand — then bed' },
   { name: 'Deck Chair Philosopher', sub: 'Best thoughts happen at sea' },
   { name: 'Photo Chronicler',       sub: 'Every moment captured for posterity' },
-  { name: 'Show Fan',              sub: 'Front row for every performance' },
-  { name: 'Late Night Reveller',   sub: 'The night is young at every port' },
-  { name: 'Early Riser',           sub: 'Sunrises at sea are unmatched' },
-  { name: 'Foodie Explorer',       sub: 'Every meal is an adventure' },
+  { name: 'Show Fan',               sub: 'Front row for every performance' },
+  { name: 'Late Night Reveller',    sub: 'The night is young at every port' },
+  { name: 'Early Riser',            sub: 'Sunrises at sea are unmatched' },
+  { name: 'Foodie Explorer',        sub: 'Every meal is an adventure' },
   { name: 'Drinks Package Champion', sub: 'Getting full value, every day' },
-  { name: 'Pool Lounger',          sub: 'Claimed this sunbed at 7am' },
-  { name: 'Shopping Enthusiast',   sub: 'Duty-free is a sport' },
-  { name: 'Cocktail Hour Regular', sub: '5pm somewhere in the world' },
-  { name: 'Ship Historian',        sub: 'Knows every deck and corridor by heart' },
+  { name: 'Pool Lounger',           sub: 'Claimed this sunbed at 7am' },
+  { name: 'Shopping Enthusiast',    sub: 'Duty-free is a sport' },
+  { name: 'Cocktail Hour Regular',  sub: '5pm somewhere in the world' },
+  { name: 'Ship Historian',         sub: 'Knows every deck and corridor by heart' },
 ]
 
-const TRAIT_MAP = Object.fromEntries(TRAIT_OPTIONS.map(t => [t.name, t.sub]))
+const TRAIT_MAP: Record<string, string> = Object.fromEntries(TRAIT_OPTIONS.map(t => [t.name, t.sub]))
 
 const COLORS = [
   'var(--t-primary)',
@@ -43,25 +45,36 @@ const COLORS = [
   '#8B5CF6',
 ]
 
-const SLOTS = ['trait_1', 'trait_2', 'trait_3', 'trait_4']
-const EMPTY = Object.fromEntries(SLOTS.map(s => [s, '']))
+const SLOTS = ['trait_1', 'trait_2', 'trait_3', 'trait_4'] as const
+type SlotKey = typeof SLOTS[number]
+type Traits  = Record<SlotKey, string>
 
-function TraitRow({ slotKey, value, color, onSave, isLast }) {
-  const [editing, setEditing] = useState(false)
-  const [saved,   setSaved]   = useState(false)
-  const selectRef = useRef(null)
+const EMPTY: Traits = Object.fromEntries(SLOTS.map(s => [s, ''])) as Traits
+
+interface TraitRowProps {
+  slotKey: SlotKey
+  value:   string
+  color:   string
+  onSave:  (key: SlotKey, value: string) => Promise<void>
+  isLast:  boolean
+}
+
+function TraitRow({ slotKey, value, color, onSave, isLast }: TraitRowProps) {
+  const [editing, setEditing] = useState<boolean>(false)
+  const [saved,   setSaved]   = useState<boolean>(false)
+  const selectRef = useRef<HTMLSelectElement>(null)
 
   useEffect(() => {
     if (editing && selectRef.current) selectRef.current.focus()
   }, [editing])
 
-  const handleChange = async (e) => {
+  const handleChange = async (e: ChangeEvent<HTMLSelectElement>) => {
     const newVal = e.target.value
     setEditing(false)
     if (newVal === value) return
     await onSave(slotKey, newVal)
     setSaved(true)
-    setTimeout(() => setSaved(false), 1500)
+    window.setTimeout(() => setSaved(false), 1500)
   }
 
   const sub = value ? TRAIT_MAP[value] : null
@@ -94,17 +107,9 @@ function TraitRow({ slotKey, value, color, onSave, isLast }) {
           onBlur={() => setEditing(false)}
           onClick={e => e.stopPropagation()}
           style={{
-            border: `1px solid ${color}`,
-            borderRadius: 8,
-            padding: '6px 10px',
-            fontSize: 13,
-            fontFamily: FONT_BODY,
-            fontWeight: 600,
-            color: NAVY2,
-            background: WHITE,
-            outline: 'none',
-            width: '100%',
-            cursor: 'pointer',
+            border: `1px solid ${color}`, borderRadius: 8, padding: '6px 10px',
+            fontSize: 13, fontFamily: FONT_BODY, fontWeight: 600, color: NAVY2,
+            background: WHITE, outline: 'none', width: '100%', cursor: 'pointer',
             boxShadow: `0 0 0 2px ${color}22`,
           }}
         >
@@ -133,10 +138,14 @@ function TraitRow({ slotKey, value, color, onSave, isLast }) {
   )
 }
 
-export default function Personality({ onSave }) {
+interface Props {
+  onSave: (patch: Record<string, string | null>) => Promise<void>
+}
+
+export default function Personality({ onSave }: Props) {
   const userId = useUserId()
-  const [traits,  setTraits]  = useState(EMPTY)
-  const [loading, setLoading] = useState(true)
+  const [traits,  setTraits]  = useState<Traits>(EMPTY)
+  const [loading, setLoading] = useState<boolean>(true)
 
   useEffect(() => {
     if (!userId) return
@@ -148,16 +157,16 @@ export default function Personality({ onSave }) {
       .then(({ data, error }) => {
         if (error) console.error('Personality load error:', error)
         if (data) setTraits({
-          trait_1: data.trait_1 ?? '',
-          trait_2: data.trait_2 ?? '',
-          trait_3: data.trait_3 ?? '',
-          trait_4: data.trait_4 ?? '',
+          trait_1: (data as Traits).trait_1 ?? '',
+          trait_2: (data as Traits).trait_2 ?? '',
+          trait_3: (data as Traits).trait_3 ?? '',
+          trait_4: (data as Traits).trait_4 ?? '',
         })
         setLoading(false)
       })
   }, [userId])
 
-  const handleSave = async (key, value) => {
+  const handleSave = async (key: SlotKey, value: string) => {
     setTraits(t => ({ ...t, [key]: value }))
     await onSave({ [key]: value || null })
   }

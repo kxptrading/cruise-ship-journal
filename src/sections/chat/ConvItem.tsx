@@ -1,7 +1,32 @@
 import { NAVY, TEXT, MUTED, WHITE, BORDER } from '../../constants'
 import { fmtTime, Avatar, GroupIcon } from './helpers'
 
-export default function ConvItem({ conv, active, onClick, userId }) {
+interface LastMessage {
+  created_at: string
+  user_id:    string
+  body:       string
+}
+
+interface OtherUser {
+  avatarUrl?: string | null
+}
+
+interface Conversation {
+  lastMessage:  LastMessage | null
+  unreadCount?: number
+  type:         string
+  otherUser?:   OtherUser | null
+  displayName:  string
+}
+
+interface Props {
+  conv:    Conversation
+  active:  boolean
+  onClick: () => void
+  userId:  string
+}
+
+export default function ConvItem({ conv, active, onClick, userId }: Props) {
   const last   = conv.lastMessage
   const unread = conv.unreadCount || 0
 

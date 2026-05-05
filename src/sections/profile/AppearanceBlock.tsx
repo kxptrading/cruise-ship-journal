@@ -1,12 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/AppearanceBlock.jsx — Theme selector card on the Profile page
+// profile/AppearanceBlock.tsx — Theme selector card on the Profile page
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
+import type { KeyboardEvent } from 'react'
 import { WHITE, BORDER, NAVY2, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { THEMES } from '../../themes'
+import type { Theme } from '../../themes'
 
-const GROUPS = [
+interface ThemeGroup {
+  label: string
+  ids:   string[]
+}
+
+const GROUPS: ThemeGroup[] = [
   { label: 'Blues',   ids: ['ocean', 'midnight', 'cobalt', 'steel'] },
   { label: 'Purples', ids: ['violet', 'lavender', 'indigo', 'periwinkle'] },
   { label: 'Reds',    ids: ['rose', 'coral', 'blush', 'bubblegum'] },
@@ -15,7 +22,13 @@ const GROUPS = [
   { label: 'Yellow',  ids: ['gold', 'lemon', 'amber', 'saffron'] },
 ]
 
-function ThemeSwatch({ t, active, onThemeChange }) {
+interface SwatchProps {
+  t:             Theme
+  active:        boolean
+  onThemeChange?: (id: string) => void
+}
+
+function ThemeSwatch({ t, active, onThemeChange }: SwatchProps) {
   return (
     <button
       onClick={() => onThemeChange?.(t.id)}
@@ -53,9 +66,16 @@ function ThemeSwatch({ t, active, onThemeChange }) {
   )
 }
 
-export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange }) {
-  const [ageInput, setAgeInput] = useState('')
-  const [ageSaved, setAgeSaved] = useState(false)
+interface Props {
+  theme:          string
+  onThemeChange?: (id: string) => void
+  age:            number | null
+  onAgeChange?:   (n: number) => void
+}
+
+export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange }: Props) {
+  const [ageInput, setAgeInput] = useState<string>('')
+  const [ageSaved, setAgeSaved] = useState<boolean>(false)
 
   const handleAgeBlur = () => {
     const n = parseInt(ageInput)
@@ -63,7 +83,7 @@ export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange
     if (!isNaN(n) && n >= 1 && n <= 120) {
       onAgeChange?.(n)
       setAgeSaved(true)
-      setTimeout(() => setAgeSaved(false), 1500)
+      window.setTimeout(() => setAgeSaved(false), 1500)
     }
   }
 
@@ -90,11 +110,11 @@ export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange
             <input
               type="number"
               min="1" max="120"
-              placeholder={age ?? 'Age'}
+              placeholder={age !== null ? String(age) : 'Age'}
               value={ageInput}
               onChange={e => setAgeInput(e.target.value)}
               onBlur={handleAgeBlur}
-              onKeyDown={e => { if (e.key === 'Enter') { e.target.blur() } }}
+              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') { (e.target as HTMLInputElement).blur() } }}
               style={{ width: 72, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 10px', fontSize: 13, fontFamily: FONT_BODY, color: TEXT, outline: 'none', textAlign: 'center' }}
             />
             {ageSaved && <span style={{ fontSize: 11, fontWeight: 700, color: TEAL }}>✓ Saved</span>}

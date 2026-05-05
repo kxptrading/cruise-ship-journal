@@ -1,7 +1,20 @@
 import { NAVY, WHITE, BORDER, TEXT, MUTED } from '../../constants'
 import { fmtFull, Avatar } from './helpers'
 
-export default function MsgBubble({ msg, isOwn, showAuthor, authorName, authorAvatar }) {
+interface Message {
+  body:       string
+  created_at: string
+}
+
+interface Props {
+  msg:          Message
+  isOwn:        boolean
+  showAuthor:   boolean
+  authorName?:  string | null
+  authorAvatar?: string | null
+}
+
+export default function MsgBubble({ msg, isOwn, showAuthor, authorName, authorAvatar }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: isOwn ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 7, marginBottom: 3 }}>
       {!isOwn && <Avatar url={authorAvatar} name={authorName} size={28} fontSize={10} />}

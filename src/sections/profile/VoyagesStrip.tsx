@@ -1,17 +1,19 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// profile/VoyagesStrip.jsx — Compact 3-column voyage card grid
-//
-// Reads real voyages from the allVoyages prop. Each card shows cruise line,
-// ship name, dates, and a coloured left-border accent.
+// profile/VoyagesStrip.tsx — Compact 3-column voyage card grid
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { WHITE, BORDER, NAVY2, NAVY, GOLD, MUTED, LIGHT, TEAL, PLUM, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { useW } from '../../context'
+import type { VoyageListRow } from '../../types'
 
-// Cycle through accent colours per voyage
 const ACCENT_CYCLE = [NAVY, PLUM, TEAL, GOLD]
 
-export default function VoyagesStrip({ allVoyages, onViewAll }) {
+interface Props {
+  allVoyages: VoyageListRow[]
+  onViewAll:  () => void
+}
+
+export default function VoyagesStrip({ allVoyages, onViewAll }: Props) {
   const w = useW()
   const cols = w < 480 ? 1 : w < 700 ? 2 : 3
 
@@ -20,7 +22,6 @@ export default function VoyagesStrip({ allVoyages, onViewAll }) {
   return (
     <div style={{ background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '18px 20px', marginBottom: 20 }}>
 
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 4 }}>JOURNEY</div>
@@ -34,7 +35,6 @@ export default function VoyagesStrip({ allVoyages, onViewAll }) {
         </button>
       </div>
 
-      {/* Voyage grid */}
       {allVoyages.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '24px 0', color: MUTED, fontSize: 13 }}>
           No voyages yet — add your first one in Voyage Details.
@@ -63,7 +63,6 @@ export default function VoyagesStrip({ allVoyages, onViewAll }) {
                 onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
                 aria-label={`${v.ship_name || 'Unnamed voyage'}, ${isActive ? 'active' : 'past'}`}
               >
-                {/* Cruise line + active pill */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                   <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                     {v.cruise_line || 'Cruise'}
@@ -75,12 +74,10 @@ export default function VoyagesStrip({ allVoyages, onViewAll }) {
                   )}
                 </div>
 
-                {/* Ship name */}
                 <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: NAVY2, marginBottom: 6 }}>
                   {v.ship_name || 'Unnamed Voyage'}
                 </div>
 
-                {/* Date + nights */}
                 <div style={{ display: 'flex', gap: 8, fontSize: 10.5, color: MUTED, fontFamily: FONT_BODY, flexWrap: 'wrap' }}>
                   {depDate && (
                     <span>

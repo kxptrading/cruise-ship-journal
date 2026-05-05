@@ -1,17 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/feed/QuickComposer.jsx — Quick post composer
-//
-// A Facebook-style "What happened today?" composer. Collapsed by default;
-// expands to show a textarea, day picker, star rating, and photo attachment.
-//
-// Props:
-//   dailyLogs   — array of daily log objects (to populate the day picker)
-//   itinerary   — array of itinerary objects (port names for day picker labels)
-//   voyageId    — current voyage ID (for photo upload)
-//   userId      — authenticated user ID (for photo upload)
-//   currentDay  — 1-based day number (pre-selects today in the picker), or null
-//   onChange    — callback(updatedDailyLogs) — sole write path
-//   showToast   — toast notification callback
+// sections/feed/QuickComposer.tsx — Quick post composer
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef } from 'react'
@@ -20,21 +8,37 @@ import { useW } from '../../context'
 import { Stars } from '../../components/ui'
 import { addPhoto } from '../../lib/photoStorage'
 import CameraCapture from '../../components/CameraCapture'
+import type { DailyLog, ItineraryDay } from '../../types'
 
-export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, currentDay, onChange, showToast }) {
+interface ImagePickerPos {
+  top:  number
+  left: number
+}
+
+interface Props {
+  dailyLogs:  DailyLog[]
+  itinerary:  ItineraryDay[]
+  voyageId:   string | null
+  userId:     string | null
+  currentDay: number | null
+  onChange:   (updated: DailyLog[]) => void
+  showToast?: (msg: string) => void
+}
+
+export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, currentDay, onChange, showToast }: Props) {
   const w = useW()
 
-  const [composing,           setComposing]           = useState(false)
-  const [composeDay,          setComposeDay]          = useState('')
-  const [composeText,         setComposeText]         = useState('')
-  const [composeRating,       setComposeRating]       = useState(0)
-  const [composeImage,        setComposeImage]        = useState(null)
-  const [composeImagePreview, setComposeImagePreview] = useState('')
-  const [showImagePicker,     setShowImagePicker]     = useState(null)  // null | { top, left }
-  const [showCamera,          setShowCamera]          = useState(false)
+  const [composing,           setComposing]           = useState<boolean>(false)
+  const [composeDay,          setComposeDay]          = useState<string>('')
+  const [composeText,         setComposeText]         = useState<string>('')
+  const [composeRating,       setComposeRating]       = useState<number>(0)
+  const [composeImage,        setComposeImage]        = useState<File | null>(null)
+  const [composeImagePreview, setComposeImagePreview] = useState<string>('')
+  const [showImagePicker,     setShowImagePicker]     = useState<ImagePickerPos | null>(null)
+  const [showCamera,          setShowCamera]          = useState<boolean>(false)
 
-  const textRef       = useRef(null)
-  const imageInputRef = useRef(null)
+  const textRef       = useRef<HTMLTextAreaElement>(null)
+  const imageInputRef = useRef<HTMLInputElement>(null)
 
   const resetComposer = () => {
     setComposing(false)
@@ -52,7 +56,7 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
       const todayIdx = currentDay - 1
       if (todayIdx >= 0 && todayIdx < dailyLogs.length) setComposeDay(String(todayIdx))
     }
-    setTimeout(() => textRef.current?.focus(), 60)
+    window.setTimeout(() => textRef.current?.focus(), 60)
   }
 
   const handlePost = async () => {
@@ -184,8 +188,8 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                       <button
                         onClick={() => { setShowImagePicker(null); imageInputRef.current?.click() }}
                         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: '11px 16px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: TEXT, textAlign: 'left' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#F4F4F2'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#F4F4F2' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                       >
                         <span style={{ fontSize: 16 }}>🖼️</span> Upload Image
                       </button>
@@ -193,8 +197,8 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                       <button
                         onClick={() => { setShowImagePicker(null); setShowCamera(true) }}
                         style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', padding: '11px 16px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: TEXT, textAlign: 'left' }}
-                        onMouseEnter={e => e.currentTarget.style.background = '#F4F4F2'}
-                        onMouseLeave={e => e.currentTarget.style.background = 'none'}
+                        onMouseEnter={e => { e.currentTarget.style.background = '#F4F4F2' }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                       >
                         <span style={{ fontSize: 16 }}>📸</span> Take a Photo
                       </button>

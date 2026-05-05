@@ -1,27 +1,36 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/feed/VoyageHero.jsx — Voyage hero banner
-//
-// Static hero with time-of-day gradient, optional cover photo, animated
-// progress bar, companion pills, and a night-sky star field.
-//
-// Props:
-//   w             — viewport width (px)
-//   voyage        — voyage data object
-//   voyagePct     — 0–100 progress percentage, or null (not yet sailing)
-//   currentDay    — 1-based day number within the voyage, or null
-//   voyageNights  — total nights on the voyage
-//   daysLeft      — days remaining, 0 if voyage complete
-//   barPct        — animated bar width (starts at 0, transitions to voyagePct)
-//   timeOfDay     — 'morning' | 'afternoon' | 'evening' | 'night'
-//   stars         — stable array of star objects for night mode
-//   onNav         — section navigation callback
+// sections/feed/VoyageHero.tsx — Voyage hero banner
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { GOLD, WHITE, BP, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { Donut } from '../../components/ui'
 import { getTimeGradient, getVignetteRGB } from '../../lib/atmosphere'
+import type { TimeOfDay } from '../../lib/atmosphere'
+import type { Voyage } from '../../types'
 
-export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav }) {
+interface Star {
+  id:       number | string
+  x:        number
+  y:        number
+  size:     number
+  delay:    number
+  duration: number
+}
+
+interface Props {
+  w:            number
+  voyage:       Voyage
+  voyagePct:    number | null
+  currentDay:   number | null
+  voyageNights: number
+  daysLeft:     number
+  barPct:       number
+  timeOfDay:    TimeOfDay
+  stars:        Star[]
+  onNav:        (id: string) => void
+}
+
+export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav }: Props) {
   const HERO_H = w < BP.mobile ? 210 : 250
   const tg = getTimeGradient(timeOfDay)
   const [vr, vg, vb] = getVignetteRGB(timeOfDay)

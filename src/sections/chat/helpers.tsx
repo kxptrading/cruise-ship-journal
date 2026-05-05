@@ -2,11 +2,11 @@
 
 import { NAVY2, WHITE, GOLD, FONT_BODY } from '../../constants'
 
-export function fmtTime(ts) {
+export function fmtTime(ts: string | null | undefined): string {
   if (!ts) return ''
   const d   = new Date(ts)
   const now = new Date()
-  const diff = now - d
+  const diff = now.getTime() - d.getTime()
   if (d.toDateString() === now.toDateString())
     return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
   if (diff < 172800000) return 'Yesterday'
@@ -14,12 +14,12 @@ export function fmtTime(ts) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-export function fmtFull(ts) {
+export function fmtFull(ts: string | null | undefined): string {
   if (!ts) return ''
   return new Date(ts).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
-export function fmtDateLabel(ts) {
+export function fmtDateLabel(ts: string): string {
   const d   = new Date(ts)
   const now = new Date()
   if (d.toDateString() === now.toDateString()) return 'Today'
@@ -28,13 +28,20 @@ export function fmtDateLabel(ts) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-export function getInitials(name) {
+export function getInitials(name: string | null | undefined): string {
   const words = (name || '?').trim().split(/\s+/).filter(Boolean)
   if (words.length >= 2) return (words[0][0] + words[words.length - 1][0]).toUpperCase()
   return (words[0] || '?').slice(0, 2).toUpperCase()
 }
 
-export function Avatar({ url, name, size = 36, fontSize = 13 }) {
+interface AvatarProps {
+  url?:      string | null
+  name?:     string | null
+  size?:     number
+  fontSize?: number
+}
+
+export function Avatar({ url, name, size = 36, fontSize = 13 }: AvatarProps) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
@@ -49,7 +56,11 @@ export function Avatar({ url, name, size = 36, fontSize = 13 }) {
   )
 }
 
-export function GroupIcon({ size = 36 }) {
+interface GroupIconProps {
+  size?: number
+}
+
+export function GroupIcon({ size = 36 }: GroupIconProps) {
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%', flexShrink: 0,

@@ -1,17 +1,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// components/TopNav.jsx — Full-width top navigation banner (frosted glass)
+// components/TopNav.tsx — Full-width top navigation banner (frosted glass)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { WHITE, FONT_BODY, GOLD } from '../constants'
+import { WHITE, FONT_BODY } from '../constants'
 
-const TOP_NAV_ITEMS = [
+interface NavItem {
+  id:    string
+  label: string
+  icon:  string
+}
+
+const TOP_NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',   label: 'Feed',     icon: '🧭' },
   { id: 'friends',     label: 'Friends',  icon: '👥' },
   { id: 'chat',        label: 'Messages', icon: '💬' },
   { id: 'userprofile', label: 'Profile',  icon: '👤' },
 ]
 
-export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile }) {
+interface Props {
+  section:     string
+  onNav:       (id: string) => void
+  isOverlay:   boolean
+  isMobile:    boolean
+  onMenuOpen:  () => void
+}
+
+export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile }: Props) {
   const logoH  = isMobile ? 38 : 48
   const barH   = isMobile ? 48 : 58
   const btnPad = isMobile ? '5px 10px' : '7px 18px'

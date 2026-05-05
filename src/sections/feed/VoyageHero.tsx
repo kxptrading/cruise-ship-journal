@@ -96,29 +96,29 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
       </div>
 
       {/* Content */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: `0 ${w < BP.mobile ? 18 : 28}px 20px` }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 10 }}>
-          <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'rgba(245,158,11,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 40 }}>⚓</div>
-          <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.13em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY }}>
-            {voyage.cruiseLine || 'Cruise Ship Log'}
-          </span>
-        </div>
-
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: `0 ${w < BP.mobile ? 18 : 28}px 22px` }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <h1 style={{ margin: '0 0 8px', fontSize: w < BP.mobile ? 30 : 38, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.05 }}>
+
+            {(voyage.cruiseLine || voyage.shipName) && (
+              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY, marginBottom: 5 }}>
+                {voyage.cruiseLine || 'Cruise Ship Log'}
+              </div>
+            )}
+
+            <h1 style={{ margin: '0 0 10px', fontSize: w < BP.mobile ? 28 : 36, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.05, textShadow: '0 1px 6px rgba(0,0,0,0.25)' }}>
               {voyage.shipName || 'Your Voyage Awaits'}
             </h1>
 
             {(voyage.departurePort || voyage.departureDate) && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 16px', marginBottom: voyagePct !== null ? 12 : 0 }}>
-                {voyage.departurePort && <span style={{ fontSize: 12, color: GOLD }}>📍 {voyage.departurePort}</span>}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 12 : 0 }}>
+                {voyage.departurePort && <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>📍 {voyage.departurePort}</span>}
                 {voyage.departureDate && (
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.42)' }}>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
                     📅 {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
                   </span>
                 )}
-                {voyage.cabin && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.28)' }}>🚪 Cabin {voyage.cabin}</span>}
+                {voyage.cabin && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>🚪 Cabin {voyage.cabin}</span>}
               </div>
             )}
 
@@ -131,22 +131,22 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
             {voyagePct !== null && (
               <div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: FONT_BODY }}>Voyage Progress</span>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 600 }}>Voyage Progress</span>
                   <span style={{ fontSize: 10, color: GOLD, fontWeight: 700, fontFamily: FONT_BODY }}>
                     {daysLeft === 0 ? 'Voyage Complete ✓' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
                   </span>
                 </div>
-                <div style={{ height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 2, overflow: 'hidden' }}>
+                <div style={{ height: 4, background: 'rgba(255,255,255,0.18)', borderRadius: 2, overflow: 'hidden' }}>
                   <div style={{ height: '100%', width: `${barPct}%`, background: GOLD, borderRadius: 2, transition: 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)' }} />
                 </div>
               </div>
             )}
 
             {(voyage.companion1 || voyage.companion2) && (
-              <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>With:</span>
+              <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>With:</span>
                 {[voyage.companion1, voyage.companion2, voyage.companion3, voyage.companion4].filter(Boolean).map((c, i) => (
-                  <div key={i} style={{ background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 20, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{c}</div>
+                  <div key={i} style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 20, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>{c}</div>
                 ))}
               </div>
             )}
@@ -155,17 +155,17 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
           {w >= BP.mobile && voyageNights > 0 && (
             <div style={{ flexShrink: 0, textAlign: 'center' }}>
               <div style={{ position: 'relative', width: 80, height: 80 }}>
-                <Donut pct={voyagePct || 0} size={80} color={GOLD} bg="rgba(255,255,255,0.1)" thick={6} />
+                <Donut pct={voyagePct || 0} size={80} color={GOLD} bg="rgba(255,255,255,0.15)" thick={6} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                   <div style={{ fontSize: currentDay ? 24 : 18, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
                     {currentDay || voyageNights}
                   </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.38)', marginTop: 2 }}>
+                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: 600 }}>
                     {currentDay ? `of ${voyageNights}` : 'nights'}
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.28)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4 }}>
+              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4, fontWeight: 600 }}>
                 {currentDay ? 'Current Day' : 'Duration'}
               </div>
             </div>

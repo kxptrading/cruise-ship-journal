@@ -64,6 +64,7 @@ interface DailyLogRow {
 }
 
 interface FoodLogRow {
+  id?:            string | null
   day?:           string | number | null
   date?:          string | null
   meal_type?:     string | null
@@ -79,6 +80,7 @@ interface FoodLogRow {
 }
 
 interface DiningLogRow {
+  id?:      string | null
   venue?:   string | null
   date?:    string | null
   meal?:    string | null
@@ -88,6 +90,7 @@ interface DiningLogRow {
 }
 
 interface EntertainmentRow {
+  id?:         string | null
   day?:        number | null
   date?:       string | null
   name?:       string | null
@@ -123,6 +126,7 @@ interface BudgetRow {
 }
 
 interface BudgetItemRow {
+  id?:       string | null
   date?:     string | null
   item?:     string | null
   category?: string | null
@@ -130,6 +134,7 @@ interface BudgetItemRow {
 }
 
 interface ShoppingRow {
+  id?:   string | null
   item?: string | null
   port?: string | null
   cost?: number | null
@@ -142,6 +147,7 @@ interface PackingRow {
 }
 
 interface NoteRow {
+  id?:      string | null
   title?:   string | null
   content?: string | null
 }
@@ -274,6 +280,7 @@ export function toDbDailyLogs(voyageId: string, arr: DailyLog[]) {
 
 export function fromDbFoodLogs(rows: FoodLogRow[]): FoodLog[] {
   return rows.map(r => ({
+    id:         r.id            ?? crypto.randomUUID(),
     day:        r.day != null ? String(r.day) : '',
     date:       r.date          ?? '',
     meal:       r.meal_type     ?? '',
@@ -291,6 +298,7 @@ export function fromDbFoodLogs(rows: FoodLogRow[]): FoodLog[] {
 
 export function toDbFoodLogs(voyageId: string, arr: FoodLog[]) {
   return arr.map(m => ({
+    id:            m.id,
     voyage_id:     voyageId,
     day:           m.day        || null,
     date:          m.date       || null,
@@ -312,6 +320,7 @@ export function toDbFoodLogs(voyageId: string, arr: FoodLog[]) {
 
 export function fromDbDiningLog(rows: DiningLogRow[]): DiningEntry[] {
   return rows.map(r => ({
+    id:      r.id      ?? crypto.randomUUID(),
     venue:   r.venue   ?? '',
     date:    r.date    ?? '',
     meal:    r.meal    ?? '',
@@ -323,6 +332,7 @@ export function fromDbDiningLog(rows: DiningLogRow[]): DiningEntry[] {
 
 export function toDbDiningLog(voyageId: string, arr: DiningEntry[]) {
   return arr.map(r => ({
+    id:        r.id,
     voyage_id: voyageId,
     venue:     r.venue   || null,
     date:      r.date    || null,
@@ -338,6 +348,7 @@ export function toDbDiningLog(voyageId: string, arr: DiningEntry[]) {
 
 export function fromDbEntertainmentLog(rows: EntertainmentRow[]): EntertainmentEntry[] {
   return rows.map(r => ({
+    id:         r.id          ?? crypto.randomUUID(),
     day:        r.day != null ? String(r.day) : '',
     date:       r.date        ?? '',
     name:       r.name        ?? '',
@@ -352,6 +363,7 @@ export function fromDbEntertainmentLog(rows: EntertainmentRow[]): EntertainmentE
 
 export function toDbEntertainmentLog(voyageId: string, arr: EntertainmentEntry[]) {
   return arr.map(e => ({
+    id:         e.id,
     voyage_id:  voyageId,
     day:        e.day ? parseInt(e.day, 10) : null,
     date:       e.date        || null,
@@ -428,6 +440,7 @@ export function fromDbBudget(budgetRow: BudgetRow | null | undefined, itemRows: 
   return {
     budget: budgetRow?.total_budget ?? '',
     items:  (itemRows || []).map((r): BudgetItem => ({
+      id:       r.id       ?? crypto.randomUUID(),
       date:     r.date     ?? '',
       item:     r.item     ?? '',
       category: r.category ?? '',
@@ -442,6 +455,7 @@ export function fromDbBudget(budgetRow: BudgetRow | null | undefined, itemRows: 
 export function fromDbShopping(rows: ShoppingRow[]): Shopping {
   return {
     items: rows.map((r): ShoppingItem => ({
+      id:   r.id   ?? crypto.randomUUID(),
       item: r.item ?? '',
       port: r.port ?? '',
       cost: r.cost != null ? String(r.cost) : '',
@@ -451,6 +465,7 @@ export function fromDbShopping(rows: ShoppingRow[]): Shopping {
 
 export function toDbShoppingItems(voyageId: string, arr: ShoppingItem[]) {
   return arr.map(i => ({
+    id:        i.id,
     voyage_id: voyageId,
     item:      i.item || null,
     port:      i.port || null,
@@ -481,11 +496,16 @@ export function toDbPackingItems(voyageId: string, obj: Packing) {
 // ── Notes ─────────────────────────────────────────────────────────────────────
 
 export function fromDbNotes(rows: NoteRow[]): Note[] {
-  return rows.map(r => ({ title: r.title ?? '', content: r.content ?? '' }))
+  return rows.map(r => ({
+    id:      r.id      ?? crypto.randomUUID(),
+    title:   r.title   ?? '',
+    content: r.content ?? '',
+  }))
 }
 
 export function toDbNotes(voyageId: string, arr: Note[]) {
   return arr.map(n => ({
+    id:        n.id,
     voyage_id: voyageId,
     title:     n.title   || null,
     content:   n.content || null,

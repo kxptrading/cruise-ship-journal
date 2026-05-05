@@ -65,6 +65,7 @@ export interface DailyLog {
 // ── Food Log ──────────────────────────────────────────────────────────────────
 
 export interface FoodLog {
+  id:         string
   day:        string
   date:       string
   meal:       string
@@ -82,6 +83,7 @@ export interface FoodLog {
 // ── Dining Log ────────────────────────────────────────────────────────────────
 
 export interface DiningEntry {
+  id:      string
   venue:   string
   date:    string
   meal:    string
@@ -93,6 +95,7 @@ export interface DiningEntry {
 // ── Entertainment Log ─────────────────────────────────────────────────────────
 
 export interface EntertainmentEntry {
+  id:         string
   day:        string   // stored as string for <input> binding
   date:       string
   name:       string
@@ -130,6 +133,7 @@ export interface Highlights {
 // ── Budget ────────────────────────────────────────────────────────────────────
 
 export interface BudgetItem {
+  id:       string
   date:     string
   item:     string
   category: string
@@ -144,6 +148,7 @@ export interface Budget {
 // ── Shopping ──────────────────────────────────────────────────────────────────
 
 export interface ShoppingItem {
+  id:   string
   item: string
   port: string
   cost: string   // string for <input> binding
@@ -161,6 +166,7 @@ export type Packing = Record<string, string[]>
 // ── Notes ─────────────────────────────────────────────────────────────────────
 
 export interface Note {
+  id:      string
   title:   string
   content: string
 }

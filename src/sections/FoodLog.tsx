@@ -16,7 +16,7 @@ export default function FoodLogSection({ data, onChange }: Props) {
   const w  = useW()
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
-  const add = () => onChange([...data, { day: '', date: '', meal: '', port: '', venue: '', what: '', standout: '', drinks: '', notes: '', rating: 0, cost: '', orderAgain: '' }])
+  const add = () => onChange([...data, { id: crypto.randomUUID(), day: '', date: '', meal: '', port: '', venue: '', what: '', standout: '', drinks: '', notes: '', rating: 0, cost: '', orderAgain: '' }])
   const set = (i: number, f: keyof FoodLog, v: string | number) => {
     const u = [...data]; u[i] = { ...u[i], [f]: v }; onChange(u)
   }

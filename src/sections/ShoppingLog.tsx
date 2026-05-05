@@ -17,7 +17,7 @@ export default function ShoppingLog({ data, onChange }: Props) {
   const cs    = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
   const items = data.items || []
 
-  const add = () => onChange({ ...data, items: [...items, { item: '', port: '', cost: '' }] })
+  const add = () => onChange({ ...data, items: [...items, { id: crypto.randomUUID(), item: '', port: '', cost: '' }] })
   const set = (i: number, f: keyof ShoppingItem, v: string) => {
     const u = [...items]; u[i] = { ...u[i], [f]: v }; onChange({ ...data, items: u })
   }

@@ -182,15 +182,15 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         { data: packingRows },
         { data: noteRows },
       ] = await Promise.all([
-        supabase.from('food_logs').select('day,date,meal_type,port,venue,what_i_had,standout,drinks,tasting_notes,rating,cost,order_again').eq('voyage_id', voyageId),
-        supabase.from('dining_log').select('venue,date,meal,ordered,rating,notes').eq('voyage_id', voyageId),
-        supabase.from('entertainment_log').select('day,date,name,type,venue,performers,duration,rating,notes').eq('voyage_id', voyageId),
+        supabase.from('food_logs').select('id,day,date,meal_type,port,venue,what_i_had,standout,drinks,tasting_notes,rating,cost,order_again').eq('voyage_id', voyageId),
+        supabase.from('dining_log').select('id,venue,date,meal,ordered,rating,notes').eq('voyage_id', voyageId),
+        supabase.from('entertainment_log').select('id,day,date,name,type,venue,performers,duration,rating,notes').eq('voyage_id', voyageId),
         supabase.from('food_favourites').select('best,buffet,specialty,surprising,recreate,regret').eq('voyage_id', voyageId).maybeSingle(),
         supabase.from('highlights').select('port,meal,funny,view,friends,first_time,moment').eq('voyage_id', voyageId).maybeSingle(),
         supabase.from('budget').select('id,total_budget').eq('voyage_id', voyageId).maybeSingle(),
-        supabase.from('shopping_items').select('item,port,cost').eq('voyage_id', voyageId),
+        supabase.from('shopping_items').select('id,item,port,cost').eq('voyage_id', voyageId),
         supabase.from('packing_items').select('category,item,checked').eq('voyage_id', voyageId),
-        supabase.from('notes').select('title,content').eq('voyage_id', voyageId).order('id'),
+        supabase.from('notes').select('id,title,content').eq('voyage_id', voyageId).order('id'),
       ])
 
       let budgetItemRows: Array<{ date?: string | null; item?: string | null; category?: string | null; amount?: number | null }> = []
@@ -198,7 +198,7 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         budgetIdRef.current = (budgetRow as { id: string }).id
         const { data: items } = await supabase
           .from('budget_items')
-          .select('date,item,category,amount')
+          .select('id,date,item,category,amount')
           .eq('budget_id', (budgetRow as { id: string }).id)
         budgetItemRows = items || []
       } else {
@@ -266,32 +266,52 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
       clearTimeout(foodLogsTimer.current ?? undefined)
       foodLogsTimer.current = window.setTimeout(async () => {
         const rows = val as VoyageData['foodLogs']
-        syncCheck(await supabase.from('food_logs').delete().eq('voyage_id', voyageId))
-        if (rows.length > 0) syncCheck(await supabase.from('food_logs').insert(toDbFoodLogs(voyageId, rows)))
+        if (rows.length > 0) {
+          syncCheck(await supabase.from('food_logs').upsert(toDbFoodLogs(voyageId, rows), { onConflict: 'id' }))
+          const ids = rows.map(r => r.id)
+          syncCheck(await supabase.from('food_logs').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
+        } else {
+          syncCheck(await supabase.from('food_logs').delete().eq('voyage_id', voyageId))
+        }
       }, 800)
     }
     if (key === 'diningLog' && voyageId) {
       clearTimeout(diningLogTimer.current ?? undefined)
       diningLogTimer.current = window.setTimeout(async () => {
         const rows = val as VoyageData['diningLog']
-        syncCheck(await supabase.from('dining_log').delete().eq('voyage_id', voyageId))
-        if (rows.length > 0) syncCheck(await supabase.from('dining_log').insert(toDbDiningLog(voyageId, rows)))
+        if (rows.length > 0) {
+          syncCheck(await supabase.from('dining_log').upsert(toDbDiningLog(voyageId, rows), { onConflict: 'id' }))
+          const ids = rows.map(r => r.id)
+          syncCheck(await supabase.from('dining_log').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
+        } else {
+          syncCheck(await supabase.from('dining_log').delete().eq('voyage_id', voyageId))
+        }
       }, 800)
     }
     if (key === 'entertainmentLog' && voyageId) {
       clearTimeout(entertainmentTimer.current ?? undefined)
       entertainmentTimer.current = window.setTimeout(async () => {
         const rows = val as VoyageData['entertainmentLog']
-        syncCheck(await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId))
-        if (rows.length > 0) syncCheck(await supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, rows)))
+        if (rows.length > 0) {
+          syncCheck(await supabase.from('entertainment_log').upsert(toDbEntertainmentLog(voyageId, rows), { onConflict: 'id' }))
+          const ids = rows.map(r => r.id)
+          syncCheck(await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
+        } else {
+          syncCheck(await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId))
+        }
       }, 800)
     }
     if (key === 'shopping' && voyageId) {
       clearTimeout(shoppingTimer.current ?? undefined)
       shoppingTimer.current = window.setTimeout(async () => {
         const s = val as VoyageData['shopping']
-        syncCheck(await supabase.from('shopping_items').delete().eq('voyage_id', voyageId))
-        if (s.items?.length > 0) syncCheck(await supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, s.items)))
+        if (s.items?.length > 0) {
+          syncCheck(await supabase.from('shopping_items').upsert(toDbShoppingItems(voyageId, s.items), { onConflict: 'id' }))
+          const ids = s.items.map(i => i.id)
+          syncCheck(await supabase.from('shopping_items').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
+        } else {
+          syncCheck(await supabase.from('shopping_items').delete().eq('voyage_id', voyageId))
+        }
       }, 800)
     }
     if (key === 'packing' && voyageId) {
@@ -307,8 +327,13 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
       clearTimeout(notesTimer.current ?? undefined)
       notesTimer.current = window.setTimeout(async () => {
         const n = val as VoyageData['notes']
-        syncCheck(await supabase.from('notes').delete().eq('voyage_id', voyageId))
-        if (n.length > 0) syncCheck(await supabase.from('notes').insert(toDbNotes(voyageId, n)))
+        if (n.length > 0) {
+          syncCheck(await supabase.from('notes').upsert(toDbNotes(voyageId, n), { onConflict: 'id' }))
+          const ids = n.map(note => note.id)
+          syncCheck(await supabase.from('notes').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
+        } else {
+          syncCheck(await supabase.from('notes').delete().eq('voyage_id', voyageId))
+        }
       }, 800)
     }
     if (key === 'budget' && voyageId && budgetIdRef.current) {
@@ -317,15 +342,19 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         const b   = val as VoyageData['budget']
         const bid = budgetIdRef.current
         syncCheck(await supabase.from('budget').update({ total_budget: b.budget || null }).eq('id', bid))
-        syncCheck(await supabase.from('budget_items').delete().eq('budget_id', bid))
         if (b.items?.length > 0) {
-          syncCheck(await supabase.from('budget_items').insert(b.items.map(item => ({
+          syncCheck(await supabase.from('budget_items').upsert(b.items.map(item => ({
+            id:        item.id,
             budget_id: bid,
             date:      item.date     || null,
             item:      item.item     || null,
             category:  item.category || null,
             amount:    item.amount   ? parseFloat(item.amount) : null,
-          }))))
+          })), { onConflict: 'id' }))
+          const ids = b.items.map(i => i.id)
+          syncCheck(await supabase.from('budget_items').delete().eq('budget_id', bid).not('id', 'in', `(${ids.join(',')})`))
+        } else {
+          syncCheck(await supabase.from('budget_items').delete().eq('budget_id', bid))
         }
       }, 800)
     }

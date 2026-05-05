@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { CREAM, NAVY, BP } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
 import { applyTheme, getSavedTheme } from './themes'
@@ -85,7 +86,11 @@ export default function App() {
   }
 
   // ── Navigation state ────────────────────────────────────────────────────────
-  const [section,      setSection]      = useState<string>('dashboard')
+  const navigate     = useNavigate()
+  const location     = useLocation()
+  // Derive section from URL path: /daily → 'daily', / → 'dashboard'
+  const section      = location.pathname.slice(1) || 'dashboard'
+
   const [selectedDay,  setSelectedDay]  = useState<number | null>(null)
   const [dailyJumpDay, setDailyJumpDay] = useState<number | null>(null)
   const [sidebarOpen,  setSidebarOpen]  = useState<boolean>(false)
@@ -150,7 +155,7 @@ export default function App() {
   // Wrap switchVoyage to also reset navigation state
   const switchVoyage = (newId: string) => {
     switchVoyageData(newId)
-    setSection('dashboard')
+    navigate('/')
     setSelectedDay(null)
     setDailyJumpDay(null)
   }
@@ -182,7 +187,7 @@ export default function App() {
 
   // ── Navigation handler ──────────────────────────────────────────────────────
   const navClick = (id: string) => {
-    setSection(id)
+    navigate(id === 'dashboard' ? '/' : '/' + id)
     setSelectedDay(null)
     if (id !== 'daily') setDailyJumpDay(null)
     if (isOverlay) setSidebarOpen(false)

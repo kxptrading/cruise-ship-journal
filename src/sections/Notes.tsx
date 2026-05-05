@@ -33,7 +33,7 @@ export default function Notes({ data, onChange }: Props) {
   const w  = useW()
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
-  const add = () => onChange([...data, { title: '', content: '' }])
+  const add = () => onChange([...data, { id: crypto.randomUUID(), title: '', content: '' }])
   const set = (i: number, f: keyof Note, v: string) => {
     const u = [...data]; u[i] = { ...u[i], [f]: v }; onChange(u)
   }

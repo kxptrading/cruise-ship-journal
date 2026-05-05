@@ -30,7 +30,7 @@ export default function BudgetTracker({ data, onChange }: Props) {
   const cs    = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
   const items = data.items || []
 
-  const add = () => onChange({ ...data, items: [...items, { date: '', item: '', category: '', amount: '' }] })
+  const add = () => onChange({ ...data, items: [...items, { id: crypto.randomUUID(), date: '', item: '', category: '', amount: '' }] })
   const set = (i: number, f: keyof BudgetItem, v: string) => {
     const u = [...items]; u[i] = { ...u[i], [f]: v }; onChange({ ...data, items: u })
   }

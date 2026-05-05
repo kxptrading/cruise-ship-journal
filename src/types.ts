@@ -238,6 +238,28 @@ export interface Comment {
 /** keyed by `${voyageId}-${dayNumber}` */
 export type CommentsMap = Record<string, Comment[]>
 
+// ── useVoyageData hook ────────────────────────────────────────────────────────
+
+/** Fully-empty Voyage — used as the INIT value before data loads. */
+export const EMPTY_VOYAGE: Voyage = {
+  shipName: '', cruiseLine: '', cabin: '', deck: '',
+  departureDate: '', returnDate: '', departurePort: '', totalNights: '',
+  companion1: '', companion2: '', companion3: '', companion4: '',
+  emergencyContact: '', phone: '', guestServices: '', musterStation: '',
+  diningTime: '', coverPhotoUrl: '',
+}
+
+export interface UseVoyageDataReturn {
+  data:                 VoyageData
+  loaded:               boolean
+  voyageId:             string | null
+  allVoyages:           VoyageListRow[]
+  update:               (key: keyof VoyageData, val: VoyageData[keyof VoyageData]) => void
+  switchVoyage:         (newId: string) => void
+  createVoyage:         (userId: string, partial?: Record<string, unknown>) => Promise<VoyageListRow | null>
+  handleCoverPhotoChange: (url: string | null) => void
+}
+
 // ── Photo record (Supabase Storage + photos table) ────────────────────────────
 
 export interface PhotoRecord {

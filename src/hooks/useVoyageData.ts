@@ -1,26 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// hooks/useVoyageData.js — Data layer for the active voyage
-//
-// Owns everything that touches Supabase data:
-//   • localStorage seed on mount
-//   • voyage list init (or first-time creation)
-//   • per-section load effects
-//   • debounced write-through update()
-//   • voyage switching + creation
-//   • cover photo URL sync
-//
-// App.jsx is left as a pure layout/routing shell — it never touches Supabase
-// or localStorage directly for journal data.
-//
-// API
-// ───
-//   const {
-//     data, loaded, voyageId, allVoyages,
-//     update, switchVoyage, createVoyage, handleCoverPhotoChange,
-//   } = useVoyageData({ session, showToast })
+// hooks/useVoyageData.ts — Data layer for the active voyage
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { db } from '../storage'
 import {
@@ -37,12 +20,12 @@ import {
   fromDbPacking,   toDbPackingItems,
   fromDbNotes,     toDbNotes,
 } from '../lib/converters'
+import type { VoyageData, VoyageListRow, UseVoyageDataReturn } from '../types'
+import { EMPTY_VOYAGE } from '../types'
 
 // ── Default empty state ───────────────────────────────────────────────────────
-// Exported so App.jsx can reference it for the loading guard without
-// duplicating the shape definition.
-export const INIT = {
-  voyage:           {},
+export const INIT: VoyageData = {
+  voyage:           EMPTY_VOYAGE,
   itinerary:        [],
   dailyLogs:        [],
   foodLogs:         [],
@@ -58,79 +41,78 @@ export const INIT = {
 
 const VOYAGE_SELECT = 'id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url'
 
-export function useVoyageData({ session, showToast }) {
-  const [data,       setData]       = useState(INIT)
-  const [loaded,     setLoaded]     = useState(false)
-  const [voyageId,   setVoyageId]   = useState(null)
-  const [allVoyages, setAllVoyages] = useState([])
+interface Options {
+  session:   Session | null
+  showToast: (msg: string) => void
+}
 
-  // Debounce timers — refs so they persist across renders without becoming
-  // useCallback dependencies.
-  const itineraryTimer     = useRef(null)
-  const dailyLogsTimer     = useRef(null)
-  const foodLogsTimer      = useRef(null)
-  const diningLogTimer     = useRef(null)
-  const entertainmentTimer = useRef(null)
-  const shoppingTimer      = useRef(null)
-  const budgetTimer        = useRef(null)
-  const packingTimer       = useRef(null)
-  const notesTimer         = useRef(null)
+export function useVoyageData({ session, showToast }: Options): UseVoyageDataReturn {
+  const [data,       setData]       = useState<VoyageData>(INIT)
+  const [loaded,     setLoaded]     = useState<boolean>(false)
+  const [voyageId,   setVoyageId]   = useState<string | null>(null)
+  const [allVoyages, setAllVoyages] = useState<VoyageListRow[]>([])
 
-  // Holds the budget row's DB id so the write path never needs an extra SELECT.
-  const budgetIdRef = useRef(null)
+  const itineraryTimer     = useRef<number | null>(null)
+  const dailyLogsTimer     = useRef<number | null>(null)
+  const foodLogsTimer      = useRef<number | null>(null)
+  const diningLogTimer     = useRef<number | null>(null)
+  const entertainmentTimer = useRef<number | null>(null)
+  const shoppingTimer      = useRef<number | null>(null)
+  const budgetTimer        = useRef<number | null>(null)
+  const packingTimer       = useRef<number | null>(null)
+  const notesTimer         = useRef<number | null>(null)
+
+  const budgetIdRef = useRef<string | null>(null)
 
   // ── Seed from localStorage on mount ─────────────────────────────────────────
-  // Gives instant first paint before Supabase responds. Migrates legacy notes
-  // format (plain string → array of objects).
   useEffect(() => {
-    const result = {}
+    const result: Record<string, unknown> = {}
     for (const [k, fb] of Object.entries(INIT)) result[k] = db.get(`csj-${k}`, fb)
     if (typeof result.notes === 'string') {
-      result.notes = result.notes.trim() ? [{ title: '', content: result.notes }] : []
+      result.notes = (result.notes as string).trim()
+        ? [{ title: '', content: result.notes as string }]
+        : []
     }
-    setData(result)
+    setData(result as unknown as VoyageData) // cast: shape mirrors VoyageData, values from localStorage
     setLoaded(true)
   }, [])
 
   // ── Voyage list init ─────────────────────────────────────────────────────────
-  // Loads all voyages for this user. Restores the last-used voyage from
-  // localStorage, or falls back to the oldest one. Creates a blank voyage row
-  // for brand-new users so all child tables always have a valid voyage_id.
   useEffect(() => {
     if (!session) return
+    const activeSession = session  // capture for async closure (non-null)
     let cancelled = false
 
     async function initVoyage() {
       const { data: rows } = await supabase
         .from('voyages')
         .select(VOYAGE_SELECT)
-        .eq('user_id', session.user.id)
+        .eq('user_id', activeSession.user.id)
         .order('created_at', { ascending: true })
 
       if (cancelled) return
 
       if (rows && rows.length > 0) {
-        setAllVoyages(rows)
+        setAllVoyages(rows as VoyageListRow[])
         const savedId = localStorage.getItem('csj-activeVoyageId')
-        const active  = rows.find(r => r.id === savedId) || rows[0]
+        const active  = (rows as VoyageListRow[]).find(r => r.id === savedId) || rows[0] as VoyageListRow
         setVoyageId(active.id)
         localStorage.setItem('csj-activeVoyageId', active.id)
         return
       }
 
-      // First login — create a blank voyage row.
       const { data: created } = await supabase
         .from('voyages')
-        .insert({ user_id: session.user.id })
+        .insert({ user_id: activeSession.user.id })
         .select(VOYAGE_SELECT)
         .single()
 
       if (cancelled) return
 
       if (created) {
-        setAllVoyages([created])
-        setVoyageId(created.id)
-        localStorage.setItem('csj-activeVoyageId', created.id)
+        setAllVoyages([created as VoyageListRow])
+        setVoyageId((created as VoyageListRow).id)
+        localStorage.setItem('csj-activeVoyageId', (created as VoyageListRow).id)
       }
     }
 
@@ -211,15 +193,13 @@ export function useVoyageData({ session, showToast }) {
         supabase.from('notes').select('title,content').eq('voyage_id', voyageId).order('id'),
       ])
 
-      // Budget: fetch items if the row exists, otherwise create it so
-      // subsequent writes always have a valid budgetIdRef.current.
-      let budgetItemRows = []
+      let budgetItemRows: Array<{ date?: string | null; item?: string | null; category?: string | null; amount?: number | null }> = []
       if (budgetRow) {
-        budgetIdRef.current = budgetRow.id
+        budgetIdRef.current = (budgetRow as { id: string }).id
         const { data: items } = await supabase
           .from('budget_items')
           .select('date,item,category,amount')
-          .eq('budget_id', budgetRow.id)
+          .eq('budget_id', (budgetRow as { id: string }).id)
         budgetItemRows = items || []
       } else {
         const { data: created } = await supabase
@@ -227,16 +207,16 @@ export function useVoyageData({ session, showToast }) {
           .insert({ voyage_id: voyageId, total_budget: null })
           .select('id')
           .single()
-        if (created) budgetIdRef.current = created.id
+        if (created) budgetIdRef.current = (created as { id: string }).id
       }
 
-      const updates = {
+      const updates: Partial<VoyageData> = {
         foodLogs:         fromDbFoodLogs(foodLogRows         || []),
         diningLog:        fromDbDiningLog(diningLogRows      || []),
         entertainmentLog: fromDbEntertainmentLog(entertainmentRows || []),
         foodFav:          fromDbFoodFav(foodFavRow),
         highlights:       fromDbHighlights(highlightsRow),
-        budget:           fromDbBudget(budgetRow, budgetItemRows),
+        budget:           fromDbBudget(budgetRow as { total_budget?: number | string | null } | null, budgetItemRows),
         shopping:         fromDbShopping(shoppingRows        || []),
         packing:          fromDbPacking(packingRows          || []),
         notes:            fromDbNotes(noteRows               || []),
@@ -250,102 +230,96 @@ export function useVoyageData({ session, showToast }) {
   }, [voyageId])
 
   // ── Sync error helper ────────────────────────────────────────────────────────
-  const syncCheck = useCallback(({ error }) => {
+  const syncCheck = useCallback(({ error }: { error: unknown }) => {
     if (error) showToast('⚠️ Sync error — changes saved locally but not to the cloud.')
   }, [showToast])
 
-  // ── update() — write-through to localStorage + Supabase ─────────────────────
-  // Called by every section via its onChange prop. Optimistically updates React
-  // state and localStorage, then debounces the Supabase write.
-  const update = useCallback((key, val) => {
+  // ── update() ────────────────────────────────────────────────────────────────
+  const update = useCallback((key: keyof VoyageData, val: VoyageData[keyof VoyageData]) => {
     setData(prev => ({ ...prev, [key]: val }))
     db.set(`csj-${key}`, val)
 
-    // Voyage — immediate, no debounce (one row, small payload)
     if (key === 'voyage' && voyageId) {
-      supabase.from('voyages').update(toDbVoyage(val)).eq('id', voyageId).then(syncCheck)
+      supabase.from('voyages').update(toDbVoyage(val as VoyageData['voyage'])).eq('id', voyageId).then(syncCheck)
     }
-
-    // Single-record sections — upsert on every change (tiny payload)
     if (key === 'foodFav' && voyageId) {
-      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val), { onConflict: 'voyage_id' }).then(syncCheck)
+      supabase.from('food_favourites').upsert(toDbFoodFav(voyageId, val as VoyageData['foodFav']), { onConflict: 'voyage_id' }).then(syncCheck)
     }
     if (key === 'highlights' && voyageId) {
-      supabase.from('highlights').upsert(toDbHighlights(voyageId, val), { onConflict: 'voyage_id' }).then(syncCheck)
+      supabase.from('highlights').upsert(toDbHighlights(voyageId, val as VoyageData['highlights']), { onConflict: 'voyage_id' }).then(syncCheck)
     }
-
-    // Fixed-position arrays — upsert on (voyage_id, day_number) natural key.
-    // Safer than delete-all+reinsert: no data loss if the debounce fires twice
-    // and the first DELETE races against the second INSERT.
     if (key === 'itinerary' && voyageId) {
-      clearTimeout(itineraryTimer.current)
-      itineraryTimer.current = setTimeout(async () => {
-        if (val.length > 0) {
-          syncCheck(await supabase.from('itinerary').upsert(toDbItinerary(voyageId, val), { onConflict: 'voyage_id,day_number' }))
-        }
+      clearTimeout(itineraryTimer.current ?? undefined)
+      itineraryTimer.current = window.setTimeout(async () => {
+        const rows = val as VoyageData['itinerary']
+        if (rows.length > 0) syncCheck(await supabase.from('itinerary').upsert(toDbItinerary(voyageId, rows), { onConflict: 'voyage_id,day_number' }))
       }, 800)
     }
     if (key === 'dailyLogs' && voyageId) {
-      clearTimeout(dailyLogsTimer.current)
-      dailyLogsTimer.current = setTimeout(async () => {
-        if (val.length > 0) {
-          syncCheck(await supabase.from('daily_logs').upsert(toDbDailyLogs(voyageId, val), { onConflict: 'voyage_id,day_number' }))
-        }
+      clearTimeout(dailyLogsTimer.current ?? undefined)
+      dailyLogsTimer.current = window.setTimeout(async () => {
+        const rows = val as VoyageData['dailyLogs']
+        if (rows.length > 0) syncCheck(await supabase.from('daily_logs').upsert(toDbDailyLogs(voyageId, rows), { onConflict: 'voyage_id,day_number' }))
       }, 800)
     }
     if (key === 'foodLogs' && voyageId) {
-      clearTimeout(foodLogsTimer.current)
-      foodLogsTimer.current = setTimeout(async () => {
+      clearTimeout(foodLogsTimer.current ?? undefined)
+      foodLogsTimer.current = window.setTimeout(async () => {
+        const rows = val as VoyageData['foodLogs']
         syncCheck(await supabase.from('food_logs').delete().eq('voyage_id', voyageId))
-        if (val.length > 0) syncCheck(await supabase.from('food_logs').insert(toDbFoodLogs(voyageId, val)))
+        if (rows.length > 0) syncCheck(await supabase.from('food_logs').insert(toDbFoodLogs(voyageId, rows)))
       }, 800)
     }
     if (key === 'diningLog' && voyageId) {
-      clearTimeout(diningLogTimer.current)
-      diningLogTimer.current = setTimeout(async () => {
+      clearTimeout(diningLogTimer.current ?? undefined)
+      diningLogTimer.current = window.setTimeout(async () => {
+        const rows = val as VoyageData['diningLog']
         syncCheck(await supabase.from('dining_log').delete().eq('voyage_id', voyageId))
-        if (val.length > 0) syncCheck(await supabase.from('dining_log').insert(toDbDiningLog(voyageId, val)))
+        if (rows.length > 0) syncCheck(await supabase.from('dining_log').insert(toDbDiningLog(voyageId, rows)))
       }, 800)
     }
     if (key === 'entertainmentLog' && voyageId) {
-      clearTimeout(entertainmentTimer.current)
-      entertainmentTimer.current = setTimeout(async () => {
+      clearTimeout(entertainmentTimer.current ?? undefined)
+      entertainmentTimer.current = window.setTimeout(async () => {
+        const rows = val as VoyageData['entertainmentLog']
         syncCheck(await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId))
-        if (val.length > 0) syncCheck(await supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, val)))
+        if (rows.length > 0) syncCheck(await supabase.from('entertainment_log').insert(toDbEntertainmentLog(voyageId, rows)))
       }, 800)
     }
     if (key === 'shopping' && voyageId) {
-      clearTimeout(shoppingTimer.current)
-      shoppingTimer.current = setTimeout(async () => {
+      clearTimeout(shoppingTimer.current ?? undefined)
+      shoppingTimer.current = window.setTimeout(async () => {
+        const s = val as VoyageData['shopping']
         syncCheck(await supabase.from('shopping_items').delete().eq('voyage_id', voyageId))
-        if (val.items?.length > 0) syncCheck(await supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, val.items)))
+        if (s.items?.length > 0) syncCheck(await supabase.from('shopping_items').insert(toDbShoppingItems(voyageId, s.items)))
       }, 800)
     }
     if (key === 'packing' && voyageId) {
-      clearTimeout(packingTimer.current)
-      packingTimer.current = setTimeout(async () => {
+      clearTimeout(packingTimer.current ?? undefined)
+      packingTimer.current = window.setTimeout(async () => {
+        const p = val as VoyageData['packing']
         syncCheck(await supabase.from('packing_items').delete().eq('voyage_id', voyageId))
-        const rows = toDbPackingItems(voyageId, val)
+        const rows = toDbPackingItems(voyageId, p)
         if (rows.length > 0) syncCheck(await supabase.from('packing_items').insert(rows))
       }, 800)
     }
     if (key === 'notes' && voyageId) {
-      clearTimeout(notesTimer.current)
-      notesTimer.current = setTimeout(async () => {
+      clearTimeout(notesTimer.current ?? undefined)
+      notesTimer.current = window.setTimeout(async () => {
+        const n = val as VoyageData['notes']
         syncCheck(await supabase.from('notes').delete().eq('voyage_id', voyageId))
-        if (val.length > 0) syncCheck(await supabase.from('notes').insert(toDbNotes(voyageId, val)))
+        if (n.length > 0) syncCheck(await supabase.from('notes').insert(toDbNotes(voyageId, n)))
       }, 800)
     }
-
-    // Budget — two-table write
     if (key === 'budget' && voyageId && budgetIdRef.current) {
-      clearTimeout(budgetTimer.current)
-      budgetTimer.current = setTimeout(async () => {
+      clearTimeout(budgetTimer.current ?? undefined)
+      budgetTimer.current = window.setTimeout(async () => {
+        const b   = val as VoyageData['budget']
         const bid = budgetIdRef.current
-        syncCheck(await supabase.from('budget').update({ total_budget: val.budget || null }).eq('id', bid))
+        syncCheck(await supabase.from('budget').update({ total_budget: b.budget || null }).eq('id', bid))
         syncCheck(await supabase.from('budget_items').delete().eq('budget_id', bid))
-        if (val.items?.length > 0) {
-          syncCheck(await supabase.from('budget_items').insert(val.items.map(item => ({
+        if (b.items?.length > 0) {
+          syncCheck(await supabase.from('budget_items').insert(b.items.map(item => ({
             budget_id: bid,
             date:      item.date     || null,
             item:      item.item     || null,
@@ -358,20 +332,16 @@ export function useVoyageData({ session, showToast }) {
   }, [voyageId, syncCheck])
 
   // ── switchVoyage ─────────────────────────────────────────────────────────────
-  // Clears section data + localStorage cache, then sets the new voyageId which
-  // re-triggers all load effects. App.jsx is responsible for resetting section
-  // navigation state (e.g. setSection('dashboard')).
-  const switchVoyage = useCallback((newId) => {
+  const switchVoyage = useCallback((newId: string) => {
     if (newId === voyageId) return
-    Object.keys(INIT).forEach(k => db.set(`csj-${k}`, INIT[k]))
+    Object.keys(INIT).forEach(k => db.set(`csj-${k}`, INIT[k as keyof VoyageData]))
     localStorage.setItem('csj-activeVoyageId', newId)
     setData(INIT)
     setVoyageId(newId)
   }, [voyageId])
 
   // ── createVoyage ─────────────────────────────────────────────────────────────
-  // Inserts a new voyage row, appends to allVoyages, and switches to it.
-  const createVoyage = useCallback(async (userId, partial = {}) => {
+  const createVoyage = useCallback(async (userId: string, partial: Record<string, unknown> = {}): Promise<VoyageListRow | null> => {
     const { data: created } = await supabase
       .from('voyages')
       .insert({ user_id: userId, ...partial })
@@ -379,15 +349,14 @@ export function useVoyageData({ session, showToast }) {
       .single()
 
     if (created) {
-      setAllVoyages(prev => [...prev, created])
-      switchVoyage(created.id)
+      setAllVoyages(prev => [...prev, created as VoyageListRow])
+      switchVoyage((created as VoyageListRow).id)
     }
-    return created
+    return (created as VoyageListRow | null)
   }, [switchVoyage])
 
   // ── handleCoverPhotoChange ───────────────────────────────────────────────────
-  // Called by VoyageProfile after a successful Supabase Storage upload.
-  const handleCoverPhotoChange = useCallback((url) => {
+  const handleCoverPhotoChange = useCallback((url: string | null) => {
     setData(prev => ({ ...prev, voyage: { ...prev.voyage, coverPhotoUrl: url || '' } }))
     setAllVoyages(prev => prev.map(v => v.id === voyageId ? { ...v, cover_photo_url: url } : v))
   }, [voyageId])

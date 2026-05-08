@@ -29,6 +29,8 @@ export default class ErrorBoundary extends Component<Props, State> {
     console.error('[ErrorBoundary] Caught error:', error, info)
   }
 
+  reset = () => this.setState({ hasError: false, error: null })
+
   render() {
     if (!this.state.hasError) return this.props.children
 
@@ -47,7 +49,7 @@ export default class ErrorBoundary extends Component<Props, State> {
             Something went adrift
           </h2>
           <p style={{ margin: '0 0 24px', fontSize: 14, color: MUTED, lineHeight: 1.6 }}>
-            This section ran into a problem. Your data is safe — try reloading the page.
+            This section ran into a problem. Your data is safe — use the sidebar to navigate away, or try again.
           </p>
           {import.meta.env.DEV && this.state.error && (
             <pre style={{
@@ -58,12 +60,20 @@ export default class ErrorBoundary extends Component<Props, State> {
               {this.state.error.message}
             </pre>
           )}
-          <button
-            onClick={() => window.location.reload()}
-            style={{ background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '10px 24px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
-          >
-            Reload Page
-          </button>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center' }}>
+            <button
+              onClick={this.reset}
+              style={{ background: 'transparent', color: NAVY, border: `1.5px solid ${BORDER}`, borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => window.location.reload()}
+              style={{ background: NAVY, color: WHITE, border: 'none', borderRadius: 8, padding: '10px 20px', fontSize: 14, fontWeight: 600, cursor: 'pointer' }}
+            >
+              Reload Page
+            </button>
+          </div>
         </div>
       </div>
     )

@@ -77,7 +77,7 @@ export const NAV: NavItem[] = [
   { id: 'foodfav',       label: 'Food Favourites',    icon: '💛' },
   { id: 'budget',        label: 'Budget Tracker',     icon: '💳' },
   { id: 'shopping',      label: 'Shopping Log',       icon: '🛍️' },
-  { id: 'highlights',    label: 'Highlights',         icon: '🌟' },
+  { id: 'highlights',    label: 'Highlights',         icon: '🏆' },
   { id: 'packing',       label: 'Packing List',       icon: '🧳' },
   { id: 'notes',         label: 'Notes',              icon: '📝' },
 ]

@@ -5,6 +5,7 @@
 import { NAVY, WHITE, LIGHT, BORDER, TEXT, GOLD, MUTED, TEAL, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr } from '../components/ui'
+import FE from '../components/FE'
 import type { ItineraryDay } from '../types'
 
 interface Props {
@@ -39,7 +40,7 @@ export default function Itinerary({ data, onChange }: Props) {
 
       {data.length === 0 ? (
         <div style={{ ...cs, textAlign: 'center', padding: '56px 32px', color: MUTED }}>
-          <div style={{ fontSize: 48, marginBottom: 14 }}>⚓</div>
+          <div style={{ marginBottom: 14 }}><FE emoji="⚓" size={48} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>
             No days added yet
           </div>

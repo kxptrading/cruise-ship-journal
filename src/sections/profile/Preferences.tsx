@@ -7,6 +7,7 @@ import type { ChangeEvent } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useUserId } from '../../context'
 import { WHITE, BORDER, NAVY2, MUTED, LIGHT, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
+import FE from '../../components/FE'
 
 interface PrefDef {
   key:     string
@@ -66,8 +67,8 @@ function PrefRow({ pref, value, onSave, isLast }: PrefRowProps) {
       onMouseEnter={e => { if (!editing) e.currentTarget.style.background = LIGHT }}
       onMouseLeave={e => { e.currentTarget.style.background = 'transparent' }}
     >
-      <div style={{ width: 30, height: 30, borderRadius: 8, background: LIGHT, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, flexShrink: 0 }}>
-        {pref.icon}
+      <div style={{ width: 30, height: 30, borderRadius: 8, background: LIGHT, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <FE emoji={pref.icon} size={15} />
       </div>
 
       <div style={{ flex: 1, minWidth: 0, fontSize: 12.5, color: TEXT, fontWeight: 500, fontFamily: FONT_BODY }}>

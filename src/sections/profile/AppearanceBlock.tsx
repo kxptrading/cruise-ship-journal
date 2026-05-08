@@ -7,6 +7,7 @@ import type { KeyboardEvent } from 'react'
 import { WHITE, BORDER, NAVY2, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { THEMES } from '../../themes'
 import type { Theme } from '../../themes'
+import FE from '../../components/FE'
 
 interface ThemeGroup {
   label: string
@@ -59,7 +60,7 @@ function ThemeSwatch({ t, active, onThemeChange }: SwatchProps) {
         )}
       </div>
       <div style={{ padding: '6px 8px', height: 32, display: 'flex', alignItems: 'center', gap: 5, overflow: 'hidden' }}>
-        <span style={{ fontSize: 13, flexShrink: 0 }}>{t.emoji}</span>
+        <FE emoji={t.emoji} size={13} />
         <span style={{ fontSize: 11, fontWeight: active ? 700 : 500, color: active ? NAVY2 : MUTED, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.name}</span>
       </div>
     </button>
@@ -103,7 +104,7 @@ export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange
         <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Profile Type</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: isAdult ? 'rgba(14,165,233,0.08)' : 'rgba(139,92,246,0.08)', border: `1px solid ${isAdult ? 'rgba(14,165,233,0.3)' : 'rgba(139,92,246,0.3)'}`, borderRadius: 20, padding: '4px 14px' }}>
-            <span style={{ fontSize: 15 }}>{isAdult ? '🧑' : '🧒'}</span>
+            <FE emoji={isAdult ? '🧑' : '🧒'} size={15} />
             <span style={{ fontSize: 12, fontWeight: 700, color: NAVY2 }}>{isAdult ? 'Adult' : 'Junior'}</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

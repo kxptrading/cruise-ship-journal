@@ -5,6 +5,7 @@
 import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '../constants'
 import { useW } from '../context'
 import { PgHdr, Box, Fld, Row2, Inp } from '../components/ui'
+import FE from '../components/FE'
 import type { Voyage } from '../types'
 
 interface Props {
@@ -55,7 +56,7 @@ export default function VoyageDetails({ data, onChange }: Props) {
                   border: `1px solid ${GOLD}50`, borderRadius: 8,
                   padding: '10px 14px', background: `${GOLD}10`,
                 }}>
-                  <span style={{ fontSize: 16 }}>🌙</span>
+                  <FE emoji="🌙" size={16} />
                   <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, color: NAVY2, fontWeight: 400, lineHeight: 1 }}>{data.totalNights}</span>
                   <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>night{data.totalNights !== '1' ? 's' : ''}</span>
                 </div>

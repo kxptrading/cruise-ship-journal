@@ -8,6 +8,7 @@ import { useW, useVoyageId } from '../context'
 import { getPhotos } from '../lib/photoStorage'
 import type { DailyLog, ItineraryDay } from '../types'
 import type { PhotoRecord } from '../types'
+import FE from '../components/FE'
 
 interface MealItem {
   icon:  string
@@ -96,7 +97,7 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
 
           {formattedDate && (
             <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.65)', fontWeight: 600, marginBottom: 14 }}>
-              📅 {formattedDate}
+              <><FE emoji="📅" size={13} /> {formattedDate}</>
             </div>
           )}
 
@@ -104,7 +105,7 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               {weather.map(wx => (
                 <span key={wx} style={{ fontSize: 12, borderRadius: 20, padding: '4px 12px', fontWeight: 600, ...(WX_STYLE[wx] || { background: 'rgba(255,255,255,0.15)', color: WHITE }) }}>
-                  {WX_EMOJI[wx] || '🌈'} {wx}
+                  <FE emoji={WX_EMOJI[wx] || '🌈'} size={14} /> {wx}
                 </span>
               ))}
             </div>
@@ -114,7 +115,7 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
 
       {photos.length > 1 && (
         <div style={{ ...sty.card, padding: pad }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT_BODY }}>📷 Photos</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12, fontFamily: FONT_BODY }}><FE emoji="📷" size={13} /> Photos</div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 4 }}>
             {photos.map((p, i) => (
               <div key={p.id} onClick={() => setLightbox(p.dataUrl)} style={{ flexShrink: 0, cursor: 'pointer' }}>
@@ -130,14 +131,14 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
 
       {log.highlights && (
         <div style={{ ...sty.card, padding: pad }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>📖 Journal</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><FE emoji="📖" size={13} /> Journal</div>
           <p style={{ margin: 0, fontSize: 16, color: TEXT, lineHeight: 1.8, fontWeight: 400 }}>{log.highlights}</p>
         </div>
       )}
 
       {log.bestMoment && (
         <div style={{ ...sty.card, padding: pad, borderLeft: `4px solid ${CORAL}`, background: 'rgba(249,115,22,0.04)' }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: CORAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>✨ Best Moment</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: CORAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}><FE emoji="✨" size={13} /> Best Moment</div>
           <p style={{ margin: 0, fontSize: w < BP.mobile ? 20 : 24, color: '#92400E', fontFamily: FONT_DISPLAY, fontWeight: 400, lineHeight: 1.5 }}>
             "{log.bestMoment}"
           </p>
@@ -146,11 +147,11 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
 
       {meals.length > 0 && (
         <div style={{ ...sty.card, padding: pad }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}>🍽️ What I Ate</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 14 }}><FE emoji="🍽️" size={13} /> What I Ate</div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {meals.map((m, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '12px 14px', background: LIGHT, borderRadius: 12 }}>
-                <span style={{ fontSize: 24, flexShrink: 0, lineHeight: 1 }}>{m.icon}</span>
+                <FE emoji={m.icon} size={24} />
                 <div>
                   <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>{m.label}</div>
                   <div style={{ fontSize: 15, color: TEXT, fontWeight: 600 }}>{m.text}</div>
@@ -163,11 +164,11 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
 
       {(log.activity || log.excNotes) && (
         <div style={{ ...sty.card, padding: pad, borderLeft: `4px solid ${TEAL}` }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: TEAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>🚤 Shore Excursion</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: TEAL, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}><FE emoji="🚤" size={13} /> Shore Excursion</div>
           {log.activity && <div style={{ fontSize: 16, fontWeight: 700, color: TEXT, marginBottom: 6 }}>{log.activity}</div>}
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginBottom: log.excNotes ? 10 : 0 }}>
-            {log.duration && <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}>⏱ {log.duration}</span>}
-            {log.excCost  && <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}>💰 £{log.excCost}</span>}
+            {log.duration && <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}><FE emoji="⏱" size={13} /> {log.duration}</span>}
+            {log.excCost  && <span style={{ fontSize: 13, color: MUTED, fontWeight: 600 }}><FE emoji="💰" size={13} /> £{log.excCost}</span>}
           </div>
           {log.excNotes && <p style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.7 }}>{log.excNotes}</p>}
         </div>
@@ -175,14 +176,14 @@ export default function DayDetail({ dayIndex, log, itinerary, onBack, onEdit }: 
 
       {log.entertainment && (
         <div style={{ ...sty.card, padding: pad }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>🎭 Evening</div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}><FE emoji="🎭" size={13} /> Evening</div>
           <div style={{ fontSize: 15, color: TEXT, fontWeight: 600, lineHeight: 1.6 }}>{log.entertainment}</div>
         </div>
       )}
 
       <div style={{ textAlign: 'center', paddingBottom: 8 }}>
         <button onClick={onEdit} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 22px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED, fontWeight: 600 }}>
-          ✏️ Edit this day
+          <FE emoji="✏️" size={13} /> Edit this day
         </button>
       </div>
 

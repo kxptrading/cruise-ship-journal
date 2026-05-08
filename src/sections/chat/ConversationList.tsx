@@ -5,6 +5,7 @@
 import { NAVY, WHITE, BORDER, TEXT, MUTED, FONT_BODY } from '../../constants'
 import ConvItem from './ConvItem'
 import type { Conversation } from './types'
+import FE from '../../components/FE'
 
 interface Props {
   conversations: Conversation[]
@@ -21,7 +22,7 @@ export default function ConversationList({ conversations, activeConvId, loading,
     <div style={{ width: isMobile ? '100%' : 320, flexShrink: 0, borderRight: isMobile ? 'none' : `1px solid ${BORDER}`, display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '12px 14px', borderBottom: `1px solid ${BORDER}` }}>
         <div style={{ background: '#F3F4F6', borderRadius: 10, padding: '8px 12px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 14 }}>🔍</span>
+          <FE emoji="🔍" size={14} />
           <span style={{ fontSize: 13, color: MUTED }}>Search conversations…</span>
         </div>
       </div>
@@ -31,7 +32,7 @@ export default function ConversationList({ conversations, activeConvId, loading,
           <div style={{ padding: '48px 20px', textAlign: 'center', color: MUTED, fontSize: 13 }}>Loading…</div>
         ) : conversations.length === 0 ? (
           <div style={{ padding: '48px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: 44, marginBottom: 12 }}>💬</div>
+            <div style={{ marginBottom: 12 }}><FE emoji="💬" size={44} /></div>
             <div style={{ fontSize: 15, fontWeight: 700, color: TEXT, marginBottom: 6 }}>No messages yet</div>
             <div style={{ fontSize: 13, color: MUTED, lineHeight: 1.7, marginBottom: 20 }}>Start a conversation with a friend or create a group chat.</div>
             <button onClick={onNewChat} style={{ background: NAVY, color: WHITE, border: 'none', borderRadius: 10, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY }}>

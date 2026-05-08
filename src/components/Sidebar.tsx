@@ -4,6 +4,7 @@
 
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { NAV } from '../constants'
+import FE from './FE'
 
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
 
@@ -78,7 +79,7 @@ export default function Sidebar({ section, onNav, isOverlay, isOpen, onClose, us
                 onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
                 style={{ display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left', padding: '10px 18px 10px 14px', background: active ? 'rgba(201,162,39,0.12)' : 'transparent', color: WHITE, border: 'none', borderLeft: `3px solid ${active ? GOLD : 'transparent'}`, cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY, fontWeight: active ? 700 : 400, transition: 'background 0.15s, color 0.15s', letterSpacing: '0.01em' }}>
-                <span style={{ fontSize: 18, lineHeight: 1, opacity: active ? 1 : 0.75 }}>{icon}</span>
+                <FE emoji={icon} size={18} />
                 <span style={{ flex: 1 }}>{label}</span>
                 {sectionStatus?.has(id) && !active && (
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />

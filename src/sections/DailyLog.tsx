@@ -9,6 +9,7 @@ import { PgHdr, Box, Fld, Row2, Inp, TA, Stars } from '../components/ui'
 import { addPhoto, getPhotos, deletePhoto, updateCaption } from '../lib/photoStorage'
 import type { DailyLog, ItineraryDay, Voyage } from '../types'
 import type { PhotoRecord } from '../types'
+import FE from '../components/FE'
 
 interface Props {
   data:        DailyLog[]
@@ -151,7 +152,7 @@ export default function DailyLogSection({ data, onChange, itinerary, voyage, ini
                   transition: 'background 0.15s, border-color 0.15s, color 0.15s',
                 }}
               >
-                {log.isPublic ? '🌐 Public' : '🔒 Private'}
+                {log.isPublic ? <><FE emoji="🌐" size={13} /> Public</> : <><FE emoji="🔒" size={13} /> Private</>}
               </button>
 
               <button onClick={delDay} style={{ background: '#FEE2E2', border: 'none', borderRadius: 6, padding: '5px 12px', cursor: 'pointer', color: '#DC2626', fontSize: 12, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>
@@ -223,7 +224,7 @@ export default function DailyLogSection({ data, onChange, itinerary, voyage, ini
                 disabled={uploading}
                 style={{ ...sty.btn, fontSize: 13, padding: '8px 16px', opacity: uploading ? 0.6 : 1 }}
               >
-                {uploading ? 'Uploading…' : '📷 Add Photos'}
+                {uploading ? 'Uploading…' : <><FE emoji="📷" size={13} /> Add Photos</>}
               </button>
             </div>
             {photos.length === 0 ? (

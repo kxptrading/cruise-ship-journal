@@ -8,6 +8,7 @@ import { NAVY, NAVY2, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, GOLD, BP } from '
 import { PgHdr } from '../components/ui'
 import { useUserId, useW } from '../context'
 import FriendProfile from './FriendProfile'
+import FE from '../components/FE'
 
 interface FriendUser {
   requestId:   string
@@ -264,7 +265,7 @@ export default function Friends({ initialFriend = null, onClearInitialFriend }: 
 
         {!loading && friends.length === 0 && (
           <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '32px 24px', textAlign: 'center' }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>🌊</div>
+            <div style={{ marginBottom: 12 }}><FE emoji="🌊" size={36} /></div>
             <div style={{ fontWeight: 600, color: TEXT, marginBottom: 6 }}>No friends yet</div>
             <div style={{ fontSize: 13, color: MUTED }}>Search for a fellow traveller above to get started.</div>
           </div>

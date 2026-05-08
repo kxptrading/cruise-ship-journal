@@ -5,6 +5,7 @@
 import { NAVY, MUTED, BORDER, TEXT, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr, Fld, Row2, Inp, TA, Stars, Lbl } from '../components/ui'
+import FE from '../components/FE'
 import type { FoodLog } from '../types'
 
 interface Props {
@@ -28,7 +29,7 @@ export default function FoodLogSection({ data, onChange }: Props) {
 
       {data.length === 0 && (
         <div style={{ ...sty.card, textAlign: 'center', padding: '56px 32px', color: MUTED }}>
-          <div style={{ fontSize: 48, marginBottom: 14 }}>🍴</div>
+          <div style={{ marginBottom: 14 }}><FE emoji="🍴" size={48} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>No meals logged yet</div>
           <div style={{ fontSize: 14, color: MUTED, marginBottom: 24 }}>Track every meal — from buffet discoveries to specialty dining gems.</div>
         </div>

@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
 import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, FONT_DISPLAY, FONT_BODY } from '../constants'
+import FE from '../components/FE'
 
 interface BadgeDef {
   key:   string
@@ -102,7 +103,7 @@ interface StatCellProps { emoji: string; value: string | number; label: string; 
 function StatCell({ emoji, value, label, border }: StatCellProps) {
   return (
     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 8px', borderLeft: border ? '1px solid rgba(255,255,255,0.18)' : 'none' }}>
-      <div style={{ fontSize: 18, marginBottom: 3 }}>{emoji}</div>
+      <div style={{ marginBottom: 3 }}><FE emoji={emoji} size={18} /></div>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: 22, color: GOLD, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3, textAlign: 'center' }}>{label}</div>
     </div>
@@ -121,7 +122,7 @@ function VoyageCard({ voyage }: { voyage: VoyageRow }) {
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(0,0,0,0.45))' }} />
         </div>
       ) : (
-        <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>🚢</div>
+        <div style={{ height: 90, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FE emoji="🚢" size={28} /></div>
       )}
       <div style={{ padding: '10px 12px' }}>
         <div style={{ fontFamily: FONT_DISPLAY, fontSize: 14, color: NAVY2, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{voyage.ship_name || 'Unnamed Voyage'}</div>
@@ -272,15 +273,15 @@ export default function FriendProfile({ friend, onBack }: Props) {
                     {currentVoyage?.ship_name && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: isActivelySailing ? '#15803D' : MUTED, background: isActivelySailing ? '#DCFCE7' : '#F3F4F6', border: `1px solid ${isActivelySailing ? '#86EFAC' : BORDER}`, borderRadius: 20, padding: '4px 12px' }}>
                         {isActivelySailing && <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 0 2px #86EFAC' }} />}
-                        🚢 {currentVoyage.ship_name}
+                        <FE emoji="🚢" size={14} /> {currentVoyage.ship_name}
                         {!isActivelySailing && currentVoyage.departure_date && (
                           <span style={{ fontWeight: 400, opacity: 0.75 }}>· {new Date(currentVoyage.departure_date + 'T00:00:00').getFullYear()}</span>
                         )}
                       </span>
                     )}
-                    {profile?.home_port && <span style={{ fontSize: 12, color: MUTED }}>📍 {profile.home_port}</span>}
+                    {profile?.home_port && <span style={{ fontSize: 12, color: MUTED }}><FE emoji="📍" size={12} /> {profile.home_port}</span>}
                     {profile?.favourite_cruise_line && (
-                      <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, background: `${GOLD}18`, border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '2px 9px' }}>✨ {profile.favourite_cruise_line}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, background: `${GOLD}18`, border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '2px 9px' }}><FE emoji="✨" size={11} /> {profile.favourite_cruise_line}</span>
                     )}
                   </div>
                 </div>
@@ -320,7 +321,7 @@ export default function FriendProfile({ friend, onBack }: Props) {
                   <span style={{ fontSize: 12, color: MUTED }}>of {badges.length} earned</span>
                 </div>
               </div>
-              <div style={{ fontSize: 11, color: MUTED, marginBottom: 16 }}>🚢 {voyages[0]?.ship_name || 'Most recent voyage'}</div>
+              <div style={{ fontSize: 11, color: MUTED, marginBottom: 16 }}><FE emoji="🚢" size={11} /> {voyages[0]?.ship_name || 'Most recent voyage'}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10 }}>
                 {badges.map(badge => (
                   <div key={badge.key}
@@ -330,16 +331,16 @@ export default function FriendProfile({ friend, onBack }: Props) {
                   >
                     {hoveredKey === badge.key && (
                       <div style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', zIndex: 100, width: 170, background: NAVY2, borderRadius: 10, padding: '10px 12px', pointerEvents: 'none', boxShadow: '0 8px 24px rgba(0,0,0,0.28)' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: WHITE, marginBottom: 4 }}>{badge.emoji} {badge.name}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: WHITE, marginBottom: 4 }}><FE emoji={badge.emoji} size={11} /> {badge.name}</div>
                         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{badge.howTo}</div>
-                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: badge.earned ? '#34D399' : 'rgba(255,255,255,0.5)' }}>{badge.earned ? '✓ Earned' : '🔒 Not yet earned'}</div>
+                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: badge.earned ? '#34D399' : 'rgba(255,255,255,0.5)' }}>{badge.earned ? '✓ Earned' : <><FE emoji="🔒" size={10} /> Not yet earned</>}</div>
                         <div style={{ position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', width: 0, height: 0, borderLeft: '6px solid transparent', borderRight: '6px solid transparent', borderTop: `6px solid ${NAVY2}` }} />
                       </div>
                     )}
                     {badge.earned && (
                       <div style={{ position: 'absolute', top: 6, right: 6, width: 13, height: 13, borderRadius: '50%', background: badge.color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 7, color: WHITE, fontWeight: 700 }}>✓</div>
                     )}
-                    <span style={{ fontSize: 26, filter: badge.earned ? 'none' : 'grayscale(1)' }}>{badge.emoji}</span>
+                    <span style={{ filter: badge.earned ? 'none' : 'grayscale(1)' }}><FE emoji={badge.emoji} size={26} /></span>
                     <span style={{ fontFamily: FONT_BODY, fontSize: 10, fontWeight: 700, color: badge.earned ? NAVY2 : MUTED, textAlign: 'center', lineHeight: 1.3 }}>{badge.name}</span>
                   </div>
                 ))}
@@ -356,7 +357,7 @@ export default function FriendProfile({ friend, onBack }: Props) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {allPorts.map(port => (
                   <span key={port} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: `${NAVY}08`, border: `1px solid ${BORDER}`, borderRadius: 20, padding: '5px 12px', fontSize: 12, fontWeight: 600, color: NAVY2 }}>
-                    📍 {port}
+                    <FE emoji="📍" size={12} /> {port}
                   </span>
                 ))}
               </div>
@@ -365,7 +366,7 @@ export default function FriendProfile({ friend, onBack }: Props) {
 
           {voyages.length === 0 && !profile?.bio && (
             <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '32px 24px', textAlign: 'center' }}>
-              <div style={{ fontSize: 36, marginBottom: 12 }}>⚓</div>
+              <div style={{ marginBottom: 12 }}><FE emoji="⚓" size={36} /></div>
               <div style={{ fontWeight: 600, color: TEXT, marginBottom: 6 }}>{displayName} hasn't logged any voyages yet</div>
               <div style={{ fontSize: 13, color: MUTED }}>Check back once they've set sail.</div>
             </div>

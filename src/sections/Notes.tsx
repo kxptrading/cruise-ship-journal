@@ -5,6 +5,7 @@
 import { NAVY, WHITE, BORDER, TEXT, MUTED, BP, sty } from '../constants'
 import { useW } from '../context'
 import { PgHdr } from '../components/ui'
+import FE from '../components/FE'
 import type { Note } from '../types'
 
 interface NoteColor {
@@ -45,7 +46,7 @@ export default function Notes({ data, onChange }: Props) {
 
       {data.length === 0 && (
         <div style={{ ...cs, textAlign: 'center', padding: '56px 32px', color: MUTED }}>
-          <div style={{ fontSize: 48, marginBottom: 14 }}>📝</div>
+          <div style={{ marginBottom: 14 }}><FE emoji="📝" size={48} /></div>
           <div style={{ fontSize: 18, fontWeight: 700, color: NAVY, fontFamily: 'Georgia,serif', marginBottom: 8 }}>No notes yet</div>
           <div style={{ fontSize: 14, color: MUTED, marginBottom: 24 }}>Jot down anything — tips, memories, quotes, reminders.</div>
           <button onClick={add} style={sty.btn}>+ Add Note</button>

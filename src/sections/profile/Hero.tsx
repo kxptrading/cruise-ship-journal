@@ -8,6 +8,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { NAVY2, GOLD, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { useW } from '../../context'
+import FE from '../../components/FE'
 
 const BANNER_H      = 260
 const AVATAR_SIZE   = 92
@@ -43,7 +44,7 @@ function StatCell({ emoji, value, label, border }: StatCellProps) {
       padding: sm ? '10px 6px' : '12px 8px',
       borderLeft: border ? '1px solid rgba(255,255,255,0.18)' : 'none',
     }}>
-      <div style={{ fontSize: sm ? 15 : 18, marginBottom: 3 }}>{emoji}</div>
+      <div style={{ marginBottom: 3 }}><FE emoji={emoji} size={sm ? 15 : 18} /></div>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: sm ? 18 : 22, color: GOLD, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: sm ? 8 : 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3, textAlign: 'center' }}>{label}</div>
     </div>
@@ -154,7 +155,7 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, transparent 40%, rgba(3,105,161,0.55) 100%)', pointerEvents: 'none' }} />
         {!profile.bannerUrl && !uploadingBanner && (
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center', pointerEvents: 'none' }}>
-            <div style={{ fontSize: 32, marginBottom: 8 }}>🌅</div>
+            <div style={{ marginBottom: 8 }}><FE emoji="🌅" size={32} /></div>
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: 600 }}>Click to add a banner photo</div>
           </div>
         )}
@@ -170,7 +171,7 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
               fontFamily: FONT_BODY, letterSpacing: '0.04em',
             }}
           >
-            📷 {uploadingBanner ? 'Uploading…' : 'Change Banner'}
+            <FE emoji="📷" size={11} /> {uploadingBanner ? 'Uploading…' : 'Change Banner'}
           </button>
         )}
         <Wave />
@@ -244,7 +245,7 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
                     display: 'flex', alignItems: 'center', gap: 4,
                   }}
                 >
-                  ✏️ Edit
+                  <FE emoji="✏️" size={11} /> Edit
                 </button>
               </div>
             )}
@@ -262,7 +263,7 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
                   {isActivelySailing && (
                     <span style={{ display: 'inline-block', width: 7, height: 7, borderRadius: '50%', background: '#16A34A', boxShadow: '0 0 0 2px #86EFAC' }} />
                   )}
-                  🚢 {currentVoyage.ship_name}
+                  <FE emoji="🚢" size={12} /> {currentVoyage.ship_name}
                   {!isActivelySailing && currentVoyage.departure_date && (
                     <span style={{ fontWeight: 400, opacity: 0.75 }}>
                       · {new Date(currentVoyage.departure_date + 'T00:00:00').getFullYear()}
@@ -271,11 +272,11 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
                 </span>
               )}
 
-              {profile.homePort && <span style={{ fontSize: 12, color: MUTED }}>📍 {profile.homePort}</span>}
-              {memberSince      && <span style={{ fontSize: 12, color: MUTED }}>🗓 Sailing since {memberSince}</span>}
+              {profile.homePort && <span style={{ fontSize: 12, color: MUTED }}><FE emoji="📍" size={12} /> {profile.homePort}</span>}
+              {memberSince      && <span style={{ fontSize: 12, color: MUTED }}><FE emoji="🗓" size={12} /> Sailing since {memberSince}</span>}
               {profile.favouriteCruiseLine && (
                 <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, background: `${GOLD}18`, border: `1px solid ${GOLD}40`, borderRadius: 20, padding: '2px 9px' }}>
-                  ✨ {profile.favouriteCruiseLine}
+                  <FE emoji="✨" size={11} /> {profile.favouriteCruiseLine}
                 </span>
               )}
             </div>

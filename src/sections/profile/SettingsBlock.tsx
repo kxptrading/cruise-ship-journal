@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useUserId } from '../../context'
 import { WHITE, BORDER, NAVY2, MUTED, FONT_DISPLAY, FONT_BODY } from '../../constants'
+import FE from '../../components/FE'
 
 const ROSE_C = '#F43F5E'
 const NAVY_C = '#14293F'
@@ -370,7 +371,7 @@ export default function SettingsBlock({ onSignOut, displayName }: Props) {
             onBlur={e => { e.currentTarget.style.boxShadow = 'none' }}
           >
             <div style={{ width: 32, height: 32, borderRadius: 9, background: r.color, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15 }}>
-              {r.busy ? '…' : r.emoji}
+              {r.busy ? '…' : <FE emoji={r.emoji} size={15} />}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}>{r.title}</div>
@@ -383,7 +384,7 @@ export default function SettingsBlock({ onSignOut, displayName }: Props) {
 
       {notifOn && notifPerm === 'granted' && (
         <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 10, background: `${GOLD_C}10`, border: `1px solid ${GOLD_C}30`, borderRadius: 10, padding: '10px 14px' }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}>🔔 Reminder time</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}><FE emoji="🔔" size={12} /> Reminder time</span>
           <input
             ref={timeRef}
             type="time"

@@ -9,6 +9,7 @@ import { Stars } from '../../components/ui'
 import { addPhoto } from '../../lib/photoStorage'
 import CameraCapture from '../../components/CameraCapture'
 import type { DailyLog, ItineraryDay } from '../../types'
+import FE from '../../components/FE'
 
 interface ImagePickerPos {
   top:  number
@@ -86,8 +87,8 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
           onClick={handleOpen}
           style={{ padding: '14px 16px', display: 'flex', alignItems: 'center', gap: 12, cursor: 'text', background: 'linear-gradient(135deg, var(--t-bg), var(--t-bg))' }}
         >
-          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18 }}>
-            ⚓
+          <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <FE emoji="⚓" size={18} />
           </div>
           <div style={{ flex: 1, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 22, padding: '10px 18px', fontSize: 14, color: MUTED, cursor: 'text', userSelect: 'none', fontFamily: FONT_BODY }}>
             What happened today?
@@ -97,8 +98,8 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
         /* ── Expanded composer ── */
         <div style={{ padding: 16, boxShadow: '0 4px 20px var(--t-btn-shadow)' }}>
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 18, marginTop: 2 }}>
-              ⚓
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+              <FE emoji="⚓" size={18} />
             </div>
             <textarea
               ref={textRef}
@@ -172,7 +173,7 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                     color: composeImage ? 'var(--t-primary)' : MUTED,
                   }}
                 >
-                  📷 {composeImage ? 'Change Photo' : 'Add Photo'}
+                  <FE emoji="📷" size={13} /> {composeImage ? 'Change Photo' : 'Add Photo'}
                   <span style={{ fontSize: 10, marginLeft: 2, opacity: 0.6 }}>▾</span>
                 </button>
 
@@ -191,7 +192,7 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                         onMouseEnter={e => { e.currentTarget.style.background = '#F4F4F2' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                       >
-                        <span style={{ fontSize: 16 }}>🖼️</span> Upload Image
+                        <FE emoji="🖼️" size={16} /> Upload Image
                       </button>
                       <div style={{ height: 1, background: BORDER }} />
                       <button
@@ -200,7 +201,7 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                         onMouseEnter={e => { e.currentTarget.style.background = '#F4F4F2' }}
                         onMouseLeave={e => { e.currentTarget.style.background = 'none' }}
                       >
-                        <span style={{ fontSize: 16 }}>📸</span> Take a Photo
+                        <FE emoji="📸" size={16} /> Take a Photo
                       </button>
                     </div>
                   </>

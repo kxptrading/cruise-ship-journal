@@ -7,6 +7,7 @@ import { Donut } from '../../components/ui'
 import { getTimeGradient, getVignetteRGB } from '../../lib/atmosphere'
 import type { TimeOfDay } from '../../lib/atmosphere'
 import type { Voyage } from '../../types'
+import FE from '../../components/FE'
 
 interface Star {
   id:       number | string
@@ -57,7 +58,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
               animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s`,
             }} />
           ))}
-          <div className="moon-icon" style={{ position: 'absolute', top: 14, right: 58, fontSize: 28, pointerEvents: 'none' }}>🌙</div>
+          <div className="moon-icon" style={{ position: 'absolute', top: 14, right: 58, pointerEvents: 'none' }}><FE emoji="🌙" size={28} /></div>
         </>
       )}
 
@@ -112,13 +113,13 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
 
             {(voyage.departurePort || voyage.departureDate) && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 12 : 0 }}>
-                {voyage.departurePort && <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}>📍 {voyage.departurePort}</span>}
+                {voyage.departurePort && <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}><FE emoji="📍" size={13} /> {voyage.departurePort}</span>}
                 {voyage.departureDate && (
                   <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
-                    📅 {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
+                    <FE emoji="📅" size={13} /> {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
                   </span>
                 )}
-                {voyage.cabin && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>🚪 Cabin {voyage.cabin}</span>}
+                {voyage.cabin && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}><FE emoji="🚪" size={13} /> Cabin {voyage.cabin}</span>}
               </div>
             )}
 

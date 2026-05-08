@@ -12,6 +12,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { NAVY2, WHITE, BORDER, MUTED, TEAL, sty, FONT_DISPLAY, FONT_BODY, BP } from '../constants'
+import FE from '../components/FE'
 import { useW, useVoyageId, useUserId } from '../context'
 import { getTimeOfDay } from '../lib/atmosphere'
 import { useFeedData } from '../hooks/useFeedData'
@@ -133,7 +134,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
 
       {feedItems.length === 0 ? (
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center' }}>
-          <div style={{ fontSize: 48, marginBottom: 14 }}>🌊</div>
+          <div style={{ marginBottom: 14 }}><FE emoji="🌊" size={48} /></div>
           <div style={{ fontSize: 24, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, marginBottom: 8 }}>Your voyage feed is empty</div>
           <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.7, maxWidth: 'min(380px, 100%)', margin: '0 auto 24px' }}>
             {dailyLogs.length === 0

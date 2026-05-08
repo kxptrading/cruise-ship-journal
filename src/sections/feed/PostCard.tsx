@@ -7,6 +7,7 @@ import type { KeyboardEvent } from 'react'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, CORAL, FONT_DISPLAY, FONT_BODY, WX_EMOJI, WX_STYLE } from '../../constants'
 import { useW } from '../../context'
 import type { FeedItem, FeedAuthor, ReactionState, Comment } from '../../types'
+import FE from '../../components/FE'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
 interface Reaction {
@@ -217,7 +218,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
 
         {activity && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-            <span style={{ fontSize: 14 }}>🚤</span>
+            <FE emoji="🚤" size={14} />
             <span style={{ fontSize: 13, color: TEXT }}><strong>Excursion:</strong> {activity}</span>
           </div>
         )}
@@ -226,7 +227,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
             {weather.map(wx => (
               <span key={wx} style={{ fontSize: 12, borderRadius: 20, padding: '3px 10px', ...(WX_STYLE[wx] || { background: '#F0F7FF', border: '1px solid #C7DCF5', color: '#2563EB' }) }}>
-                {WX_EMOJI[wx] || '🌈'} {wx}
+                <FE emoji={WX_EMOJI[wx] || '🌈'} size={14} /> {wx}
               </span>
             ))}
           </div>
@@ -238,7 +239,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               {meals.map((m, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-                  <span style={{ fontSize: 14, flexShrink: 0 }}>{m.icon}</span>
+                  <FE emoji={m.icon} size={14} />
                   <span style={{ fontSize: 13, color: TEXT, lineHeight: 1.4 }}>{m.text}</span>
                 </div>
               ))}
@@ -276,7 +277,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                   onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.35)' }}
                   onMouseLeave={e => { e.currentTarget.style.transform = reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)' }}
                 >
-                  {r.emoji}
+                  <FE emoji={r.emoji} size={28} />
                 </button>
               ))}
             </div>
@@ -300,7 +301,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
               userSelect: 'none', WebkitUserSelect: 'none',
             }}
           >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>{myReaction ? myReaction.emoji : '👍'}</span>
+            <FE emoji={myReaction ? myReaction.emoji : '👍'} size={18} />
             {myReaction ? myReaction.label : 'React'}
           </button>
         </div>
@@ -310,7 +311,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
             <div style={{ display: 'flex' }}>
               {reactionSummary.slice(0, 3).map((r, i) => (
-                <span key={r.id} style={{ fontSize: 15, lineHeight: 1, marginLeft: i === 0 ? 0 : -4, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.15))' }}>{r.emoji}</span>
+                <span key={r.id} style={{ lineHeight: 1, marginLeft: i === 0 ? 0 : -4, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.15))' }}><FE emoji={r.emoji} size={15} /></span>
               ))}
             </div>
             <span style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>{totalReactions}</span>
@@ -335,7 +336,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
             transition: 'border-color 0.15s, color 0.15s',
           }}
         >
-          <span style={{ fontSize: 15 }}>💬</span>
+          <FE emoji="💬" size={15} />
           {(comments?.length || 0) > 0 ? comments!.length : 'Comment'}
         </button>
       </div>

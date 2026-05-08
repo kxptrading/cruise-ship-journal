@@ -3,6 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { WHITE, FONT_BODY } from '../constants'
+import FE from './FE'
 
 interface NavItem {
   id:    string
@@ -95,7 +96,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
-              <span style={{ fontSize: isMobile ? 18 : 16, lineHeight: 1 }}>{icon}</span>
+              <FE emoji={icon} size={isMobile ? 18 : 16} />
               {!isMobile && <span>{label}</span>}
             </button>
           )

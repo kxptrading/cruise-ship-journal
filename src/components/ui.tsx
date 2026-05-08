@@ -64,7 +64,7 @@ export const Row2 = ({ children }: Row2Props) => {
 export const Box = ({ title, children, color, emoji }: BoxProps) => (
   <div style={{ borderRadius: 12, marginBottom: 20, overflow: 'hidden', border: `1px solid ${BORDER}` }}>
     <div style={{ background: color || NAVY2, color: WHITE, padding: '8px 16px', fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', borderRadius: '12px 12px 0 0', fontFamily: FONT_BODY, display: 'flex', alignItems: 'center', gap: 6 }}>
-      {emoji && <FE emoji={emoji} size={14} />}{title}
+      {emoji && <FE emoji={emoji} size={21} />}{title}
     </div>
     <div style={{ padding: 16, background: LIGHT }}>{children}</div>
   </div>
@@ -96,7 +96,7 @@ export const PgHdr = ({ title, sub, icon }: PgHdrProps) => {
   return (
     <div style={{ position: 'sticky', top: 0, zIndex: 10, background: CREAM, paddingTop: 12, paddingBottom: 4, marginBottom: 20, boxShadow: '0 4px 16px rgba(248,249,250,0.95)' }}>
       <h1 style={{ margin: 0, fontSize: h1Size, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, letterSpacing: '-0.01em', lineHeight: 1.1, display: 'flex', alignItems: 'center', gap: 10 }}>
-        {icon && <FE emoji={icon} size={Math.round(h1Size * 0.75)} />}{title}
+        {icon && <FE emoji={icon} size={Math.round(h1Size * 1.125)} />}{title}
       </h1>
       {sub && <p style={{ margin: '6px 0 0', color: MUTED, fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600 }}>{sub}</p>}
       <div style={{ height: 4, background: GOLD, width: 56, marginTop: 10, borderRadius: 2 }} />
@@ -133,7 +133,7 @@ export const MetricCard = ({ icon, value, label, sub, color, pct, ring, alert }:
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{ width: 40, height: 40, borderRadius: 12, background: color + '22', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
           {icon.length <= 4
-            ? <FE emoji={icon} size={20} />
+            ? <FE emoji={icon} size={30} />
             : <SvgIcon d={icon} size={20} color={color} />}
         </div>
         {ring !== undefined && (

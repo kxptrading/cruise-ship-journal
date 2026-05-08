@@ -44,7 +44,7 @@ function StatCell({ emoji, value, label, border }: StatCellProps) {
       padding: sm ? '10px 6px' : '12px 8px',
       borderLeft: border ? '1px solid rgba(255,255,255,0.18)' : 'none',
     }}>
-      <div style={{ marginBottom: 3 }}><FE emoji={emoji} size={sm ? 15 : 18} /></div>
+      <div style={{ marginBottom: 3 }}><FE emoji={emoji} size={sm ? 23 : 27} /></div>
       <div style={{ fontFamily: FONT_DISPLAY, fontSize: sm ? 18 : 22, color: GOLD, lineHeight: 1 }}>{value}</div>
       <div style={{ fontSize: sm ? 8 : 9, fontWeight: 700, color: 'rgba(255,255,255,0.65)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: 3, textAlign: 'center' }}>{label}</div>
     </div>

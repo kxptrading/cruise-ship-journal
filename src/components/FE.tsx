@@ -27,7 +27,7 @@ interface FEProps {
   size?: number
 }
 
-export default function FE({ emoji, size = 24 }: FEProps) {
+export default function FE({ emoji, size = 36 }: FEProps) {
   const [failed, setFailed] = useState(false)
 
   if (failed) {

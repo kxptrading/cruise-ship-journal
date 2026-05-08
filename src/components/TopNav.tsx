@@ -96,7 +96,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
-              <FE emoji={icon} size={isMobile ? 18 : 16} />
+              <FE emoji={icon} size={isMobile ? 27 : 24} />
               {!isMobile && <span>{label}</span>}
             </button>
           )

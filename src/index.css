@@ -1,3 +1,29 @@
+@import "tailwindcss";
+
+/* Map design tokens to Tailwind utilities via @theme inline.
+   "inline" means Tailwind embeds the var() reference directly into utility
+   classes so that bg-primary / text-accent etc. respond to runtime theme
+   switches driven by themes.ts — no build-time value freeze. */
+@theme inline {
+  /* ── Dynamic tokens (runtime-resolved via themes.ts CSS vars) ── */
+  --color-primary:     var(--t-primary);
+  --color-primary-dk:  var(--t-primary-dk);
+  --color-primary-mid: var(--t-primary-mid);
+  --color-primary-lt:  var(--t-primary-lt);
+  --color-accent:      var(--t-accent);
+  --color-bg:          var(--t-bg);
+
+  /* ── Static tokens (mirrored from constants.ts) ── */
+  --color-border:  #E5E7EB;
+  --color-text:    #1C2B3A;
+  --color-muted:   #6B7280;
+  --color-light:   #F9FAFB;
+  --color-teal:    #10B981;
+  --color-rose:    #F97316;
+  --color-plum:    #8B5CF6;
+  --color-white:   #FFFFFF;
+}
+
 /* ── Theme CSS variables — defaults to Ocean Blue ─────────────────────────── */
 :root {
   --t-primary:     #0EA5E9;
@@ -208,4 +234,14 @@ body::before {
 @keyframes toastOut {
   from { opacity: 1; }
   to   { opacity: 0; transform: translate(-50%, 8px); }
+}
+
+/* ── Honour OS-level reduced-motion preference ─────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

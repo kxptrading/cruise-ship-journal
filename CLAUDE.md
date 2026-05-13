@@ -24,8 +24,12 @@ The prototype phase is complete. All decisions are for the production codebase.
 | Layer | Technology |
 |---|---|
 | Framework | React 18 + Vite 6 (SPA, no SSR) |
-| Language | JavaScript (JSX) — TypeScript is on the roadmap |
-| Styling | CSS-in-JS inline styles + CSS variables for theming |
+| Language | TypeScript (JSX/TSX throughout) |
+| Styling | Tailwind CSS v4 (`@tailwindcss/vite`) + CSS-in-JS inline styles (coexisting during migration) |
+| UI primitives | shadcn/ui (`components.json` scaffold, components added to `src/components/ui/`) |
+| Animation | Framer Motion (`framer-motion`) |
+| Icons | `lucide-react` (replacing `IC` SVG object gradually) |
+| Class composition | `clsx` + `tailwind-merge` — use `cn()` from `src/lib/utils.ts` |
 | Database | Supabase (PostgreSQL) |
 | Auth | Supabase Auth (email/password) |
 | File Storage | Supabase Storage (`daily-photos` bucket, signed URLs) |
@@ -65,6 +69,13 @@ src/
 - **Write strategy**: `itinerary` + `daily_logs` use debounced upsert on `(voyage_id, day_number)`. All other dynamic arrays use debounced delete-all + reinsert (no natural key).
 - **Theme flash prevention**: `index.html` has an inline `<script>` that applies CSS vars from `localStorage` before React mounts.
 - **Photos**: Signed URLs (1-hour TTL) via `lib/photoStorage.js`. Never use `getPublicUrl`.
+
+### Styling strategy
+New components use Tailwind utility classes and shadcn primitives. Existing inline-styled components keep their styles until explicitly migrated — both systems coexist and inline styles win on specificity when mixed on the same element. Use `cn()` from `src/lib/utils.ts` for any component that applies Tailwind classes conditionally.
+
+Tailwind design tokens are defined in `src/index.css` under `@theme inline`. Dynamic tokens (`primary`, `accent`, `bg`) reference `var(--t-*)` CSS variables so they respond to runtime theme switches from `themes.ts`. Static tokens (`border`, `text`, `muted`, etc.) are fixed hex values mirroring `constants.ts`.
+
+To add a shadcn component: `npx shadcn@latest add <name>` — it lands in `src/components/ui/`. Do not confuse this with `src/components/ui.tsx`, which is the legacy hand-rolled primitives file.
 
 ---
 

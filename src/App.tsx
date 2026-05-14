@@ -19,8 +19,10 @@ import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
 import { applyTheme, getSavedTheme } from './themes'
 import { supabase } from './lib/supabase'
 import { useVoyageData } from './hooks/useVoyageData'
+import { useBreakpoint } from './hooks/useBreakpoint'
 import Sidebar      from './components/Sidebar'
 import TopNav       from './components/TopNav'
+import BottomNav    from './components/BottomNav'
 import AuthScreen   from './components/AuthScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toast }    from './components/ui'
@@ -61,8 +63,9 @@ interface ToastState {
 export default function App() {
   // ── Responsive layout flags ─────────────────────────────────────────────────
   const winW      = useWindowSize()
-  const isOverlay = winW <= BP.tablet
-  const isMobile  = winW < BP.mobile
+  const bp        = useBreakpoint()
+  const isMobile  = bp === 'mobile'
+  const isOverlay = isMobile   // sidebar becomes a drawer only on mobile
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   const [session,     setSession]     = useState<Session | null>(null)
@@ -194,8 +197,10 @@ export default function App() {
   }
 
   // ── Layout values ───────────────────────────────────────────────────────────
-  const baseFontSize = isMobile ? 15 : winW < BP.tablet ? 15.5 : 16
-  const mainPad      = isMobile ? '20px 12px' : winW < BP.tablet ? '32px 28px' : '44px 52px'
+  const baseFontSize = isMobile ? 15 : bp === 'tablet' ? 15.5 : 16
+  const mainPad      = isMobile ? '20px 12px' : bp === 'tablet' ? '32px 28px' : '44px 52px'
+  // Extra bottom clearance on mobile so content isn't hidden behind the BottomNav
+  const mainPadBottom = isMobile ? '80px' : mainPad.split(' ')[0]
 
   // ── Loading / auth screens ──────────────────────────────────────────────────
   if (!authChecked) return (
@@ -228,7 +233,7 @@ export default function App() {
         <Sidebar
           section={section}
           onNav={navClick}
-          isOverlay={isOverlay}
+          bp={bp}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           user={session?.user}
@@ -249,7 +254,7 @@ export default function App() {
           />
 
           <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-            <div key={section} className="page-in" style={{ padding: mainPad }}>
+            <div key={section} className="page-in" style={{ padding: mainPad, paddingBottom: mainPadBottom }}>
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary key={section}>
               {section === 'dashboard' && selectedDay === null && (
@@ -298,6 +303,13 @@ export default function App() {
         </div>
       </div>
       <Toast message={toast.message} visible={toast.visible} />
+      {isMobile && (
+        <BottomNav
+          section={section}
+          onNav={navClick}
+          onMenuOpen={() => setSidebarOpen(true)}
+        />
+      )}
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

@@ -1,5 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// components/TopNav.tsx — Full-width top navigation banner (frosted glass)
+// components/TopNav.tsx — Full-width top navigation banner
+//
+// Mobile  → hamburger (44×44) + logo + profile icon only (social nav is on
+//           BottomNav to avoid duplication)
+// Tablet+ → full social nav with icons + labels
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { WHITE, FONT_BODY } from '../constants'
@@ -21,16 +25,18 @@ const TOP_NAV_ITEMS: NavItem[] = [
 interface Props {
   section:     string
   onNav:       (id: string) => void
-  isOverlay:   boolean
+  isOverlay:   boolean   // true = mobile, shows hamburger
   isMobile:    boolean
   onMenuOpen:  () => void
 }
 
 export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile }: Props) {
-  const logoH  = isMobile ? 38 : 48
-  const barH   = isMobile ? 48 : 58
-  const btnPad = isMobile ? '5px 10px' : '7px 18px'
-  const navGap = isMobile ? 2 : 6
+  const barH = isMobile ? 48 : 58
+
+  // On mobile the social links move to BottomNav — only Profile stays in the top bar.
+  const visibleItems = isMobile
+    ? TOP_NAV_ITEMS.filter(item => item.id === 'userprofile')
+    : TOP_NAV_ITEMS
 
   return (
     <div style={{
@@ -40,23 +46,25 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       display: 'flex', alignItems: 'center',
       padding: isMobile ? '0 10px' : '0 22px',
       gap: isMobile ? 4 : 8,
-      borderBottom: 'none',
-      boxShadow: 'none',
       zIndex: 200,
       position: 'sticky',
       top: 0,
     }}>
 
-      {/* ── Left: hamburger (mobile) + logo ── */}
+      {/* ── Left: hamburger + logo ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexShrink: 0 }}>
         {isOverlay && (
           <button
+            aria-label="Open menu"
             onClick={onMenuOpen}
             style={{
-              background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 8, width: 30, height: 30,
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 8,
+              width: 44, height: 44,      // ≥ 44×44 tap target
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 14,
+              cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 18,
+              WebkitTapHighlightColor: 'transparent',
             }}
           >☰</button>
         )}
@@ -64,19 +72,21 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           src="/logo.svg"
           alt="Cruise Log"
           onClick={() => onNav('dashboard')}
-          style={{ height: logoH, width: 'auto', cursor: 'pointer', opacity: 0.95 }}
+          style={{ height: isMobile ? 32 : 44, width: 'auto', cursor: 'pointer', opacity: 0.95 }}
         />
       </div>
 
       <div style={{ flex: 1 }} />
 
       {/* ── Right: social nav ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: navGap }}>
-        {TOP_NAV_ITEMS.map(({ id, label, icon }) => {
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 2 : 6 }}>
+        {visibleItems.map(({ id, label, icon }) => {
           const active = section === id
           return (
             <button
               key={id}
+              aria-label={label}
+              aria-current={active ? 'page' : undefined}
               onClick={() => onNav(id)}
               style={{
                 display: 'flex', alignItems: 'center',
@@ -84,7 +94,10 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
                 background: active ? 'rgba(201,162,39,0.16)' : 'transparent',
                 border: `1px solid ${active ? 'rgba(201,162,39,0.45)' : 'transparent'}`,
                 borderRadius: 20,
-                padding: btnPad,
+                padding: isMobile ? '0' : '7px 18px',
+                width:  isMobile ? 44 : 'auto',
+                height: isMobile ? 44 : 'auto',
+                justifyContent: 'center',
                 cursor: 'pointer',
                 color: WHITE,
                 fontFamily: FONT_BODY,
@@ -92,11 +105,12 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
                 transition: 'all 0.18s ease',
                 whiteSpace: 'nowrap',
                 letterSpacing: '0.01em',
+                WebkitTapHighlightColor: 'transparent',
               }}
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
-              <FE emoji={icon} size={isMobile ? 27 : 24} />
+              <FE emoji={icon} size={isMobile ? 24 : 22} />
               {!isMobile && <span>{label}</span>}
             </button>
           )

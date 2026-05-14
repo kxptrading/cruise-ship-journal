@@ -236,6 +236,17 @@ body::before {
   to   { opacity: 0; transform: translate(-50%, 8px); }
 }
 
+/* ── Skeleton shimmer ─────────────────────────────────────────────────── */
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #f0eeea 25%, #e8e5e0 50%, #f0eeea 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
 /* ── Honour OS-level reduced-motion preference ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

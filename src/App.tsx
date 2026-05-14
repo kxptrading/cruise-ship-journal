@@ -44,6 +44,7 @@ import Notes            from './sections/Notes'
 import Friends          from './sections/Friends'
 import Chat             from './sections/Chat'
 import UserProfile      from './sections/UserProfile'
+import DesignSystem     from './sections/DesignSystem'
 import type { Session } from '@supabase/supabase-js'
 
 // Shape passed from Feed's onViewProfile into Friends as initialFriend
@@ -296,6 +297,7 @@ export default function App() {
               {section === 'friends'       && <Friends initialFriend={feedFriend} onClearInitialFriend={() => setFeedFriend(null)} />}
               {section === 'chat'          && <Chat />}
               {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />}
+              {section === 'design-system' && <DesignSystem />}
             </ErrorBoundary>
             </div>
             </div>

@@ -46,7 +46,7 @@ export default function BottomNav({ section, onNav, onMenuOpen }: Props) {
       {TABS.map(({ id, label, Icon, action }) => {
         const isMenu  = action === 'menu'
         const active  = !isMenu && section === id
-        const color   = active ? '#FFFFFF' : 'rgba(255,255,255,0.55)'
+        const color   = active ? 'var(--t-primary-lt)' : '#FFFFFF'
 
         return (
           <button

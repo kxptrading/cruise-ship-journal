@@ -6,7 +6,7 @@
 // Tablet+ → full social nav with icons + labels
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { CircleUser } from 'lucide-react'
+import { CircleUser, Menu } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, FONT_BODY } from '../constants'
 import FE from './FE'
@@ -69,7 +69,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 18,
               WebkitTapHighlightColor: 'transparent',
             }}
-          >☰</button>
+          ><Menu size={22} strokeWidth={1.75} /></button>
         )}
         <button
           onClick={() => onNav('dashboard')}

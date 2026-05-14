@@ -4,7 +4,7 @@
 
 import { Home, CalendarDays, BookOpen, Users, MessageCircle, Rss } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { GOLD, FONT_BODY } from '../constants'
+import { FONT_BODY } from '../constants'
 
 interface TabItem {
   id:       string
@@ -46,7 +46,7 @@ export default function BottomNav({ section, onNav, onMenuOpen }: Props) {
       {TABS.map(({ id, label, Icon, action }) => {
         const isMenu  = action === 'menu'
         const active  = !isMenu && section === id
-        const color   = active ? GOLD : 'rgba(255,255,255,0.55)'
+        const color   = active ? '#FFFFFF' : 'rgba(255,255,255,0.55)'
 
         return (
           <button

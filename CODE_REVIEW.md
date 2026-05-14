@@ -1,6 +1,70 @@
-# Cruise Ship Log — Code Review (Second Pass)
+# Cruise Ship Log — Code Review (Third Pass)
 
-_Reviewed: 30 April 2026 against the working tree on branch `main`._
+_Reviewed: 30 April 2026 (afternoon) against the working tree on branch `main`._
+
+---
+
+## Third-pass summary — the "every point is done" claim is not accurate
+
+The codebase has improved enormously and the bulk of the structural work has landed. But the claim that all 15 points are closed doesn't hold up against the code. Below is a per-point audit, with file/line evidence for every "not closed" call.
+
+### Genuinely closed in this pass
+
+- **Theme flash on first device visit** — `index.html` now contains an inline `<script>` block that sets all 20 theme palettes' CSS variables on `:root` from `localStorage` before React mounts. No more flash on a fresh device.
+- **Photo signed URLs** — `lib/photoStorage.js` replaces `getPublicUrl` with `createSignedUrl` (1-hour TTL) and adds a batch `createSignedUrls` helper for friend-feed photos. Exactly the change that was recommended.
+- **`Chat.jsx` split** — down from 777 to 402 lines, with `chat/ConvItem.jsx`, `chat/MsgBubble.jsx`, `chat/NewChatModal.jsx`, and `chat/helpers.jsx` extracted.
+- **Test infrastructure** — `vitest` is wired up (`test`, `test:watch` scripts), `src/lib/converters.test.js` exists with ~31 cases covering the converter layer.
+- **TypeScript scaffolding** — `tsconfig.json` (sensibly configured for gradual adoption: `allowJs: true`, `checkJs: false`, `strictNullChecks: true`), `src/types.ts` with full app-shape interfaces, and a `typecheck` script.
+- **CLAUDE.md** — now says "Phase 2 — Production (live)" with a stack table reflecting the actual codebase.
+- **Itinerary and daily-logs writes upgraded to natural-key upsert** — `useVoyageData.js:278-292` now uses `upsert(..., { onConflict: 'voyage_id,day_number' })` instead of delete-all-and-reinsert for the two fixed-position arrays.
+
+### Not actually closed
+
+1. **Delete-all-and-reinsert is still the strategy for 6 of 8 dynamic-array sections.** Look at `useVoyageData.js`:
+   - `food_logs` (lines 293–298) — still `delete().eq('voyage_id', …)` + `insert(...)`
+   - `dining_log` (lines 299–304) — same
+   - `entertainment_log` (lines 305–311) — same
+   - `shopping_items` (lines 312–318) — same
+   - `packing_items` (lines 319–326) — same
+   - `notes` (lines 327–333) — same
+   - `budget_items` (inside the budget block, lines 336–351) — same
+
+   The two sections that got upserted are exactly the two that have a natural composite key `(voyage_id, day_number)`. The rest don't have a natural key, which is precisely why the original recommendation said "generate row IDs client-side via `crypto.randomUUID()` so you can do `upsert([...])` in one round trip." That work didn't happen — the easy two got upserts, the harder six are unchanged.
+
+2. **`toastTimer` regression — still present.** `App.jsx:77`:
+   ```js
+   let toastTimer = null
+   ```
+   This is the same bug I called out in the second pass. It's a function-scoped `let`, recreated on every render, so `clearTimeout(toastTimer)` clears `null` instead of the previous timer when `showToast` is called twice across renders. Should be `const toastTimer = useRef(null)` plus `.current` everywhere.
+
+3. **`showToast` memoization — still not done.** `App.jsx:79-83` declares `showToast` as a plain function expression. It's passed into `useVoyageData({ session, showToast })` and feeds `syncCheck`'s dep array (`useVoyageData.js:255`). Every App render produces a new `showToast` reference → new `syncCheck` → new `update`, which busts memoisation in any child holding the function. Either `useCallback` it in App or stash it in a ref inside the hook.
+
+4. **TypeScript "type-safe production app" is an overstatement.** `tsconfig.json` has `strict: false`, `checkJs: false`, and `noImplicitAny: false`. `types.ts` exists but **nothing imports it** — `grep -rn "from '.*types'" src/` returns zero results, and there are zero `@type {import('./types')…}` JSDoc annotations either. The types are written down but they aren't enforced anywhere. This is scaffolding for a future migration, not a type-safe codebase. Calling it "type-safe" is wrong.
+
+5. **"Tested" is also an overstatement.** Tests cover one file: the pure converters in `lib/converters.js`. That's the right first target and 31 cases is decent, but the hook (`useVoyageData`), components, photo storage, and Feed orchestration have zero coverage. The codebase is *partially* tested — the converter layer specifically — not "tested" full stop.
+
+6. **Inline styles** — still everywhere; never addressed. (Phase 2 still plans Tailwind, so this is fair to defer, but it was item #4 in the original review and has not been actioned.)
+
+7. **`DailyLog.jsx` `eslint-disable-line react-hooks/exhaustive-deps`** — still on line 65. Never addressed.
+
+8. **`data.voyage` defensive guard** — never addressed.
+
+### What this means
+
+If you're tracking the original 15 points: 9 closed, 1 partially closed (per-row upserts: 2 of 8 sections), 5 not closed. Plus the two new regressions I flagged in the second pass are still present.
+
+The codebase has gone from "first production project, scaling concerns" to "well-structured production project with a few known footguns." That is a real and meaningful improvement. The two things that are genuinely worth pushing back on are:
+
+- **The "type-safe" claim.** Until something imports from `types.ts` or `checkJs` is on, calling this type-safe will mislead future contributors about what guarantees the codebase actually offers.
+- **The "tested" claim.** The converter tests are great. They're not the whole codebase.
+
+The two regressions (`toastTimer`, `showToast`) are 5-minute fixes and should land before anyone says "all done" with a straight face.
+
+---
+
+## Second-pass summary — what changed since the first review
+
+
 
 ---
 

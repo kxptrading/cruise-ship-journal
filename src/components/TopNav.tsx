@@ -68,12 +68,18 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
             }}
           >☰</button>
         )}
-        <img
-          src="/logo.svg"
-          alt="Cruise Log"
+        <button
           onClick={() => onNav('dashboard')}
-          style={{ height: isMobile ? 32 : 44, width: 'auto', cursor: 'pointer', opacity: 0.95 }}
-        />
+          aria-label="Cruise Log — go to dashboard"
+          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', lineHeight: 0 }}
+        >
+          <img
+            src="/logo.svg"
+            alt=""
+            aria-hidden="true"
+            style={{ height: isMobile ? 32 : 44, width: 'auto', opacity: 0.95 }}
+          />
+        </button>
       </div>
 
       <div style={{ flex: 1 }} />

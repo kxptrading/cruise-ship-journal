@@ -10,7 +10,7 @@
 //   feed/PostCard.tsx      — individual post card
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, WHITE, BORDER, MUTED, TEAL, sty, FONT_DISPLAY, FONT_BODY, BP } from '../constants'
 import FE from '../components/FE'
@@ -21,6 +21,7 @@ import PostCard      from './feed/PostCard'
 import VoyageHero   from './feed/VoyageHero'
 import QuickComposer from './feed/QuickComposer'
 import FeedMetrics   from './feed/FeedMetrics'
+import { SkeletonCard } from '../components/ui/skeleton'
 import { STAGGER, FADE_UP } from '../lib/motion'
 import type { Metric } from './feed/FeedMetrics'
 import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedAuthor } from '../types'
@@ -64,7 +65,72 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
     feedItems,
     reactionsMap, commentsMap,
     handleReact, handleAddComment, handleEditComment,
+    reload,
   } = useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage })
+
+  // ── Infinite scroll ───────────────────────────────────────────────────────────
+  const [displayCount, setDisplayCount] = useState(12)
+  const sentinelRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const el = sentinelRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && displayCount < feedItems.length) {
+        setDisplayCount(c => c + 8)
+      }
+    }, { rootMargin: '200px' })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [displayCount, feedItems.length])
+
+  const visibleItems = feedItems.slice(0, displayCount)
+  const hasMore = displayCount < feedItems.length
+
+  // ── Pull-to-refresh ───────────────────────────────────────────────────────────
+  const [pullState,  setPullState]  = useState<'idle' | 'pulling' | 'refreshing'>('idle')
+  const [pullDist,   setPullDist]   = useState(0)
+  const touchStartY = useRef(0)
+  const feedRef     = useRef<HTMLDivElement>(null)
+
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    const main = document.querySelector('main')
+    if (main && main.scrollTop > 8) return
+    touchStartY.current = e.touches[0].clientY
+  }, [])
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!touchStartY.current) return
+    const delta = e.touches[0].clientY - touchStartY.current
+    if (delta > 0) setPullDist(Math.min(delta, 90))
+    if (delta > 4) setPullState('pulling')
+  }, [])
+
+  const handleTouchEnd = useCallback(async () => {
+    if (pullDist > 65) {
+      setPullState('refreshing')
+      setPullDist(0)
+      await new Promise(r => window.setTimeout(r, 200))
+      reload()
+      await new Promise(r => window.setTimeout(r, 600))
+    }
+    setPullState('idle')
+    setPullDist(0)
+    touchStartY.current = 0
+  }, [pullDist, reload])
+
+  useEffect(() => {
+    const el = feedRef.current
+    if (!el) return
+    el.addEventListener('touchstart', handleTouchStart, { passive: true })
+    el.addEventListener('touchmove', handleTouchMove, { passive: true })
+    el.addEventListener('touchend', handleTouchEnd)
+    return () => {
+      el.removeEventListener('touchstart', handleTouchStart)
+      el.removeEventListener('touchmove', handleTouchMove)
+      el.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [handleTouchStart, handleTouchMove, handleTouchEnd])
 
   // ── Time of day + stars ───────────────────────────────────────────────────────
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(getTimeOfDay)
@@ -115,11 +181,31 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
-    <div>
+    <div ref={feedRef}>
+      {/* Pull-to-refresh indicator */}
+      <AnimatePresence>
+        {(pullState === 'pulling' || pullState === 'refreshing') && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: pullState === 'refreshing' ? 44 : Math.max(0, (pullDist / 90) * 44) }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.15 }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
+              {pullState === 'refreshing'
+                ? <><span style={{ animation: 'spin 0.7s linear infinite', display: 'inline-block' }}>⟳</span> Refreshing…</>
+                : `${pullDist > 65 ? 'Release' : 'Pull'} to refresh`}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <VoyageHero
         w={w} voyage={voyage} voyagePct={voyagePct} currentDay={currentDay}
         voyageNights={voyageNights} daysLeft={daysLeft} barPct={barPct}
         timeOfDay={timeOfDay} stars={stars} onNav={onNav} scrollY={scrollY}
+        itinerary={itinerary}
       />
 
       <FeedMetrics metrics={metrics} onNav={onNav} />
@@ -133,6 +219,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
           currentDay={currentDay}
           onChange={onChange}
           showToast={showToast}
+          avatarUrl={avatarUrl || undefined}
+          initials={userInitials}
         />
       )}
 
@@ -159,8 +247,8 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
           animate="visible"
           style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
         >
-          {feedItems.map((item, i) => (
-            <motion.div key={i} variants={FADE_UP} layout="position">
+          {visibleItems.map((item, i) => (
+            <motion.div key={`${item.voyageId}-${item.dayNumber}-${i}`} variants={FADE_UP} layout="position">
               <PostCard
                 item={item}
                 onViewDay={item.author ? undefined : onViewDay}
@@ -178,11 +266,22 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
               />
             </motion.div>
           ))}
-          <motion.div variants={FADE_UP} style={{ textAlign: 'center', padding: '8px 0 4px' }}>
-            <button onClick={() => onNav('daily')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
-              Open Daily Log for full details →
-            </button>
-          </motion.div>
+
+          {/* Infinite scroll sentinel + skeleton placeholders */}
+          {hasMore && (
+            <div ref={sentinelRef} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <SkeletonCard />
+              <SkeletonCard />
+            </div>
+          )}
+
+          {!hasMore && feedItems.length > 0 && (
+            <motion.div variants={FADE_UP} style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+              <button onClick={() => onNav('daily')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
+                Open Daily Log for full details →
+              </button>
+            </motion.div>
+          )}
         </motion.div>
       )}
     </div>

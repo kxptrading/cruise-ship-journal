@@ -1,0 +1,27 @@
+{
+  "name": "Cruise Ship Log",
+  "short_name": "CruiseLog",
+  "description": "A web-based cruise travel journal — log every day of your voyage.",
+  "theme_color": "#1B3A5C",
+  "background_color": "#F4F1EB",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "en-GB",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["lifestyle", "travel", "utilities"],
+  "screenshots": []
+}

@@ -12,7 +12,7 @@
 // All DB ↔ app shape conversion lives in lib/converters.ts.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
@@ -28,26 +28,47 @@ import BottomNav    from './components/BottomNav'
 import AuthScreen   from './components/AuthScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toast }    from './components/ui'
-import Feed             from './sections/Feed'
-import DayDetail        from './sections/DayDetail'
-import VoyageProfile    from './sections/VoyageProfile'
-import VoyageDetails    from './sections/VoyageDetails'
-import Itinerary        from './sections/Itinerary'
-import DailyLog         from './sections/DailyLog'
-import FoodLog          from './sections/FoodLog'
-import DiningLog        from './sections/DiningLog'
-import EntertainmentLog from './sections/EntertainmentLog'
-import FoodFavourites   from './sections/FoodFavourites'
-import BudgetTracker    from './sections/BudgetTracker'
-import ShoppingLog      from './sections/ShoppingLog'
-import Highlights       from './sections/Highlights'
-import PackingList      from './sections/PackingList'
-import Notes            from './sections/Notes'
-import Friends          from './sections/Friends'
-import Chat             from './sections/Chat'
-import UserProfile      from './sections/UserProfile'
-import DesignSystem     from './sections/DesignSystem'
+// Section components — all lazy-loaded so the initial bundle is just the shell
+const Dashboard        = lazy(() => import('./sections/Dashboard'))
+const Feed             = lazy(() => import('./sections/Feed'))
+const DayDetail        = lazy(() => import('./sections/DayDetail'))
+const VoyageProfile    = lazy(() => import('./sections/VoyageProfile'))
+const VoyageDetails    = lazy(() => import('./sections/VoyageDetails'))
+const Itinerary        = lazy(() => import('./sections/Itinerary'))
+const DailyLog         = lazy(() => import('./sections/DailyLog'))
+const FoodLog          = lazy(() => import('./sections/FoodLog'))
+const DiningLog        = lazy(() => import('./sections/DiningLog'))
+const EntertainmentLog = lazy(() => import('./sections/EntertainmentLog'))
+const FoodFavourites   = lazy(() => import('./sections/FoodFavourites'))
+const BudgetTracker    = lazy(() => import('./sections/BudgetTracker'))
+const ShoppingLog      = lazy(() => import('./sections/ShoppingLog'))
+const Highlights       = lazy(() => import('./sections/Highlights'))
+const PackingList      = lazy(() => import('./sections/PackingList'))
+const Notes            = lazy(() => import('./sections/Notes'))
+const Friends          = lazy(() => import('./sections/Friends'))
+const Chat             = lazy(() => import('./sections/Chat'))
+const UserProfile      = lazy(() => import('./sections/UserProfile'))
+const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
+const NotFound         = lazy(() => import('./sections/NotFound'))
 import type { Session } from '@supabase/supabase-js'
+
+// All valid section IDs — anything else renders NotFound
+const KNOWN_SECTIONS = new Set([
+  'feed', 'profile', 'voyage', 'itinerary', 'daily', 'food', 'dining',
+  'entertainment', 'foodfav', 'budget', 'shopping', 'highlights', 'packing',
+  'notes', 'friends', 'chat', 'userprofile', 'design-system',
+])
+
+// Minimal loading shimmer shown while a lazy section chunk loads
+function SectionLoader() {
+  return (
+    <div style={{ padding: '40px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {[80, 200, 140, 200].map((h, i) => (
+        <div key={i} className="skeleton-shimmer" style={{ height: h, borderRadius: 14 }} />
+      ))}
+    </div>
+  )
+}
 
 // Shape passed from Feed's onViewProfile into Friends as initialFriend
 interface FeedFriend {
@@ -261,7 +282,7 @@ export default function App() {
             onMenuOpen={() => setSidebarOpen(true)}
           />
 
-          <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <main ref={mainRef} role="main" aria-label="Main content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             <AnimatePresence mode="wait">
             <motion.div
               key={section}
@@ -273,7 +294,29 @@ export default function App() {
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary key={section}>
+            <Suspense fallback={<SectionLoader />}>
               {section === 'dashboard' && selectedDay === null && (
+                <Dashboard
+                  voyage={data.voyage}
+                  itinerary={data.itinerary}
+                  dailyLogs={data.dailyLogs}
+                  budget={data.budget}
+                  packing={data.packing}
+                  foodLogs={data.foodLogs}
+                  diningLog={data.diningLog}
+                  sectionStatus={sectionStatus}
+                  onChange={v => update('dailyLogs', v)}
+                  onNav={navClick}
+                  showToast={showToast}
+                  onViewDay={setSelectedDay}
+                  scrollY={scrollY}
+                  onViewProfile={(author) => {
+                    setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
+                    navClick('friends')
+                  }}
+                />
+              )}
+              {section === 'feed' && (
                 <Feed
                   voyage={data.voyage}
                   itinerary={data.itinerary}
@@ -314,6 +357,9 @@ export default function App() {
               {section === 'chat'          && <Chat />}
               {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />}
               {section === 'design-system' && <DesignSystem />}
+              {/* 404 — no known section matched */}
+              {!KNOWN_SECTIONS.has(section) && section !== 'dashboard' && <NotFound onNav={navClick} />}
+            </Suspense>
             </ErrorBoundary>
             </div>
             </motion.div>

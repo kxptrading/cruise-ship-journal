@@ -12,6 +12,7 @@ import { AnimatePresence, motion }  from 'framer-motion'
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
 import { NAV } from '../constants'
 import FE     from './FE'
+import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
 
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
@@ -41,6 +42,9 @@ export default function Sidebar({
 
   // Tooltip tracking for tablet icon-only mode
   const [tooltip, setTooltip] = useState<{ id: string; y: number } | null>(null)
+
+  // Focus trap — active when mobile drawer is open
+  const drawerRef = useFocusTrap<HTMLElement>(isMobile && isOpen)
 
   // Close drawer on Escape (mobile)
   useEffect(() => {
@@ -241,6 +245,10 @@ export default function Sidebar({
           {isOpen && (
             <motion.aside
               key="drawer"
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Navigation menu"
               initial={{ x: -W_FULL }}
               animate={{ x: 0 }}
               exit={{ x: -W_FULL }}

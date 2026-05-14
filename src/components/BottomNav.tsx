@@ -2,7 +2,7 @@
 // components/BottomNav.tsx — Fixed bottom tab bar (mobile only)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Home, CalendarDays, BookOpen, Users, MessageCircle } from 'lucide-react'
+import { Home, CalendarDays, BookOpen, Users, MessageCircle, Rss } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { GOLD, FONT_BODY } from '../constants'
 
@@ -14,9 +14,9 @@ interface TabItem {
 }
 
 const TABS: TabItem[] = [
-  { id: 'dashboard', label: 'Feed',    Icon: Home },
+  { id: 'dashboard', label: 'Home',    Icon: Home },
+  { id: 'feed',      label: 'Feed',    Icon: Rss },
   { id: 'daily',     label: 'Daily',   Icon: CalendarDays },
-  { id: 'journal',   label: 'Journal', Icon: BookOpen, action: 'menu' },
   { id: 'friends',   label: 'Friends', Icon: Users },
   { id: 'chat',      label: 'Chat',    Icon: MessageCircle },
 ]

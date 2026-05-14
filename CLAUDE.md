@@ -226,22 +226,34 @@ IC.star      IC.anchor  IC.compass IC.trending IC.food  IC.ship
 
 ## Roadmap (Next Steps)
 
-### Immediate
-- [ ] User accounts & login (Supabase Auth)
-- [ ] Multiple voyages — switch between past / future cruises
-- [ ] Mobile responsive layout — collapsible sidebar, touch-friendly
+### Completed (Phases 0–7)
+- [x] User accounts & login (Supabase Auth)
+- [x] Multiple voyages — switch between past / future cruises
+- [x] Mobile responsive layout — collapsible sidebar, bottom tab bar, touch-friendly
+- [x] Photo uploads — drag-and-drop in Daily Log, signed URLs, lightbox gallery
+- [x] Social feed — reactions, comments, friend posts, QuickComposer
+- [x] Design system — Tailwind v4, shadcn primitives, motion language
+- [x] Dashboard — interactive metric cards, sparklines, budget breakdown, itinerary timeline, ports map
+- [x] Daily Log — tabbed card UI, animated weather chips, swipe pager, drag-drop photos
+- [x] Itinerary — visual vertical timeline, drag-to-reorder, inline edit, animated Add Day
+- [x] Accessibility — focus-visible ring, ARIA roles, focus trap on mobile drawer, reduced-motion
+- [x] Performance — React.lazy code-splitting for all sections, PortsMap lazy-loaded
+- [x] PWA — manifest.json, theme-color, apple-touch-icon, mobile-web-app-capable
 
 ### Near-term
-- [ ] Photo uploads — real images in Daily Log photo memory slots
 - [ ] Export to PDF — recreate the physical journal format digitally
 - [ ] Social sharing — shareable public highlight pages (like a Facebook post)
+- [ ] Service worker — offline shell caching + background sync
+- [ ] Push notifications — react to friends' posts while offline
 
 ### Future
 - [ ] AI assistant — port suggestions, excursion tips based on logged preferences
 - [ ] Weather integration — auto-fill weather from departure date + port
 - [ ] Packing list customisation — add/remove items, create custom categories
 - [ ] Multi-user voyages — share a journal with travel companions
-- [ ] Offline support — PWA with sync when reconnected
+- [ ] Photo multi-upload carousel in feed posts (data model: photos[] per day)
+- [ ] Per-row upserts for all 6 remaining dynamic-array sections (currently delete-all + reinsert)
+- [ ] TypeScript strict mode — currently `strict: false`; converter layer is the highest-value first target
 
 ---
 

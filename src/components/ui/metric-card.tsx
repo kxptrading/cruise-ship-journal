@@ -80,18 +80,45 @@ function useCountUp(target: number, duration = 1.2): number {
 
 // ── MetricCard ───────────────────────────────────────────────────────────────
 
-export interface MetricCardProps {
-  icon:    string           // emoji shown in coloured badge
-  value:   string | number  // numeric values animate; strings display as-is
-  label:   string
-  sub?:    string
-  color:   string
-  pct?:    number           // progress bar (0-100)
-  ring?:   number           // donut ring (0-100)
-  alert?:  boolean          // turns ring/progress red when true
+// ── Inline sparkline ─────────────────────────────────────────────────────────
+
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  if (data.length < 2) return null
+  const w = 80, h = 26
+  const min = Math.min(...data)
+  const max = Math.max(...data)
+  const range = max - min || 1
+  const pts = data.map((v, i) => ({
+    x: (i / (data.length - 1)) * w,
+    y: h - ((v - min) / range) * (h - 4) - 2,
+  }))
+  // Smooth cubic bezier path
+  const d = pts.reduce((acc, pt, i) => {
+    if (i === 0) return `M${pt.x},${pt.y}`
+    const prev = pts[i - 1]
+    const cx   = (prev.x + pt.x) / 2
+    return `${acc} C${cx},${prev.y} ${cx},${pt.y} ${pt.x},${pt.y}`
+  }, '')
+  return (
+    <svg width={w} height={h} style={{ display: 'block', marginTop: 6, overflow: 'visible' }}>
+      <path d={d} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" opacity={0.7} />
+    </svg>
+  )
 }
 
-export function MetricCard({ icon, value, label, sub, color, pct, ring, alert }: MetricCardProps) {
+export interface MetricCardProps {
+  icon:       string           // emoji shown in coloured badge
+  value:      string | number  // numeric values animate; strings display as-is
+  label:      string
+  sub?:       string
+  color:      string
+  pct?:       number           // progress bar (0-100)
+  ring?:      number           // donut ring (0-100)
+  alert?:     boolean          // turns ring/progress red when true
+  sparkline?: number[]         // optional mini line chart below the metric
+}
+
+export function MetricCard({ icon, value, label, sub, color, pct, ring, alert, sparkline }: MetricCardProps) {
   const isNumeric = typeof value === 'number'
   const counted   = useCountUp(isNumeric ? value : 0)
   const displayed = isNumeric ? counted : value
@@ -149,6 +176,9 @@ export function MetricCard({ icon, value, label, sub, color, pct, ring, alert }:
               style={{ height: '100%', background: alert ? '#DC2626' : color, borderRadius: 2 }}
             />
           </div>
+        )}
+        {sparkline && sparkline.some(v => v > 0) && (
+          <Sparkline data={sparkline} color={alert ? '#DC2626' : color} />
         )}
       </div>
     </motion.div>

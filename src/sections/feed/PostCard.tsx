@@ -4,10 +4,12 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { KeyboardEvent } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY, NAVY2, GOLD, WHITE, BORDER, TEXT, MUTED, CORAL, FONT_DISPLAY, FONT_BODY, WX_EMOJI, WX_STYLE } from '../../constants'
 import { useW } from '../../context'
 import type { FeedItem, FeedAuthor, ReactionState, Comment } from '../../types'
 import FE from '../../components/FE'
+import { SCALE_POP, SCALE_POP_TRANSITION, REACTION_FLOAT } from '../../lib/motion'
 
 // ── Reaction definitions ──────────────────────────────────────────────────────
 interface Reaction {
@@ -49,6 +51,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
   const [editText, setEditText]         = useState<string>('')
   const [saving, setSaving]             = useState<boolean>(false)
   const [pickerOpen, setPickerOpen]     = useState<boolean>(false)
+  const [flashEmoji, setFlashEmoji]     = useState<string | null>(null)
   const commentInputRef = useRef<HTMLTextAreaElement>(null)
   const longPressTimer  = useRef<number | null>(null)
   const pickerRef       = useRef<HTMLDivElement>(null)
@@ -74,7 +77,12 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
     if (myReaction) { onReact?.(myReaction.id) } else { openPicker() }
   }
 
-  const handlePickReaction = (id: string) => { closePicker(); onReact?.(id) }
+  const handlePickReaction = (id: string) => {
+    closePicker()
+    onReact?.(id)
+    const emoji = REACTIONS.find(r => r.id === id)?.emoji
+    if (emoji) { setFlashEmoji(emoji); window.setTimeout(() => setFlashEmoji(null), 800) }
+  }
 
   useEffect(() => {
     if (!pickerOpen) return
@@ -264,32 +272,49 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
               animation: 'reactionPickerIn 0.22s cubic-bezier(0.34,1.56,0.64,1)',
             }}>
               {REACTIONS.map(r => (
-                <button
+                <motion.button
                   key={r.id}
                   onClick={() => handlePickReaction(r.id)}
                   title={r.label}
+                  whileHover={{ scale: 1.35 }}
+                  whileTap={{ scale: 0.9 }}
+                  animate={reactions?.[r.id]?.mine ? { scale: 1.25 } : { scale: 1 }}
                   style={{
                     background: 'none', border: 'none', cursor: 'pointer',
                     padding: 4, borderRadius: '50%', fontSize: 28, lineHeight: 1,
-                    transition: 'transform 0.15s',
-                    transform: reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)',
                   }}
-                  onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.35)' }}
-                  onMouseLeave={e => { e.currentTarget.style.transform = reactions?.[r.id]?.mine ? 'scale(1.25)' : 'scale(1)' }}
                 >
                   <FE emoji={r.emoji} size={28} />
-                </button>
+                </motion.button>
               ))}
             </div>
           )}
 
-          <button
+          {/* Floating emoji animation on react */}
+          <AnimatePresence>
+            {flashEmoji && (
+              <motion.div
+                key={flashEmoji + Date.now()}
+                variants={REACTION_FLOAT}
+                initial="initial"
+                animate="animate"
+                exit={{ opacity: 0 }}
+                style={{ position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', fontSize: 28, pointerEvents: 'none', zIndex: 60 }}
+              >
+                <FE emoji={flashEmoji} size={28} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <motion.button
             onClick={handleReactTap}
             onMouseDown={handlePressStart}
             onMouseUp={handlePressEnd}
             onMouseLeave={handlePressEnd}
             onTouchStart={handlePressStart}
             onTouchEnd={handlePressEnd}
+            animate={myReaction ? SCALE_POP : undefined}
+            transition={myReaction ? SCALE_POP_TRANSITION : undefined}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               background: myReaction ? 'var(--t-bg)' : 'transparent',
@@ -303,7 +328,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
           >
             <FE emoji={myReaction ? myReaction.emoji : '👍'} size={18} />
             {myReaction ? myReaction.label : 'React'}
-          </button>
+          </motion.button>
         </div>
 
         {/* Amalgamated reaction summary */}

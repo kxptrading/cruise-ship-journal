@@ -14,12 +14,14 @@
 
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
 import { applyTheme, getSavedTheme } from './themes'
 import { supabase } from './lib/supabase'
 import { useVoyageData } from './hooks/useVoyageData'
 import { useBreakpoint } from './hooks/useBreakpoint'
+import { PAGE_TRANSITION } from './lib/motion'
 import Sidebar      from './components/Sidebar'
 import TopNav       from './components/TopNav'
 import BottomNav    from './components/BottomNav'
@@ -203,6 +205,10 @@ export default function App() {
   // Extra bottom clearance on mobile so content isn't hidden behind the BottomNav
   const mainPadBottom = isMobile ? '80px' : mainPad.split(' ')[0]
 
+  // ── Scroll tracking — fed into VoyageHero for parallax/fade ────────────────
+  const mainRef = useRef<HTMLElement>(null)
+  const { scrollY } = useScroll({ container: mainRef })
+
   // ── Loading / auth screens ──────────────────────────────────────────────────
   if (!authChecked) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
@@ -226,6 +232,7 @@ export default function App() {
 
   // ── Layout ──────────────────────────────────────────────────────────────────
   return (
+    <MotionConfig reducedMotion="user">
     <VoyageCtx.Provider value={voyageId}>
     <UserCtx.Provider value={session?.user?.id ?? null}>
     <WCtx.Provider value={winW}>
@@ -254,8 +261,16 @@ export default function App() {
             onMenuOpen={() => setSidebarOpen(true)}
           />
 
-          <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
-            <div key={section} className="page-in" style={{ padding: mainPad, paddingBottom: mainPadBottom }}>
+          <main ref={mainRef} style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            <AnimatePresence mode="wait">
+            <motion.div
+              key={section}
+              variants={PAGE_TRANSITION}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              style={{ padding: mainPad, paddingBottom: mainPadBottom }}
+            >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             <ErrorBoundary key={section}>
               {section === 'dashboard' && selectedDay === null && (
@@ -272,6 +287,7 @@ export default function App() {
                   onNav={navClick}
                   showToast={showToast}
                   onViewDay={setSelectedDay}
+                  scrollY={scrollY}
                   onViewProfile={(author) => {
                     setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
                     navClick('friends')
@@ -300,7 +316,8 @@ export default function App() {
               {section === 'design-system' && <DesignSystem />}
             </ErrorBoundary>
             </div>
-            </div>
+            </motion.div>
+            </AnimatePresence>
           </main>
         </div>
       </div>
@@ -315,5 +332,6 @@ export default function App() {
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>
+    </MotionConfig>
   )
 }

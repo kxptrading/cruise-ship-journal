@@ -11,6 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, WHITE, BORDER, MUTED, TEAL, sty, FONT_DISPLAY, FONT_BODY, BP } from '../constants'
 import FE from '../components/FE'
 import { useW, useVoyageId, useUserId } from '../context'
@@ -20,9 +21,11 @@ import PostCard      from './feed/PostCard'
 import VoyageHero   from './feed/VoyageHero'
 import QuickComposer from './feed/QuickComposer'
 import FeedMetrics   from './feed/FeedMetrics'
+import { STAGGER, FADE_UP } from '../lib/motion'
 import type { Metric } from './feed/FeedMetrics'
 import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedAuthor } from '../types'
 import type { TimeOfDay } from '../lib/atmosphere'
+import type { MotionValue } from 'framer-motion'
 
 interface Star {
   id:       number | string
@@ -47,9 +50,10 @@ interface Props {
   showToast?:     (msg: string) => void
   onViewDay?:     (dayIndex: number) => void
   onViewProfile?: (author: FeedAuthor) => void
+  scrollY?:       MotionValue<number>
 }
 
-export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStatus, onChange, onNav, showToast, onViewDay, onViewProfile }: Props) {
+export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStatus, onChange, onNav, showToast, onViewDay, onViewProfile, scrollY }: Props) {
   const w        = useW()
   const voyageId = useVoyageId()
   const userId   = useUserId()
@@ -115,7 +119,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
       <VoyageHero
         w={w} voyage={voyage} voyagePct={voyagePct} currentDay={currentDay}
         voyageNights={voyageNights} daysLeft={daysLeft} barPct={barPct}
-        timeOfDay={timeOfDay} stars={stars} onNav={onNav}
+        timeOfDay={timeOfDay} stars={stars} onNav={onNav} scrollY={scrollY}
       />
 
       <FeedMetrics metrics={metrics} onNav={onNav} />
@@ -149,31 +153,37 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <motion.div
+          variants={STAGGER}
+          initial="hidden"
+          animate="visible"
+          style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+        >
           {feedItems.map((item, i) => (
-            <PostCard
-              key={i}
-              item={item}
-              onViewDay={item.author ? undefined : onViewDay}
-              avatarUrl={avatarUrl}
-              initials={userInitials}
-              displayName={userDisplayName}
-              author={item.author}
-              onViewProfile={item.author ? () => onViewProfile?.(item.author!) : undefined}
-              reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
-              onReact={(rid: string) => handleReact(item.voyageId, item.dayNumber, rid)}
-              comments={commentsMap[`${item.voyageId}-${item.dayNumber}`] || []}
-              onAddComment={(body: string) => handleAddComment(item.voyageId, item.dayNumber, body)}
-              onEditComment={handleEditComment}
-              userId={userId ?? undefined}
-            />
+            <motion.div key={i} variants={FADE_UP} layout="position">
+              <PostCard
+                item={item}
+                onViewDay={item.author ? undefined : onViewDay}
+                avatarUrl={avatarUrl}
+                initials={userInitials}
+                displayName={userDisplayName}
+                author={item.author}
+                onViewProfile={item.author ? () => onViewProfile?.(item.author!) : undefined}
+                reactions={reactionsMap[`${item.voyageId}-${item.dayNumber}`] || {}}
+                onReact={(rid: string) => handleReact(item.voyageId, item.dayNumber, rid)}
+                comments={commentsMap[`${item.voyageId}-${item.dayNumber}`] || []}
+                onAddComment={(body: string) => handleAddComment(item.voyageId, item.dayNumber, body)}
+                onEditComment={handleEditComment}
+                userId={userId ?? undefined}
+              />
+            </motion.div>
           ))}
-          <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+          <motion.div variants={FADE_UP} style={{ textAlign: 'center', padding: '8px 0 4px' }}>
             <button onClick={() => onNav('daily')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '8px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
               Open Daily Log for full details →
             </button>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
       )}
     </div>
   )

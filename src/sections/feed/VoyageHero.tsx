@@ -2,6 +2,8 @@
 // sections/feed/VoyageHero.tsx — Voyage hero banner
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { motion, useTransform } from 'framer-motion'
+import type { MotionValue } from 'framer-motion'
 import { GOLD, WHITE, BP, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { Donut } from '../../components/ui'
 import { getTimeGradient, getVignetteRGB } from '../../lib/atmosphere'
@@ -29,14 +31,22 @@ interface Props {
   timeOfDay:    TimeOfDay
   stars:        Star[]
   onNav:        (id: string) => void
+  scrollY?:     MotionValue<number>
 }
 
-export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav }: Props) {
+export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav, scrollY }: Props) {
   const HERO_H = w < BP.mobile ? 210 : 250
   const tg = getTimeGradient(timeOfDay)
   const [vr, vg, vb] = getVignetteRGB(timeOfDay)
 
+  // Fallback MotionValues when scrollY isn't provided (e.g. during SSR or tests)
+  const defaultScrollY = useTransform(() => 0)
+  const sy = scrollY ?? defaultScrollY
+  const heroOpacity = useTransform(sy, [0, 160], [1, 0.4])
+  const heroFilter  = useTransform(sy, [0, 160], ['blur(0px)', 'blur(4px)'])
+
   return (
+    <motion.div style={{ opacity: heroOpacity, filter: heroFilter, willChange: 'opacity, filter' }}>
     <div style={{
       position: 'relative', height: HERO_H, borderRadius: 20,
       marginBottom: 16, overflow: 'hidden',
@@ -174,5 +184,6 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
         </div>
       </div>
     </div>
+    </motion.div>
   )
 }

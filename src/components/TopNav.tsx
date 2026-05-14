@@ -39,7 +39,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
 
   // On mobile the social links move to BottomNav — only Profile stays in the top bar.
   const visibleItems = isMobile
-    ? TOP_NAV_ITEMS.filter(item => item.id === 'userprofile')
+    ? TOP_NAV_ITEMS.filter(item => item.id === 'search' || item.id === 'userprofile')
     : TOP_NAV_ITEMS
 
   return (

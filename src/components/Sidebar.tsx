@@ -69,22 +69,7 @@ export default function Sidebar({
       flexShrink: 0,
       background: 'var(--t-primary-dk)',
     }}>
-      {isTablet
-        ? <img src="/logo.svg" alt="Swell Days" style={{ height: 32, width: 'auto', opacity: 0.9 }} />
-        : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <img src="/logo.svg" alt="Swell Days" style={{ height: 36, width: 'auto', opacity: 0.9, flexShrink: 0 }} />
-            <div>
-              <div style={{ fontSize: 19, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1.2 }}>
-                Swell Days
-              </div>
-              <div style={{ fontSize: 9, color: WHITE, marginTop: 5, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, opacity: 0.6 }}>
-                A Journal for Every Voyage
-              </div>
-            </div>
-          </div>
-        )
-      }
+      <img src="/logo.svg" alt="Swell Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
       {isMobile && (
         <button
           aria-label="Close menu"

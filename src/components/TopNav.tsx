@@ -6,7 +6,7 @@
 // Tablet+ → full social nav with icons + labels
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { CircleUser, Menu } from 'lucide-react'
+import { CircleUser, Menu, Search } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, FONT_BODY } from '../constants'
 import FE from './FE'
@@ -22,6 +22,7 @@ const TOP_NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',   label: 'Feed',     icon: '🧭' },
   { id: 'friends',     label: 'Friends',  icon: '👥' },
   { id: 'chat',        label: 'Messages', icon: '💬' },
+  { id: 'search',      label: 'Search',   icon: '',   LIcon: Search },
   { id: 'userprofile', label: 'Profile',  icon: '👤', LIcon: CircleUser },
 ]
 

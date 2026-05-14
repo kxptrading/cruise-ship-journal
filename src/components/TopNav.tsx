@@ -6,20 +6,23 @@
 // Tablet+ → full social nav with icons + labels
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { CircleUser } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { WHITE, FONT_BODY } from '../constants'
 import FE from './FE'
 
 interface NavItem {
-  id:    string
-  label: string
-  icon:  string
+  id:      string
+  label:   string
+  icon:    string
+  LIcon?:  LucideIcon   // optional Lucide icon, takes priority over emoji
 }
 
 const TOP_NAV_ITEMS: NavItem[] = [
   { id: 'dashboard',   label: 'Feed',     icon: '🧭' },
   { id: 'friends',     label: 'Friends',  icon: '👥' },
   { id: 'chat',        label: 'Messages', icon: '💬' },
-  { id: 'userprofile', label: 'Profile',  icon: '👤' },
+  { id: 'userprofile', label: 'Profile',  icon: '👤', LIcon: CircleUser },
 ]
 
 interface Props {
@@ -86,7 +89,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
 
       {/* ── Right: social nav ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 2 : 6 }}>
-        {visibleItems.map(({ id, label, icon }) => {
+        {visibleItems.map(({ id, label, icon, LIcon }) => {
           const active = section === id
           return (
             <button
@@ -116,7 +119,10 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.1)' }}
               onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
             >
-              <FE emoji={icon} size={isMobile ? 24 : 22} />
+              {LIcon
+                ? <LIcon size={isMobile ? 24 : 22} strokeWidth={active ? 2.5 : 1.75} />
+                : <FE emoji={icon} size={isMobile ? 24 : 22} />
+              }
               {!isMobile && <span>{label}</span>}
             </button>
           )

@@ -73,7 +73,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
         )}
         <button
           onClick={() => onNav('dashboard')}
-          aria-label="Cruise Log — go to dashboard"
+          aria-label="Swell Days — go to dashboard"
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', lineHeight: 0 }}
         >
           <img

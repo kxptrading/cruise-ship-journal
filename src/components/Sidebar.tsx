@@ -74,7 +74,7 @@ export default function Sidebar({
         : (
           <div>
             <div style={{ fontSize: 19, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1.2 }}>
-              Cruise Log
+              Swell Days
             </div>
             <div style={{ fontSize: 9, color: WHITE, marginTop: 5, letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, opacity: 0.6 }}>
               A Journal for Every Voyage

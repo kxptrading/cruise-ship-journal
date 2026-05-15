@@ -53,6 +53,9 @@ const NotFound         = lazy(() => import('./sections/NotFound'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
+const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
+const PostEditorPage   = lazy(() => import('./pages/PostEditorPage'))
+const PostDetailPage   = lazy(() => import('./pages/PostDetailPage'))
 import type { Session } from '@supabase/supabase-js'
 
 // All valid section IDs — anything else renders NotFound
@@ -303,7 +306,10 @@ export default function App() {
                 {/* ── New page-based routes (Phase 2+) ───────────────────── */}
                 <Route path="/voyages"             element={<VoyagesPage />} />
                 <Route path="/voyages/new"         element={<VoyageEditorPage />} />
-                <Route path="/voyages/:voyageId/edit" element={<VoyageEditorPage />} />
+                <Route path="/voyages/:voyageId/edit"              element={<VoyageEditorPage />} />
+                <Route path="/voyages/:voyageId/posts/new"         element={<PostComposerPage />} />
+                <Route path="/voyages/:voyageId/posts/:postId/edit" element={<PostEditorPage />} />
+                <Route path="/voyages/:voyageId/posts/:postId"     element={<PostDetailPage />} />
                 <Route path="/voyages/:voyageId"   element={
                   <VoyageDetailPage
                     data={data}

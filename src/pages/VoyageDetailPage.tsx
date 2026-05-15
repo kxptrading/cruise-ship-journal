@@ -19,6 +19,8 @@ import FE from '@/components/FE'
 import { ArrowLeft, Pencil, Plus } from 'lucide-react'
 import type { VoyageData } from '@/types'
 
+import PostList       from '@/features/posts/PostList'
+
 // Journal section components — lazy-loaded per-tab
 const DailyLog       = lazy(() => import('@/sections/DailyLog'))
 const ItinerarySection = lazy(() => import('@/features/voyages/ItineraryEditor'))
@@ -211,15 +213,8 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
           transition={{ duration: 0.18 }}
         >
           <Suspense fallback={<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}><SkeletonCard /><SkeletonCard /></div>}>
-            {activeTab === 'posts' && (
-              <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20 }}>
-                <EmptyState
-                  icon="📝"
-                  heading="Posts coming in Phase 3"
-                  body="Individual post creation with audience control (Private / Family / Public) will be built in the next phase."
-                  action={{ label: 'Write in Daily Log instead', onClick: () => setActiveTab('daily') }}
-                />
-              </div>
+            {activeTab === 'posts' && voyageId && (
+              <PostList voyageId={voyageId} />
             )}
             {activeTab === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={0} />}
             {activeTab === 'itinerary'     && <ItinerarySection data={data.itinerary} onChange={v => update('itinerary', v)} />}

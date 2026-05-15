@@ -15,6 +15,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import type { PostRow } from './hooks'
 import { useDeletePost, useUpdatePost } from './hooks'
 import type { Audience } from '@/types/models'
+import MediaThumbnails from '@/ui/MediaThumbnails'
 
 // ── Quick audience popover ────────────────────────────────────────────────────
 
@@ -184,6 +185,8 @@ export default function JournalPostCard({ post, voyageId }: Props) {
               )}
             </p>
           )}
+
+          {(post.media_paths ?? []).length > 0 && <MediaThumbnails paths={post.media_paths} maxShow={3} size="sm" />}
 
           {/* Metadata snippets */}
           {(rating !== null || weather.length > 0) && (

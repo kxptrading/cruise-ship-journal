@@ -11,6 +11,7 @@ import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import FE from '@/components/FE'
 import { ArrowLeft, Pencil, Trash2 } from 'lucide-react'
+import MediaThumbnails from '@/ui/MediaThumbnails'
 import { useState } from 'react'
 import { AnimatePresence } from 'framer-motion'
 
@@ -96,6 +97,11 @@ export default function PostDetailPage() {
           <p style={{ margin: '0 0 20px', fontSize: 15, color: TEXT, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
             {post.body}
           </p>
+
+          {/* Photos */}
+          {(post.media_paths ?? []).length > 0 && (
+            <MediaThumbnails paths={post.media_paths} />
+          )}
 
           {/* Rating */}
           {rating !== null && (

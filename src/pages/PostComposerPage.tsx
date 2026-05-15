@@ -29,7 +29,8 @@ export default function PostComposerPage() {
         body:      values.body.trim(),
         post_date: values.postDate || undefined,
         location:  values.location.trim() || undefined,
-        audience:  values.audience,
+        audience:     values.audience,
+        media_paths: values.mediaPaths,
       })
       navigate(`/voyages/${voyageId}/posts/${post.id}`)
     } finally {

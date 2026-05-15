@@ -4,22 +4,26 @@
 
 import { WHITE, BORDER, TEXT, MUTED, FONT_BODY, sty } from '@/constants'
 import AudienceSelector from './AudienceSelector'
+import MediaUploader from '@/ui/MediaUploader'
+import { useUserId } from '@/context'
 import type { Audience } from '@/types/models'
 
 export interface PostFormValues {
-  title:    string
-  body:     string
-  postDate: string
-  location: string
-  audience: Audience
+  title:       string
+  body:        string
+  postDate:    string
+  location:    string
+  audience:    Audience
+  mediaPaths:  string[]
 }
 
 export const EMPTY_POST_FORM: PostFormValues = {
-  title:    '',
-  body:     '',
-  postDate: new Date().toISOString().split('T')[0],
-  location: '',
-  audience: 'private',
+  title:       '',
+  body:        '',
+  postDate:    new Date().toISOString().split('T')[0],
+  location:    '',
+  audience:    'private',
+  mediaPaths:  [],
 }
 
 interface Props {
@@ -37,6 +41,7 @@ const field = (label: string, child: React.ReactNode) => (
 )
 
 export default function PostEditorForm({ values, onChange }: Props) {
+  const userId = useUserId()
   const set = <K extends keyof PostFormValues>(k: K, v: PostFormValues[K]) =>
     onChange({ ...values, [k]: v })
 
@@ -80,6 +85,16 @@ export default function PostEditorForm({ values, onChange }: Props) {
           />
         )}
       </div>
+
+      {/* Photos */}
+      {field('Photos',
+        <MediaUploader
+          paths={values.mediaPaths}
+          userId={userId}
+          onAdd={path => set('mediaPaths', [...values.mediaPaths, path])}
+          onRemove={path => set('mediaPaths', values.mediaPaths.filter(p => p !== path))}
+        />
+      )}
 
       {/* Audience */}
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '16px 18px' }}>

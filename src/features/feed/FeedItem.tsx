@@ -11,6 +11,7 @@ import { WHITE, BORDER, NAVY2, MUTED, TEAL, TEXT, FONT_DISPLAY, FONT_BODY } from
 import AudiencePill from '@/features/posts/AudiencePill'
 import FE from '@/components/FE'
 import type { FeedRow } from './hooks'
+import MediaThumbnails from '@/ui/MediaThumbnails'
 import { useUserId } from '@/context'
 
 const BODY_PREVIEW = 240
@@ -147,7 +148,12 @@ export default function FeedItem({ item }: Props) {
           )}
         </p>
 
-        {/* Rating from metadata */}
+        {/* Photos */}
+      {(item.media_paths ?? []).length > 0 && (
+        <MediaThumbnails paths={item.media_paths} maxShow={3} size="sm" />
+      )}
+
+      {/* Rating from metadata */}
         {typeof item.metadata?.rating === 'number' && item.metadata.rating > 0 && (
           <div style={{ marginTop: 10, fontSize: 14, color: '#F59E0B' }}>
             {'★'.repeat(item.metadata.rating as number)}{'☆'.repeat(5 - (item.metadata.rating as number))}

@@ -28,7 +28,8 @@ export default function PostEditorPage() {
         body:     post.body     ?? '',
         postDate: post.post_date ?? '',
         location: post.location  ?? '',
-        audience: post.audience,
+        audience:    post.audience,
+        mediaPaths: post.media_paths ?? [],
       })
     }
   }, [post])
@@ -45,7 +46,8 @@ export default function PostEditorPage() {
         body:      values.body.trim(),
         post_date: values.postDate        || null,
         location:  values.location.trim() || null,
-        audience:  values.audience,
+        audience:     values.audience,
+        media_paths: values.mediaPaths,
       })
       navigate(`/voyages/${voyageId}/posts/${postId}`)
     } finally {

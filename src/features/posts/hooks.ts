@@ -14,22 +14,23 @@ import type { Audience } from '@/types/models'
 // ── Row shape ─────────────────────────────────────────────────────────────────
 
 export interface PostRow {
-  id:         string
-  voyage_id:  string
-  user_id:    string
-  title:      string | null
-  body:       string
-  post_date:  string | null
-  location:   string | null
-  media_ids:  string[]
-  audience:   Audience
-  metadata:   Record<string, unknown> | null
-  created_at: string
-  updated_at: string
+  id:          string
+  voyage_id:   string
+  user_id:     string
+  title:       string | null
+  body:        string
+  post_date:   string | null
+  location:    string | null
+  media_ids:   string[]
+  media_paths: string[]         // storage paths in daily-photos bucket
+  audience:    Audience
+  metadata:    Record<string, unknown> | null
+  created_at:  string
+  updated_at:  string
 }
 
 export type CreatePostInput = Pick<PostRow, 'voyage_id' | 'body' | 'audience'> &
-  Partial<Pick<PostRow, 'title' | 'post_date' | 'location' | 'media_ids' | 'metadata'>>
+  Partial<Pick<PostRow, 'title' | 'post_date' | 'location' | 'media_ids' | 'media_paths' | 'metadata'>>
 
 export type UpdatePostInput = Partial<Omit<PostRow, 'id' | 'voyage_id' | 'user_id' | 'created_at'>>
 

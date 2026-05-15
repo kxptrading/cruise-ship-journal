@@ -20,8 +20,9 @@ export interface FeedRow {
   body:        string
   post_date:   string | null
   location:    string | null
-  media_ids:   string[]
-  audience:    Audience
+  media_ids:    string[]
+  media_paths:  string[]
+  audience:     Audience
   metadata:    Record<string, unknown> | null
   created_at:  string
   updated_at:  string

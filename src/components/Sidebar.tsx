@@ -17,35 +17,39 @@ import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
 
-// ── TickerText — seamless marquee ticker ──────────────────────────────────────
-// Two copies of the text placed side-by-side in a flex row. The wrapper
-// animates by exactly one copy-width so the loop is frame-perfect: the moment
-// the last character exits the left edge, the duplicate enters from the right.
-// Both copies travel at the same speed in the same element — only one is ever
-// inside the visible container at a given time (for names wider than the pill).
+// ── TickerText — seamless marquee, gap calculated from string length ───────────
+// Gap = max(MIN_GAP, containerWidth - textWidth)
+//
+// Short name  (tw < cw):  gap fills the remaining container width so copy 2
+//   enters the right edge exactly when copy 1 exits the left — the label
+//   always has text in it and never looks empty.
+//
+// Long name   (tw >= cw): text already overflows, gap is just MIN_GAP so the
+//   next rotation starts immediately after the tail disappears.
 
-const TICKER_GAP = 40   // px gap between the two copies
+const MIN_GAP = 32   // minimum breathing room between repetitions (px)
 
 function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
   const outerRef   = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLSpanElement>(null)
-  const [dims, setDims] = useState<{ tw: number } | null>(null)
+  const [dims, setDims] = useState<{ cw: number; tw: number } | null>(null)
 
   useEffect(() => {
+    const outer   = outerRef.current
     const measure = measureRef.current
-    if (measure) setDims({ tw: measure.scrollWidth })
+    if (!outer || !measure) return
+    setDims({ cw: outer.clientWidth, tw: measure.scrollWidth })
   }, [text])
 
   const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', flexShrink: 0, ...style }
 
-  // The wrapper moves by exactly (textWidth + gap) so when copy 1 exits left,
-  // copy 2 is in exactly copy 1's starting position — a seamless loop.
-  const step     = dims ? dims.tw + TICKER_GAP : 0
-  const duration = Math.max(2, step / 45)          // ~45 px/s, min 2 s
+  const gap      = dims ? Math.max(MIN_GAP, dims.cw - dims.tw) : MIN_GAP
+  const step     = dims ? dims.tw + gap : 0
+  const duration = Math.max(2, step / 45)     // steady ~45 px/s, min 2 s
 
   return (
     <div ref={outerRef} style={{ overflow: 'hidden', flex: 1 }}>
-      {/* Hidden span for measuring the real rendered text width */}
+      {/* Hidden: measures real rendered pixel width of the text */}
       <span
         ref={measureRef}
         aria-hidden="true"
@@ -59,10 +63,9 @@ function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
           key={text}
           animate={{ x: [0, -step] }}
           transition={{ duration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
-          style={{ display: 'flex', gap: TICKER_GAP, width: 'max-content' }}
+          style={{ display: 'flex', width: 'max-content' }}
         >
-          <span style={base}>{text}</span>
-          {/* Second copy — enters right edge exactly as first exits left edge */}
+          <span style={{ ...base, paddingRight: gap }}>{text}</span>
           <span style={base} aria-hidden="true">{text}</span>
         </motion.div>
       ) : (

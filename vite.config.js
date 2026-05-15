@@ -11,6 +11,11 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
+  // Prevents vite:css-analysis from trying to open Tailwind's virtual CSS
+  // imports in dev mode, which causes spurious ENOENT errors in the console.
+  css: {
+    devSourcemap: false,
+  },
   server: {
     host: true,
     historyApiFallback: true,

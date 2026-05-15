@@ -3,8 +3,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useRef, useEffect } from 'react'
-import { WHITE, BORDER, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
-import type { ItineraryDay, DailyLog } from '../../types'
+import { WHITE, BORDER, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import type { ItineraryDay, DailyLog } from '@/types'
 
 const WX_EMOJI: Record<string, string> = {
   Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️', Windy: '💨', Hot: '🌡️', Mild: '🌤️', Cool: '❄️',

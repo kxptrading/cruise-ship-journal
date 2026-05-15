@@ -2,11 +2,11 @@
 // sections/dashboard/RecentPosts.tsx — 3-up grid of latest daily log posts
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { WHITE, BORDER, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, BP } from '../../constants'
-import { useW } from '../../context'
-import type { DailyLog, ItineraryDay } from '../../types'
+import { WHITE, BORDER, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, BP } from '@/constants'
+import { useW } from '@/context'
+import type { DailyLog, ItineraryDay } from '@/types'
 import { motion } from 'framer-motion'
-import { STAGGER, FADE_UP } from '../../lib/motion'
+import { STAGGER, FADE_UP } from '@/lib/motion'
 
 const WX_EMOJI: Record<string, string> = {
   Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️', Windy: '💨', Hot: '🌡️', Mild: '🌤️', Cool: '❄️',

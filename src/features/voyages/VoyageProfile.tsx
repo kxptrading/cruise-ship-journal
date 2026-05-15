@@ -3,13 +3,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef } from 'react'
-import { NAVY, NAVY2, GOLD, WHITE, CREAM, BORDER, TEXT, MUTED, BP, sty } from '../constants'
-import FE from '../components/FE'
-import { useW } from '../context'
-import { PgHdr, Fld, Row2, Inp } from '../components/ui'
-import { supabase } from '../lib/supabase'
-import ImageCropper from '../components/ImageCropper'
-import type { Voyage, VoyageListRow } from '../types'
+import { NAVY, NAVY2, GOLD, WHITE, CREAM, BORDER, TEXT, MUTED, BP, sty } from '@/constants'
+import FE from '@/components/FE'
+import { useW } from '@/context'
+import { PgHdr, Fld, Row2, Inp } from '@/components/ui'
+import { supabase } from '@/lib/supabase'
+import ImageCropper from '@/components/ImageCropper'
+import type { Voyage, VoyageListRow } from '@/types'
 import type { Session } from '@supabase/supabase-js'
 
 const COVER_ASPECT = 840 / 220

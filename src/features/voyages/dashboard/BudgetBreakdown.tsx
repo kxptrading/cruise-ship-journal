@@ -4,8 +4,8 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { WHITE, BORDER, MUTED, TEAL, ROSE, GOLD, FONT_BODY, FONT_DISPLAY } from '../../constants'
-import type { Budget } from '../../types'
+import { WHITE, BORDER, MUTED, TEAL, ROSE, GOLD, FONT_BODY, FONT_DISPLAY } from '@/constants'
+import type { Budget } from '@/types'
 
 const CATEGORIES = ['Excursions', 'Drinks', 'Shopping', 'Dining', 'Other'] as const
 

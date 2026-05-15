@@ -5,7 +5,7 @@
 // All data-fetching lives in hooks/useFeedData.ts.
 // Sub-components:
 //   feed/VoyageHero.tsx    — hero banner
-//   feed/FeedMetrics.tsx   — quick-stat cards
+//   features/voyages/VoyageMetrics.tsx   — quick-stat cards
 //   feed/QuickComposer.tsx — inline log composer
 //   feed/PostCard.tsx      — individual post card
 // ─────────────────────────────────────────────────────────────────────────────
@@ -17,13 +17,13 @@ import FE from '../components/FE'
 import { useW, useVoyageId, useUserId } from '../context'
 import { getTimeOfDay } from '../lib/atmosphere'
 import { useFeedData } from '../hooks/useFeedData'
-import PostCard      from './feed/PostCard'
-import VoyageHero   from './feed/VoyageHero'
-import QuickComposer from './feed/QuickComposer'
-import FeedMetrics   from './feed/FeedMetrics'
+import PostCard      from '@/features/posts/PostCard'
+import VoyageHero   from '@/features/voyages/VoyageHero'
+import QuickComposer from '@/features/posts/QuickComposer'
+import VoyageMetrics from '@/features/voyages/VoyageMetrics'
 import { SkeletonCard } from '../components/ui/skeleton'
 import { STAGGER, FADE_UP } from '../lib/motion'
-import type { Metric } from './feed/FeedMetrics'
+import type { Metric } from '@/features/voyages/VoyageMetrics'
 import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedAuthor } from '../types'
 import type { TimeOfDay } from '../lib/atmosphere'
 import type { MotionValue } from 'framer-motion'
@@ -208,7 +208,7 @@ export default function Feed({ voyage, itinerary, dailyLogs, budget, sectionStat
         itinerary={itinerary}
       />
 
-      <FeedMetrics metrics={metrics} onNav={onNav} />
+      <VoyageMetrics metrics={metrics} onNav={onNav} />
 
       {dailyLogs.length > 0 && (
         <QuickComposer

@@ -8,12 +8,12 @@
 
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { NAVY2, WHITE, BORDER, TEXT, GOLD, MUTED, TEAL, BP, sty, FONT_DISPLAY, FONT_BODY } from '../constants'
-import { useW } from '../context'
-import { PgHdr } from '../components/ui'
-import FE from '../components/FE'
-import type { ItineraryDay } from '../types'
-import { FADE_UP, STAGGER } from '../lib/motion'
+import { NAVY2, WHITE, BORDER, TEXT, GOLD, MUTED, TEAL, BP, sty, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import { useW } from '@/context'
+import { PgHdr } from '@/components/ui'
+import FE from '@/components/FE'
+import type { ItineraryDay } from '@/types'
+import { FADE_UP, STAGGER } from '@/lib/motion'
 
 interface Props {
   data:     ItineraryDay[]

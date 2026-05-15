@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 import { NAVY, NAVY2, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, GOLD, BP } from '../constants'
 import { PgHdr } from '../components/ui'
 import { useUserId, useW } from '../context'
-import FriendProfile from './FriendProfile'
+import FriendProfile from '@/features/contacts/FriendProfile'
 import FE from '../components/FE'
 
 interface FriendUser {

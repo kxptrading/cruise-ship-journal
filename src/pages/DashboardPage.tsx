@@ -16,17 +16,17 @@ import { useW, useVoyageId } from '../context'
 import { getTimeOfDay } from '../lib/atmosphere'
 import { STAGGER, FADE_UP } from '../lib/motion'
 import { MetricCard } from '../components/ui/metric-card'
-import VoyageHero       from './feed/VoyageHero'
-import BudgetBreakdown  from './dashboard/BudgetBreakdown'
-import ItineraryTimeline from './dashboard/ItineraryTimeline'
-import RecentPosts      from './dashboard/RecentPosts'
+import VoyageHero       from '@/features/voyages/VoyageHero'
+import BudgetBreakdown  from '@/features/voyages/dashboard/BudgetBreakdown'
+import ItineraryTimeline from '@/features/voyages/dashboard/ItineraryTimeline'
+import RecentPosts      from '@/features/voyages/dashboard/RecentPosts'
 import FE from '../components/FE'
 import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedAuthor } from '../types'
 import type { TimeOfDay } from '../lib/atmosphere'
 import type { MotionValue } from 'framer-motion'
 
 // Lazy-load the heavy map so dashboard initial render is fast
-const PortsMap = lazy(() => import('./dashboard/PortsMap'))
+const PortsMap = lazy(() => import('@/features/voyages/dashboard/PortsMap'))
 
 interface Star {
   id: number; x: number; y: number; size: number; delay: number; duration: number

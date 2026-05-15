@@ -8,8 +8,8 @@
 
 import { useMemo } from 'react'
 import { ComposableMap, Geographies, Geography, Marker, Line } from 'react-simple-maps'
-import { BORDER, MUTED, TEAL, WHITE, FONT_BODY } from '../../constants'
-import type { ItineraryDay } from '../../types'
+import { BORDER, MUTED, TEAL, WHITE, FONT_BODY } from '@/constants'
+import type { ItineraryDay } from '@/types'
 
 const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 

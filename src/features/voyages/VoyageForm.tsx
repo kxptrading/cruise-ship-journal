@@ -2,11 +2,11 @@
 // sections/VoyageDetails.tsx — Voyage setup form
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '../constants'
-import { useW } from '../context'
-import { PgHdr, Box, Fld, Row2, Inp } from '../components/ui'
-import FE from '../components/FE'
-import type { Voyage } from '../types'
+import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '@/constants'
+import { useW } from '@/context'
+import { PgHdr, Box, Fld, Row2, Inp } from '@/components/ui'
+import FE from '@/components/FE'
+import type { Voyage } from '@/types'
 
 interface Props {
   data:     Voyage

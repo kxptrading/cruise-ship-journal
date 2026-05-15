@@ -3,9 +3,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, FONT_DISPLAY, FONT_BODY } from '../constants'
-import FE from '../components/FE'
+import { supabase } from '@/lib/supabase'
+import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import FE from '@/components/FE'
 
 interface BadgeDef {
   key:   string

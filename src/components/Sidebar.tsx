@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useState }      from 'react'
-import { useLocation }              from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion }  from 'framer-motion'
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY, FONT_LOGO } from '../constants'
 import { NAV, PRIMARY_NAV } from '../constants'
@@ -41,6 +41,25 @@ export default function Sidebar({
   const isMobile   = bp === 'mobile'
   const isTablet   = bp === 'tablet'
   const location   = useLocation()
+  const navigate   = useNavigate()
+
+  // Detect whether we're on a specific voyage detail page
+  const voyageIdMatch    = location.pathname.match(/^\/voyages\/([^/]+?)(?:\/|$)/)
+  const currentVoyageId  = voyageIdMatch?.[1]
+  const isOnVoyage       = !!currentVoyageId && currentVoyageId !== 'new'
+
+  // Active journal tab from ?tab= search param (set by journal nav links)
+  const activeTabParam = new URLSearchParams(location.search).get('tab')
+
+  // Navigate journal section links to the current voyage's tab
+  const navToJournalTab = (tabId: string) => {
+    if (isOnVoyage) {
+      navigate(`/voyages/${currentVoyageId}?tab=${tabId}`)
+    } else {
+      onNav(tabId)
+    }
+    if (isMobile) onClose()
+  }
 
   // Tooltip tracking for tablet icon-only mode
   const [tooltip, setTooltip] = useState<{ id: string; y: number } | null>(null)
@@ -108,12 +127,15 @@ export default function Sidebar({
   )
 
   // ── Nav items ──────────────────────────────────────────────────────────────
-  // Determine the active id — handles both /section and /voyages/:id paths
-  const activeId = location.pathname.startsWith('/voyages') ? 'voyages'
-    : location.pathname.slice(1) || 'dashboard'
+  // Determine the active id — handles /voyages/:id paths and ?tab= journal tabs
+  const activeId = activeTabParam
+    ? activeTabParam                                          // journal tab active
+    : location.pathname.startsWith('/voyages') ? 'voyages'   // voyage pages
+    : location.pathname.slice(1) || 'dashboard'              // legacy sections
 
-  const renderNavButton = (id: string, label: string, icon: string) => {
+  const renderNavButton = (id: string, label: string, icon: string, customOnClick?: () => void) => {
     const active = activeId === id
+    const handleClick = customOnClick ?? (() => { onNav(id); if (isMobile) onClose() })
     if (isTablet) {
       return (
         <div
@@ -126,7 +148,7 @@ export default function Sidebar({
         >
           <button
             aria-label={label}
-            onClick={() => onNav(id)}
+            onClick={handleClick}
             style={{
               width: W_ICON, height: 44,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -145,7 +167,7 @@ export default function Sidebar({
     return (
       <button
         key={id}
-        onClick={() => { onNav(id); if (isMobile) onClose() }}
+        onClick={handleClick}
         onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
         onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
         style={{
@@ -182,15 +204,19 @@ export default function Sidebar({
         renderNavButton(id, label, icon)
       )}
 
-      {/* Journal sections divider */}
-      {!isTablet && (
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 20px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-          Your Journal
-        </div>
-      )}
-      {isTablet && <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 12px' }} />}
-      {navItems.map(({ id, label, icon }) =>
-        renderNavButton(id, label, icon)
+      {/* Journal sections — only shown when viewing a specific voyage */}
+      {isOnVoyage && (
+        <>
+          {!isTablet && (
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 20px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+              Your Journal
+            </div>
+          )}
+          {isTablet && <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 12px' }} />}
+          {navItems.map(({ id, label, icon }) =>
+            renderNavButton(id, label, icon, () => navToJournalTab(id))
+          )}
+        </>
       )}
     </nav>
   )

@@ -6,8 +6,8 @@
 // data until Phase 3-6 rebuild them as self-fetching pages.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, lazy, Suspense } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useState, useEffect, lazy, Suspense } from 'react'
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, GOLD, TEAL, WHITE, BORDER, MUTED, FONT_DISPLAY, FONT_BODY, sty, BP } from '@/constants'
 import { useW } from '@/context'
@@ -75,9 +75,21 @@ function formatDate(iso: string | null) {
 
 export default function VoyageDetailPage({ data, update, showToast, isAdult }: Props) {
   const navigate         = useNavigate()
-  const { voyageId }     = useParams<{ voyageId: string }>()
-  const w                = useW()
-  const [activeTab, setActiveTab] = useState<Tab>('posts')
+  const { voyageId }       = useParams<{ voyageId: string }>()
+  const [searchParams]     = useSearchParams()
+  const w                  = useW()
+
+  // Initialise from ?tab= so sidebar journal links open the right section
+  const tabParam   = searchParams.get('tab') as Tab | null
+  const validTabs  = new Set(TABS.map(t => t.id))
+  const [activeTab, setActiveTab] = useState<Tab>(
+    tabParam && validTabs.has(tabParam) ? tabParam : 'posts'
+  )
+
+  // Sync when ?tab changes (e.g. user clicks a different sidebar link while already on this page)
+  useEffect(() => {
+    if (tabParam && validTabs.has(tabParam)) setActiveTab(tabParam)
+  }, [tabParam]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Fetch voyage metadata from React Query (title, cover image, stats)
   const { data: voyageRow, isLoading } = useVoyage(voyageId)

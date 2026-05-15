@@ -7,7 +7,8 @@
 //   desktop → always-visible, 240 px wide, full labels
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useState }      from 'react'
+import { useEffect, useRef, useState } from 'react'
+import type { CSSProperties }          from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion }  from 'framer-motion'
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY, FONT_LOGO } from '../constants'
@@ -15,6 +16,57 @@ import { NAV, PRIMARY_NAV } from '../constants'
 import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
+
+// ── TickerText — single-copy scrolling ticker ─────────────────────────────────
+// Measures the actual text width and container width, then animates ONE copy of
+// the text from just-off-screen-right to just-off-screen-left. No duplicate
+// visible; loops with a brief pause after each pass.
+
+function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
+  const outerRef   = useRef<HTMLDivElement>(null)
+  const measureRef = useRef<HTMLSpanElement>(null)
+  const [travel, setTravel] = useState<{ from: number; to: number } | null>(null)
+
+  useEffect(() => {
+    const outer   = outerRef.current
+    const measure = measureRef.current
+    if (!outer || !measure) return
+    const cw = outer.clientWidth
+    const tw = measure.scrollWidth
+    // Only animate when text is wider than its container
+    setTravel(tw > cw ? { from: cw + 8, to: -(tw + 8) } : null)
+  }, [text])
+
+  const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', ...style }
+
+  return (
+    <div ref={outerRef} style={{ overflow: 'hidden', flex: 1, position: 'relative' }}>
+      {/* Hidden span used only for measuring text width */}
+      <span ref={measureRef} aria-hidden="true"
+        style={{ ...base, position: 'absolute', visibility: 'hidden', top: 0, left: 0, pointerEvents: 'none' }}>
+        {text}
+      </span>
+      {travel ? (
+        // Animated — one copy scrolls from right edge to left edge, then pauses
+        <motion.span
+          animate={{ x: [travel.from, travel.to] }}
+          transition={{
+            duration: Math.max(3, (travel.from - travel.to) / 55),
+            ease: 'linear',
+            repeat: Infinity,
+            repeatDelay: 1.2,
+          }}
+          style={base}
+        >
+          {text}
+        </motion.span>
+      ) : (
+        // Static — fits without scrolling
+        <span style={base}>{text}</span>
+      )}
+    </div>
+  )
+}
 
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
 const W_FULL = 240
@@ -101,11 +153,9 @@ export default function Sidebar({
     </div>
   )
 
-  // ── Voyage label — scrolling ticker for long ship names ──────────────────
+  // ── Voyage label — uses TickerText for long ship names ───────────────────
   const VoyageSwitcher = () => {
-    const name   = voyageName || 'No voyage selected'
-    const scroll = name.length > 18   // only animate when text would overflow
-
+    const name = voyageName || 'No voyage selected'
     return (
       <div style={{ padding: '10px 14px 2px' }}>
         <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: FONT_BODY, fontWeight: 700, marginBottom: 5 }}>
@@ -113,23 +163,14 @@ export default function Sidebar({
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 11px', overflow: 'hidden' }}>
           <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
-          {/* Ticker container */}
-          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
-            {scroll ? (
-              <motion.div
-                animate={{ x: ['0%', '-50%'] }}
-                transition={{ duration: name.length * 0.18, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
-                style={{ display: 'flex', gap: '3em', whiteSpace: 'nowrap', willChange: 'transform' }}
-              >
-                <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }}>{name}</span>
-                <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }} aria-hidden="true">{name}</span>
-              </motion.div>
-            ) : (
-              <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY, whiteSpace: 'nowrap' }}>{name}</span>
-            )}
-          </div>
+          <TickerText
+            text={name}
+            style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }}
+          />
           {voyageCount > 1 && (
-            <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '1px 6px', fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, flexShrink: 0 }}>{voyageCount}</span>
+            <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '1px 6px', fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, flexShrink: 0 }}>
+              {voyageCount}
+            </span>
           )}
         </div>
       </div>

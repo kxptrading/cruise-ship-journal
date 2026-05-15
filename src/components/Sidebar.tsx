@@ -18,50 +18,53 @@ import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
 
 // ── TickerText — single-copy scrolling ticker ─────────────────────────────────
-// Measures the actual text width and container width, then animates ONE copy of
-// the text from just-off-screen-right to just-off-screen-left. No duplicate
-// visible; loops with a brief pause after each pass.
+// Always animates. Measures actual text width, starts the text visible at x:0,
+// scrolls left until fully off-screen, pauses, then loops back to x:0.
+// One copy at a time — no duplicate text visible.
 
 function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
-  const outerRef   = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLSpanElement>(null)
-  const [travel, setTravel] = useState<{ from: number; to: number } | null>(null)
+  const [tw, setTw] = useState(0)
 
   useEffect(() => {
-    const outer   = outerRef.current
-    const measure = measureRef.current
-    if (!outer || !measure) return
-    const cw = outer.clientWidth
-    const tw = measure.scrollWidth
-    // Only animate when text is wider than its container
-    setTravel(tw > cw ? { from: cw + 8, to: -(tw + 8) } : null)
+    const el = measureRef.current
+    if (el) setTw(el.scrollWidth)
   }, [text])
 
   const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', ...style }
+  // Scroll at a steady ~45 px/s; minimum 2 s so short names don't flash past
+  const duration = Math.max(2, tw / 45)
 
   return (
-    <div ref={outerRef} style={{ overflow: 'hidden', flex: 1, position: 'relative' }}>
-      {/* Hidden span used only for measuring text width */}
-      <span ref={measureRef} aria-hidden="true"
-        style={{ ...base, position: 'absolute', visibility: 'hidden', top: 0, left: 0, pointerEvents: 'none' }}>
+    <div style={{ overflow: 'hidden', flex: 1, position: 'relative' }}>
+      {/* Hidden span — measures real rendered text width */}
+      <span
+        ref={measureRef}
+        aria-hidden="true"
+        style={{ ...base, position: 'absolute', visibility: 'hidden', top: 0, left: 0, pointerEvents: 'none' }}
+      >
         {text}
       </span>
-      {travel ? (
-        // Animated — one copy scrolls from right edge to left edge, then pauses
+
+      {tw > 0 ? (
+        // Start at x:0 (visible), scroll to -(tw + 16) (fully off-screen left),
+        // pause 1.5 s, then loop — instant reset to x:0 is off-screen-right→visible
+        // which reads as the name circling back around.
         <motion.span
-          animate={{ x: [travel.from, travel.to] }}
+          key={text}                   // remount when name changes so animation restarts
+          initial={{ x: 0 }}
+          animate={{ x: -(tw + 16) }}
           transition={{
-            duration: Math.max(3, (travel.from - travel.to) / 55),
-            ease: 'linear',
-            repeat: Infinity,
-            repeatDelay: 1.2,
+            duration,
+            ease:        'linear',
+            repeat:      Infinity,
+            repeatDelay: 1.5,
           }}
           style={base}
         >
           {text}
         </motion.span>
       ) : (
-        // Static — fits without scrolling
         <span style={base}>{text}</span>
       )}
     </div>

@@ -17,53 +17,54 @@ import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
 
-// ── TickerText — single-copy scrolling ticker ─────────────────────────────────
-// Always animates. Measures actual text width, starts the text visible at x:0,
-// scrolls left until fully off-screen, pauses, then loops back to x:0.
-// One copy at a time — no duplicate text visible.
+// ── TickerText — seamless marquee ticker ──────────────────────────────────────
+// Two copies of the text placed side-by-side in a flex row. The wrapper
+// animates by exactly one copy-width so the loop is frame-perfect: the moment
+// the last character exits the left edge, the duplicate enters from the right.
+// Both copies travel at the same speed in the same element — only one is ever
+// inside the visible container at a given time (for names wider than the pill).
+
+const TICKER_GAP = 40   // px gap between the two copies
 
 function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
+  const outerRef   = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLSpanElement>(null)
-  const [tw, setTw] = useState(0)
+  const [dims, setDims] = useState<{ tw: number } | null>(null)
 
   useEffect(() => {
-    const el = measureRef.current
-    if (el) setTw(el.scrollWidth)
+    const measure = measureRef.current
+    if (measure) setDims({ tw: measure.scrollWidth })
   }, [text])
 
-  const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', ...style }
-  // Scroll at a steady ~45 px/s; minimum 2 s so short names don't flash past
-  const duration = Math.max(2, tw / 45)
+  const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', flexShrink: 0, ...style }
+
+  // The wrapper moves by exactly (textWidth + gap) so when copy 1 exits left,
+  // copy 2 is in exactly copy 1's starting position — a seamless loop.
+  const step     = dims ? dims.tw + TICKER_GAP : 0
+  const duration = Math.max(2, step / 45)          // ~45 px/s, min 2 s
 
   return (
-    <div style={{ overflow: 'hidden', flex: 1, position: 'relative' }}>
-      {/* Hidden span — measures real rendered text width */}
+    <div ref={outerRef} style={{ overflow: 'hidden', flex: 1 }}>
+      {/* Hidden span for measuring the real rendered text width */}
       <span
         ref={measureRef}
         aria-hidden="true"
-        style={{ ...base, position: 'absolute', visibility: 'hidden', top: 0, left: 0, pointerEvents: 'none' }}
+        style={{ ...base, position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}
       >
         {text}
       </span>
 
-      {tw > 0 ? (
-        // Start at x:0 (visible), scroll to -(tw + 16) (fully off-screen left),
-        // pause 1.5 s, then loop — instant reset to x:0 is off-screen-right→visible
-        // which reads as the name circling back around.
-        <motion.span
-          key={text}                   // remount when name changes so animation restarts
-          initial={{ x: 0 }}
-          animate={{ x: -(tw + 16) }}
-          transition={{
-            duration,
-            ease:        'linear',
-            repeat:      Infinity,
-            repeatDelay: 1.5,
-          }}
-          style={base}
+      {dims ? (
+        <motion.div
+          key={text}
+          animate={{ x: [0, -step] }}
+          transition={{ duration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
+          style={{ display: 'flex', gap: TICKER_GAP, width: 'max-content' }}
         >
-          {text}
-        </motion.span>
+          <span style={base}>{text}</span>
+          {/* Second copy — enters right edge exactly as first exits left edge */}
+          <span style={base} aria-hidden="true">{text}</span>
+        </motion.div>
       ) : (
         <span style={base}>{text}</span>
       )}

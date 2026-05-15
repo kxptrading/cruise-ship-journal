@@ -70,6 +70,21 @@ function SectionLoader() {
   )
 }
 
+// ── Voyage ticker label helper ────────────────────────────────────────────────
+function fmtDate(iso: string | null): string {
+  if (!iso) return ''
+  return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
+function buildVoyageLabel(name: string | null | undefined, from: string | null | undefined, to: string | null | undefined): string {
+  const n = name || ''
+  const d = from && to ? `${fmtDate(from)} – ${fmtDate(to)}`
+          : from       ? `From ${fmtDate(from)}`
+          : to         ? `Until ${fmtDate(to)}`
+          : ''
+  return d ? `${n}  ·  ${d}` : n
+}
+
 // Shape passed from Feed's onViewProfile into Friends as initialFriend
 interface FeedFriend {
   requestId:   string
@@ -290,7 +305,14 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
           user={session?.user}
           onSignOut={() => supabase.auth.signOut()}
-          voyageName={allVoyages.find(v => v.id === voyageId)?.ship_name ?? data.voyage.shipName}
+          voyageName={(() => {
+            const row = allVoyages.find(v => v.id === voyageId)
+            return buildVoyageLabel(
+              row?.ship_name ?? data.voyage.shipName,
+              row?.departure_date ?? data.voyage.departureDate,
+              row?.return_date    ?? data.voyage.returnDate,
+            )
+          })()}
           voyageCount={allVoyages.length}
           sectionStatus={sectionStatus}
           isAdult={isAdult}

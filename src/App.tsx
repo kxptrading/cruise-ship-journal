@@ -338,21 +338,7 @@ export default function App() {
                       />
                     : <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
                 } />
-                <Route path="/feed" element={
-                  <Feed
-                    voyage={data.voyage} itinerary={data.itinerary}
-                    dailyLogs={data.dailyLogs} budget={data.budget}
-                    packing={data.packing} foodLogs={data.foodLogs}
-                    diningLog={data.diningLog} sectionStatus={sectionStatus}
-                    onChange={v => update('dailyLogs', v)} onNav={navClick}
-                    showToast={showToast} onViewDay={setSelectedDay}
-                    scrollY={scrollY}
-                    onViewProfile={(author) => {
-                      setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
-                      navClick('friends')
-                    }}
-                  />
-                } />
+                <Route path="/feed" element={<Feed />} />
                 <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
                 <Route path="/voyage"        element={<VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />} />
                 <Route path="/itinerary"     element={<Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />} />

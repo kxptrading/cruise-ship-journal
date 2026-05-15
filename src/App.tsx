@@ -352,7 +352,9 @@ export default function App() {
                 <Route path="/highlights"    element={<Highlights data={data.highlights} onChange={v => update('highlights', v)} />} />
                 <Route path="/packing"       element={<PackingList data={data.packing} onChange={v => update('packing', v)} />} />
                 <Route path="/notes"         element={<Notes data={data.notes} onChange={v => update('notes', v)} />} />
-                <Route path="/friends"       element={<Friends initialFriend={feedFriend} onClearInitialFriend={() => setFeedFriend(null)} />} />
+                {/* /friends and /contacts both route to the new ContactsPage */}
+                <Route path="/friends"  element={<Friends />} />
+                <Route path="/contacts" element={<Friends />} />
                 <Route path="/chat"          element={<Chat />} />
                 <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />} />
                 <Route path="/design-system" element={<DesignSystem />} />

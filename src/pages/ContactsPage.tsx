@@ -1,290 +1,219 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/Friends.tsx — Social friends management
+// pages/ContactsPage.tsx — Contacts with Family tag (spec §4: /contacts)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
-import { NAVY, NAVY2, WHITE, BORDER, TEXT, MUTED, LIGHT, TEAL, GOLD, BP } from '../constants'
-import { PgHdr } from '../components/ui'
-import { useUserId, useW } from '../context'
-import FriendProfile from '@/features/contacts/FriendProfile'
-import FE from '../components/FE'
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { WHITE, BORDER, NAVY2, MUTED, TEAL, GOLD, FONT_DISPLAY, FONT_BODY, BP, sty } from '@/constants'
+import { useW, useUserId } from '@/context'
+import {
+  useContacts, useSendFriendRequest, useAcceptRequest, useDeclineRequest, useSearchUsers,
+} from '@/features/contacts/hooks'
+import ContactRow from '@/features/contacts/ContactRow'
+import { SkeletonCard } from '@/components/ui/skeleton'
+import { EmptyState } from '@/components/ui/empty-state'
+import { STAGGER, FADE_UP } from '@/lib/motion'
+import { Search, UserPlus, Check, X } from 'lucide-react'
 
-interface FriendUser {
-  requestId:   string
-  userId:      string
-  displayName: string
-  email:       string
-  avatarUrl:   string
-}
-
-interface SearchProfile {
-  user_id:      string
-  email:        string
-  display_name: string | null
-  avatar_url:   string | null
-}
-
-interface AvatarProps {
-  name?:      string | null
-  avatarUrl?: string | null
-  size?:      number
-  bg?:        string
-}
-
-function Avatar({ name, avatarUrl, size = 40, bg = NAVY }: AvatarProps) {
-  const initials = (name || '?').slice(0, 2).toUpperCase()
-  if (avatarUrl) {
-    return (
-      <img src={avatarUrl} alt={name || ''} style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: `2px solid ${BORDER}` }} />
-    )
-  }
+function Avatar({ url, name, size = 38 }: { url: string | null; name: string; size?: number }) {
+  const initials = name.trim().split(/\s+/).map((w: string) => w[0]).slice(0, 2).join('').toUpperCase() || '?'
   return (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: bg, color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: size * 0.36, fontWeight: 700, flexShrink: 0, fontFamily: 'inherit' }}>
-      {initials}
+    <div style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, background: 'var(--t-primary-dk)', border: `2px solid ${BORDER}`, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {url
+        ? <img src={url} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        : <span style={{ fontSize: size * 0.34, fontWeight: 700, color: '#fff', fontFamily: FONT_BODY }}>{initials}</span>
+      }
     </div>
   )
 }
 
-interface PillProps { label: string; color: string }
-function Pill({ label, color }: PillProps) {
-  return (
-    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', padding: '3px 8px', borderRadius: 20, background: `${color}18`, color, border: `1px solid ${color}40` }}>
-      {label}
-    </span>
-  )
-}
+export default function ContactsPage() {
+  const w      = useW()
+  const userId = useUserId()
+  const [searchQuery, setSearchQuery] = useState('')
+  const [debouncedQ,  setDebouncedQ]  = useState('')
 
-function useCard() {
-  const w = useW()
-  return {
-    background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`,
-    padding: w < BP.mobile ? '14px 16px' : '18px 20px', marginBottom: 10,
-    display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' as const,
-  }
-}
+  const { data: contacts, isLoading } = useContacts()
+  const { data: searchResults = [] }  = useSearchUsers(debouncedQ)
+  const sendRequest  = useSendFriendRequest()
+  const acceptReq    = useAcceptRequest()
+  const declineReq   = useDeclineRequest()
 
-interface Props {
-  initialFriend?:         FriendUser | null
-  onClearInitialFriend?:  () => void
-}
-
-export default function Friends({ initialFriend = null, onClearInitialFriend }: Props) {
-  const currentUserId = useUserId()
-  const w             = useW()
-  const card          = useCard()
-  const isMobile      = w < BP.mobile
-
-  const [viewingFriend, setViewingFriend] = useState<FriendUser | null>(initialFriend)
-
-  const [searchQuery,  setSearchQuery]  = useState<string>('')
-  const [searchResult, setSearchResult] = useState<SearchProfile[] | 'not_found' | null>(null)
-  const [searching,    setSearching]    = useState<boolean>(false)
-
-  const [incoming, setIncoming] = useState<FriendUser[]>([])
-  const [friends,  setFriends]  = useState<FriendUser[]>([])
-  const [loading,  setLoading]  = useState<boolean>(true)
-
-  const loadConnections = useCallback(async () => {
-    if (!currentUserId) return
-    setLoading(true)
-
-    const { data: rows } = await supabase
-      .from('friend_requests')
-      .select('id, from_user_id, to_user_id, status, created_at')
-      .or(`from_user_id.eq.${currentUserId},to_user_id.eq.${currentUserId}`)
-
-    if (!rows) { setLoading(false); return }
-
-    const pendingIncoming = rows.filter((r: { status: string; to_user_id: string }) => r.status === 'pending' && r.to_user_id === currentUserId)
-    const accepted        = rows.filter((r: { status: string }) => r.status === 'accepted')
-
-    const peerIds = [
-      ...pendingIncoming.map((r: { from_user_id: string }) => r.from_user_id),
-      ...accepted.map((r: { from_user_id: string; to_user_id: string }) => r.from_user_id === currentUserId ? r.to_user_id : r.from_user_id),
-    ]
-
-    let profileMap: Record<string, { user_id: string; email?: string; display_name?: string | null; avatar_url?: string | null }> = {}
-    if (peerIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, email, display_name, avatar_url')
-        .in('user_id', peerIds)
-      ;(profiles || []).forEach((p: { user_id: string; email?: string; display_name?: string | null; avatar_url?: string | null }) => { profileMap[p.user_id] = p })
-    }
-
-    setIncoming(pendingIncoming.map((r: { id: string; from_user_id: string }) => ({
-      requestId:   r.id,
-      userId:      r.from_user_id,
-      displayName: profileMap[r.from_user_id]?.display_name || 'Unknown',
-      email:       profileMap[r.from_user_id]?.email        || '',
-      avatarUrl:   profileMap[r.from_user_id]?.avatar_url   || '',
-    })))
-
-    setFriends(accepted.map((r: { id: string; from_user_id: string; to_user_id: string }) => {
-      const peerId = r.from_user_id === currentUserId ? r.to_user_id : r.from_user_id
-      return {
-        requestId:   r.id,
-        userId:      peerId,
-        displayName: profileMap[peerId]?.display_name || 'Unknown',
-        email:       profileMap[peerId]?.email        || '',
-        avatarUrl:   profileMap[peerId]?.avatar_url   || '',
-      }
-    }))
-
-    setLoading(false)
-  }, [currentUserId])
-
-  useEffect(() => { loadConnections() }, [loadConnections])
-
-  const handleSearch = async () => {
-    const q = searchQuery.trim()
-    if (!q) return
-    setSearching(true)
-    setSearchResult(null)
-
-    const { data } = await supabase
-      .from('profiles')
-      .select('user_id, email, display_name, avatar_url')
-      .ilike('display_name', `%${q}%`)
-      .neq('user_id', currentUserId)
-      .limit(8)
-
-    setSearchResult(data && data.length > 0 ? data : 'not_found')
-    setSearching(false)
+  const handleSearchChange = (v: string) => {
+    setSearchQuery(v)
+    clearTimeout((window as Window & { _sqt?: number })._sqt)
+    ;(window as Window & { _sqt?: number })._sqt = window.setTimeout(() => setDebouncedQ(v), 300)
   }
 
-  const sendRequest = async (toUserId: string) => {
-    await supabase.from('friend_requests').insert({ from_user_id: currentUserId, to_user_id: toUserId })
-    setSearchResult(null)
-    setSearchQuery('')
-    loadConnections()
-  }
+  const alreadyConnected = new Set([
+    ...(contacts?.accepted ?? []).map(c => c.userId),
+    ...(contacts?.incoming ?? []).map(c => c.userId),
+    ...(contacts?.outgoing ?? []).map(c => c.userId),
+  ])
 
-  const acceptRequest = async (requestId: string) => {
-    await supabase.from('friend_requests').update({ status: 'accepted' }).eq('id', requestId)
-    loadConnections()
-  }
-
-  const removeRequest = async (requestId: string) => {
-    await supabase.from('friend_requests').delete().eq('id', requestId)
-    loadConnections()
-  }
-
-  const getRelationship = (userId: string): 'friends' | 'incoming' | 'none' => {
-    if (friends.find(f => f.userId === userId))  return 'friends'
-    if (incoming.find(f => f.userId === userId)) return 'incoming'
-    return 'none'
-  }
-
-  const avatarColors = ['#0EA5E9', '#10B981', '#F59E0B', '#8B5CF6', '#F97316', '#B03060']
-  const avatarColor  = (id = '') => avatarColors[id.charCodeAt(0) % avatarColors.length]
-
-  if (viewingFriend) {
-    return <FriendProfile friend={viewingFriend} onBack={() => { setViewingFriend(null); onClearInitialFriend?.() }} />
-  }
+  const familyCount = (contacts?.accepted ?? []).filter(c => c.isFamily).length
 
   return (
     <div>
-      <PgHdr icon="👥" title="Friends" />
-
-      <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: w < BP.mobile ? 16 : '20px 24px', marginBottom: 24 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>Find a Friend</div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <input
-            value={searchQuery}
-            onChange={e => { setSearchQuery(e.target.value); setSearchResult(null) }}
-            onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Search by name…"
-            style={{ flex: 1, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '10px 14px', fontSize: 16, fontFamily: 'inherit', background: '#F4F1EB', color: TEXT, outline: 'none', boxSizing: 'border-box' }}
-          />
-          <button
-            onClick={handleSearch}
-            disabled={searching || !searchQuery.trim()}
-            style={{ background: NAVY2, color: WHITE, border: 'none', borderRadius: 8, padding: '10px 18px', fontSize: 14, fontWeight: 600, cursor: searching ? 'default' : 'pointer', fontFamily: 'inherit', opacity: !searchQuery.trim() ? 0.45 : 1 }}
-          >
-            {searching ? '…' : 'Search'}
-          </button>
-        </div>
-
-        {searchResult === 'not_found' && (
-          <div style={{ marginTop: 12, fontSize: 13, color: MUTED }}>No users found with that name.</div>
-        )}
-        {Array.isArray(searchResult) && (
-          <div style={{ marginTop: 14 }}>
-            {searchResult.map(profile => {
-              const rel = getRelationship(profile.user_id)
-              return (
-                <div key={profile.user_id} style={{ ...card, marginBottom: 8, background: LIGHT, flexWrap: 'nowrap' }}>
-                  <Avatar name={profile.display_name} avatarUrl={profile.avatar_url} bg={avatarColor(profile.user_id)} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{profile.display_name || 'Unknown'}</div>
-                    <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>{profile.email}</div>
-                  </div>
-                  {rel === 'friends'  && <Pill label="Already friends" color={TEAL} />}
-                  {rel === 'incoming' && <Pill label="Request pending" color={GOLD} />}
-                  {rel === 'none' && (
-                    <button onClick={() => sendRequest(profile.user_id)} style={{ background: NAVY2, color: WHITE, border: 'none', borderRadius: 8, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit', flexShrink: 0 }}>
-                      + Add Friend
-                    </button>
-                  )}
-                </div>
-              )
-            })}
-          </div>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <h1 style={{ margin: '0 0 4px', fontSize: w < BP.mobile ? 24 : 30, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
+          Contacts
+        </h1>
+        {!isLoading && contacts && (
+          <p style={{ margin: 0, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
+            {contacts.accepted.length} contact{contacts.accepted.length !== 1 ? 's' : ''}
+            {familyCount > 0 && ` · ${familyCount} family`}
+          </p>
         )}
       </div>
 
-      {incoming.length > 0 && (
-        <div style={{ marginBottom: 24 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-            Friend Requests · {incoming.length}
+      {/* Search to add contacts */}
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, padding: '16px 18px', marginBottom: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT_BODY }}>
+          Find people
+        </div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ flex: 1, position: 'relative' }}>
+            <Search size={15} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: MUTED }} />
+            <input
+              value={searchQuery}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="Search by name or email…"
+              style={{ ...sty.inp, paddingLeft: 34 }}
+            />
           </div>
-          {incoming.map(req => (
-            <div key={req.requestId} style={card}>
-              <Avatar name={req.displayName} avatarUrl={req.avatarUrl} bg={avatarColor(req.userId)} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{req.displayName}</div>
-                <div style={{ fontSize: 12, color: MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{req.email}</div>
+        </div>
+
+        {/* Search results */}
+        <AnimatePresence>
+          {debouncedQ.length >= 2 && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} style={{ overflow: 'hidden', marginTop: 10 }}>
+              {searchResults.length === 0 ? (
+                <div style={{ padding: '12px 4px', fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>No users found for "{debouncedQ}"</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {searchResults.map(r => {
+                    const connected = alreadyConnected.has(r.userId)
+                    const isOutgoing = (contacts?.outgoing ?? []).some(c => c.userId === r.userId)
+                    return (
+                      <div key={r.userId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 4px' }}>
+                        <Avatar url={r.avatarUrl} name={r.displayName ?? r.email ?? '?'} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: NAVY2, fontFamily: FONT_BODY }}>{r.displayName ?? 'User'}</div>
+                          {r.email && <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>{r.email}</div>}
+                        </div>
+                        {connected ? (
+                          <span style={{ fontSize: 12, color: isOutgoing ? GOLD : TEAL, fontWeight: 600, fontFamily: FONT_BODY }}>
+                            {isOutgoing ? 'Requested' : 'Connected'}
+                          </span>
+                        ) : (
+                          <motion.button
+                            onClick={() => sendRequest.mutate(r.userId)}
+                            disabled={sendRequest.isPending}
+                            whileTap={{ scale: 0.96 }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', background: 'var(--t-primary)', color: '#fff', border: 'none', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: FONT_BODY }}
+                          >
+                            <UserPlus size={13} /> Add
+                          </motion.button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Incoming requests */}
+      {(contacts?.incoming ?? []).length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10, fontFamily: FONT_BODY }}>
+            Pending requests ({contacts!.incoming.length})
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {contacts!.incoming.map(c => (
+              <div key={c.requestId} style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <Avatar url={c.avatarUrl} name={c.displayName} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}>{c.displayName}</div>
+                  {c.email && <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>{c.email}</div>}
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <motion.button
+                    onClick={() => acceptReq.mutate(c.requestId)}
+                    whileTap={{ scale: 0.94 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '6px 14px', background: '#F0FDF4', border: '1px solid #86EFAC', borderRadius: 10, cursor: 'pointer', fontSize: 12, fontWeight: 700, color: '#16A34A', fontFamily: FONT_BODY }}
+                  >
+                    <Check size={13} /> Accept
+                  </motion.button>
+                  <motion.button
+                    onClick={() => declineReq.mutate(c.requestId)}
+                    whileTap={{ scale: 0.94 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px', background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 10, cursor: 'pointer', fontSize: 12, color: '#DC2626', fontFamily: FONT_BODY }}
+                  >
+                    <X size={13} />
+                  </motion.button>
+                </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0, width: isMobile ? '100%' : 'auto' }}>
-                <button onClick={() => acceptRequest(req.requestId)} style={{ flex: isMobile ? 1 : undefined, background: TEAL, color: WHITE, border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Accept</button>
-                <button onClick={() => removeRequest(req.requestId)} style={{ flex: isMobile ? 1 : undefined, background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 14px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>Decline</button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
+      {/* Contacts list */}
       <div>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-          Your Friends {friends.length > 0 ? `· ${friends.length}` : ''}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT_BODY }}>
+            My Contacts
+          </div>
+          {familyCount > 0 && (
+            <span style={{ fontSize: 12, color: '#2563EB', fontWeight: 600, fontFamily: FONT_BODY, background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 20, padding: '2px 10px' }}>
+              👨‍👩‍👧 {familyCount} family
+            </span>
+          )}
         </div>
 
-        {loading && <div style={{ color: MUTED, fontSize: 13, padding: '20px 0' }}>Loading…</div>}
-
-        {!loading && friends.length === 0 && (
-          <div style={{ background: WHITE, borderRadius: 14, border: `1px solid ${BORDER}`, padding: '32px 24px', textAlign: 'center' }}>
-            <div style={{ marginBottom: 12 }}><FE emoji="🌊" size={36} /></div>
-            <div style={{ fontWeight: 600, color: TEXT, marginBottom: 6 }}>No friends yet</div>
-            <div style={{ fontSize: 13, color: MUTED }}>Search for a fellow traveller above to get started.</div>
+        {isLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <SkeletonCard />
+            <SkeletonCard />
           </div>
         )}
 
-        {friends.map(f => (
-          <div key={f.requestId} style={card}>
-            <Avatar name={f.displayName} avatarUrl={f.avatarUrl} bg={avatarColor(f.userId)} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, color: TEXT, fontSize: 14 }}>{f.displayName}</div>
-              <div style={{ fontSize: 12, color: MUTED, marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.email}</div>
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-              <Pill label="Friend" color={TEAL} />
-              <button onClick={() => setViewingFriend(f)} style={{ background: NAVY2, color: WHITE, border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit' }}>View Profile</button>
-              <button onClick={() => removeRequest(f.requestId)} style={{ background: 'transparent', color: MUTED, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 12px', fontSize: 12, cursor: 'pointer', fontFamily: 'inherit' }} title="Remove friend">Remove</button>
-            </div>
+        {!isLoading && (contacts?.accepted ?? []).length === 0 && (
+          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16 }}>
+            <EmptyState
+              icon="👥"
+              heading="No contacts yet"
+              body="Search for people above to connect with them. Once connected, you can mark them as Family to share family-only posts."
+            />
           </div>
-        ))}
+        )}
+
+        {!isLoading && (contacts?.accepted ?? []).length > 0 && (
+          <motion.div variants={STAGGER} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {/* Family contacts first */}
+            {contacts!.accepted
+              .slice()
+              .sort((a, b) => (b.isFamily ? 1 : 0) - (a.isFamily ? 1 : 0))
+              .map(c => (
+                <motion.div key={c.requestId} variants={FADE_UP}>
+                  <ContactRow contact={c} showRemove />
+                </motion.div>
+              ))
+            }
+          </motion.div>
+        )}
+
+        {/* Family tip */}
+        {!isLoading && (contacts?.accepted ?? []).length > 0 && familyCount === 0 && (
+          <div style={{ marginTop: 14, background: '#FFFBEB', border: '1px solid #FCD34D', borderRadius: 12, padding: '12px 14px', fontSize: 13, color: '#92400E', fontFamily: FONT_BODY }}>
+            💡 Mark contacts as <strong>Family</strong> to share family-only posts with them — or to see their family posts in your Feed.
+          </div>
+        )}
       </div>
     </div>
   )

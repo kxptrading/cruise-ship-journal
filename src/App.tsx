@@ -290,7 +290,7 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
           user={session?.user}
           onSignOut={() => supabase.auth.signOut()}
-          voyageName={data.voyage.shipName}
+          voyageName={allVoyages.find(v => v.id === voyageId)?.ship_name ?? data.voyage.shipName}
           voyageCount={allVoyages.length}
           sectionStatus={sectionStatus}
           isAdult={isAdult}

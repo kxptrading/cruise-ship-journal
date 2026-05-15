@@ -2,9 +2,10 @@
 // components/BottomNav.tsx — Fixed bottom tab bar (mobile only)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Home, CalendarDays, BookOpen, Users, MessageCircle, Rss } from 'lucide-react'
+import { Ship, CalendarDays, Users, MessageCircle, Rss } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { FONT_BODY } from '../constants'
+import { useLocation } from 'react-router-dom'
 
 interface TabItem {
   id:       string
@@ -14,11 +15,11 @@ interface TabItem {
 }
 
 const TABS: TabItem[] = [
-  { id: 'dashboard', label: 'Home',    Icon: Home },
-  { id: 'feed',      label: 'Feed',    Icon: Rss },
-  { id: 'daily',     label: 'Daily',   Icon: CalendarDays },
-  { id: 'friends',   label: 'Friends', Icon: Users },
-  { id: 'chat',      label: 'Chat',    Icon: MessageCircle },
+  { id: 'voyages',  label: 'Voyages', Icon: Ship },
+  { id: 'feed',     label: 'Feed',    Icon: Rss },
+  { id: 'daily',    label: 'Daily',   Icon: CalendarDays },
+  { id: 'friends',  label: 'Friends', Icon: Users },
+  { id: 'chat',     label: 'Chat',    Icon: MessageCircle },
 ]
 
 interface Props {
@@ -28,6 +29,10 @@ interface Props {
 }
 
 export default function BottomNav({ section, onNav, onMenuOpen }: Props) {
+  const { pathname } = useLocation()
+  // Derive active tab — /voyages/* maps to 'voyages'
+  const activeTab = pathname.startsWith('/voyages') ? 'voyages' : (pathname.slice(1) || section)
+
   return (
     <nav
       aria-label="Bottom navigation"
@@ -45,7 +50,7 @@ export default function BottomNav({ section, onNav, onMenuOpen }: Props) {
     >
       {TABS.map(({ id, label, Icon, action }) => {
         const isMenu  = action === 'menu'
-        const active  = !isMenu && section === id
+        const active  = !isMenu && activeTab === id
         const color   = active ? 'var(--t-primary-lt)' : '#FFFFFF'
 
         return (

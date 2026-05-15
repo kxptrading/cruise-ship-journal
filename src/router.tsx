@@ -43,7 +43,10 @@ export const router = createBrowserRouter([
   // Voyages
   { path: '/voyages',      element: <VoyagesPage /> },
   { path: '/voyages/new',  element: <VoyageEditorPage /> },
-  { path: '/voyages/:voyageId',      element: <VoyageDetailPage /> },
+  // VoyageDetailPage requires data props from the App shell during migration.
+  // This route stub will be updated when App fully switches to RouterProvider.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  { path: '/voyages/:voyageId',      element: <VoyageDetailPage {...({} as any)} /> },
   { path: '/voyages/:voyageId/edit', element: <VoyageEditorPage /> },
 
   // Posts (nested under a voyage)

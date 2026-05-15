@@ -8,9 +8,10 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useState }      from 'react'
+import { useLocation }              from 'react-router-dom'
 import { AnimatePresence, motion }  from 'framer-motion'
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY } from '../constants'
-import { NAV } from '../constants'
+import { NAV, PRIMARY_NAV } from '../constants'
 import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
@@ -37,8 +38,9 @@ export default function Sidebar({
   section, onNav, bp, isOpen, onClose,
   user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult,
 }: Props) {
-  const isMobile  = bp === 'mobile'
-  const isTablet  = bp === 'tablet'
+  const isMobile   = bp === 'mobile'
+  const isTablet   = bp === 'tablet'
+  const location   = useLocation()
 
   // Tooltip tracking for tablet icon-only mode
   const [tooltip, setTooltip] = useState<{ id: string; y: number } | null>(null)
@@ -106,76 +108,90 @@ export default function Sidebar({
   )
 
   // ── Nav items ──────────────────────────────────────────────────────────────
-  const Nav = () => (
-    <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: isTablet ? 'auto' : undefined }}>
-      {!isTablet && (
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 10px' }}>
-          Your Journal
-        </div>
-      )}
-      {navItems.map(({ id, label, icon }) => {
-        const active = section === id
+  // Determine the active id — handles both /section and /voyages/:id paths
+  const activeId = location.pathname.startsWith('/voyages') ? 'voyages'
+    : location.pathname.slice(1) || 'dashboard'
 
-        if (isTablet) {
-          return (
-            <div
-              key={id}
-              onMouseEnter={e => {
-                const rect = e.currentTarget.getBoundingClientRect()
-                setTooltip({ id, y: rect.top + rect.height / 2 })
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <button
-                aria-label={label}
-                onClick={() => onNav(id)}
-                style={{
-                  width: W_ICON, height: 44,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
-                  border: 'none',
-                  borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
-                  cursor: 'pointer',
-                  color: WHITE,
-                  WebkitTapHighlightColor: 'transparent',
-                }}
-              >
-                <FE emoji={icon} size={20} />
-              </button>
-            </div>
-          )
-        }
-
-        // Desktop / mobile — full label row
-        return (
+  const renderNavButton = (id: string, label: string, icon: string) => {
+    const active = activeId === id
+    if (isTablet) {
+      return (
+        <div
+          key={id}
+          onMouseEnter={e => {
+            const rect = e.currentTarget.getBoundingClientRect()
+            setTooltip({ id, y: rect.top + rect.height / 2 })
+          }}
+          onMouseLeave={() => setTooltip(null)}
+        >
           <button
-            key={id}
-            onClick={() => { onNav(id); if (isMobile) onClose() }}
-            onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
-            onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+            aria-label={label}
+            onClick={() => onNav(id)}
             style={{
-              display: 'flex', alignItems: 'center', gap: 11,
-              width: '100%', textAlign: 'left',
-              padding: '10px 18px 10px 14px', minHeight: 44,
+              width: W_ICON, height: 44,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
-              color: WHITE,
               border: 'none',
               borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
-              cursor: 'pointer',
-              fontSize: 14, fontFamily: FONT_BODY, fontWeight: active ? 700 : 400,
-              transition: 'background 0.15s',
-              letterSpacing: '0.01em',
+              cursor: 'pointer', color: WHITE,
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <FE emoji={icon} size={18} />
-            <span style={{ flex: 1 }}>{label}</span>
-            {sectionStatus?.has(id) && !active && (
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />
-            )}
+            <FE emoji={icon} size={20} />
           </button>
-        )
-      })}
+        </div>
+      )
+    }
+    return (
+      <button
+        key={id}
+        onClick={() => { onNav(id); if (isMobile) onClose() }}
+        onMouseEnter={e => { if (!active) e.currentTarget.style.background = 'rgba(255,255,255,0.06)' }}
+        onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent' }}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 11,
+          width: '100%', textAlign: 'left',
+          padding: '10px 18px 10px 14px', minHeight: 44,
+          background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
+          color: WHITE, border: 'none',
+          borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
+          cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY,
+          fontWeight: active ? 700 : 400,
+          transition: 'background 0.15s', letterSpacing: '0.01em',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        <FE emoji={icon} size={18} />
+        <span style={{ flex: 1 }}>{label}</span>
+        {sectionStatus?.has(id) && !active && (
+          <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />
+        )}
+      </button>
+    )
+  }
+
+  const Nav = () => (
+    <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: isTablet ? 'auto' : undefined }}>
+      {/* Primary nav */}
+      {!isTablet && (
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '0 20px 8px' }}>
+          Swell Days
+        </div>
+      )}
+      {PRIMARY_NAV.filter(({ id }) => id !== 'budget' || isAdult).map(({ id, label, icon }) =>
+        renderNavButton(id, label, icon)
+      )}
+
+      {/* Journal sections divider */}
+      {!isTablet && (
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 20px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          Your Journal
+        </div>
+      )}
+      {isTablet && <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 12px' }} />}
+      {navItems.map(({ id, label, icon }) =>
+        renderNavButton(id, label, icon)
+      )}
     </nav>
   )
 

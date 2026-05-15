@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Routes, Route } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
@@ -50,6 +50,9 @@ const Chat             = lazy(() => import('./sections/Chat'))
 const UserProfile      = lazy(() => import('./pages/ProfilePage'))
 const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
 const NotFound         = lazy(() => import('./sections/NotFound'))
+const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
+const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
+const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
 import type { Session } from '@supabase/supabase-js'
 
 // All valid section IDs — anything else renders NotFound
@@ -214,7 +217,8 @@ export default function App() {
 
   // ── Navigation handler ──────────────────────────────────────────────────────
   const navClick = (id: string) => {
-    navigate(id === 'dashboard' ? '/' : '/' + id)
+    if (id === 'dashboard') navigate('/')
+    else navigate('/' + id)
     setSelectedDay(null)
     if (id !== 'daily') setDailyJumpDay(null)
     if (isOverlay) setSidebarOpen(false)
@@ -285,7 +289,7 @@ export default function App() {
           <main ref={mainRef} role="main" aria-label="Main content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             <AnimatePresence mode="wait">
             <motion.div
-              key={section}
+              key={location.pathname}
               variants={PAGE_TRANSITION}
               initial="initial"
               animate="animate"
@@ -293,72 +297,75 @@ export default function App() {
               style={{ padding: mainPad, paddingBottom: mainPadBottom }}
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
-            <ErrorBoundary key={section}>
+            <ErrorBoundary key={location.pathname}>
             <Suspense fallback={<SectionLoader />}>
-              {section === 'dashboard' && selectedDay === null && (
-                <Dashboard
-                  voyage={data.voyage}
-                  itinerary={data.itinerary}
-                  dailyLogs={data.dailyLogs}
-                  budget={data.budget}
-                  packing={data.packing}
-                  foodLogs={data.foodLogs}
-                  diningLog={data.diningLog}
-                  sectionStatus={sectionStatus}
-                  onChange={v => update('dailyLogs', v)}
-                  onNav={navClick}
-                  showToast={showToast}
-                  onViewDay={setSelectedDay}
-                  scrollY={scrollY}
-                  onViewProfile={(author) => {
-                    setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
-                    navClick('friends')
-                  }}
-                />
-              )}
-              {section === 'feed' && (
-                <Feed
-                  voyage={data.voyage}
-                  itinerary={data.itinerary}
-                  dailyLogs={data.dailyLogs}
-                  budget={data.budget}
-                  packing={data.packing}
-                  foodLogs={data.foodLogs}
-                  diningLog={data.diningLog}
-                  sectionStatus={sectionStatus}
-                  onChange={v => update('dailyLogs', v)}
-                  onNav={navClick}
-                  showToast={showToast}
-                  onViewDay={setSelectedDay}
-                  scrollY={scrollY}
-                  onViewProfile={(author) => {
-                    setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
-                    navClick('friends')
-                  }}
-                />
-              )}
-              {section === 'dashboard' && selectedDay !== null && (
-                <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
-              )}
-              {section === 'profile'       && <VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />}
-              {section === 'voyage'        && <VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />}
-              {section === 'itinerary'     && <Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />}
-              {section === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={dailyJumpDay ?? 0} />}
-              {section === 'food'          && <FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />}
-              {section === 'dining'        && <DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />}
-              {section === 'entertainment' && <EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />}
-              {section === 'foodfav'       && <FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />}
-              {section === 'budget'        && isAdult && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}
-              {section === 'shopping'      && <ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />}
-              {section === 'highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
-              {section === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
-              {section === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
-              {section === 'friends'       && <Friends initialFriend={feedFriend} onClearInitialFriend={() => setFeedFriend(null)} />}
-              {section === 'chat'          && <Chat />}
-              {section === 'userprofile'   && <UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />}
-              {section === 'design-system' && <DesignSystem />}
-              {/* 404 — no known section matched */}
-              {!KNOWN_SECTIONS.has(section) && section !== 'dashboard' && <NotFound onNav={navClick} />}
+              <Routes>
+                {/* ── New page-based routes (Phase 2+) ───────────────────── */}
+                <Route path="/voyages"             element={<VoyagesPage />} />
+                <Route path="/voyages/new"         element={<VoyageEditorPage />} />
+                <Route path="/voyages/:voyageId/edit" element={<VoyageEditorPage />} />
+                <Route path="/voyages/:voyageId"   element={
+                  <VoyageDetailPage
+                    data={data}
+                    update={update}
+                    onNav={navClick}
+                    showToast={showToast}
+                    isAdult={isAdult}
+                  />
+                } />
+
+                {/* ── Legacy section routes (preserved during migration) ── */}
+                <Route path="/" element={
+                  selectedDay === null
+                    ? <Dashboard
+                        voyage={data.voyage} itinerary={data.itinerary}
+                        dailyLogs={data.dailyLogs} budget={data.budget}
+                        packing={data.packing} foodLogs={data.foodLogs}
+                        diningLog={data.diningLog} sectionStatus={sectionStatus}
+                        onChange={v => update('dailyLogs', v)} onNav={navClick}
+                        showToast={showToast} onViewDay={setSelectedDay}
+                        scrollY={scrollY}
+                        onViewProfile={(author) => {
+                          setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
+                          navClick('friends')
+                        }}
+                      />
+                    : <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
+                } />
+                <Route path="/feed" element={
+                  <Feed
+                    voyage={data.voyage} itinerary={data.itinerary}
+                    dailyLogs={data.dailyLogs} budget={data.budget}
+                    packing={data.packing} foodLogs={data.foodLogs}
+                    diningLog={data.diningLog} sectionStatus={sectionStatus}
+                    onChange={v => update('dailyLogs', v)} onNav={navClick}
+                    showToast={showToast} onViewDay={setSelectedDay}
+                    scrollY={scrollY}
+                    onViewProfile={(author) => {
+                      setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
+                      navClick('friends')
+                    }}
+                  />
+                } />
+                <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
+                <Route path="/voyage"        element={<VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />} />
+                <Route path="/itinerary"     element={<Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />} />
+                <Route path="/daily"         element={<DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={dailyJumpDay ?? 0} />} />
+                <Route path="/food"          element={<FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />} />
+                <Route path="/dining"        element={<DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />} />
+                <Route path="/entertainment" element={<EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />} />
+                <Route path="/foodfav"       element={<FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />} />
+                <Route path="/budget"        element={isAdult ? <BudgetTracker data={data.budget} onChange={v => update('budget', v)} /> : <NotFound onNav={navClick} />} />
+                <Route path="/shopping"      element={<ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />} />
+                <Route path="/highlights"    element={<Highlights data={data.highlights} onChange={v => update('highlights', v)} />} />
+                <Route path="/packing"       element={<PackingList data={data.packing} onChange={v => update('packing', v)} />} />
+                <Route path="/notes"         element={<Notes data={data.notes} onChange={v => update('notes', v)} />} />
+                <Route path="/friends"       element={<Friends initialFriend={feedFriend} onClearInitialFriend={() => setFeedFriend(null)} />} />
+                <Route path="/chat"          element={<Chat />} />
+                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />} />
+                <Route path="/design-system" element={<DesignSystem />} />
+                <Route path="*"              element={<NotFound onNav={navClick} />} />
+              </Routes>
             </Suspense>
             </ErrorBoundary>
             </div>

@@ -67,6 +67,15 @@ export interface NavItem {
   icon:  string
 }
 
+// Primary navigation — shown at the top of the sidebar
+export const PRIMARY_NAV: NavItem[] = [
+  { id: 'voyages',  label: 'My Voyages', icon: '🚢' },
+  { id: 'feed',     label: 'Feed',       icon: '📡' },
+  { id: 'friends',  label: 'Friends',    icon: '👥' },
+  { id: 'chat',     label: 'Chat',       icon: '💬' },
+]
+
+// Journal sub-sections — shown in the sidebar under a divider (legacy routes)
 export const NAV: NavItem[] = [
   { id: 'daily',         label: 'Daily Log',          icon: '📅' },
   { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },

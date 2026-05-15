@@ -13,7 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
-import { useNavigate, useLocation, Routes, Route } from 'react-router-dom'
+import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
 import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
@@ -33,23 +33,17 @@ const Dashboard        = lazy(() => import('./pages/DashboardPage'))
 const Feed             = lazy(() => import('./pages/FeedPage'))
 const DayDetail        = lazy(() => import('./sections/DayDetail'))
 const VoyageProfile    = lazy(() => import('./features/voyages/VoyageProfile'))
+// VoyageDetails / Itinerary / DailyLog etc. are no longer top-level routes —
+// they are tabs inside VoyageDetailPage. Lazy imports kept for VoyageDetailPage.
 const VoyageDetails    = lazy(() => import('./features/voyages/VoyageForm'))
-const Itinerary        = lazy(() => import('./features/voyages/ItineraryEditor'))
-const DailyLog         = lazy(() => import('./sections/DailyLog'))
-const FoodLog          = lazy(() => import('./sections/FoodLog'))
-const DiningLog        = lazy(() => import('./sections/DiningLog'))
-const EntertainmentLog = lazy(() => import('./sections/EntertainmentLog'))
-const FoodFavourites   = lazy(() => import('./sections/FoodFavourites'))
-const BudgetTracker    = lazy(() => import('./sections/BudgetTracker'))
-const ShoppingLog      = lazy(() => import('./sections/ShoppingLog'))
-const Highlights       = lazy(() => import('./sections/Highlights'))
-const PackingList      = lazy(() => import('./sections/PackingList'))
-const Notes            = lazy(() => import('./sections/Notes'))
 const Friends          = lazy(() => import('./pages/ContactsPage'))
 const Chat             = lazy(() => import('./sections/Chat'))
 const UserProfile      = lazy(() => import('./pages/ProfilePage'))
 const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
 const NotFound         = lazy(() => import('./sections/NotFound'))
+const LoginPage        = lazy(() => import('./pages/LoginPage'))
+const SignupPage       = lazy(() => import('./pages/SignupPage'))
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
@@ -247,7 +241,15 @@ export default function App() {
     </div>
   )
 
-  if (!session) return <AuthScreen />
+  if (!session) return (
+    <Suspense fallback={null}>
+      <Routes>
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/reset"  element={<ResetPasswordPage />} />
+        <Route path="*"       element={<LoginPage />} />
+      </Routes>
+    </Suspense>
+  )
 
   if (!loaded || !voyageId) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
@@ -340,18 +342,10 @@ export default function App() {
                 } />
                 <Route path="/feed" element={<Feed />} />
                 <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
-                <Route path="/voyage"        element={<VoyageDetails data={data.voyage} onChange={v => update('voyage', v)} />} />
-                <Route path="/itinerary"     element={<Itinerary data={data.itinerary} onChange={v => update('itinerary', v)} />} />
-                <Route path="/daily"         element={<DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={dailyJumpDay ?? 0} />} />
-                <Route path="/food"          element={<FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />} />
-                <Route path="/dining"        element={<DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />} />
-                <Route path="/entertainment" element={<EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />} />
-                <Route path="/foodfav"       element={<FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />} />
-                <Route path="/budget"        element={isAdult ? <BudgetTracker data={data.budget} onChange={v => update('budget', v)} /> : <NotFound onNav={navClick} />} />
-                <Route path="/shopping"      element={<ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />} />
-                <Route path="/highlights"    element={<Highlights data={data.highlights} onChange={v => update('highlights', v)} />} />
-                <Route path="/packing"       element={<PackingList data={data.packing} onChange={v => update('packing', v)} />} />
-                <Route path="/notes"         element={<Notes data={data.notes} onChange={v => update('notes', v)} />} />
+                {/* Legacy section routes — redirect to /voyages so old bookmarks don't 404 */}
+                {['voyage','itinerary','daily','food','dining','entertainment','foodfav','budget','shopping','highlights','packing','notes'].map(path => (
+                  <Route key={path} path={`/${path}`} element={<Navigate to="/voyages" replace />} />
+                ))}
                 {/* /friends and /contacts both route to the new ContactsPage */}
                 <Route path="/friends"  element={<Friends />} />
                 <Route path="/contacts" element={<Friends />} />

@@ -101,30 +101,40 @@ export default function Sidebar({
     </div>
   )
 
-  // ── Voyage switcher (desktop + mobile only) ────────────────────────────────
-  const VoyageSwitcher = () => (
-    <div style={{ padding: '14px 12px 4px' }}>
-      <button
-        onClick={() => { onNav('profile'); if (isMobile) onClose() }}
-        style={{ width: '100%', background: section === 'profile' ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.05)', border: `1px solid ${section === 'profile' ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.08)'}`, borderRadius: 12, padding: '9px 13px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontFamily: FONT_BODY, transition: 'background 0.18s, border-color 0.18s', minHeight: 44 }}
-        onMouseEnter={e => { if (section !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.09)' }}
-        onMouseLeave={e => { if (section !== 'profile') e.currentTarget.style.background = 'rgba(255,255,255,0.05)' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, minWidth: 0 }}>
-          <span style={{ fontSize: 15, flexShrink: 0 }}>🚢</span>
-          <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', opacity: 0.9 }}>
-            {voyageName || 'My Voyages'}
-          </span>
+  // ── Voyage label — scrolling ticker for long ship names ──────────────────
+  const VoyageSwitcher = () => {
+    const name   = voyageName || 'No voyage selected'
+    const scroll = name.length > 18   // only animate when text would overflow
+
+    return (
+      <div style={{ padding: '10px 14px 2px' }}>
+        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: FONT_BODY, fontWeight: 700, marginBottom: 5 }}>
+          Active Voyage
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 11px', overflow: 'hidden' }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
+          {/* Ticker container */}
+          <div style={{ flex: 1, overflow: 'hidden', position: 'relative' }}>
+            {scroll ? (
+              <motion.div
+                animate={{ x: ['0%', '-50%'] }}
+                transition={{ duration: name.length * 0.18, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
+                style={{ display: 'flex', gap: '3em', whiteSpace: 'nowrap', willChange: 'transform' }}
+              >
+                <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }}>{name}</span>
+                <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }} aria-hidden="true">{name}</span>
+              </motion.div>
+            ) : (
+              <span style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY, whiteSpace: 'nowrap' }}>{name}</span>
+            )}
+          </div>
           {voyageCount > 1 && (
-            <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 10, padding: '1px 7px', fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 700 }}>{voyageCount}</span>
+            <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '1px 6px', fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, flexShrink: 0 }}>{voyageCount}</span>
           )}
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', fontWeight: 300 }}>›</span>
         </div>
-      </button>
-    </div>
-  )
+      </div>
+    )
+  }
 
   // ── Nav items ──────────────────────────────────────────────────────────────
   // Determine the active id — handles /voyages/:id paths and ?tab= journal tabs

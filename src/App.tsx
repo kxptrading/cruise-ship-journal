@@ -179,7 +179,21 @@ export default function App() {
     handleCoverPhotoChange,
   } = useVoyageData({ session, showToast })
 
-  // Wrap switchVoyage to also reset navigation state
+  // ── URL-driven voyage switch ────────────────────────────────────────────────
+  // When the user navigates to /voyages/:id, load that voyage's data even if
+  // a different voyage was previously active in localStorage.
+  useEffect(() => {
+    const match    = location.pathname.match(/^\/voyages\/([^/]+?)(?:\/|$)/)
+    const urlId    = match?.[1]
+    const isNew    = urlId === 'new'
+    if (urlId && !isNew && voyageId && urlId !== voyageId) {
+      switchVoyageData(urlId)
+      setSelectedDay(null)
+      setDailyJumpDay(null)
+    }
+  }, [location.pathname, voyageId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Wrap switchVoyage (used by VoyageProfile voyage-switcher) to also navigate home
   const switchVoyage = (newId: string) => {
     switchVoyageData(newId)
     navigate('/')

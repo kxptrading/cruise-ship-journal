@@ -8,7 +8,7 @@
 
 import { CircleUser, Menu, Search, Compass, Users, MessageCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { WHITE, FONT_BODY, FONT_DISPLAY } from '../constants'
+import { WHITE, FONT_BODY, FONT_LOGO } from '../constants'
 import FE from './FE'
 
 interface NavItem {
@@ -74,11 +74,11 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
         )}
         <button
           onClick={() => onNav('dashboard')}
-          aria-label="Swell Days — go to dashboard"
+          aria-label="SwellDays — go to dashboard"
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
-          <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '0.01em', lineHeight: 1, opacity: 0.95 }}>
-            Swell Days
+          <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: WHITE, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', lineHeight: 1, opacity: 0.95 }}>
+            SwellDays
           </span>
         </button>
       </div>

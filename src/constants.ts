@@ -39,6 +39,7 @@ export const SECTION_COLORS: Record<string, string> = {
 // ── Typography ────────────────────────────────────────────────────────────────
 export const FONT_DISPLAY = "'Fredoka One', cursive"
 export const FONT_BODY    = "'Nunito', sans-serif"
+export const FONT_LOGO    = "'Space Grotesk', sans-serif"
 
 // ── Responsive breakpoints (px) ───────────────────────────────────────────────
 export const BP: { mobile: number; tablet: number } = { mobile: 640, tablet: 1024 }

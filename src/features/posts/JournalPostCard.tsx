@@ -5,7 +5,7 @@
 // Shows: date, location, audience pill, title, body preview, metadata snippets.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { WHITE, BORDER, NAVY2, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, TEXT } from '@/constants'
@@ -13,7 +13,50 @@ import AudiencePill from './AudiencePill'
 import FE from '@/components/FE'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { PostRow } from './hooks'
-import { useDeletePost } from './hooks'
+import { useDeletePost, useUpdatePost } from './hooks'
+import type { Audience } from '@/types/models'
+
+// ── Quick audience popover ────────────────────────────────────────────────────
+
+const AUDIENCE_OPTIONS: { value: Audience; emoji: string; label: string }[] = [
+  { value: 'private', emoji: '🔒', label: 'Private'  },
+  { value: 'family',  emoji: '👨‍👩‍👧', label: 'Family'   },
+  { value: 'public',  emoji: '🌐', label: 'Public'   },
+]
+
+function AudiencePopover({ current, onSelect, onClose }: { current: Audience; onSelect: (a: Audience) => void; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const handler = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) onClose() }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [onClose])
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.92, y: 4 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.92, y: 4 }}
+      transition={{ type: 'spring', damping: 22, stiffness: 380 }}
+      style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 100, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, boxShadow: '0 8px 24px rgba(0,0,0,0.14)', overflow: 'hidden', minWidth: 140 }}
+    >
+      {AUDIENCE_OPTIONS.map(opt => (
+        <button
+          key={opt.value}
+          onClick={() => onSelect(opt.value)}
+          style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '9px 14px', background: current === opt.value ? '#F9FAFB' : 'none', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: NAVY2, textAlign: 'left', fontWeight: current === opt.value ? 700 : 400 }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#F3F4F6' }}
+          onMouseLeave={e => { e.currentTarget.style.background = current === opt.value ? '#F9FAFB' : 'none' }}
+        >
+          <span style={{ fontSize: 15 }}>{opt.emoji}</span>
+          {opt.label}
+          {current === opt.value && <span style={{ marginLeft: 'auto', fontSize: 12, color: '#9CA3AF' }}>✓</span>}
+        </button>
+      ))}
+    </motion.div>
+  )
+}
 
 const BODY_LIMIT = 200
 
@@ -28,9 +71,16 @@ interface Props {
 }
 
 export default function JournalPostCard({ post, voyageId }: Props) {
-  const navigate     = useNavigate()
-  const deletePost   = useDeletePost()
-  const [confirmDel, setConfirmDel] = useState(false)
+  const navigate       = useNavigate()
+  const deletePost     = useDeletePost()
+  const updatePost     = useUpdatePost()
+  const [confirmDel,   setConfirmDel]   = useState(false)
+  const [audiencePop,  setAudiencePop]  = useState(false)
+
+  const handleAudienceChange = async (audience: Audience) => {
+    setAudiencePop(false)
+    await updatePost.mutateAsync({ id: post.id, audience })
+  }
 
   const truncated    = post.body.length > BODY_LIMIT
   const bodyPreview  = truncated ? post.body.slice(0, BODY_LIMIT).trimEnd() + '…' : post.body
@@ -78,7 +128,25 @@ export default function JournalPostCard({ post, voyageId }: Props) {
             </div>
 
             {/* Actions */}
-            <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
+            <div style={{ display: 'flex', gap: 4, flexShrink: 0, position: 'relative' }}>
+              {/* Quick audience toggle */}
+              <button
+                onClick={() => setAudiencePop(v => !v)}
+                style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '4px 8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}
+                title="Change audience"
+              >
+                {({ private: '🔒', family: '👨‍👩‍👧', public: '🌐' } as Record<string, string>)[post.audience]} ▾
+              </button>
+              <AnimatePresence>
+                {audiencePop && (
+                  <AudiencePopover
+                    current={post.audience}
+                    onSelect={handleAudienceChange}
+                    onClose={() => setAudiencePop(false)}
+                  />
+                )}
+              </AnimatePresence>
+
               <button
                 onClick={() => navigate(`/voyages/${voyageId}/posts/${post.id}/edit`)}
                 style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '4px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}

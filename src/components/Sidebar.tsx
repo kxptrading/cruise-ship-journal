@@ -1,10 +1,31 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // components/Sidebar.tsx — Navigation sidebar
 //
-// Three display modes driven by the `bp` prop:
-//   mobile  → hidden by default; slides in as a Framer Motion drawer
-//   tablet  → always-visible, 64 px wide, icons only with hover tooltips
-//   desktop → always-visible, 240 px wide, full labels
+// THREE DISPLAY MODES (driven by the `bp` prop):
+//   mobile  → hidden by default; slides in as a Framer Motion spring drawer
+//             overlaying the content (zIndex 1000) with a blurred backdrop.
+//   tablet  → always-visible, 64 px wide (W_ICON), icons only with floating
+//             hover tooltips rendered outside the aside to escape overflow clipping.
+//   desktop → always-visible, 240 px wide (W_FULL), full icon + label layout.
+//
+// VOYAGE CONTEXT AWARENESS:
+//   When the URL matches /voyages/:id (and isn't /voyages/new), the Sidebar
+//   shows a secondary "Your Journal" section with per-voyage section links.
+//   These links navigate to /voyages/:id?tab=<sectionId> rather than to top-level
+//   routes. This keeps the user on the VoyageDetailPage while switching tabs.
+//   When not on a voyage page, journal nav items are hidden to avoid confusion.
+//
+// ACTIVE STATE DETECTION:
+//   activeId is derived from the URL in this order of precedence:
+//     1. ?tab= param  — journal section is active inside a voyage page.
+//     2. /voyages/*   — any voyage page sets 'voyages' as active.
+//     3. path slice   — fallback to the first path segment (e.g. 'feed', 'friends').
+//
+// SECTION STATUS DOTS:
+//   A small gold dot appears next to section labels when sectionStatus.has(id)
+//   is true. sectionStatus is computed in App.tsx from the voyage data and
+//   indicates which sections have meaningful content. The dot is hidden when
+//   the section is already active (gold border already signals selection).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react'
@@ -17,39 +38,76 @@ import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
 
-// ── TickerText — seamless marquee, gap calculated from string length ───────────
-// Gap = max(MIN_GAP, containerWidth - textWidth)
+// ── TickerText — seamless marquee for voyage names ────────────────────────────
 //
-// Short name  (tw < cw):  gap fills the remaining container width so copy 2
-//   enters the right edge exactly when copy 1 exits the left — the label
-//   always has text in it and never looks empty.
+// PROBLEM: Ship names + date ranges can be longer than the sidebar width.
+// SOLUTION: A CSS marquee-style animation that scrolls the text continuously.
 //
-// Long name   (tw >= cw): text already overflows, gap is just MIN_GAP so the
-//   next rotation starts immediately after the tail disappears.
+// SEAMLESS LOOP TECHNIQUE:
+//   Two copies of the text are rendered side-by-side in a flex row.
+//   The animation slides them left by exactly (textWidth + gap) pixels.
+//   When the first copy exits the left edge, the animation loops back to x=0
+//   and the second copy is now where the first copy was — creating a seamless join.
+//
+// GAP CALCULATION (the key to "seamless"):
+//   gap = max(MIN_GAP, containerWidth - textWidth)
+//
+//   Short name  (textWidth < containerWidth):
+//     gap = containerWidth - textWidth
+//     → the second copy begins exactly at the right edge of the container
+//       when the first copy exits the left. Text is always present in the viewport.
+//
+//   Long name   (textWidth >= containerWidth):
+//     gap = MIN_GAP (32 px breathing room between rotations)
+//     → text already overflows; a small gap prevents the tail and head of the next
+//       cycle from appearing to collide.
+//
+// SCROLL SPEED:
+//   duration = max(2, step / 45)
+//   → steady ~45 px/s feel regardless of text length, with a 2-second minimum
+//     so very short names don't spin too fast.
+//
+// MEASUREMENT:
+//   A hidden <span> with position:absolute renders the text off-screen to
+//   measure its rendered pixel width (scrollWidth). This is more accurate than
+//   estimating from character count because it accounts for font kerning and
+//   emoji widths.
+//
+// STATIC FALLBACK:
+//   Before dims is set (first render), the text is shown as a static <span>
+//   to avoid a flash of empty space while measurement happens.
 
 const MIN_GAP = 32   // minimum breathing room between repetitions (px)
 
 function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
   const outerRef   = useRef<HTMLDivElement>(null)
   const measureRef = useRef<HTMLSpanElement>(null)
+  // dims stores the measured container width (cw) and text width (tw).
+  // null = measurement not yet taken.
   const [dims, setDims] = useState<{ cw: number; tw: number } | null>(null)
 
   useEffect(() => {
     const outer   = outerRef.current
     const measure = measureRef.current
     if (!outer || !measure) return
+    // clientWidth = inner width without scrollbar. scrollWidth = full rendered text width.
     setDims({ cw: outer.clientWidth, tw: measure.scrollWidth })
   }, [text])
 
   const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', flexShrink: 0, ...style }
 
+  // The gap between the end of copy 1 and the start of copy 2.
   const gap      = dims ? Math.max(MIN_GAP, dims.cw - dims.tw) : MIN_GAP
+  // step = total distance the animation travels before looping back to x=0.
+  // Equals textWidth + gap so the second copy is always placed exactly after the first.
   const step     = dims ? dims.tw + gap : 0
+  // Convert step to duration at ~45 px/s, floor at 2s.
   const duration = Math.max(2, step / 45)     // steady ~45 px/s, min 2 s
 
   return (
     <div ref={outerRef} style={{ overflow: 'hidden', flex: 1 }}>
-      {/* Hidden: measures real rendered pixel width of the text */}
+      {/* Hidden measurement span — aria-hidden prevents screen readers from reading
+          this duplicate. position:absolute removes it from layout flow. */}
       <span
         ref={measureRef}
         aria-hidden="true"
@@ -59,6 +117,9 @@ function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
       </span>
 
       {dims ? (
+        // Animated row: slides from x=0 to x=-step, then loops.
+        // copy 1 has paddingRight: gap to create the inter-copy breathing room.
+        // copy 2 has aria-hidden because it is purely decorative.
         <motion.div
           key={text}
           animate={{ x: [0, -step] }}
@@ -69,15 +130,17 @@ function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
           <span style={base} aria-hidden="true">{text}</span>
         </motion.div>
       ) : (
+        // Static fallback before dims is measured.
         <span style={base}>{text}</span>
       )}
     </div>
   )
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
-const W_FULL = 240
-const W_ICON = 64
+const W_FULL = 240   // desktop sidebar width (px)
+const W_ICON = 64    // tablet icon-only sidebar width (px)
 
 interface Props {
   section:       string
@@ -102,7 +165,10 @@ export default function Sidebar({
   const location   = useLocation()
   const navigate   = useNavigate()
 
-  // Detect whether we're on a specific voyage detail page
+  // ── Voyage context detection ────────────────────────────────────────────────
+  // Determines whether we're on a specific voyage detail page so the journal
+  // nav section can be shown. We exclude 'new' to avoid showing journal links
+  // on the "Create Voyage" form.
   const voyageIdMatch    = location.pathname.match(/^\/voyages\/([^/]+?)(?:\/|$)/)
   const currentVoyageId  = voyageIdMatch?.[1]
   const isOnVoyage       = !!currentVoyageId && currentVoyageId !== 'new'
@@ -110,7 +176,9 @@ export default function Sidebar({
   // Active journal tab from ?tab= search param (set by journal nav links)
   const activeTabParam = new URLSearchParams(location.search).get('tab')
 
-  // Navigate journal section links to the current voyage's tab
+  // Navigate journal section links to the current voyage's tab.
+  // If not on a voyage page, fall back to the legacy top-level section route
+  // (this path is rare; most navigation now goes through VoyageDetailPage).
   const navToJournalTab = (tabId: string) => {
     if (isOnVoyage) {
       navigate(`/voyages/${currentVoyageId}?tab=${tabId}`)
@@ -120,13 +188,16 @@ export default function Sidebar({
     if (isMobile) onClose()
   }
 
-  // Tooltip tracking for tablet icon-only mode
+  // Tooltip state for tablet icon-only mode.
+  // Stores the nav item id and the vertical midpoint of the hovered button
+  // so the floating tooltip can be positioned at the same y coordinate.
   const [tooltip, setTooltip] = useState<{ id: string; y: number } | null>(null)
 
-  // Focus trap — active when mobile drawer is open
+  // Focus trap — active when mobile drawer is open for accessibility.
+  // Traps keyboard focus inside the drawer so Tab doesn't reach background content.
   const drawerRef = useFocusTrap<HTMLElement>(isMobile && isOpen)
 
-  // Close drawer on Escape (mobile)
+  // Close drawer on Escape (mobile) — matches the expected modal keyboard behaviour.
   useEffect(() => {
     if (!isMobile || !isOpen) return
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -134,9 +205,11 @@ export default function Sidebar({
     return () => document.removeEventListener('keydown', handler)
   }, [isMobile, isOpen, onClose])
 
-  // Close tooltip on unmount / mode change
+  // Clear tooltip when switching breakpoints to avoid a stuck tooltip when
+  // the sidebar transitions from tablet (hover tooltips) to desktop (labels).
   useEffect(() => { setTooltip(null) }, [bp])
 
+  // Budget nav item is filtered for underage users (same gate as the tab in VoyageDetailPage).
   const navItems = NAV.filter(({ id }) => id !== 'budget' || isAdult)
 
   // ── Shared header ──────────────────────────────────────────────────────────
@@ -161,6 +234,7 @@ export default function Sidebar({
   )
 
   // ── Voyage label — uses TickerText for long ship names ───────────────────
+  // Only shown on desktop (not tablet) because the icon-only sidebar has no room.
   const VoyageSwitcher = () => {
     const name = voyageName || 'No voyage selected'
     return (
@@ -174,6 +248,7 @@ export default function Sidebar({
             text={name}
             style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }}
           />
+          {/* Show voyage count badge when user has multiple voyages so they know they can switch */}
           {voyageCount > 1 && (
             <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '1px 6px', fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, flexShrink: 0 }}>
               {voyageCount}
@@ -184,13 +259,19 @@ export default function Sidebar({
     )
   }
 
-  // ── Nav items ──────────────────────────────────────────────────────────────
-  // Determine the active id — handles /voyages/:id paths and ?tab= journal tabs
+  // ── Active ID resolution ────────────────────────────────────────────────────
+  // Derive the active nav item from URL state with explicit precedence:
+  //   1. ?tab= param active → journal section is selected inside a voyage page.
+  //   2. Path starts with /voyages → 'voyages' top-level item is selected.
+  //   3. Path slice → legacy top-level route (e.g. /feed → 'feed').
   const activeId = activeTabParam
     ? activeTabParam                                          // journal tab active
     : location.pathname.startsWith('/voyages') ? 'voyages'   // voyage pages
     : location.pathname.slice(1) || 'dashboard'              // legacy sections
 
+  // ── Nav button renderer ────────────────────────────────────────────────────
+  // Renders one nav item in either tablet (icon-only) or desktop (icon+label) mode.
+  // customOnClick overrides the default onNav behaviour for journal tab items.
   const renderNavButton = (id: string, label: string, icon: string, customOnClick?: () => void) => {
     const active = activeId === id
     const handleClick = customOnClick ?? (() => { onNav(id); if (isMobile) onClose() })
@@ -199,6 +280,8 @@ export default function Sidebar({
         <div
           key={id}
           onMouseEnter={e => {
+            // Capture the hovered button's vertical midpoint in viewport coordinates.
+            // The tooltip is rendered at position:fixed using this y value.
             const rect = e.currentTarget.getBoundingClientRect()
             setTooltip({ id, y: rect.top + rect.height / 2 })
           }}
@@ -243,6 +326,8 @@ export default function Sidebar({
       >
         <FE emoji={icon} size={18} />
         <span style={{ flex: 1 }}>{label}</span>
+        {/* Gold dot — indicates this section has content. Hidden when active to
+            avoid competing with the gold left-border active indicator. */}
         {sectionStatus?.has(id) && !active && (
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />
         )}
@@ -250,9 +335,10 @@ export default function Sidebar({
     )
   }
 
+  // ── Nav section ────────────────────────────────────────────────────────────
   const Nav = () => (
     <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: isTablet ? 'auto' : undefined }}>
-      {/* Primary nav */}
+      {/* Primary nav — always visible: Dashboard, Feed, Voyages, Friends, Chat, Profile */}
       {!isTablet && (
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 20px 8px' }}>
           SwellDays
@@ -262,7 +348,9 @@ export default function Sidebar({
         renderNavButton(id, label, icon)
       )}
 
-      {/* Journal sections — only shown when viewing a specific voyage */}
+      {/* Journal sections — only shown when on a specific voyage detail page.
+          Each link navigates to /voyages/:id?tab=<sectionId> to open the correct
+          tab in VoyageDetailPage without losing the voyage context. */}
       {isOnVoyage && (
         <>
           {!isTablet && (
@@ -313,6 +401,9 @@ export default function Sidebar({
   )
 
   // ── Mobile: Framer Motion drawer + backdrop ────────────────────────────────
+  // The drawer slides in from x=-240 (off the left edge) to x=0.
+  // The backdrop fades in behind it and closes the drawer on click.
+  // Both are wrapped in AnimatePresence so they animate out when isOpen becomes false.
   if (isMobile) {
     return (
       <>
@@ -334,12 +425,15 @@ export default function Sidebar({
             <motion.aside
               key="drawer"
               ref={drawerRef}
+              // role="dialog" + aria-modal tells screen readers this is a modal overlay.
               role="dialog"
               aria-modal="true"
               aria-label="Navigation menu"
               initial={{ x: -W_FULL }}
               animate={{ x: 0 }}
               exit={{ x: -W_FULL }}
+              // Spring animation for snappy feel; damping/stiffness tuned to feel
+              // native on both fast and slow devices.
               transition={{ type: 'spring', damping: 30, stiffness: 320 }}
               style={{
                 width: W_FULL, background: SIDEBAR_BG,
@@ -361,6 +455,8 @@ export default function Sidebar({
   }
 
   // ── Tablet: 64 px icon-only sidebar ───────────────────────────────────────
+  // The tooltip is rendered outside <aside> to escape overflow:visible clipping.
+  // It is positioned with position:fixed at the button's y midpoint + left of W_ICON.
   if (isTablet) {
     return (
       <>
@@ -368,6 +464,8 @@ export default function Sidebar({
           width: W_ICON, background: SIDEBAR_BG,
           flexShrink: 0,
           display: 'flex', flexDirection: 'column',
+          // overflow:visible is required for the floating tooltip to appear outside
+          // the sidebar bounds. Nav uses overflowY:auto for its own scroll.
           overflowY: 'auto', overflowX: 'visible',
         }}>
           <Header />
@@ -375,7 +473,9 @@ export default function Sidebar({
           <TabletFooter />
         </aside>
 
-        {/* Floating tooltip — rendered outside <aside> to escape overflow */}
+        {/* Floating tooltip — rendered outside <aside> to escape overflow clipping.
+            Positioned with position:fixed at W_ICON+10 px from the left edge,
+            vertically centered on the hovered button using translateY(-50%). */}
         <AnimatePresence>
           {tooltip && (
             <motion.div

@@ -10,6 +10,16 @@
 //
 // All Supabase data loading and write-through lives in useVoyageData.
 // All DB ↔ app shape conversion lives in lib/converters.ts.
+//
+// DATA FLOW OVERVIEW:
+//   useVoyageData  →  data / update()  →  passed as props to legacy sections
+//   React Query hooks (features/*/hooks.ts)  →  used directly by new pages
+//
+// MIGRATION STATUS: The app is in a dual-layer transition.
+//   • New pages (/voyages, /feed, /friends) use React Query and are self-fetching.
+//   • Legacy sections (daily log, food, packing, etc.) still receive `data` and
+//     `update` props from this root via VoyageDetailPage. Each section will be
+//     migrated to React Query in future phases.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
@@ -71,11 +81,15 @@ function SectionLoader() {
 }
 
 // ── Voyage ticker label helper ────────────────────────────────────────────────
+// Appends 'T00:00:00' so the Date constructor treats the ISO string as local
+// time rather than UTC midnight (which shifts dates by ±hours on most systems).
 function fmtDate(iso: string | null): string {
   if (!iso) return ''
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+// Builds the readable label shown in the Sidebar TickerText.
+// The dot separator ( · ) gives clear visual hierarchy between the name and dates.
 function buildVoyageLabel(name: string | null | undefined, from: string | null | undefined, to: string | null | undefined): string {
   const n = name || ''
   const d = from && to ? `${fmtDate(from)} – ${fmtDate(to)}`
@@ -101,6 +115,8 @@ interface ToastState {
 
 export default function App() {
   // ── Responsive layout flags ─────────────────────────────────────────────────
+  // winW feeds the WCtx context so any component can react to window size without
+  // prop-drilling. bp is a categorical breakpoint enum ('mobile' | 'tablet' | 'desktop').
   const winW      = useWindowSize()
   const bp        = useBreakpoint()
   const isMobile  = bp === 'mobile'
@@ -108,12 +124,19 @@ export default function App() {
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   const [session,     setSession]     = useState<Session | null>(null)
+  // authChecked gates the render: we show a spinner until we know the auth state.
+  // Without this gate the login screen would flash briefly on page load even for
+  // authenticated users (Supabase getSession is async).
   const [authChecked, setAuthChecked] = useState<boolean>(false)
 
   // ── Theme ───────────────────────────────────────────────────────────────────
+  // getSavedTheme reads localStorage synchronously, so the initial state is
+  // always the persisted value — no flash of default theme on mount.
   const [theme, setTheme] = useState<string>(getSavedTheme)
 
   // ── Age gate — null means not set, treated as adult ─────────────────────────
+  // The age field comes from the user's profile in Supabase. null means the user
+  // has never set their age, and we default to showing adult content (budget tab).
   const [userAge, setUserAge] = useState<number | null>(null)
   const isAdult = userAge === null || userAge >= 18
 
@@ -123,6 +146,7 @@ export default function App() {
   const switchTheme = (id: string) => {
     applyTheme(id)
     setTheme(id)
+    // Also persist to the DB so the theme roams across devices.
     const uid = session?.user?.id
     if (uid) supabase.from('profiles').update({ theme: id }).eq('user_id', uid).then()
   }
@@ -140,6 +164,8 @@ export default function App() {
 
   // ── Toast ───────────────────────────────────────────────────────────────────
   const [toast, setToast]   = useState<ToastState>({ message: '', visible: false })
+  // toastTimer ref lets us clear a previous timeout if a new toast fires before
+  // the old one hides. Without this a rapid sequence of toasts would race.
   const toastTimer           = useRef<number | null>(null)
 
   const showToast = (message: string) => {
@@ -149,6 +175,9 @@ export default function App() {
   }
 
   // ── Auth session lifecycle ──────────────────────────────────────────────────
+  // getSession() runs once on mount to restore the persisted session from storage.
+  // onAuthStateChange() then keeps the session state in sync for the entire
+  // lifetime of the tab (sign-in from another tab, token refresh, sign-out, etc.).
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session: s } }) => {
       setSession(s)
@@ -178,6 +207,8 @@ export default function App() {
   }, [])
 
   // ── Auto-close sidebar when viewport widens past tablet breakpoint ──────────
+  // Without this, a user could open the mobile drawer, resize the window, and
+  // end up with the drawer open on top of the always-visible desktop sidebar.
   useEffect(() => {
     if (!isOverlay) setSidebarOpen(false)
   }, [isOverlay])
@@ -197,6 +228,14 @@ export default function App() {
   // ── URL-driven voyage switch ────────────────────────────────────────────────
   // When the user navigates to /voyages/:id, load that voyage's data even if
   // a different voyage was previously active in localStorage.
+  //
+  // WHY: Deep-linking (e.g. someone shares a URL to a specific voyage) must work.
+  // The regex captures the first path segment after /voyages/ and ignores
+  // sub-routes like /voyages/:id/posts/:postId.
+  //
+  // We only trigger switchVoyageData if the URL ID genuinely differs from what is
+  // currently loaded — avoids an infinite re-load loop when the effect fires after
+  // switchVoyageData itself updates voyageId.
   useEffect(() => {
     const match    = location.pathname.match(/^\/voyages\/([^/]+?)(?:\/|$)/)
     const urlId    = match?.[1]
@@ -217,6 +256,8 @@ export default function App() {
   }
 
   // Wrap createVoyage to inject session.user.id
+  // The session guard (!) is safe here because createVoyage is only callable
+  // when a session exists (the !session render branch returns early above).
   const createVoyage = async (partial: Record<string, unknown> = {}): Promise<void> => {
     await createVoyageData(session!.user.id, partial)
   }
@@ -224,6 +265,9 @@ export default function App() {
   // ── Section completion status ───────────────────────────────────────────────
   // A Set of section IDs that have meaningful data — used by Sidebar (dots)
   // and Feed (journal completion score).
+  //
+  // useMemo is important here: `data` is a stable object reference from
+  // useVoyageData, so this recalculates only when data actually changes.
   const sectionStatus = useMemo(() => {
     const has = new Set<string>()
     if (data.voyage.shipName || data.voyage.cruiseLine || data.voyage.departureDate) has.add('voyage')
@@ -257,10 +301,17 @@ export default function App() {
   const mainPadBottom = isMobile ? '80px' : mainPad.split(' ')[0]
 
   // ── Scroll tracking — fed into VoyageHero for parallax/fade ────────────────
+  // useScroll with a container ref tracks the overflow-y scroll on <main>, not
+  // the window scroll. This is necessary because <main> is the scrolling element
+  // (not the body) in this layout.
   const mainRef = useRef<HTMLElement>(null)
   const { scrollY } = useScroll({ container: mainRef })
 
   // ── Loading / auth screens ──────────────────────────────────────────────────
+  // Three progressive gates before the full app shell renders:
+  //   1. authChecked — waiting for Supabase to restore the session from storage.
+  //   2. !session    — user is not logged in; show auth routes only.
+  //   3. !loaded || !voyageId — auth is confirmed but voyage data hasn't loaded yet.
   if (!authChecked) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
       <div style={{ textAlign: 'center' }}>
@@ -290,6 +341,13 @@ export default function App() {
   )
 
   // ── Layout ──────────────────────────────────────────────────────────────────
+  // Three React contexts are provided here at the root level:
+  //   VoyageCtx  — the currently active voyageId (string), used by feature hooks.
+  //   UserCtx    — the current user's ID, consumed by all React Query hooks.
+  //   WCtx       — the window inner-width in px, used by sections for responsive layout.
+  //
+  // MotionConfig reducedMotion="user" respects the OS-level 'reduce motion'
+  // accessibility setting by automatically disabling Framer Motion animations.
   return (
     <MotionConfig reducedMotion="user">
     <VoyageCtx.Provider value={voyageId}>
@@ -305,6 +363,8 @@ export default function App() {
           onClose={() => setSidebarOpen(false)}
           user={session?.user}
           onSignOut={() => supabase.auth.signOut()}
+          // Prefer the allVoyages list row (already in memory) over data.voyage to
+          // avoid a stale name if the user has just created a new voyage.
           voyageName={(() => {
             const row = allVoyages.find(v => v.id === voyageId)
             return buildVoyageLabel(
@@ -327,7 +387,13 @@ export default function App() {
             onMenuOpen={() => setSidebarOpen(true)}
           />
 
+          {/* <main> is the sole overflow-y scroll container.
+              Its ref feeds the Framer Motion useScroll hook for parallax effects.
+              overflow-x: hidden prevents horizontal scroll from animated page transitions. */}
           <main ref={mainRef} role="main" aria-label="Main content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+            {/* AnimatePresence mode="wait" ensures the exiting page fully unmounts
+                before the entering page begins animating. The key is the full
+                pathname so sub-route changes also trigger the transition. */}
             <AnimatePresence mode="wait">
             <motion.div
               key={location.pathname}
@@ -338,6 +404,8 @@ export default function App() {
               style={{ padding: mainPad, paddingBottom: mainPadBottom }}
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
+            {/* ErrorBoundary is keyed by pathname so a crash in one section
+                is isolated and cleared when navigating away. */}
             <ErrorBoundary key={location.pathname}>
             <Suspense fallback={<SectionLoader />}>
               <Routes>
@@ -348,6 +416,9 @@ export default function App() {
                 <Route path="/voyages/:voyageId/posts/new"         element={<PostComposerPage />} />
                 <Route path="/voyages/:voyageId/posts/:postId/edit" element={<PostEditorPage />} />
                 <Route path="/voyages/:voyageId/posts/:postId"     element={<PostDetailPage />} />
+                {/* VoyageDetailPage receives data+update so it can pass them to
+                    legacy journal-section tabs without those tabs needing to
+                    re-fetch data they already have from useVoyageData. */}
                 <Route path="/voyages/:voyageId"   element={
                   <VoyageDetailPage
                     data={data}

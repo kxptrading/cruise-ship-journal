@@ -3,6 +3,35 @@
 //
 // useFeed() calls the get_feed() Supabase RPC (Phase 4) which implements
 // the spec §7 canSeeInFeed visibility logic server-side.
+//
+// VISIBILITY ENFORCEMENT:
+//   The RPC enforces the same rules as feedVisibility.ts#canSeeInFeed, but
+//   running them inside PostgreSQL means:
+//     - Private posts NEVER reach the client (not even encrypted).
+//     - Family posts are filtered by the is_family column in friend_requests.
+//     - The viewer only sees their own posts and those of accepted contacts.
+//   This is the authoritative enforcement layer. The client-side canSeeInFeed
+//   function exists only for unit tests and optimistic UI.
+//
+// CACHE KEY:
+//   ['feed', userId] — user-scoped so different accounts in the same tab
+//   get separate cached feeds.
+//
+//   The 'feed' key is also invalidated by:
+//     - useUpdatePost / useDeletePost   (posts/hooks.ts)
+//     - useToggleFamily / useAcceptRequest  (contacts/hooks.ts)
+//   Any mutation that could change what posts are visible in the feed
+//   must invalidate ['feed'] to keep the feed current.
+//
+// PAGINATION:
+//   pageLimit defaults to 50. Cursor-based pagination is not implemented yet;
+//   page_offset is always 0. When pagination is added, the query key should
+//   include the page/cursor so each page has its own cache entry.
+//
+// STALE TIME:
+//   1 minute (shorter than the global 2-minute default) because the feed
+//   aggregates multiple users' activity and goes stale faster than
+//   single-voyage data that only one user writes to.
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useQuery } from '@tanstack/react-query'
@@ -11,6 +40,8 @@ import { useUserId } from '@/context'
 import type { Audience } from '@/types/models'
 
 // ── Feed row (enriched by the RPC) ───────────────────────────────────────────
+// The RPC JOINs posts with profiles and voyages so the feed item has everything
+// needed for display without additional queries in the component layer.
 
 export interface FeedRow {
   id:          string
@@ -26,7 +57,7 @@ export interface FeedRow {
   metadata:    Record<string, unknown> | null
   created_at:  string
   updated_at:  string
-  // enriched
+  // enriched fields — sourced from the voyages and profiles tables by the RPC
   ship_name:   string | null
   cruise_line: string | null
   author_display_name: string | null

@@ -36,7 +36,7 @@ export default function LoginPage() {
         {/* Wordmark */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div style={{ fontSize: 30, fontWeight: 700, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', color: 'var(--t-primary-dk)' }}>
-            SwellDays
+            Deck Days
           </div>
           <div style={{ fontSize: 13, color: MUTED, marginTop: 4, fontFamily: FONT_BODY }}>Your voyage journal</div>
         </div>
@@ -77,7 +77,7 @@ export default function LoginPage() {
 
         <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <Link to="/signup" style={{ fontSize: 13, color: 'var(--t-primary)', fontWeight: 600, fontFamily: FONT_BODY, textDecoration: 'none' }}>
-            New to SwellDays? Create an account →
+            New to Deck Days? Create an account →
           </Link>
           <Link to="/reset" style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, textDecoration: 'none' }}>
             Forgot password?

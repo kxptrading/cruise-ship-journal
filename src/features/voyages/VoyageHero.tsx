@@ -142,7 +142,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
 
             {(voyage.cruiseLine || voyage.shipName) && (
               <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY, marginBottom: 5 }}>
-                {voyage.cruiseLine || 'SwellDays'}
+                {voyage.cruiseLine || 'Deck Days'}
               </div>
             )}
 

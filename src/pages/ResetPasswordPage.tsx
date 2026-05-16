@@ -51,7 +51,7 @@ export default function ResetPasswordPage() {
         style={{ width: '100%', maxWidth: 400, background: WHITE, borderRadius: 24, padding: '36px 32px', boxShadow: '0 24px 80px rgba(0,0,0,0.35)' }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 30, fontWeight: 700, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', color: 'var(--t-primary-dk)' }}>SwellDays</div>
+          <div style={{ fontSize: 30, fontWeight: 700, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', color: 'var(--t-primary-dk)' }}>Deck Days</div>
           <div style={{ fontSize: 13, color: MUTED, marginTop: 4, fontFamily: FONT_BODY }}>Reset your password</div>
         </div>
 

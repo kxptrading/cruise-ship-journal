@@ -1,4 +1,4 @@
-# SwellDays — Project Context
+# Deck Days — Project Context
 
 ## What This Is
 
@@ -78,7 +78,7 @@ src/
 
   components/
     Sidebar.tsx         — nav shell: PRIMARY_NAV always; Your Journal only on /voyages/:id
-    TopNav.tsx          — SwellDays wordmark + auth nav icons
+    TopNav.tsx          — Deck Days wordmark + auth nav icons
     BottomNav.tsx       — mobile tab bar (voyage-aware active state)
     ui/                 — Card, Button, MetricCard, StarRating, Skeleton,
                           EmptyState, AudienceSelector, SectionBox, Label, Input

@@ -74,11 +74,11 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
         )}
         <button
           onClick={() => onNav('dashboard')}
-          aria-label="SwellDays — go to dashboard"
+          aria-label="Deck Days — go to dashboard"
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
           <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: WHITE, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', lineHeight: 1, opacity: 0.95 }}>
-            SwellDays
+            Deck Days
           </span>
         </button>
       </div>

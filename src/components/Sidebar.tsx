@@ -222,7 +222,7 @@ export default function Sidebar({
       flexShrink: 0,
       background: 'var(--t-primary-dk)',
     }}>
-      <img src="/logo.svg" alt="Swell Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
+      <img src="/logo.svg" alt="Deck Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
       {isMobile && (
         <button
           aria-label="Close menu"
@@ -341,7 +341,7 @@ export default function Sidebar({
       {/* Primary nav — always visible: Dashboard, Feed, Voyages, Friends, Chat, Profile */}
       {!isTablet && (
         <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 20px 8px' }}>
-          SwellDays
+          Deck Days
         </div>
       )}
       {PRIMARY_NAV.filter(({ id }) => id !== 'budget' || isAdult).map(({ id, label, icon }) =>

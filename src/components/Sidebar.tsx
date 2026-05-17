@@ -222,7 +222,7 @@ export default function Sidebar({
       flexShrink: 0,
       background: 'var(--t-primary-dk)',
     }}>
-      <img src="/DeckDaysLogo.png" alt="Deck Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
+      <img src="/logo.svg" alt="Deck Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
       {isMobile && (
         <button
           aria-label="Close menu"
@@ -340,8 +340,8 @@ export default function Sidebar({
     <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: isTablet ? 'auto' : undefined }}>
       {/* Primary nav — always visible: Dashboard, Feed, Voyages, Friends, Chat, Profile */}
       {!isTablet && (
-        <div style={{ padding: '0 20px 8px' }}>
-          <img src="/DeckDays.png" alt="Deck Days" style={{ height: 18, width: 'auto', opacity: 0.5 }} />
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 20px 8px' }}>
+          Deck Days
         </div>
       )}
       {PRIMARY_NAV.filter(({ id }) => id !== 'budget' || isAdult).map(({ id, label, icon }) =>

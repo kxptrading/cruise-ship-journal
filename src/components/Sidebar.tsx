@@ -222,7 +222,7 @@ export default function Sidebar({
       flexShrink: 0,
       background: 'var(--t-primary-dk)',
     }}>
-      <img src="/logo.svg" alt="Deck Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
+      <img src="/DeckDaysLogo.png" alt="Deck Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
       {isMobile && (
         <button
           aria-label="Close menu"

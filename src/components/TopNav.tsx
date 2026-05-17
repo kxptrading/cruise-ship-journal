@@ -77,9 +77,11 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           aria-label="Deck Days — go to dashboard"
           style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
         >
-          <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: WHITE, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', lineHeight: 1, opacity: 0.95 }}>
-            Deck Days
-          </span>
+          <img
+            src="/DeckDays.png"
+            alt="Deck Days"
+            style={{ height: isMobile ? 28 : 36, width: 'auto', display: 'block', opacity: 0.95 }}
+          />
         </button>
       </div>
 

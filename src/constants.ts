@@ -73,7 +73,7 @@ export const PRIMARY_NAV: NavItem[] = [
   { id: 'voyages',  label: 'My Voyages', icon: '🚢' },
   { id: 'feed',     label: 'Feed',       icon: '📡' },
   { id: 'friends',  label: 'Friends',    icon: '👥' },
-  { id: 'chat',     label: 'Chat',       icon: '💬' },
+  { id: 'chat',     label: 'Messages',   icon: '💬' },
 ]
 
 // Journal sub-sections — shown in the sidebar under a divider (legacy routes)

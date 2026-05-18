@@ -35,9 +35,7 @@ export default function LoginPage() {
       >
         {/* Wordmark */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
-          <div style={{ fontSize: 30, fontWeight: 700, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', color: 'var(--t-primary-dk)' }}>
-            Deck Days
-          </div>
+          <img src="/DeckDays2.png" alt="Deck Days" style={{ height: 48, width: 'auto', display: 'block', margin: '0 auto' }} />
           <div style={{ fontSize: 13, color: MUTED, marginTop: 4, fontFamily: FONT_BODY }}>Your voyage journal</div>
         </div>
 

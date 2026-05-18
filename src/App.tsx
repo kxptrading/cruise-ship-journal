@@ -286,9 +286,27 @@ export default function App() {
   }, [data])
 
   // ── Navigation handler ──────────────────────────────────────────────────────
+  // Journal section IDs (daily, budget, food, etc.) no longer have top-level
+  // routes — they are tabs inside VoyageDetailPage. When navClick receives one
+  // of these IDs, redirect to /voyages/:id?tab=<section> so the correct tab
+  // opens. Fall back to /voyages if voyageId isn't available yet.
+  const JOURNAL_TABS = new Set([
+    'daily','itinerary','food','dining','entertainment',
+    'foodfav','budget','shopping','highlights','packing','notes','voyage',
+  ])
+
   const navClick = (id: string) => {
-    if (id === 'dashboard') navigate('/')
-    else navigate('/' + id)
+    if (id === 'dashboard') {
+      navigate('/')
+    } else if (JOURNAL_TABS.has(id) && voyageId) {
+      // Map 'voyage' (old Voyage Details route) to the itinerary tab
+      const tab = id === 'voyage' ? 'itinerary' : id
+      navigate(`/voyages/${voyageId}?tab=${tab}`)
+    } else if (JOURNAL_TABS.has(id)) {
+      navigate('/voyages')
+    } else {
+      navigate('/' + id)
+    }
     setSelectedDay(null)
     if (id !== 'daily') setDailyJumpDay(null)
     if (isOverlay) setSidebarOpen(false)

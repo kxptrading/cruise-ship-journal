@@ -402,6 +402,7 @@ export default function App() {
             onNav={navClick}
             isOverlay={isOverlay}
             isMobile={isMobile}
+            isTablet={bp === 'tablet'}
             onMenuOpen={() => setSidebarOpen(true)}
             voyageLabel={(() => {
               const row = allVoyages.find(v => v.id === voyageId)

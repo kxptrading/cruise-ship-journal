@@ -36,11 +36,13 @@ interface Props {
   onNav:        (id: string) => void
   isOverlay:    boolean   // true = mobile, shows hamburger
   isMobile:     boolean
+  isTablet:     boolean
   onMenuOpen:   () => void
   voyageLabel?: string    // active voyage name + dates for centre ticker
 }
 
-export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile, voyageLabel }: Props) {
+export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile, isTablet, voyageLabel }: Props) {
+  const isDesktop = !isMobile && !isTablet
   const barH = isMobile ? 48 : 58
 
   // On mobile the social links move to BottomNav — only Profile stays in the top bar.
@@ -49,67 +51,63 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
     : TOP_NAV_ITEMS
 
   return (
-    <div style={{
-      flexShrink: 0,
-      height: barH,
-      background: 'var(--t-primary-dk)',
-      display: 'flex', alignItems: 'center',
-      padding: isMobile ? '0 10px' : '0 22px',
-      gap: isMobile ? 4 : 8,
-      zIndex: 200,
-      /* sticky keeps bar at top; relative anchors the absolute centre ticker */
-      position: 'sticky',
-      top: 0,
-    }}>
+    // Outer wrapper is sticky and stacks the main bar + optional ticker sub-bar
+    <div style={{ position: 'sticky', top: 0, zIndex: 200, flexShrink: 0 }}>
 
-      {/* ── Left: hamburger + logo ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexShrink: 0 }}>
-        {isOverlay && (
+      {/* ── Main bar ── */}
+      <div style={{
+        height: barH,
+        background: 'var(--t-primary-dk)',
+        display: 'flex', alignItems: 'center',
+        padding: isMobile ? '0 10px' : '0 22px',
+        gap: isMobile ? 4 : 8,
+        position: 'relative',   // anchors the desktop absolute-centred ticker
+      }}>
+
+        {/* ── Left: hamburger + logo ── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 10, flexShrink: 0 }}>
+          {isOverlay && (
+            <button
+              aria-label="Open menu"
+              onClick={onMenuOpen}
+              style={{
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: 8,
+                width: 44, height: 44,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 18,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            ><Menu size={22} strokeWidth={1.75} /></button>
+          )}
           <button
-            aria-label="Open menu"
-            onClick={onMenuOpen}
-            style={{
-              background: 'rgba(255,255,255,0.07)',
-              border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: 8,
-              width: 44, height: 44,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 18,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          ><Menu size={22} strokeWidth={1.75} /></button>
-        )}
-        <button
-          onClick={() => onNav('dashboard')}
-          aria-label="Deck Days — go to dashboard"
-          style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-        >
-          <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: WHITE, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', lineHeight: 1, opacity: 0.95 }}>Deck Days</span>
-        </button>
-      </div>
-
-      {/* ── Centre: active voyage ticker — absolutely centred in the full bar ── */}
-      {voyageLabel && (
-        <div style={{
-          position:  'absolute',
-          left:      '50%',
-          transform: 'translateX(-50%)',
-          display:   'flex', alignItems: 'center', gap: 6,
-          width:     isMobile ? 180 : 340,
-          pointerEvents: 'none',   // let clicks through to buttons behind
-        }}>
-          <span style={{ fontSize: 15, flexShrink: 0 }}>🚢</span>
-          <TickerText
-            text={voyageLabel}
-            style={{ fontSize: isMobile ? 13 : 15, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
-          />
+            onClick={() => onNav('dashboard')}
+            aria-label="Deck Days — go to dashboard"
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          >
+            <span style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: WHITE, fontFamily: FONT_LOGO, letterSpacing: '-0.02em', lineHeight: 1, opacity: 0.95 }}>Deck Days</span>
+          </button>
         </div>
-      )}
 
-      {/* Spacer keeps left and right sections flush to their edges */}
-      <div style={{ flex: 1 }} />
+        {/* ── Centre ticker — desktop only, absolutely centred ── */}
+        {isDesktop && voyageLabel && (
+          <div style={{
+            position: 'absolute', left: '50%', transform: 'translateX(-50%)',
+            display: 'flex', alignItems: 'center', gap: 6,
+            width: 360, pointerEvents: 'none',
+          }}>
+            <span style={{ fontSize: 15, flexShrink: 0 }}>🚢</span>
+            <TickerText
+              text={voyageLabel}
+              style={{ fontSize: 15, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
+            />
+          </div>
+        )}
 
-      {/* ── Right: social nav ── */}
+        <div style={{ flex: 1 }} />
+
+        {/* ── Right: social nav ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 2 : 6, flexShrink: 0 }}>
         {visibleItems.map(({ id, label, icon, LIcon }) => {
           const active = section === id
@@ -150,6 +148,25 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           )
         })}
       </div>
+    </div>
+
+    {/* Mobile + tablet: ticker in a slim sub-bar (no room in main bar) */}
+    {!isDesktop && voyageLabel && (
+      <div style={{
+        height: 28,
+        background: 'var(--t-primary-mid)',
+        borderTop: '1px solid rgba(255,255,255,0.08)',
+        display: 'flex', alignItems: 'center',
+        padding: '0 14px', gap: 6,
+        overflow: 'hidden',
+      }}>
+        <span style={{ fontSize: 13, flexShrink: 0 }}>🚢</span>
+        <TickerText
+          text={voyageLabel}
+          style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
+        />
+      </div>
+    )}
     </div>
   )
 }

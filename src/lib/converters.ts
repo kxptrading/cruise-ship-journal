@@ -293,6 +293,7 @@ export function fromDbFoodLogs(rows: FoodLogRow[]): FoodLog[] {
     rating:     r.rating        ?? 0,
     cost:       r.cost          ?? '',
     orderAgain: r.order_again   ?? '',
+    photos:     [],   // photos are stored client-side in FoodLog state; not persisted to food_logs table
   }))
 }
 

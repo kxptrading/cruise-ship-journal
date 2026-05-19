@@ -78,6 +78,7 @@ export interface FoodLog {
   rating:     number
   cost:       string
   orderAgain: string
+  photos:     string[]   // storage paths in daily-photos bucket
 }
 
 // ── Dining Log ────────────────────────────────────────────────────────────────

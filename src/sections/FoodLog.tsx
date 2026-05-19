@@ -1,10 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// sections/FoodLog.tsx — Detailed meal-by-meal food diary
+// sections/FoodLog.tsx — Detailed meal-by-meal food diary with photo uploads
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { NAVY, MUTED, BORDER, TEXT, BP, sty } from '../constants'
-import { useW } from '../context'
+import { useW, useUserId } from '../context'
 import { PgHdr, Fld, Row2, Inp, TA, Stars, Lbl } from '../components/ui'
+import MediaUploader   from '@/ui/MediaUploader'
+import MediaThumbnails from '@/ui/MediaThumbnails'
 import FE from '../components/FE'
 import type { FoodLog } from '../types'
 
@@ -14,13 +16,20 @@ interface Props {
 }
 
 export default function FoodLogSection({ data, onChange }: Props) {
-  const w  = useW()
-  const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+  const w      = useW()
+  const userId = useUserId()
+  const cs     = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
 
-  const add = () => onChange([...data, { id: crypto.randomUUID(), day: '', date: '', meal: '', port: '', venue: '', what: '', standout: '', drinks: '', notes: '', rating: 0, cost: '', orderAgain: '' }])
-  const set = (i: number, f: keyof FoodLog, v: string | number) => {
+  const add = () => onChange([...data, {
+    id: crypto.randomUUID(), day: '', date: '', meal: '', port: '',
+    venue: '', what: '', standout: '', drinks: '', notes: '',
+    rating: 0, cost: '', orderAgain: '', photos: [],
+  }])
+
+  const set = (i: number, f: keyof FoodLog, v: string | number | string[]) => {
     const u = [...data]; u[i] = { ...u[i], [f]: v }; onChange(u)
   }
+
   const del = (i: number) => onChange(data.filter((_, idx) => idx !== i))
 
   return (
@@ -81,6 +90,27 @@ export default function FoodLogSection({ data, onChange }: Props) {
               </div>
             </div>
           </Row2>
+
+          {/* ── Photos ─────────────────────────────────────────────────────── */}
+          <div style={{ marginTop: 16, paddingTop: 16, borderTop: `1px solid ${BORDER}` }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+              📷 Photos
+            </div>
+            {/* Show existing photos */}
+            {(meal.photos ?? []).length > 0 && (
+              <div style={{ marginBottom: 10 }}>
+                <MediaThumbnails paths={meal.photos ?? []} size="sm" />
+              </div>
+            )}
+            {/* Upload new photos */}
+            <MediaUploader
+              paths={meal.photos ?? []}
+              userId={userId}
+              onAdd={path => set(i, 'photos', [...(meal.photos ?? []), path])}
+              onRemove={path => set(i, 'photos', (meal.photos ?? []).filter(p => p !== path))}
+              maxFiles={6}
+            />
+          </div>
         </div>
       ))}
 

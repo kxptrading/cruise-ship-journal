@@ -55,8 +55,9 @@ export interface VoyageRow {
   guest_services:   string | null
   muster_station:   string | null
   dining_time:      string | null
-  cover_photo_url:  string | null
-  created_at:       string
+  cover_photo_url:      string | null
+  cruise_description:   string | null
+  created_at:           string
 }
 
 // ── Voyage list (all voyages for the current user) ────────────────────────────

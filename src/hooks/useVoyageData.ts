@@ -190,7 +190,7 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
     if (!voyageId) return
     supabase
       .from('voyages')
-      .select('ship_name, cruise_line, cabin, deck, departure_date, return_date, departure_port, total_nights, companion_1, companion_2, companion_3, companion_4, emergency_contact, phone, guest_services, muster_station, dining_time, cover_photo_url')
+      .select('ship_name, cruise_line, cabin, deck, departure_date, return_date, departure_port, total_nights, companion_1, companion_2, companion_3, companion_4, emergency_contact, phone, guest_services, muster_station, dining_time, cover_photo_url, cruise_description')
       .eq('id', voyageId)
       .single()
       .then(({ data: row }) => {

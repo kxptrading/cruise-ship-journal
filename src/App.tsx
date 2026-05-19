@@ -38,6 +38,7 @@ import BottomNav    from './components/BottomNav'
 import AuthScreen   from './components/AuthScreen'
 import ErrorBoundary from './components/ErrorBoundary'
 import { Toast }    from './components/ui'
+import Footer      from './components/Footer'
 // Section components — all lazy-loaded so the initial bundle is just the shell
 const Dashboard        = lazy(() => import('./pages/DashboardPage'))
 const Feed             = lazy(() => import('./pages/FeedPage'))
@@ -495,6 +496,7 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
+            <Footer />
           </main>
         </div>
       </div>

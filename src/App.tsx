@@ -318,7 +318,8 @@ export default function App() {
   const baseFontSize = isMobile ? 15 : bp === 'tablet' ? 15.5 : 16
   const mainPad      = isMobile ? '20px 12px' : bp === 'tablet' ? '32px 28px' : '44px 52px'
   // Extra bottom clearance on mobile so content isn't hidden behind the BottomNav
-  const mainPadBottom = isMobile ? '80px' : mainPad.split(' ')[0]
+  // Mobile: 80px clears the BottomNav. Tablet/desktop: 120px clears the fixed Footer.
+  const mainPadBottom = isMobile ? '80px' : '120px'
 
   // ── Scroll tracking — fed into VoyageHero for parallax/fade ────────────────
   // useScroll with a container ref tracks the overflow-y scroll on <main>, not
@@ -497,7 +498,6 @@ export default function App() {
             </motion.div>
             </AnimatePresence>
           </main>
-          {!isMobile && <Footer />}
         </div>
       </div>
       <Toast message={toast.message} visible={toast.visible} />
@@ -507,6 +507,20 @@ export default function App() {
           onNav={navClick}
           onMenuOpen={() => setSidebarOpen(true)}
         />
+      )}
+      {/* Fixed footer — mirrors how TopNav uses sticky top: 0.
+          Left offset skips the sidebar so footer only spans the content area.
+          Hidden on mobile where BottomNav owns the bottom strip. */}
+      {!isMobile && (
+        <div style={{
+          position: 'fixed',
+          bottom:   0,
+          left:     bp === 'tablet' ? 64 : bp === 'desktop' ? 210 : 0,
+          right:    0,
+          zIndex:   150,
+        }}>
+          <Footer />
+        </div>
       )}
     </WCtx.Provider>
     </UserCtx.Provider>

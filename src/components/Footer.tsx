@@ -51,7 +51,7 @@ export default function Footer() {
   return (
     <footer
       role="contentinfo"
-      style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 24px 14px', fontFamily: FONT_BODY, flexShrink: 0 }}
+      style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 24px 14px', fontFamily: FONT_BODY, background: 'var(--t-bg)' }}
     >
       {/* Social media */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 12 }}>

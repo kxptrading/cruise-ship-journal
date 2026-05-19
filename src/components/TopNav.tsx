@@ -10,6 +10,7 @@
 //   voyageLabel is built in App.tsx from allVoyages (instant, no async wait).
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { useState, useEffect } from 'react'
 import { CircleUser, Menu, Search, Compass, Users, MessageCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, FONT_BODY, FONT_LOGO } from '../constants'
@@ -42,7 +43,15 @@ interface Props {
 }
 
 export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile, isTablet, voyageLabel }: Props) {
-  const isDesktop = !isMobile && !isTablet
+  // Use a wider threshold (1280px) so tablets in landscape (1024px) still
+  // get the sub-bar ticker rather than the main-bar version.
+  const [winW, setWinW] = useState(() => window.innerWidth)
+  useEffect(() => {
+    const h = () => setWinW(window.innerWidth)
+    window.addEventListener('resize', h)
+    return () => window.removeEventListener('resize', h)
+  }, [])
+  const isDesktop = winW >= 1280
   const barH = isMobile ? 48 : 58
 
   // On mobile the social links move to BottomNav — only Profile stays in the top bar.
@@ -154,8 +163,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
     {!isDesktop && voyageLabel && (
       <div style={{
         height: 28,
-        background: 'var(--t-primary-mid)',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
+        background: 'var(--t-primary-dk)',
         display: 'flex', alignItems: 'center',
         padding: '0 14px', gap: 6,
         overflow: 'hidden',

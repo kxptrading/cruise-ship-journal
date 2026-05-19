@@ -52,6 +52,7 @@ import PostList       from '@/features/posts/PostList'
 
 // Journal section components — lazy-loaded per-tab
 // Each chunk is only downloaded when the user clicks the corresponding tab.
+const VoyageForm     = lazy(() => import('@/features/voyages/VoyageForm'))
 const DailyLog       = lazy(() => import('@/sections/DailyLog'))
 const ItinerarySection = lazy(() => import('@/features/voyages/ItineraryEditor'))
 const BudgetTracker  = lazy(() => import('@/sections/BudgetTracker'))
@@ -65,13 +66,14 @@ const PackingList    = lazy(() => import('@/sections/PackingList'))
 const Notes          = lazy(() => import('@/sections/Notes'))
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
-// 'posts' is the default tab — it shows the React Query powered PostList.
-// All other tabs render legacy section components.
+// 'voyage' is the default tab — shown first when navigating from My Voyages.
+// 'posts' and the journal sections follow.
 
-type Tab = 'posts' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
+type Tab = 'voyage' | 'posts' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
            'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes'
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
+  { id: 'voyage',        label: 'Details',       emoji: '🚢' },
   { id: 'posts',         label: 'Posts',         emoji: '📝' },
   { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
   { id: 'itinerary',     label: 'Itinerary',     emoji: '🗺️' },
@@ -121,7 +123,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   const tabParam   = searchParams.get('tab') as Tab | null
   const validTabs  = new Set(TABS.map(t => t.id))
   const [activeTab, setActiveTab] = useState<Tab>(
-    tabParam && validTabs.has(tabParam) ? tabParam : 'posts'
+    tabParam && validTabs.has(tabParam) ? tabParam : 'voyage'
   )
 
   // Sync activeTab when ?tab= changes (e.g. user clicks a different Sidebar link
@@ -274,6 +276,10 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
           transition={{ duration: 0.18 }}
         >
           <Suspense fallback={<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}><SkeletonCard /><SkeletonCard /></div>}>
+            {/* 'voyage' tab — Voyage Details form (default landing tab) */}
+            {activeTab === 'voyage' && (
+              <VoyageForm data={data.voyage} onChange={v => update('voyage', v)} />
+            )}
             {/* 'posts' tab — fully React Query, self-fetching via PostList */}
             {activeTab === 'posts' && voyageId && (
               <PostList voyageId={voyageId} />

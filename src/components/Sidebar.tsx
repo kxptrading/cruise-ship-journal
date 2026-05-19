@@ -39,7 +39,7 @@ import type { Breakpoint } from '../hooks/useBreakpoint'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
-const W_FULL = 240   // desktop sidebar width (px)
+const W_FULL = 210   // desktop sidebar width (px)
 const W_ICON = 64    // tablet icon-only sidebar width (px)
 
 interface Props {
@@ -116,7 +116,7 @@ export default function Sidebar({
   const Header = () => (
     <div style={{
       height: 58, minHeight: 58,
-      padding: isTablet ? 0 : '0 20px',
+      padding: isTablet ? 0 : '0 14px',
       display: 'flex', alignItems: 'center',
       justifyContent: isTablet ? 'center' : 'space-between',
       flexShrink: 0,
@@ -188,7 +188,7 @@ export default function Sidebar({
         style={{
           display: 'flex', alignItems: 'center', gap: 11,
           width: '100%', textAlign: 'left',
-          padding: '10px 18px 10px 14px', minHeight: 44,
+          padding: '10px 14px 10px 10px', minHeight: 44,
           background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
           color: WHITE, border: 'none',
           borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
@@ -214,7 +214,7 @@ export default function Sidebar({
     <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: isTablet ? 'auto' : undefined }}>
       {/* Primary nav — always visible: Dashboard, Feed, Voyages, Friends, Chat, Profile */}
       {!isTablet && (
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 20px 8px' }}>
+        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 14px 8px' }}>
           Deck Days
         </div>
       )}
@@ -228,7 +228,7 @@ export default function Sidebar({
       {isOnVoyage && (
         <>
           {!isTablet && (
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 20px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 14px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
               Your Journal
             </div>
           )}
@@ -243,7 +243,7 @@ export default function Sidebar({
 
   // ── Footer ─────────────────────────────────────────────────────────────────
   const Footer = () => (
-    <div style={{ padding: '14px 16px 18px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+    <div style={{ padding: '10px 12px 14px', borderTop: '1px solid rgba(255,255,255,0.07)' }}>
       {user && (
         <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.7)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 2, letterSpacing: '0.01em' }}>
           {user.email}

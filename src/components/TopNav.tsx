@@ -10,7 +10,6 @@
 //   voyageLabel is built in App.tsx from allVoyages (instant, no async wait).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect } from 'react'
 import { CircleUser, Menu, Search, Compass, Users, MessageCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, FONT_BODY, FONT_LOGO } from '../constants'
@@ -37,21 +36,11 @@ interface Props {
   onNav:        (id: string) => void
   isOverlay:    boolean   // true = mobile, shows hamburger
   isMobile:     boolean
-  isTablet:     boolean
   onMenuOpen:   () => void
   voyageLabel?: string    // active voyage name + dates for centre ticker
 }
 
-export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile, isTablet, voyageLabel }: Props) {
-  // Use a wider threshold (1280px) so tablets in landscape (1024px) still
-  // get the sub-bar ticker rather than the main-bar version.
-  const [winW, setWinW] = useState(() => window.innerWidth)
-  useEffect(() => {
-    const h = () => setWinW(window.innerWidth)
-    window.addEventListener('resize', h)
-    return () => window.removeEventListener('resize', h)
-  }, [])
-  const isDesktop = winW >= 1280
+export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile, voyageLabel }: Props) {
   const barH = isMobile ? 48 : 58
 
   // On mobile the social links move to BottomNav — only Profile stays in the top bar.
@@ -99,21 +88,6 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           </button>
         </div>
 
-        {/* ── Centre ticker — desktop only, absolutely centred ── */}
-        {isDesktop && voyageLabel && (
-          <div style={{
-            position: 'absolute', left: '50%', transform: 'translateX(-50%)',
-            display: 'flex', alignItems: 'center', gap: 6,
-            width: 360, pointerEvents: 'none',
-          }}>
-            <span style={{ fontSize: 15, flexShrink: 0 }}>🚢</span>
-            <TickerText
-              text={voyageLabel}
-              style={{ fontSize: 15, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
-            />
-          </div>
-        )}
-
         <div style={{ flex: 1 }} />
 
         {/* ── Right: social nav ── */}
@@ -159,8 +133,8 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       </div>
     </div>
 
-    {/* Mobile + tablet: ticker in a slim sub-bar (no room in main bar) */}
-    {!isDesktop && voyageLabel && (
+    {/* Ticker always in sub-bar — consistent on all devices and orientations */}
+    {voyageLabel && (
       <div style={{
         height: 28,
         background: 'var(--t-primary-dk)',

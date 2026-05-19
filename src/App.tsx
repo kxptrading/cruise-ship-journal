@@ -90,13 +90,14 @@ function fmtDate(iso: string | null): string {
 
 // Builds the readable label shown in the Sidebar TickerText.
 // The dot separator ( · ) gives clear visual hierarchy between the name and dates.
-function buildVoyageLabel(name: string | null | undefined, from: string | null | undefined, to: string | null | undefined): string {
+function buildVoyageLabel(name: string | null | undefined, from: string | null | undefined, to: string | null | undefined, description?: string | null): string {
   const n = name || ''
   const d = from && to ? `${fmtDate(from)} – ${fmtDate(to)}`
           : from       ? `From ${fmtDate(from)}`
           : to         ? `Until ${fmtDate(to)}`
           : ''
-  return d ? `${n}  ·  ${d}` : n
+  const base = d ? `${n}  ·  ${d}` : n
+  return description?.trim() ? `${base}  -  ${description.trim()}` : base
 }
 
 // Shape passed from Feed's onViewProfile into Friends as initialFriend
@@ -389,6 +390,7 @@ export default function App() {
               row?.ship_name ?? data.voyage.shipName,
               row?.departure_date ?? data.voyage.departureDate,
               row?.return_date    ?? data.voyage.returnDate,
+              data.voyage.cruiseDescription,
             )
           })()}
           voyageCount={allVoyages.length}
@@ -409,6 +411,7 @@ export default function App() {
                 row?.ship_name ?? data.voyage.shipName,
                 row?.departure_date ?? data.voyage.departureDate,
                 row?.return_date    ?? data.voyage.returnDate,
+                data.voyage.cruiseDescription,
               ) || undefined
             })()}
           />

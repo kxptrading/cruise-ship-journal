@@ -496,8 +496,8 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
-            <Footer />
           </main>
+          {!isMobile && <Footer />}
         </div>
       </div>
       <Toast message={toast.message} visible={toast.visible} />

@@ -51,10 +51,10 @@ export default function Footer() {
   return (
     <footer
       role="contentinfo"
-      style={{ borderTop: `1px solid ${BORDER}`, padding: '28px 24px 20px', marginTop: 40, fontFamily: FONT_BODY }}
+      style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 24px 14px', fontFamily: FONT_BODY, flexShrink: 0 }}
     >
       {/* Social media */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 18 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 20, marginBottom: 12 }}>
         {SOCIAL.map(({ label, href, icon }) => (
           <a
             key={label}
@@ -73,7 +73,7 @@ export default function Footer() {
       </div>
 
       {/* Legal links */}
-      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '6px 20px', marginBottom: 14 }}>
+      <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: '4px 16px', marginBottom: 10 }}>
         {LEGAL.map(({ label, href }) => (
           <a
             key={label}

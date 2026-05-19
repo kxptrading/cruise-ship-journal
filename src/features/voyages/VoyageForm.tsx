@@ -4,7 +4,7 @@
 
 import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '@/constants'
 import { useW } from '@/context'
-import { PgHdr, Box, Fld, Row2, Inp } from '@/components/ui'
+import { PgHdr, Box, Fld, Row2, Inp, TA } from '@/components/ui'
 import FE from '@/components/FE'
 import type { Voyage } from '@/types'
 
@@ -34,8 +34,13 @@ export default function VoyageDetails({ data, onChange }: Props) {
       <div style={cs}>
 
         <Box title="SHIP INFORMATION">
-          <Fld label="Cruise Line"><Inp value={data.cruiseLine} onChange={(v: string) => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" /></Fld>
-          <Fld label="Ship Name"><Inp value={data.shipName} onChange={(v: string) => set('shipName', v)} placeholder="e.g. Wonder of the Seas" /></Fld>
+          <Row2>
+            <Fld label="Ship Name" half><Inp value={data.shipName} onChange={(v: string) => set('shipName', v)} placeholder="e.g. Wonder of the Seas" /></Fld>
+            <Fld label="Cruise Line" half><Inp value={data.cruiseLine} onChange={(v: string) => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" /></Fld>
+          </Row2>
+          <Fld label="Cruise Description">
+            <TA value={data.cruiseDescription || ''} onChange={(v: string) => set('cruiseDescription', v)} placeholder="Describe your cruise — itinerary, highlights, what to expect…" rows={3} />
+          </Fld>
           <Row2>
             <Fld label="Cabin Number & Type" half><Inp value={data.cabin} onChange={(v: string) => set('cabin', v)} placeholder="e.g. 8234 — Balcony" /></Fld>
             <Fld label="Deck" half><Inp value={data.deck} onChange={(v: string) => set('deck', v)} placeholder="e.g. Deck 8" /></Fld>

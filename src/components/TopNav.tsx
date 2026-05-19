@@ -57,6 +57,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       padding: isMobile ? '0 10px' : '0 22px',
       gap: isMobile ? 4 : 8,
       zIndex: 200,
+      /* sticky keeps bar at top; relative anchors the absolute centre ticker */
       position: 'sticky',
       top: 0,
     }}>
@@ -87,20 +88,26 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
         </button>
       </div>
 
-      {/* ── Centre: active voyage ticker ── */}
-      {voyageLabel ? (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 8px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: isMobile ? 160 : 320, width: '100%' }}>
-            <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
-            <TickerText
-              text={voyageLabel}
-              style={{ fontSize: isMobile ? 11 : 12, color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontFamily: FONT_BODY }}
-            />
-          </div>
+      {/* ── Centre: active voyage ticker — absolutely centred in the full bar ── */}
+      {voyageLabel && (
+        <div style={{
+          position:  'absolute',
+          left:      '50%',
+          transform: 'translateX(-50%)',
+          display:   'flex', alignItems: 'center', gap: 6,
+          width:     isMobile ? 180 : 340,
+          pointerEvents: 'none',   // let clicks through to buttons behind
+        }}>
+          <span style={{ fontSize: 15, flexShrink: 0 }}>🚢</span>
+          <TickerText
+            text={voyageLabel}
+            style={{ fontSize: isMobile ? 13 : 15, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
+          />
         </div>
-      ) : (
-        <div style={{ flex: 1 }} />
       )}
+
+      {/* Spacer keeps left and right sections flush to their edges */}
+      <div style={{ flex: 1 }} />
 
       {/* ── Right: social nav ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 2 : 6, flexShrink: 0 }}>

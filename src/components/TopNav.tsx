@@ -4,11 +4,16 @@
 // Mobile  → hamburger (44×44) + logo + profile icon only (social nav is on
 //           BottomNav to avoid duplication)
 // Tablet+ → full social nav with icons + labels
+//
+// CENTRE TICKER:
+//   The active voyage name + date range scrolls in the centre of the bar.
+//   voyageLabel is built in App.tsx from allVoyages (instant, no async wait).
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { CircleUser, Menu, Search, Compass, Users, MessageCircle } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, FONT_BODY, FONT_LOGO } from '../constants'
+import TickerText from '../ui/TickerText'
 import FE from './FE'
 
 interface NavItem {
@@ -27,14 +32,15 @@ const TOP_NAV_ITEMS: NavItem[] = [
 ]
 
 interface Props {
-  section:     string
-  onNav:       (id: string) => void
-  isOverlay:   boolean   // true = mobile, shows hamburger
-  isMobile:    boolean
-  onMenuOpen:  () => void
+  section:      string
+  onNav:        (id: string) => void
+  isOverlay:    boolean   // true = mobile, shows hamburger
+  isMobile:     boolean
+  onMenuOpen:   () => void
+  voyageLabel?: string    // active voyage name + dates for centre ticker
 }
 
-export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile }: Props) {
+export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile, voyageLabel }: Props) {
   const barH = isMobile ? 48 : 58
 
   // On mobile the social links move to BottomNav — only Profile stays in the top bar.
@@ -65,7 +71,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
               background: 'rgba(255,255,255,0.07)',
               border: '1px solid rgba(255,255,255,0.12)',
               borderRadius: 8,
-              width: 44, height: 44,      // ≥ 44×44 tap target
+              width: 44, height: 44,
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               cursor: 'pointer', flexShrink: 0, color: WHITE, fontSize: 18,
               WebkitTapHighlightColor: 'transparent',
@@ -81,10 +87,23 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
         </button>
       </div>
 
-      <div style={{ flex: 1 }} />
+      {/* ── Centre: active voyage ticker ── */}
+      {voyageLabel ? (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', padding: '0 8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: isMobile ? 160 : 320, width: '100%' }}>
+            <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
+            <TickerText
+              text={voyageLabel}
+              style={{ fontSize: isMobile ? 11 : 12, color: 'rgba(255,255,255,0.85)', fontWeight: 600, fontFamily: FONT_BODY }}
+            />
+          </div>
+        </div>
+      ) : (
+        <div style={{ flex: 1 }} />
+      )}
 
       {/* ── Right: social nav ── */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 2 : 6 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 2 : 6, flexShrink: 0 }}>
         {visibleItems.map(({ id, label, icon, LIcon }) => {
           const active = section === id
           return (

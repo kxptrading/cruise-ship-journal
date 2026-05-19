@@ -28,8 +28,7 @@
 //   the section is already active (gold border already signals selection).
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useEffect, useRef, useState } from 'react'
-import type { CSSProperties }          from 'react'
+import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion }  from 'framer-motion'
 import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY, FONT_LOGO } from '../constants'
@@ -37,105 +36,6 @@ import { NAV, PRIMARY_NAV } from '../constants'
 import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
-
-// ── TickerText — seamless marquee for voyage names ────────────────────────────
-//
-// PROBLEM: Ship names + date ranges can be longer than the sidebar width.
-// SOLUTION: A CSS marquee-style animation that scrolls the text continuously.
-//
-// SEAMLESS LOOP TECHNIQUE:
-//   Two copies of the text are rendered side-by-side in a flex row.
-//   The animation slides them left by exactly (textWidth + gap) pixels.
-//   When the first copy exits the left edge, the animation loops back to x=0
-//   and the second copy is now where the first copy was — creating a seamless join.
-//
-// GAP CALCULATION (the key to "seamless"):
-//   gap = max(MIN_GAP, containerWidth - textWidth)
-//
-//   Short name  (textWidth < containerWidth):
-//     gap = containerWidth - textWidth
-//     → the second copy begins exactly at the right edge of the container
-//       when the first copy exits the left. Text is always present in the viewport.
-//
-//   Long name   (textWidth >= containerWidth):
-//     gap = MIN_GAP (32 px breathing room between rotations)
-//     → text already overflows; a small gap prevents the tail and head of the next
-//       cycle from appearing to collide.
-//
-// SCROLL SPEED:
-//   duration = max(2, step / 45)
-//   → steady ~45 px/s feel regardless of text length, with a 2-second minimum
-//     so very short names don't spin too fast.
-//
-// MEASUREMENT:
-//   A hidden <span> with position:absolute renders the text off-screen to
-//   measure its rendered pixel width (scrollWidth). This is more accurate than
-//   estimating from character count because it accounts for font kerning and
-//   emoji widths.
-//
-// STATIC FALLBACK:
-//   Before dims is set (first render), the text is shown as a static <span>
-//   to avoid a flash of empty space while measurement happens.
-
-const MIN_GAP = 32   // minimum breathing room between repetitions (px)
-
-function TickerText({ text, style }: { text: string; style?: CSSProperties }) {
-  const outerRef   = useRef<HTMLDivElement>(null)
-  const measureRef = useRef<HTMLSpanElement>(null)
-  // dims stores the measured container width (cw) and text width (tw).
-  // null = measurement not yet taken.
-  const [dims, setDims] = useState<{ cw: number; tw: number } | null>(null)
-
-  useEffect(() => {
-    const outer   = outerRef.current
-    const measure = measureRef.current
-    if (!outer || !measure) return
-    // clientWidth = inner width without scrollbar. scrollWidth = full rendered text width.
-    setDims({ cw: outer.clientWidth, tw: measure.scrollWidth })
-  }, [text])
-
-  const base: CSSProperties = { display: 'inline-block', whiteSpace: 'nowrap', flexShrink: 0, ...style }
-
-  // The gap between the end of copy 1 and the start of copy 2.
-  const gap      = dims ? Math.max(MIN_GAP, dims.cw - dims.tw) : MIN_GAP
-  // step = total distance the animation travels before looping back to x=0.
-  // Equals textWidth + gap so the second copy is always placed exactly after the first.
-  const step     = dims ? dims.tw + gap : 0
-  // Convert step to duration at ~45 px/s, floor at 2s.
-  const duration = Math.max(2, step / 45)     // steady ~45 px/s, min 2 s
-
-  return (
-    <div ref={outerRef} style={{ overflow: 'hidden', flex: 1 }}>
-      {/* Hidden measurement span — aria-hidden prevents screen readers from reading
-          this duplicate. position:absolute removes it from layout flow. */}
-      <span
-        ref={measureRef}
-        aria-hidden="true"
-        style={{ ...base, position: 'absolute', visibility: 'hidden', pointerEvents: 'none' }}
-      >
-        {text}
-      </span>
-
-      {dims ? (
-        // Animated row: slides from x=0 to x=-step, then loops.
-        // copy 1 has paddingRight: gap to create the inter-copy breathing room.
-        // copy 2 has aria-hidden because it is purely decorative.
-        <motion.div
-          key={text}
-          animate={{ x: [0, -step] }}
-          transition={{ duration, ease: 'linear', repeat: Infinity, repeatType: 'loop' }}
-          style={{ display: 'flex', width: 'max-content' }}
-        >
-          <span style={{ ...base, paddingRight: gap }}>{text}</span>
-          <span style={base} aria-hidden="true">{text}</span>
-        </motion.div>
-      ) : (
-        // Static fallback before dims is measured.
-        <span style={base}>{text}</span>
-      )}
-    </div>
-  )
-}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
@@ -232,32 +132,6 @@ export default function Sidebar({
       )}
     </div>
   )
-
-  // ── Voyage label — uses TickerText for long ship names ───────────────────
-  // Only shown on desktop (not tablet) because the icon-only sidebar has no room.
-  const VoyageSwitcher = () => {
-    const name = voyageName || 'No voyage selected'
-    return (
-      <div style={{ padding: '10px 14px 2px' }}>
-        <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.12em', fontFamily: FONT_BODY, fontWeight: 700, marginBottom: 5 }}>
-          Active Voyage
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(255,255,255,0.05)', borderRadius: 10, padding: '7px 11px', overflow: 'hidden' }}>
-          <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
-          <TickerText
-            text={name}
-            style={{ fontSize: 12, color: WHITE, fontWeight: 600, opacity: 0.9, fontFamily: FONT_BODY }}
-          />
-          {/* Show voyage count badge when user has multiple voyages so they know they can switch */}
-          {voyageCount > 1 && (
-            <span style={{ background: 'rgba(255,255,255,0.1)', borderRadius: 8, padding: '1px 6px', fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, flexShrink: 0 }}>
-              {voyageCount}
-            </span>
-          )}
-        </div>
-      </div>
-    )
-  }
 
   // ── Active ID resolution ────────────────────────────────────────────────────
   // Derive the active nav item from URL state with explicit precedence:
@@ -444,7 +318,7 @@ export default function Sidebar({
               }}
             >
               <Header />
-              <VoyageSwitcher />
+
               <Nav />
               <Footer />
             </motion.aside>
@@ -519,7 +393,7 @@ export default function Sidebar({
       overflowY: 'auto',
     }}>
       <Header />
-      <VoyageSwitcher />
+
       <Nav />
       <Footer />
     </aside>

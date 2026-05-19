@@ -403,6 +403,14 @@ export default function App() {
             isOverlay={isOverlay}
             isMobile={isMobile}
             onMenuOpen={() => setSidebarOpen(true)}
+            voyageLabel={(() => {
+              const row = allVoyages.find(v => v.id === voyageId)
+              return buildVoyageLabel(
+                row?.ship_name ?? data.voyage.shipName,
+                row?.departure_date ?? data.voyage.departureDate,
+                row?.return_date    ?? data.voyage.returnDate,
+              ) || undefined
+            })()}
           />
 
           {/* <main> is the sole overflow-y scroll container.

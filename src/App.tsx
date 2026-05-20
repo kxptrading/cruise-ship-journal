@@ -408,6 +408,11 @@ export default function App() {
             isMobile={isMobile}
             onMenuOpen={() => setSidebarOpen(true)}
             voyageLabel={(() => {
+              // Only show the voyage name when the user is on a specific voyage
+              // page (/voyages/:id). Everywhere else show the welcome message.
+              const onVoyagePage = /^\/voyages\/[^/]+/.test(location.pathname) &&
+                                   !location.pathname.endsWith('/new')
+              if (!onVoyagePage) return undefined
               const row = allVoyages.find(v => v.id === voyageId)
               return buildVoyageLabel(
                 row?.ship_name ?? data.voyage.shipName,

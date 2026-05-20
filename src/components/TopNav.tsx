@@ -147,6 +147,8 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
           text={voyageLabel}
           style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
         />
+        {/* Mirrored ship — scaleX(-1) flips it to face left, creating a bookend effect */}
+        <span style={{ fontSize: 13, flexShrink: 0, display: 'inline-block', transform: 'scaleX(-1)' }}>🚢</span>
       </div>
     )}
     </div>

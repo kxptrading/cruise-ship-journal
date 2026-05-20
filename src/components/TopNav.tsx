@@ -141,13 +141,13 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
         padding: '0 14px', gap: 6,
         overflow: 'hidden',
       }}>
-        <span style={{ fontSize: 13, flexShrink: 0 }}>🚢</span>
+        <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
         <TickerText
           text={voyageLabel || 'Welcome to Deck Days, the journal app tailored to your every journaling needs on your voyage!'}
-          style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
+          style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
         />
         {/* Mirrored ship — scaleX(-1) flips it to face left, creating a bookend effect */}
-        <span style={{ fontSize: 13, flexShrink: 0, display: 'inline-block', transform: 'scaleX(-1)' }}>🚢</span>
+        <span style={{ fontSize: 14, flexShrink: 0, display: 'inline-block', transform: 'scaleX(-1)' }}>🚢</span>
     </div>
     </div>
   )

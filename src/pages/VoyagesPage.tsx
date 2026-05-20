@@ -59,6 +59,16 @@ export default function VoyagesPage() {
 
   return (
     <div>
+      {/* Welcome message */}
+      <div style={{ marginBottom: 28, padding: '20px 24px', background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary) 100%)', borderRadius: 18, boxShadow: '0 4px 16px rgba(0,0,0,0.1)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 32, flexShrink: 0 }}>⚓</span>
+          <p style={{ margin: 0, fontSize: w < BP.mobile ? 14 : 16, color: 'rgba(255,255,255,0.95)', fontFamily: FONT_BODY, lineHeight: 1.6, fontWeight: 500 }}>
+            Welcome to Deck Days, the journal app tailored to your every journaling needs on your voyage!
+          </p>
+        </div>
+      </div>
+
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>

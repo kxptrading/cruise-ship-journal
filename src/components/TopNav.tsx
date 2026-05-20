@@ -133,9 +133,8 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       </div>
     </div>
 
-    {/* Ticker always in sub-bar — consistent on all devices and orientations */}
-    {voyageLabel && (
-      <div style={{
+    {/* Ticker always in sub-bar — voyage name when active, welcome message otherwise */}
+    <div style={{
         height: 28,
         background: 'var(--t-primary-dk)',
         display: 'flex', alignItems: 'center',
@@ -144,13 +143,12 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       }}>
         <span style={{ fontSize: 13, flexShrink: 0 }}>🚢</span>
         <TickerText
-          text={voyageLabel}
+          text={voyageLabel || 'Welcome to Deck Days, the journal app tailored to your every journaling needs on your voyage!'}
           style={{ fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
         />
         {/* Mirrored ship — scaleX(-1) flips it to face left, creating a bookend effect */}
         <span style={{ fontSize: 13, flexShrink: 0, display: 'inline-block', transform: 'scaleX(-1)' }}>🚢</span>
-      </div>
-    )}
+    </div>
     </div>
   )
 }

@@ -47,12 +47,6 @@ html, body, #root {
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
-}
-
-body {
-  overflow-x: hidden;
-  overscroll-behavior-x: none;
 }
 
 /* ── Custom scrollbar ─────────────────────────────────────────────────────── */

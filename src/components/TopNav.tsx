@@ -143,7 +143,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
       }}>
         <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
         <TickerText
-          text={voyageLabel || 'Welcome to Deck Days, the journal app tailored to your every journaling needs on your voyage!'}
+          text={voyageLabel || 'Welcome to Deck Days, the journal app tailored to your every journaling needs!!!'}
           style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
         />
         {/* Mirrored ship — scaleX(-1) flips it to face left, creating a bookend effect */}

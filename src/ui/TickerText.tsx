@@ -67,7 +67,7 @@ export default function TickerText({ text, style }: Props) {
   const duration = Math.max(2, step / 45)
 
   return (
-    <div ref={outerRef} style={{ overflow: 'hidden', flex: 1 }}>
+    <div ref={outerRef} style={{ overflow: 'hidden', flex: 1, position: 'relative' }}>
       {/* Hidden span — measures the actual rendered pixel width of the text.
           aria-hidden prevents screen readers doubling the content. */}
       <span

@@ -50,7 +50,7 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
 
   return (
     // Outer wrapper is sticky and stacks the main bar + optional ticker sub-bar
-    <div style={{ position: 'sticky', top: 0, zIndex: 200, flexShrink: 0 }}>
+    <div style={{ zIndex: 200, flexShrink: 0 }}>
 
       {/* ── Main bar ── */}
       <div style={{

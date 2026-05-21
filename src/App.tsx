@@ -374,34 +374,9 @@ export default function App() {
     <VoyageCtx.Provider value={voyageId}>
     <UserCtx.Provider value={session?.user?.id ?? null}>
     <WCtx.Provider value={winW}>
-      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
+      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
-        <Sidebar
-          section={section}
-          onNav={navClick}
-          bp={bp}
-          isOpen={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
-          user={session?.user}
-          onSignOut={() => supabase.auth.signOut()}
-          // Prefer the allVoyages list row (already in memory) over data.voyage to
-          // avoid a stale name if the user has just created a new voyage.
-          voyageName={(() => {
-            const row = allVoyages.find(v => v.id === voyageId)
-            return buildVoyageLabel(
-              row?.ship_name ?? data.voyage.shipName,
-              row?.departure_date ?? data.voyage.departureDate,
-              row?.return_date    ?? data.voyage.returnDate,
-              data.voyage.cruiseDescription,
-            )
-          })()}
-          voyageCount={allVoyages.length}
-          sectionStatus={sectionStatus}
-          isAdult={isAdult}
-        />
-
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
-          <TopNav
+        <TopNav
             section={section}
             onNav={navClick}
             isOverlay={isOverlay}
@@ -423,6 +398,30 @@ export default function App() {
             })()}
           />
 
+        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+          <Sidebar
+            section={section}
+            onNav={navClick}
+            bp={bp}
+            isOpen={sidebarOpen}
+            onClose={() => setSidebarOpen(false)}
+            user={session?.user}
+            onSignOut={() => supabase.auth.signOut()}
+            voyageName={(() => {
+              const row = allVoyages.find(v => v.id === voyageId)
+              return buildVoyageLabel(
+                row?.ship_name ?? data.voyage.shipName,
+                row?.departure_date ?? data.voyage.departureDate,
+                row?.return_date    ?? data.voyage.returnDate,
+                data.voyage.cruiseDescription,
+              )
+            })()}
+            voyageCount={allVoyages.length}
+            sectionStatus={sectionStatus}
+            isAdult={isAdult}
+          />
+
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           {/* <main> is the sole overflow-y scroll container.
               Its ref feeds the Framer Motion useScroll hook for parallax effects.
               overflow-x: hidden prevents horizontal scroll from animated page transitions. */}
@@ -503,6 +502,7 @@ export default function App() {
             </motion.div>
             </AnimatePresence>
           </main>
+          </div>
         </div>
       </div>
       <Toast message={toast.message} visible={toast.visible} />

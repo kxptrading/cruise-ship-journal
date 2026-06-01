@@ -135,19 +135,25 @@ export default function TopNav({ section, onNav, isOverlay, onMenuOpen, isMobile
 
     {/* Ticker always in sub-bar — voyage name when active, welcome message otherwise */}
     <div style={{
-        height: 28,
+        height: 34,
         background: 'var(--t-primary-dk)',
         display: 'flex', alignItems: 'center',
-        padding: '0 14px', gap: 6,
+        justifyContent: isMobile ? 'flex-start' : 'center',
         overflow: 'hidden',
       }}>
-        <span style={{ fontSize: 14, flexShrink: 0 }}>🚢</span>
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 6,
+        width: isMobile ? '100%' : '50%',
+        padding: '0 14px',
+        overflow: 'hidden',
+      }}>
+        <span style={{ fontSize: 21, flexShrink: 0 }}>⚓</span>
         <TickerText
           text={voyageLabel || 'Welcome to Deck Days, the journal app tailored to your every journaling needs!!!'}
-          style={{ fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
+          style={{ fontSize: 21, color: 'rgba(255,255,255,0.9)', fontWeight: 600, fontFamily: FONT_BODY }}
         />
-        {/* Mirrored ship — scaleX(-1) flips it to face left, creating a bookend effect */}
-        <span style={{ fontSize: 14, flexShrink: 0, display: 'inline-block', transform: 'scaleX(-1)' }}>🚢</span>
+        <span style={{ fontSize: 21, flexShrink: 0 }}>⚓</span>
+      </div>
     </div>
     </div>
   )

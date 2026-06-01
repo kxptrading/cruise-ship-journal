@@ -513,16 +513,14 @@ export default function App() {
           onMenuOpen={() => setSidebarOpen(true)}
         />
       )}
-      {/* Fixed footer — mirrors how TopNav uses sticky top: 0.
-          Left offset skips the sidebar so footer only spans the content area.
-          Hidden on mobile where BottomNav owns the bottom strip. */}
+      {/* Fixed footer — sidebar is now auto-hide so footer spans the full width. */}
       {!isMobile && (
         <div style={{
           position: 'fixed',
-          bottom:   0,
-          left:     bp === 'tablet' ? 64 : bp === 'desktop' ? 210 : 0,
-          right:    0,
-          zIndex:   150,
+          bottom: 0,
+          left:   0,
+          right:  0,
+          zIndex: 150,
         }}>
           <Footer />
         </div>

@@ -88,9 +88,10 @@ export default function Sidebar({
     if (isMobile) onClose()
   }
 
-  // Tooltip state for tablet icon-only mode.
-  // Stores the nav item id and the vertical midpoint of the hovered button
-  // so the floating tooltip can be positioned at the same y coordinate.
+  // Auto-hide state for desktop/tablet — sidebar slides in when mouse nears left edge.
+  const [isAutoOpen, setIsAutoOpen] = useState(false)
+
+  // Tooltip state — kept for potential future use but no longer used with auto-hide sidebar.
   const [tooltip, setTooltip] = useState<{ id: string; y: number } | null>(null)
 
   // Focus trap — active when mobile drawer is open for accessibility.
@@ -116,13 +117,13 @@ export default function Sidebar({
   const Header = () => (
     <div style={{
       height: 58, minHeight: 58,
-      padding: isTablet ? 0 : '0 14px',
+      padding: '0 14px',
       display: 'flex', alignItems: 'center',
-      justifyContent: isTablet ? 'center' : 'space-between',
+      justifyContent: 'space-between',
       flexShrink: 0,
       background: 'var(--t-primary-dk)',
     }}>
-      <img src="/logo.svg" alt="Deck Days" style={{ height: isTablet ? 36 : 44, width: 'auto', opacity: 0.9 }} />
+      <img src="/logo.svg" alt="Deck Days" style={{ height: 44, width: 'auto', opacity: 0.9 }} />
       {isMobile && (
         <button
           aria-label="Close menu"
@@ -149,36 +150,6 @@ export default function Sidebar({
   const renderNavButton = (id: string, label: string, icon: string, customOnClick?: () => void) => {
     const active = activeId === id
     const handleClick = customOnClick ?? (() => { onNav(id); if (isMobile) onClose() })
-    if (isTablet) {
-      return (
-        <div
-          key={id}
-          onMouseEnter={e => {
-            // Capture the hovered button's vertical midpoint in viewport coordinates.
-            // The tooltip is rendered at position:fixed using this y value.
-            const rect = e.currentTarget.getBoundingClientRect()
-            setTooltip({ id, y: rect.top + rect.height / 2 })
-          }}
-          onMouseLeave={() => setTooltip(null)}
-        >
-          <button
-            aria-label={label}
-            onClick={handleClick}
-            style={{
-              width: W_ICON, height: 44,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
-              border: 'none',
-              borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
-              cursor: 'pointer', color: WHITE,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <FE emoji={icon} size={20} />
-          </button>
-        </div>
-      )
-    }
     return (
       <button
         key={id}
@@ -211,28 +182,21 @@ export default function Sidebar({
 
   // ── Nav section ────────────────────────────────────────────────────────────
   const Nav = () => (
-    <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: isTablet ? 'auto' : undefined }}>
+    <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: 'auto' }}>
       {/* Primary nav — always visible: Dashboard, Feed, Voyages, Friends, Chat, Profile */}
-      {!isTablet && (
-        <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 14px 8px' }}>
-          Deck Days
-        </div>
-      )}
+      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 14px 8px' }}>
+        Deck Days
+      </div>
       {PRIMARY_NAV.filter(({ id }) => id !== 'budget' || isAdult).map(({ id, label, icon }) =>
         renderNavButton(id, label, icon)
       )}
 
-      {/* Journal sections — only shown when on a specific voyage detail page.
-          Each link navigates to /voyages/:id?tab=<sectionId> to open the correct
-          tab in VoyageDetailPage without losing the voyage context. */}
+      {/* Journal sections — only shown when on a specific voyage detail page. */}
       {isOnVoyage && (
         <>
-          {!isTablet && (
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 14px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-              Your Journal
-            </div>
-          )}
-          {isTablet && <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '8px 12px' }} />}
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.14em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, padding: '14px 14px 8px', marginTop: 4, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            Your Journal
+          </div>
           {navItems.map(({ id, label, icon }) =>
             renderNavButton(id, label, icon, () => navToJournalTab(id))
           )}
@@ -328,74 +292,53 @@ export default function Sidebar({
     )
   }
 
-  // ── Tablet: 64 px icon-only sidebar ───────────────────────────────────────
-  // The tooltip is rendered outside <aside> to escape overflow:visible clipping.
-  // It is positioned with position:fixed at the button's y midpoint + left of W_ICON.
-  if (isTablet) {
-    return (
-      <>
-        <aside style={{
-          width: W_ICON, background: SIDEBAR_BG,
-          flexShrink: 0,
-          display: 'flex', flexDirection: 'column',
-          // overflow:visible is required for the floating tooltip to appear outside
-          // the sidebar bounds. Nav uses overflowY:auto for its own scroll.
-          overflowY: 'auto', overflowX: 'visible',
-        }}>
-          <Header />
-          <Nav />
-          <TabletFooter />
-        </aside>
-
-        {/* Floating tooltip — rendered outside <aside> to escape overflow clipping.
-            Positioned with position:fixed at W_ICON+10 px from the left edge,
-            vertically centered on the hovered button using translateY(-50%). */}
-        <AnimatePresence>
-          {tooltip && (
-            <motion.div
-              key={tooltip.id}
-              initial={{ opacity: 0, x: -6 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.12 }}
-              style={{
-                position: 'fixed',
-                left: W_ICON + 10,
-                top: tooltip.y,
-                transform: 'translateY(-50%)',
-                zIndex: 1001,
-                background: 'var(--t-primary-dk)',
-                color: WHITE,
-                padding: '5px 12px',
-                borderRadius: 8,
-                fontSize: 13,
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-                pointerEvents: 'none',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
-                fontFamily: FONT_BODY,
-              }}
-            >
-              {NAV.find(n => n.id === tooltip.id)?.label ?? ''}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </>
-    )
-  }
-
-  // ── Desktop: full 240 px sidebar ───────────────────────────────────────────
+  // ── Desktop + Tablet: auto-hide sidebar ───────────────────────────────────
+  // Hidden off-screen by default. A thin trigger strip at the left edge detects
+  // mouse proximity and slides the sidebar in with a spring animation.
   return (
-    <aside style={{
-      width: W_FULL, background: SIDEBAR_BG,
-      flexShrink: 0,
-      display: 'flex', flexDirection: 'column',
-      overflowY: 'auto',
-    }}>
-      <Header />
+    <>
+      {/* Invisible trigger strip — catches the mouse at the left edge */}
+      {!isAutoOpen && (
+        <div
+          onMouseEnter={() => setIsAutoOpen(true)}
+          style={{ position: 'fixed', left: 0, top: 0, width: 12, height: '100vh', zIndex: 499 }}
+        />
+      )}
 
-      <Nav />
-      <Footer />
-    </aside>
+      {/* Backdrop — dims content while sidebar is open */}
+      <AnimatePresence>
+        {isAutoOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            onClick={() => setIsAutoOpen(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 498, backdropFilter: 'blur(2px)' }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar panel */}
+      <motion.aside
+        initial={{ x: -W_FULL }}
+        animate={{ x: isAutoOpen ? 0 : -W_FULL }}
+        transition={{ type: 'spring', damping: 30, stiffness: 320 }}
+        onMouseLeave={() => setIsAutoOpen(false)}
+        style={{
+          position: 'fixed', left: 0, top: 0,
+          width: W_FULL, height: '100vh',
+          background: SIDEBAR_BG,
+          zIndex: 500,
+          display: 'flex', flexDirection: 'column',
+          overflowY: 'auto',
+          boxShadow: '8px 0 40px rgba(0,0,0,0.4)',
+        }}
+      >
+        <Header />
+        <Nav />
+        <Footer />
+      </motion.aside>
+    </>
   )
 }

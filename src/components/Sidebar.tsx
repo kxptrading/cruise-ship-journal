@@ -124,13 +124,11 @@ export default function Sidebar({
       background: 'var(--t-primary-dk)',
     }}>
       <img src="/logo.svg" alt="Deck Days" style={{ height: 44, width: 'auto', opacity: 0.9 }} />
-      {isMobile && (
-        <button
-          aria-label="Close menu"
-          onClick={onClose}
-          style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: 'rgba(255,255,255,0.5)', fontSize: 18 }}
-        >×</button>
-      )}
+      <button
+        aria-label="Close menu"
+        onClick={isMobile ? onClose : () => { setIsAutoOpen(false); onClose() }}
+        style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, width: 32, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: 'rgba(255,255,255,0.5)', fontSize: 18 }}
+      >×</button>
     </div>
   )
 
@@ -292,13 +290,16 @@ export default function Sidebar({
     )
   }
 
-  // ── Desktop + Tablet: auto-hide sidebar ───────────────────────────────────
-  // Hidden off-screen by default. A thin trigger strip at the left edge detects
-  // mouse proximity and slides the sidebar in with a spring animation.
+  // ── Desktop + Tablet: hamburger-triggered + mouse-edge sidebar ───────────────
+  // Opens via the hamburger in TopNav (isOpen prop) OR by mousing near the left
+  // edge (isAutoOpen). Closes via backdrop click, mouse-leave, or onClose().
+  const desktopOpen = isOpen || isAutoOpen
+  const closeDesktop = () => { setIsAutoOpen(false); onClose() }
+
   return (
     <>
       {/* Invisible trigger strip — catches the mouse at the left edge */}
-      {!isAutoOpen && (
+      {!desktopOpen && (
         <div
           onMouseEnter={() => setIsAutoOpen(true)}
           style={{ position: 'fixed', left: 0, top: 0, width: 12, height: '100vh', zIndex: 499 }}
@@ -307,14 +308,14 @@ export default function Sidebar({
 
       {/* Backdrop — dims content while sidebar is open */}
       <AnimatePresence>
-        {isAutoOpen && (
+        {desktopOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            onClick={() => setIsAutoOpen(false)}
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 498, backdropFilter: 'blur(2px)' }}
+            onClick={closeDesktop}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 498, backdropFilter: 'blur(2px)' }}
           />
         )}
       </AnimatePresence>
@@ -322,9 +323,9 @@ export default function Sidebar({
       {/* Sidebar panel */}
       <motion.aside
         initial={{ x: -W_FULL }}
-        animate={{ x: isAutoOpen ? 0 : -W_FULL }}
+        animate={{ x: desktopOpen ? 0 : -W_FULL }}
         transition={{ type: 'spring', damping: 30, stiffness: 320 }}
-        onMouseLeave={() => setIsAutoOpen(false)}
+        onMouseLeave={() => { if (!isOpen) setIsAutoOpen(false) }}
         style={{
           position: 'fixed', left: 0, top: 0,
           width: W_FULL, height: '100vh',

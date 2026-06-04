@@ -12,7 +12,7 @@
 //                    Ticker sub-bar below the main bar.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Menu, Compass, Ship, Users, MessageCircle, CircleUser } from 'lucide-react'
+import { Menu, Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, GOLD, FONT_BODY } from '../constants'
 import TickerText from '../ui/TickerText'
@@ -84,6 +84,25 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
           <span style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY, letterSpacing: '-0.01em', opacity: 0.95 }}>
             Deck Days
           </span>
+        </button>
+
+        <div style={{ flex: 1 }} />
+
+        <button
+          aria-label="Profile"
+          onClick={() => onNav('userprofile')}
+          style={{
+            background: section === 'userprofile' ? 'rgba(201,162,39,0.18)' : 'transparent',
+            border: 'none',
+            width: 40, height: 40, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            color: section === 'userprofile' ? GOLD : 'rgba(255,255,255,0.85)',
+            borderRadius: 8,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <UserCircle2 size={24} strokeWidth={section === 'userprofile' ? 2.5 : 1.75} />
         </button>
       </div>
     )

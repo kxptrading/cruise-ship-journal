@@ -31,8 +31,9 @@ interface VoyageRow {
   phone?:             string | null
   guest_services?:    string | null
   muster_station?:    string | null
-  dining_time?:       string | null
-  cover_photo_url?:   string | null
+  dining_time?:          string | null
+  cover_photo_url?:      string | null
+  cruise_description?:   string | null
 }
 
 interface ItineraryRow {
@@ -173,8 +174,9 @@ export function fromDbVoyage(row: VoyageRow): Voyage {
     phone:            row.phone             ?? '',
     guestServices:    row.guest_services    ?? '',
     musterStation:    row.muster_station    ?? '',
-    diningTime:       row.dining_time       ?? '',
-    coverPhotoUrl:    row.cover_photo_url   ?? '',
+    diningTime:          row.dining_time          ?? '',
+    coverPhotoUrl:       row.cover_photo_url      ?? '',
+    cruiseDescription:   row.cruise_description   ?? '',
   }
 }
 
@@ -196,8 +198,9 @@ export function toDbVoyage(v: Voyage) {
     phone:             v.phone            || null,
     guest_services:    v.guestServices    || null,
     muster_station:    v.musterStation    || null,
-    dining_time:       v.diningTime       || null,
-    cover_photo_url:   v.coverPhotoUrl    || null,
+    dining_time:          v.diningTime          || null,
+    cover_photo_url:      v.coverPhotoUrl       || null,
+    cruise_description:   v.cruiseDescription   || null,
   }
 }
 
@@ -293,6 +296,7 @@ export function fromDbFoodLogs(rows: FoodLogRow[]): FoodLog[] {
     rating:     r.rating        ?? 0,
     cost:       r.cost          ?? '',
     orderAgain: r.order_again   ?? '',
+    photos:     [],   // photos are stored client-side in FoodLog state; not persisted to food_logs table
   }))
 }
 

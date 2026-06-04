@@ -1,0 +1,336 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// sections/dashboard/PortsMap.tsx — Port route map (react-simple-maps)
+//
+// Lazy-loaded by Dashboard.tsx so the main bundle stays fast.
+// Uses a hardcoded dictionary of common cruise port coordinates.
+// Ports that aren't in the dictionary are silently skipped.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { useMemo } from 'react'
+import { ComposableMap, Geographies, Geography, Marker, Line } from 'react-simple-maps'
+import { BORDER, MUTED, TEAL, WHITE, FONT_BODY } from '@/constants'
+import type { ItineraryDay } from '@/types'
+
+const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
+
+// [longitude, latitude] — the most common cruise ports
+const PORT_COORDS: Record<string, [number, number]> = {
+  // Caribbean
+  'nassau':                [-77.35, 25.04],
+  'bahamas':               [-77.35, 25.04],
+  'cozumel':               [-86.95, 20.42],
+  'cancun':                [-86.85, 21.16],
+  'ocho rios':             [-77.11, 18.41],
+  'montego bay':           [-77.91, 18.47],
+  'kingston':              [-76.79, 17.99],
+  'san juan':              [-66.11, 18.47],
+  'puerto rico':           [-66.11, 18.47],
+  'st. thomas':            [-64.90, 18.34],
+  'saint thomas':          [-64.90, 18.34],
+  'st. maarten':           [-63.07, 18.04],
+  'sint maarten':          [-63.07, 18.04],
+  'barbados':              [-59.54, 13.09],
+  'bridgetown':            [-59.62, 13.10],
+  'trinidad':              [-61.52, 10.52],
+  'aruba':                 [-69.97, 12.52],
+  'curacao':               [-68.93, 12.10],
+  'grand cayman':          [-81.38, 19.32],
+  'cayman islands':        [-81.38, 19.32],
+  'belize city':           [-88.20, 17.25],
+  'roatan':                [-86.53, 16.32],
+  'costa maya':            [-87.70, 18.71],
+  'progreso':              [-89.65, 21.28],
+  'key west':              [-81.79, 24.56],
+  'miami':                 [-80.19, 25.77],
+  'port canaveral':        [-80.62, 28.40],
+  'fort lauderdale':       [-80.14, 26.12],
+  'new york':              [-74.01, 40.71],
+  'baltimore':             [-76.61, 39.29],
+  'galveston':             [-94.80, 29.30],
+  'new orleans':           [-90.07, 29.95],
+  // Mediterranean
+  'barcelona':             [2.17,  41.38],
+  'rome':                  [12.60, 41.49],
+  'civitavecchia':         [11.80, 42.09],
+  'naples':                [14.27, 40.84],
+  'athens':                [23.73, 37.97],
+  'piraeus':               [23.65, 37.94],
+  'dubrovnik':             [18.09, 42.65],
+  'split':                 [16.44, 43.51],
+  'kotor':                 [18.77, 42.42],
+  'venice':                [12.33, 45.44],
+  'genoa':                 [8.93,  44.41],
+  'marseille':             [5.37,  43.30],
+  'monte carlo':           [7.42,  43.73],
+  'monaco':                [7.42,  43.73],
+  'nice':                  [7.27,  43.70],
+  'palma':                 [2.65,  39.57],
+  'mallorca':              [2.65,  39.57],
+  'ibiza':                 [1.43,  38.91],
+  'santorini':             [25.46, 36.40],
+  'mykonos':               [25.33, 37.45],
+  'corfu':                 [19.92, 39.62],
+  'rhodes':                [28.23, 36.44],
+  'valletta':              [14.51, 35.90],
+  'malta':                 [14.51, 35.90],
+  'lisbon':                [-9.14, 38.72],
+  'cadiz':                 [-6.30, 36.53],
+  'malaga':                [-4.42, 36.72],
+  'valencia':              [-0.38, 39.47],
+  'istanbul':              [28.97, 41.01],
+  'kusadasi':              [27.26, 37.86],
+  'ephesus':               [27.36, 37.94],
+  'palermo':               [13.36, 38.12],
+  'catania':               [15.08, 37.50],
+  'messina':               [15.55, 38.19],
+  'livorno':               [10.32, 43.55],
+  'florence':              [11.26, 43.77],
+  'pisa':                  [10.40, 43.72],
+  'thessaloniki':          [22.94, 40.63],
+  'heraklion':             [25.14, 35.34],
+  'crete':                 [24.81, 35.51],
+  'limassol':              [33.04, 34.68],
+  'cyprus':                [33.04, 34.68],
+  'zadar':                 [15.23, 44.12],
+  'port said':             [32.30, 31.26],
+  'suez':                  [32.55, 29.97],
+  // Northern Europe
+  'southampton':           [-1.40, 50.90],
+  'london':                [-0.13, 51.51],
+  'dover':                 [1.31,  51.13],
+  'amsterdam':             [4.90,  52.37],
+  'rotterdam':             [4.48,  51.92],
+  'copenhagen':            [12.57, 55.68],
+  'oslo':                  [10.75, 59.91],
+  'bergen':                [5.32,  60.39],
+  'stavanger':             [5.73,  58.97],
+  'geirangerfjord':        [7.21,  62.10],
+  'flam':                  [7.12,  60.86],
+  'stockholm':             [18.07, 59.33],
+  'helsinki':              [24.94, 60.17],
+  'tallinn':               [24.75, 59.44],
+  'riga':                  [24.11, 56.95],
+  'st. petersburg':        [30.32, 59.93],
+  'saint petersburg':      [30.32, 59.93],
+  'hamburg':               [9.99,  53.55],
+  'kiel':                  [10.14, 54.32],
+  'rostock':               [12.14, 54.09],
+  'edinburgh':             [-3.19, 55.95],
+  'greenock':              [-4.76, 55.95],
+  'glasgow':               [-4.25, 55.86],
+  'liverpool':             [-2.98, 53.41],
+  'belfast':               [-5.93, 54.60],
+  'dublin':                [-6.26, 53.33],
+  'cork':                  [-8.47, 51.90],
+  'cobh':                  [-8.29, 51.85],
+  'leith':                 [-3.17, 55.98],
+  // Alaska
+  'juneau':                [-134.42, 58.30],
+  'ketchikan':             [-131.65, 55.34],
+  'skagway':               [-135.32, 59.46],
+  'sitka':                 [-135.34, 57.05],
+  'glacier bay':           [-136.00, 58.67],
+  'victoria':              [-123.37, 48.43],
+  'seattle':               [-122.33, 47.61],
+  'vancouver':             [-123.12, 49.28],
+  'whittier':              [-148.68, 60.77],
+  'seward':                [-149.44, 60.10],
+  // Asia-Pacific
+  'singapore':             [103.82, 1.35],
+  'hong kong':             [114.17, 22.32],
+  'shanghai':              [121.47, 31.23],
+  'tokyo':                 [139.69, 35.69],
+  'yokohama':              [139.64, 35.44],
+  'osaka':                 [135.50, 34.69],
+  'sydney':                [151.21, -33.87],
+  'melbourne':             [144.96, -37.81],
+  'auckland':              [174.76, -36.85],
+  'bali':                  [115.19, -8.41],
+  'denpasar':              [115.19, -8.41],
+  'bangkok':               [100.52, 13.75],
+  'taipei':                [121.56, 25.04],
+  // Middle East
+  'dubai':                 [55.30, 25.20],
+  'abu dhabi':             [54.37, 24.47],
+  'muscat':                [58.59, 23.61],
+  'aqaba':                 [35.00, 29.53],
+  // Africa & Indian Ocean
+  'cape town':             [18.42, -33.92],
+  'durban':                [31.02, -29.86],
+  'mombasa':               [39.66, -4.05],
+  'mauritius':             [57.55, -20.35],
+  'port louis':            [57.50, -20.16],
+  'reunion':               [55.54, -21.11],
+  'seychelles':            [55.45, -4.68],
+  'mahe':                  [55.45, -4.68],
+  // South America
+  'buenos aires':          [-58.38, -34.60],
+  'montevideo':            [-56.18, -34.90],
+  'rio de janeiro':        [-43.17, -22.91],
+  'cartagena':             [-75.51, 10.40],
+  'lima':                  [-77.04, -12.05],
+  'callao':                [-77.13, -12.05],
+  'valparaiso':            [-71.63, -33.05],
+  'santiago':              [-70.65, -33.45],
+  'ushuaia':               [-68.30, -54.80],
+  // Canaries & Atlantic
+  'tenerife':              [-16.55, 28.29],
+  'las palmas':            [-15.41, 28.10],
+  'gran canaria':          [-15.41, 28.10],
+  'madeira':               [-17.01, 32.65],
+  'funchal':               [-17.01, 32.65],
+  'bermuda':               [-64.79, 32.30],
+  'azores':                [-28.01, 37.74],
+  'lanzarote':             [-13.64, 29.05],
+  'fuerteventura':         [-14.01, 28.36],
+  'la palma':              [-17.89, 28.68],
+}
+
+function resolvePort(name: string): [number, number] | null {
+  if (!name) return null
+  const key = name.trim().toLowerCase()
+  // Direct match
+  if (PORT_COORDS[key]) return PORT_COORDS[key]
+  // Partial match — first word
+  const firstWord = key.split(/[\s,]+/)[0]
+  const partial = Object.entries(PORT_COORDS).find(([k]) => k.includes(firstWord) || firstWord.includes(k))
+  return partial ? partial[1] : null
+}
+
+interface PortPoint {
+  name:   string
+  coords: [number, number]
+  dayNum: number
+  isSea:  boolean
+}
+
+interface Props {
+  itinerary: ItineraryDay[]
+}
+
+export default function PortsMap({ itinerary }: Props) {
+  const points = useMemo<PortPoint[]>(() => {
+    const pts: PortPoint[] = []
+    itinerary.forEach((day, i) => {
+      if (!day.port) return
+      const isSea = day.port.toLowerCase().includes('sea')
+      if (isSea) return
+      const coords = resolvePort(day.port)
+      if (coords) pts.push({ name: day.port, coords, dayNum: i + 1, isSea: false })
+    })
+    return pts
+  }, [itinerary])
+
+  if (points.length === 0) {
+    return (
+      <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8, fontFamily: FONT_BODY }}>
+          Ports Map
+        </div>
+        <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
+          Add ports to your itinerary to see the route map.
+        </div>
+      </div>
+    )
+  }
+
+  // Compute bounding box + projection center/scale
+  const lngs = points.map(p => p.coords[0])
+  const lats = points.map(p => p.coords[1])
+  const minLng = Math.min(...lngs), maxLng = Math.max(...lngs)
+  const minLat = Math.min(...lats), maxLat = Math.max(...lats)
+  const centerLng = (minLng + maxLng) / 2
+  const centerLat = (minLat + maxLat) / 2
+  const spread = Math.max(maxLng - minLng, maxLat - minLat)
+  const scale = spread > 100 ? 120 : spread > 60 ? 180 : spread > 30 ? 280 : spread > 10 ? 420 : 600
+
+  // Deduplicate consecutive identical ports
+  const routePoints: PortPoint[] = []
+  for (const pt of points) {
+    const last = routePoints[routePoints.length - 1]
+    if (!last || last.name !== pt.name) routePoints.push(pt)
+  }
+
+  return (
+    <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, marginBottom: 16, overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{ padding: '16px 20px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>
+          Route Map
+        </div>
+        <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>
+          {routePoints.length} port{routePoints.length !== 1 ? 's' : ''}
+        </div>
+      </div>
+
+      {/* Map */}
+      <div style={{ background: '#EFF6FF', borderTop: `1px solid ${BORDER}` }}>
+        <ComposableMap
+          projection="geoMercator"
+          projectionConfig={{ center: [centerLng, centerLat], scale }}
+          style={{ width: '100%', height: 260 }}
+        >
+          <Geographies geography={GEO_URL}>
+            {({ geographies }) =>
+              geographies.map(geo => (
+                <Geography
+                  key={geo.rsmKey}
+                  geography={geo}
+                  fill="#DBEAFE"
+                  stroke="#BFDBFE"
+                  strokeWidth={0.5}
+                  style={{ default: { outline: 'none' }, hover: { outline: 'none' }, pressed: { outline: 'none' } }}
+                />
+              ))
+            }
+          </Geographies>
+
+          {/* Route line */}
+          {routePoints.length > 1 && routePoints.map((pt, i) => {
+            if (i === 0) return null
+            return (
+              <Line
+                key={`line-${i}`}
+                from={routePoints[i - 1].coords}
+                to={pt.coords}
+                stroke={TEAL}
+                strokeWidth={1.5}
+                strokeDasharray="4 3"
+                strokeLinecap="round"
+              />
+            )
+          })}
+
+          {/* Port markers */}
+          {routePoints.map((pt, i) => {
+            const isFirst = i === 0
+            const isLast  = i === routePoints.length - 1
+            const markerColor = isFirst ? 'var(--t-primary-dk)' : isLast ? TEAL : TEAL
+
+            return (
+              <Marker key={`pin-${i}`} coordinates={pt.coords}>
+                <circle r={isFirst || isLast ? 5 : 4} fill={markerColor} stroke={WHITE} strokeWidth={1.5} />
+                <text
+                  y={-8}
+                  textAnchor="middle"
+                  style={{
+                    fontSize:   9,
+                    fill:       'var(--t-primary-dk)',
+                    fontFamily: FONT_BODY,
+                    fontWeight: 600,
+                    pointerEvents: 'none',
+                    paintOrder: 'stroke',
+                    stroke:     WHITE,
+                    strokeWidth: 2,
+                  }}
+                >
+                  {pt.name.length > 14 ? pt.name.slice(0, 13) + '…' : pt.name}
+                </text>
+              </Marker>
+            )
+          })}
+        </ComposableMap>
+      </div>
+    </div>
+  )
+}

@@ -7,6 +7,7 @@ import { NAVY, WHITE, BORDER, TEXT, MUTED, FONT_BODY } from '../../constants'
 import MsgBubble from './MsgBubble'
 import { Avatar, GroupIcon, fmtDateLabel } from './helpers'
 import type { Conversation, Message, MemberProfile } from './types'
+import FE from '../../components/FE'
 
 // ── Date-separator helpers ────────────────────────────────────────────────────
 
@@ -50,7 +51,7 @@ export default function MessageThread({ activeConv, messages, memberProfiles, ms
   if (!activeConv) {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: MUTED, padding: 32, textAlign: 'center' }}>
-        <div style={{ fontSize: 52, marginBottom: 14 }}>⛵</div>
+        <div style={{ marginBottom: 14 }}><FE emoji="⛵" size={52} /></div>
         <div style={{ fontSize: 17, fontWeight: 700, color: TEXT, marginBottom: 6 }}>Select a conversation</div>
         <div style={{ fontSize: 13, color: MUTED }}>Choose one on the left or start a new chat.</div>
       </div>
@@ -82,7 +83,7 @@ export default function MessageThread({ activeConv, messages, memberProfiles, ms
           <div style={{ textAlign: 'center', color: MUTED, fontSize: 13, marginTop: 48 }}>Loading messages…</div>
         ) : messages.length === 0 ? (
           <div style={{ textAlign: 'center', color: MUTED, marginTop: 48 }}>
-            <div style={{ fontSize: 36, marginBottom: 10 }}>👋</div>
+            <div style={{ marginBottom: 10 }}><FE emoji="👋" size={36} /></div>
             <div style={{ fontSize: 14 }}>Say hello to {activeConv.displayName}!</div>
           </div>
         ) : (

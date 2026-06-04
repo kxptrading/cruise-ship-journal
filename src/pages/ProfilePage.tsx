@@ -10,15 +10,15 @@ import ImageCropper from '../components/ImageCropper'
 import type { Session } from '@supabase/supabase-js'
 import type { VoyageListRow, Voyage } from '../types'
 
-import Hero         from './profile/Hero'
-import PassportMap  from './profile/PassportMap'
-import Personality  from './profile/Personality'
-import Badges       from './profile/Badges'
-import Companions   from './profile/Companions'
-import VoyagesStrip from './profile/VoyagesStrip'
-import Preferences      from './profile/Preferences'
-import SettingsBlock    from './profile/SettingsBlock'
-import AppearanceBlock  from './profile/AppearanceBlock'
+import Hero         from '@/sections/profile/Hero'
+import PassportMap  from '@/sections/profile/PassportMap'
+import Personality  from '@/sections/profile/Personality'
+import Badges       from '@/sections/profile/Badges'
+import Companions   from '@/sections/profile/Companions'
+import VoyagesStrip from '@/sections/profile/VoyagesStrip'
+import Preferences      from '@/sections/profile/Preferences'
+import SettingsBlock    from '@/sections/profile/SettingsBlock'
+import AppearanceBlock  from '@/sections/profile/AppearanceBlock'
 
 const BANNER_ASPECT = 840 / 220
 
@@ -39,16 +39,18 @@ interface CropState {
 }
 
 interface Props {
-  session:       Session | null
-  allVoyages:    VoyageListRow[]
-  voyage:        Voyage
-  onNav:         (section: string) => void
-  theme:         string
-  onThemeChange: (id: string) => void
-  onAgeChange?:  (age: number) => void
+  session:           Session | null
+  allVoyages:        VoyageListRow[]
+  voyage:            Voyage
+  onNav:             (section: string) => void
+  theme:             string
+  onThemeChange:     (id: string) => void
+  onAgeChange?:      (age: number) => void
+  iconPack?:         'fluent' | 'native' | 'lucide'
+  onIconPackChange?: (pack: 'fluent' | 'native' | 'lucide') => void
 }
 
-export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, onAgeChange }: Props) {
+export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, onAgeChange, iconPack, onIconPackChange }: Props) {
   const userId   = useUserId()
   const w        = useW()
   const isMobile = w < BP.mobile
@@ -214,6 +216,8 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
         <AppearanceBlock
           theme={theme}
           onThemeChange={onThemeChange}
+          iconPack={iconPack}
+          onIconPackChange={onIconPackChange}
           age={profile.age}
           onAgeChange={async (age: number) => {
             setProfile(p => ({ ...p, age }))

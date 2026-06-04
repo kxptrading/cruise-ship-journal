@@ -2,10 +2,11 @@
 // sections/VoyageDetails.tsx — Voyage setup form
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '../constants'
-import { useW } from '../context'
-import { PgHdr, Box, Fld, Row2, Inp } from '../components/ui'
-import type { Voyage } from '../types'
+import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '@/constants'
+import { useW } from '@/context'
+import { PgHdr, Box, Fld, Row2, Inp, TA } from '@/components/ui'
+import FE from '@/components/FE'
+import type { Voyage } from '@/types'
 
 interface Props {
   data:     Voyage
@@ -33,8 +34,13 @@ export default function VoyageDetails({ data, onChange }: Props) {
       <div style={cs}>
 
         <Box title="SHIP INFORMATION">
-          <Fld label="Cruise Line"><Inp value={data.cruiseLine} onChange={(v: string) => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" /></Fld>
-          <Fld label="Ship Name"><Inp value={data.shipName} onChange={(v: string) => set('shipName', v)} placeholder="e.g. Wonder of the Seas" /></Fld>
+          <Row2>
+            <Fld label="Ship Name" half><Inp value={data.shipName} onChange={(v: string) => set('shipName', v)} placeholder="e.g. Wonder of the Seas" /></Fld>
+            <Fld label="Cruise Line" half><Inp value={data.cruiseLine} onChange={(v: string) => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" /></Fld>
+          </Row2>
+          <Fld label="Cruise Description">
+            <TA value={data.cruiseDescription || ''} onChange={(v: string) => set('cruiseDescription', v)} placeholder="Describe your cruise — itinerary, highlights, what to expect…" rows={3} />
+          </Fld>
           <Row2>
             <Fld label="Cabin Number & Type" half><Inp value={data.cabin} onChange={(v: string) => set('cabin', v)} placeholder="e.g. 8234 — Balcony" /></Fld>
             <Fld label="Deck" half><Inp value={data.deck} onChange={(v: string) => set('deck', v)} placeholder="e.g. Deck 8" /></Fld>
@@ -55,7 +61,7 @@ export default function VoyageDetails({ data, onChange }: Props) {
                   border: `1px solid ${GOLD}50`, borderRadius: 8,
                   padding: '10px 14px', background: `${GOLD}10`,
                 }}>
-                  <span style={{ fontSize: 16 }}>🌙</span>
+                  <FE emoji="🌙" size={16} />
                   <span style={{ fontFamily: 'Georgia,serif', fontSize: 20, color: NAVY2, fontWeight: 400, lineHeight: 1 }}>{data.totalNights}</span>
                   <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>night{data.totalNights !== '1' ? 's' : ''}</span>
                 </div>

@@ -1,6 +1,7 @@
 // Shared helpers and mini-components used across the Chat sub-files.
 
 import { NAVY2, WHITE, GOLD, FONT_BODY } from '../../constants'
+import FE from '../../components/FE'
 
 export function fmtTime(ts: string | null | undefined): string {
   if (!ts) return ''
@@ -66,7 +67,6 @@ export function GroupIcon({ size = 36 }: GroupIconProps) {
       width: size, height: size, borderRadius: '50%', flexShrink: 0,
       background: `linear-gradient(135deg, ${GOLD}, #F97316)`,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: Math.round(size * 0.45),
-    }}>👥</div>
+    }}><FE emoji="👥" size={Math.round(size * 0.45)} /></div>
   )
 }

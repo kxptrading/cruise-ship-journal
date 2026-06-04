@@ -28,8 +28,9 @@ export interface Voyage {
   phone:            string
   guestServices:    string
   musterStation:    string
-  diningTime:       string
-  coverPhotoUrl:    string
+  diningTime:          string
+  coverPhotoUrl:       string
+  cruiseDescription:   string   // free-text description of the cruise
 }
 
 // ── Itinerary ─────────────────────────────────────────────────────────────────
@@ -78,6 +79,7 @@ export interface FoodLog {
   rating:     number
   cost:       string
   orderAgain: string
+  photos:     string[]   // storage paths in daily-photos bucket
 }
 
 // ── Dining Log ────────────────────────────────────────────────────────────────
@@ -253,7 +255,7 @@ export const EMPTY_VOYAGE: Voyage = {
   departureDate: '', returnDate: '', departurePort: '', totalNights: '',
   companion1: '', companion2: '', companion3: '', companion4: '',
   emergencyContact: '', phone: '', guestServices: '', musterStation: '',
-  diningTime: '', coverPhotoUrl: '',
+  diningTime: '', coverPhotoUrl: '', cruiseDescription: '',
 }
 
 export interface UseVoyageDataReturn {

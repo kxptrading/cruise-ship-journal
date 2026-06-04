@@ -1,0 +1,27 @@
+{
+  "name": "Deck Days",
+  "short_name": "Deck Days",
+  "description": "A web-based cruise travel journal — log every day of your voyage.",
+  "theme_color": "#1B3A5C",
+  "background_color": "#F4F1EB",
+  "display": "standalone",
+  "orientation": "portrait",
+  "start_url": "/",
+  "scope": "/",
+  "lang": "en-GB",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["lifestyle", "travel", "utilities"],
+  "screenshots": []
+}

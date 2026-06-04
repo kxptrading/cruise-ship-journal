@@ -1,70 +1,112 @@
-# Cruise Ship Log — Project Context
+# Deck Days — Project Context
 
 ## What This Is
 
-A web-based cruise travel journal that digitises a 14-page PDF paperback journal into a full-stack
-application. Think Facebook-style feed meets travel diary — users can log every day of a cruise,
-track food, budget, itinerary, packing, and highlights, with the end goal of a shareable,
-multi-voyage journal platform.
+A journal-first web app for documenting cruise voyages. Users keep private day-by-day journals
+organised by voyage. Individual posts can be opt-in shared to a social Feed visible to contacts.
+The journal is the primary surface; the Feed is secondary.
 
-This is the developer's first serious production project. Decisions should prioritise clarity,
-good patterns, and learning value over clever abstraction.
+Deployed at: **cruise-ship-journal.vercel.app**
 
 ---
 
 ## Current State
 
-**Phase 2 — Production (live)**
+**Phases 0–8 complete. Production codebase.**
 
-The app is fully deployed and in active use at cruise-ship-journal.vercel.app.
-The prototype phase is complete. All decisions are for the production codebase.
+The full spec from `CRUISE_VOYAGE_JOURNAL_SPEC.md` has been implemented.
 
 ### Production Stack
 
 | Layer | Technology |
 |---|---|
 | Framework | React 18 + Vite 6 (SPA, no SSR) |
-| Language | JavaScript (JSX) — TypeScript is on the roadmap |
-| Styling | CSS-in-JS inline styles + CSS variables for theming |
+| Language | TypeScript throughout |
+| Routing | React Router v7 (`<BrowserRouter>` + `<Routes>`) |
+| Server state | TanStack Query v5 (React Query) — all data fetching |
+| Styling | Tailwind CSS v4 (`@tailwindcss/vite`) + inline styles (coexisting) |
+| UI primitives | shadcn/ui scaffold in `src/components/ui/` |
+| Animation | Framer Motion v12 |
+| Icons | `lucide-react` |
 | Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (email/password) |
-| File Storage | Supabase Storage (`daily-photos` bucket, signed URLs) |
+| Auth | Supabase Auth — `/login`, `/signup`, `/reset` pages |
+| File Storage | Supabase Storage (`daily-photos` bucket, public URLs) |
 | Hosting | Vercel (auto-deploy on push to `main`) |
 
 ### Architecture
 
 ```
 src/
-  App.jsx                   — layout shell, auth, routing (~220 lines)
-  hooks/useVoyageData.js    — all Supabase data loading + write-through
-  lib/converters.js         — pure DB ↔ app shape converters (22 functions)
-  lib/photoStorage.js       — signed URL photo upload/fetch
-  sections/
-    Feed.jsx                — feed orchestrator
-    feed/PostCard.jsx       — post card, reactions, comments
-    feed/VoyageHero.jsx     — hero banner
-    feed/QuickComposer.jsx  — quick post composer
-    Chat.jsx                — messaging orchestrator
-    chat/ConvItem.jsx       — conversation list row
-    chat/MsgBubble.jsx      — message bubble
-    chat/NewChatModal.jsx   — new DM / group modal
-    chat/helpers.js         — Avatar, GroupIcon, format helpers
-    Friends.jsx + FriendProfile.jsx
-    [12 other journal sections]
+  App.tsx               — shell: auth gate, layout, theme, useVoyageData wiring
+  main.tsx              — React root, QueryClientProvider, BrowserRouter
+  router.tsx            — createBrowserRouter scaffold (Phase 2 reference)
+  types.ts              — legacy app-shape types (Voyage, DailyLog, etc.)
+  types/models.ts       — spec types (Post, Audience, Contact, Media, FeedEntry)
+
+  pages/                — full page components (one per route)
+    LoginPage.tsx           /login
+    SignupPage.tsx           /signup
+    ResetPasswordPage.tsx   /reset
+    VoyagesPage.tsx          /voyages
+    VoyageDetailPage.tsx     /voyages/:id  (tabbed: Posts + journal sections)
+    VoyageEditorPage.tsx     /voyages/new + /voyages/:id/edit
+    PostComposerPage.tsx     /voyages/:id/posts/new
+    PostEditorPage.tsx       /voyages/:id/posts/:postId/edit
+    PostDetailPage.tsx       /voyages/:id/posts/:postId
+    FeedPage.tsx             /feed  (React Query, get_feed RPC)
+    ContactsPage.tsx         /contacts + /friends
+    ProfilePage.tsx          /userprofile
+
+  features/
+    voyages/            — VoyageCard, VoyageForm, ItineraryEditor, VoyageHero,
+                          VoyageProfile, VoyageMetrics, hooks.ts
+    voyages/dashboard/  — BudgetBreakdown, ItineraryTimeline, PortsMap, RecentPosts
+    posts/              — PostCard (feed), JournalPostCard, PostList,
+                          PostEditorForm, AudiencePill, AudienceSelector,
+                          EditConfirmBanner, mediaStorage.ts, hooks.ts
+    feed/               — FeedItem, feedVisibility.ts, hooks.ts
+    contacts/           — ContactRow, FamilyToggle, FriendProfile, hooks.ts
+    auth/               — (placeholder for future auth helpers)
+
+  sections/             — legacy journal sub-sections, used as tabs in VoyageDetailPage
+    BudgetTracker, DailyLog, DiningLog, EntertainmentLog, FoodFavourites,
+    FoodLog, Highlights, Notes, PackingList, ShoppingLog, Chat, DayDetail
+
+  ui/                   — shared UI primitives (spec §5)
+    MediaUploader.tsx   — drag-drop multi-file uploader
+    MediaThumbnails.tsx — responsive grid with swipe lightbox
+
   components/
-    Sidebar.jsx  TopNav.jsx  ErrorBoundary.jsx  AuthScreen.jsx
-    CameraCapture.jsx
-  constants.js              — design tokens (colours, breakpoints, nav)
-  themes.js                 — 20 colour themes, applyTheme(), getSavedTheme()
-  context.js                — WCtx, VoyageCtx, UserCtx, useW(), useVoyageId(), useUserId()
-  storage.js                — localStorage db helper
+    Sidebar.tsx         — nav shell: PRIMARY_NAV always; Your Journal only on /voyages/:id
+    TopNav.tsx          — Deck Days wordmark + auth nav icons
+    BottomNav.tsx       — mobile tab bar (voyage-aware active state)
+    ui/                 — Card, Button, MetricCard, StarRating, Skeleton,
+                          EmptyState, AudienceSelector, SectionBox, Label, Input
+
+  hooks/
+    useVoyageData.ts    — legacy debounced write-through for journal sections
+    useFeedData.ts      — legacy feed data (dashboard social feed)
+    useFocusTrap.ts     — keyboard focus trap for mobile drawer
+    useBreakpoint.ts
+
+  lib/
+    queryClient.ts      — TanStack Query singleton
+    supabase.ts         — Supabase client
+    converters.ts       — DB ↔ app shape converters
+    photoStorage.ts     — signed URL photo fetch (daily-photos bucket)
+    motion.ts           — shared Framer Motion variants
+    atmosphere.ts       — time-of-day gradients for hero
 ```
 
 ### Key patterns
-- **Data flow**: `useVoyageData` owns all Supabase reads/writes. Components call `onChange(updatedArray)` which hits `update(key, val)` in the hook.
-- **Write strategy**: `itinerary` + `daily_logs` use debounced upsert on `(voyage_id, day_number)`. All other dynamic arrays use debounced delete-all + reinsert (no natural key).
-- **Theme flash prevention**: `index.html` has an inline `<script>` that applies CSS vars from `localStorage` before React mounts.
-- **Photos**: Signed URLs (1-hour TTL) via `lib/photoStorage.js`. Never use `getPublicUrl`.
+
+- **Routing**: `<BrowserRouter>` + `<Routes>/<Route>` in App.tsx. New spec pages at `/voyages/*`. Legacy routes at `/`, `/feed`, `/profile`, `/chat` etc. Old solo section routes (`/daily` etc.) redirect to `/voyages`.
+- **Data fetching**: TanStack Query for all spec data (voyages, posts, feed, contacts). Legacy `useVoyageData` hook for journal section data passed as props to VoyageDetailPage tabs.
+- **Auth gate**: App.tsx checks `!session` → renders `<LoginPage>` / `<SignupPage>` / `<ResetPasswordPage>` via inner `<Routes>`. No separate auth shell needed.
+- **Journal sections**: Accessible only through VoyageDetailPage tabs (`/voyages/:id?tab=daily`). Sidebar "Your Journal" section hidden on all pages except `/voyages/:id`.
+- **Posts**: `posts` table with `audience` (private|family|public), `media_paths TEXT[]`, `metadata JSONB` (migrated daily-log fields). Feed uses `get_feed()` Supabase RPC.
+- **Theme flash prevention**: `index.html` inline `<script>` applies CSS vars before React mounts.
+- **Photos**: `daily-photos` bucket (public). Post media at `{userId}/posts/{uuid}.{ext}`. Use `getPublicUrl()` — no signed URLs needed for public bucket.
 
 ---
 
@@ -215,22 +257,34 @@ IC.star      IC.anchor  IC.compass IC.trending IC.food  IC.ship
 
 ## Roadmap (Next Steps)
 
-### Immediate
-- [ ] User accounts & login (Supabase Auth)
-- [ ] Multiple voyages — switch between past / future cruises
-- [ ] Mobile responsive layout — collapsible sidebar, touch-friendly
+### Completed (Phases 0–7)
+- [x] User accounts & login (Supabase Auth)
+- [x] Multiple voyages — switch between past / future cruises
+- [x] Mobile responsive layout — collapsible sidebar, bottom tab bar, touch-friendly
+- [x] Photo uploads — drag-and-drop in Daily Log, signed URLs, lightbox gallery
+- [x] Social feed — reactions, comments, friend posts, QuickComposer
+- [x] Design system — Tailwind v4, shadcn primitives, motion language
+- [x] Dashboard — interactive metric cards, sparklines, budget breakdown, itinerary timeline, ports map
+- [x] Daily Log — tabbed card UI, animated weather chips, swipe pager, drag-drop photos
+- [x] Itinerary — visual vertical timeline, drag-to-reorder, inline edit, animated Add Day
+- [x] Accessibility — focus-visible ring, ARIA roles, focus trap on mobile drawer, reduced-motion
+- [x] Performance — React.lazy code-splitting for all sections, PortsMap lazy-loaded
+- [x] PWA — manifest.json, theme-color, apple-touch-icon, mobile-web-app-capable
 
 ### Near-term
-- [ ] Photo uploads — real images in Daily Log photo memory slots
 - [ ] Export to PDF — recreate the physical journal format digitally
 - [ ] Social sharing — shareable public highlight pages (like a Facebook post)
+- [ ] Service worker — offline shell caching + background sync
+- [ ] Push notifications — react to friends' posts while offline
 
 ### Future
 - [ ] AI assistant — port suggestions, excursion tips based on logged preferences
 - [ ] Weather integration — auto-fill weather from departure date + port
 - [ ] Packing list customisation — add/remove items, create custom categories
 - [ ] Multi-user voyages — share a journal with travel companions
-- [ ] Offline support — PWA with sync when reconnected
+- [ ] Photo multi-upload carousel in feed posts (data model: photos[] per day)
+- [ ] Per-row upserts for all 6 remaining dynamic-array sections (currently delete-all + reinsert)
+- [ ] TypeScript strict mode — currently `strict: false`; converter layer is the highest-value first target
 
 ---
 

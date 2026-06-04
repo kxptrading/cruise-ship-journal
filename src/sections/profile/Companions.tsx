@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useUserId } from '../../context'
 import { WHITE, BORDER, NAVY2, MUTED, LIGHT, FONT_DISPLAY, FONT_BODY } from '../../constants'
+import FE from '../../components/FE'
 
 const COLORS = ['#0EA5E9', '#10B981', '#F59E0B', '#8B5CF6', '#F97316', '#EC4899', '#14B8A6', '#6366F1']
 
@@ -105,7 +106,7 @@ export default function Companions({ onNav }: Props) {
 
       {!loading && companions.length === 0 && (
         <div style={{ textAlign: 'center', padding: '28px 16px', color: MUTED }}>
-          <div style={{ fontSize: 32, marginBottom: 10 }}>👥</div>
+          <div style={{ marginBottom: 10 }}><FE emoji="👥" size={32} /></div>
           <div style={{ fontWeight: 600, color: NAVY2, marginBottom: 6, fontSize: 14 }}>No companions yet</div>
           <div style={{ fontSize: 13 }}>
             Add shipmates in{' '}

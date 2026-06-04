@@ -3,12 +3,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useRef } from 'react'
-import { NAVY, NAVY2, GOLD, WHITE, CREAM, BORDER, TEXT, MUTED, BP, sty } from '../constants'
-import { useW } from '../context'
-import { PgHdr, Fld, Row2, Inp } from '../components/ui'
-import { supabase } from '../lib/supabase'
-import ImageCropper from '../components/ImageCropper'
-import type { Voyage, VoyageListRow } from '../types'
+import { NAVY, NAVY2, GOLD, WHITE, CREAM, BORDER, TEXT, MUTED, BP, sty } from '@/constants'
+import FE from '@/components/FE'
+import { useW } from '@/context'
+import { PgHdr, Fld, Row2, Inp } from '@/components/ui'
+import { supabase } from '@/lib/supabase'
+import ImageCropper from '@/components/ImageCropper'
+import type { Voyage, VoyageListRow } from '@/types'
 import type { Session } from '@supabase/supabase-js'
 
 const COVER_ASPECT = 840 / 220
@@ -43,7 +44,7 @@ function VoyageCard({ voyage, isActive, onSwitch }: VoyageCardProps) {
       <div style={{ width: 64, height: 64, borderRadius: 10, flexShrink: 0, overflow: 'hidden', background: voyage.cover_photo_url ? 'transparent' : NAVY2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {voyage.cover_photo_url
           ? <img src={voyage.cover_photo_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-          : <span style={{ fontSize: 26 }}>🚢</span>
+          : <FE emoji="🚢" size={26} />
         }
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -201,14 +202,14 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
               <img src={currentCover} alt="Voyage cover" style={{ width: '100%', height: w < BP.mobile ? 180 : 240, objectFit: 'cover', display: 'block' }} />
               <div style={{ position: 'absolute', bottom: 12, right: 12, display: 'flex', gap: 8 }}>
                 <button onClick={() => fileRef.current?.click()} disabled={uploading} style={{ background: 'rgba(0,0,0,0.6)', color: WHITE, border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>
-                  {uploading ? 'Uploading…' : '📷 Change'}
+                  {uploading ? 'Uploading…' : <><FE emoji="📷" size={12} /> Change</>}
                 </button>
                 <button onClick={handleRemoveCover} style={{ background: 'rgba(220,38,38,0.75)', color: WHITE, border: 'none', borderRadius: 8, padding: '7px 14px', cursor: 'pointer', fontSize: 12, fontFamily: 'inherit', fontWeight: 600 }}>Remove</button>
               </div>
             </>
           ) : (
             <div onClick={() => fileRef.current?.click()} style={{ padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center', cursor: 'pointer' }}>
-              <div style={{ fontSize: 36, marginBottom: 10 }}>🌅</div>
+              <div style={{ marginBottom: 10 }}><FE emoji="🌅" size={36} /></div>
               <div style={{ fontSize: 14, fontWeight: 700, color: NAVY, marginBottom: 4 }}>Add a Cover Photo</div>
               <div style={{ fontSize: 13, color: MUTED }}>{uploading ? 'Uploading…' : 'Upload a photo of your ship or first port'}</div>
             </div>

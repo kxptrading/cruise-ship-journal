@@ -39,6 +39,7 @@ export const SECTION_COLORS: Record<string, string> = {
 // ── Typography ────────────────────────────────────────────────────────────────
 export const FONT_DISPLAY = "'Fredoka One', cursive"
 export const FONT_BODY    = "'Nunito', sans-serif"
+export const FONT_LOGO    = "'Space Grotesk', sans-serif"
 
 // ── Responsive breakpoints (px) ───────────────────────────────────────────────
 export const BP: { mobile: number; tablet: number } = { mobile: 640, tablet: 1024 }
@@ -67,9 +68,17 @@ export interface NavItem {
   icon:  string
 }
 
+// Primary navigation — shown at the top of the sidebar
+export const PRIMARY_NAV: NavItem[] = [
+  { id: 'voyages',  label: 'My Voyages', icon: '🚢' },
+  { id: 'feed',     label: 'Feed',       icon: '📡' },
+  { id: 'friends',  label: 'Friends',    icon: '👥' },
+  { id: 'chat',     label: 'Messages',   icon: '💬' },
+]
+
+// Journal sub-sections — shown in the sidebar under a divider (legacy routes)
 export const NAV: NavItem[] = [
   { id: 'daily',         label: 'Daily Log',          icon: '📅' },
-  { id: 'voyage',        label: 'Voyage Details',     icon: '🚢' },
   { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },
   { id: 'food',          label: 'Food Log',           icon: '🍴' },
   { id: 'dining',        label: 'Restaurant Log',     icon: '🍽️' },
@@ -77,7 +86,7 @@ export const NAV: NavItem[] = [
   { id: 'foodfav',       label: 'Food Favourites',    icon: '💛' },
   { id: 'budget',        label: 'Budget Tracker',     icon: '💳' },
   { id: 'shopping',      label: 'Shopping Log',       icon: '🛍️' },
-  { id: 'highlights',    label: 'Highlights',         icon: '🌟' },
+  { id: 'highlights',    label: 'Highlights',         icon: '🏆' },
   { id: 'packing',       label: 'Packing List',       icon: '🧳' },
   { id: 'notes',         label: 'Notes',              icon: '📝' },
 ]

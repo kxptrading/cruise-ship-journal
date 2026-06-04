@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../../lib/supabase'
 import { WHITE, BORDER, NAVY2, GOLD, MUTED, CREAM, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { useW } from '../../context'
+import FE from '../../components/FE'
 
 interface BadgeDef {
   key:   string
@@ -57,7 +58,7 @@ function BadgeTooltip({ badge }: TooltipProps) {
       }}
     >
       <div style={{ fontSize: 12, fontWeight: 700, color: WHITE_STR, fontFamily: FONT_BODY, marginBottom: 5, lineHeight: 1.3 }}>
-        {badge.emoji} {badge.name}
+        <FE emoji={badge.emoji} size={12} /> {badge.name}
       </div>
       <div style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 4, fontFamily: FONT_BODY }}>
         How to earn
@@ -74,7 +75,7 @@ function BadgeTooltip({ badge }: TooltipProps) {
         borderRadius: 20, padding: '3px 9px',
         fontFamily: FONT_BODY,
       }}>
-        {badge.earned ? '✓ Earned' : '🔒 Not yet earned'}
+        {badge.earned ? '✓ Earned' : <><FE emoji="🔒" size={10} /> Not yet earned</>}
       </div>
       <div style={{
         position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
@@ -219,7 +220,7 @@ export default function Badges({ currentVoyage }: Props) {
       <div style={{ marginBottom: 16 }}>
         {shipName ? (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 600, color: MUTED }}>
-            <span style={{ fontSize: 14 }}>🚢</span>
+            <FE emoji="🚢" size={14} />
             <span>{shipName} · badges earned this voyage</span>
           </div>
         ) : (
@@ -261,8 +262,8 @@ export default function Badges({ currentVoyage }: Props) {
                 fontSize: 8, color: WHITE_STR, fontWeight: 700,
               }}>✓</div>
             )}
-            <span style={{ fontSize: 28, filter: badge.earned ? 'none' : 'grayscale(1)' }}>
-              {badge.emoji}
+            <span style={{ filter: badge.earned ? 'none' : 'grayscale(1)' }}>
+              <FE emoji={badge.emoji} size={28} />
             </span>
             <span style={{ fontFamily: FONT_BODY, fontSize: 11, fontWeight: 700, color: badge.earned ? NAVY2 : MUTED, textAlign: 'center', lineHeight: 1.3 }}>
               {badge.name}

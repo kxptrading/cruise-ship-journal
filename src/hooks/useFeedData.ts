@@ -5,7 +5,7 @@
 // Returns: combined feedItems + all interaction handlers.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getPhotos, getSignedUrls } from '../lib/photoStorage'
 import type { Voyage, ItineraryDay, DailyLog, FeedItem, FeedAuthor, ReactionsMap, CommentsMap, Comment } from '../types'
@@ -39,11 +39,16 @@ export interface UseFeedDataReturn {
   handleReact:       (postVoyageId: string, dayNumber: number, reactionId: string) => Promise<void>
   handleAddComment:  (postVoyageId: string, dayNumber: number, body: string) => Promise<void>
   handleEditComment: (commentId: string, newBody: string) => Promise<void>
+  reload:            () => void
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 
 export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: Options): UseFeedDataReturn {
+
+  // ── Reload trigger — incrementing this re-runs all fetch effects ─────────────
+  const [loadKey, setLoadKey] = useState(0)
+  const reload = useCallback(() => setLoadKey(k => k + 1), [])
 
   // ── Own profile ─────────────────────────────────────────────────────────────
   const [avatarUrl,       setAvatarUrl]       = useState<string>('')
@@ -63,7 +68,7 @@ export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: 
         setUserInitials(toInitials(data))
         setUserDisplayName(data.display_name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || 'Cruiser')
       })
-  }, [userId])
+  }, [userId, loadKey])
 
   // ── Friend posts ─────────────────────────────────────────────────────────────
   const [friendPosts, setFriendPosts] = useState<FeedItem[]>([])
@@ -155,7 +160,7 @@ export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: 
     }
 
     loadFriendFeeds()
-  }, [userId])
+  }, [userId, loadKey])
 
   // ── Own day photos ────────────────────────────────────────────────────────────
   const [photosByDay, setPhotosByDay] = useState<Record<number, { dataUrl: string; caption: string }>>({})
@@ -173,7 +178,7 @@ export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: 
       results.forEach(({ day, photo }) => { if (photo) map[day] = photo })
       setPhotosByDay(map)
     })
-  }, [dailyLogs.length, voyageId])
+  }, [dailyLogs.length, voyageId, loadKey])
 
   // ── Combined feed items ───────────────────────────────────────────────────────
   const feedItems = useMemo<FeedItem[]>(() => {
@@ -332,5 +337,6 @@ export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: 
     feedItems,
     reactionsMap, commentsMap,
     handleReact, handleAddComment, handleEditComment,
+    reload,
   }
 }

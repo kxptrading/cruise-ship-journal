@@ -84,7 +84,7 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
           aria-label="Deck Days — home"
           style={{
             position: 'absolute', left: '50%', top: '50%',
-            transform: 'translate(calc(-50% + 18px), -50%)',
+            transform: 'translate(calc(-50% - 18px), -50%)',
             background: 'none', border: 'none', padding: 0, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8,
           }}

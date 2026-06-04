@@ -16,7 +16,8 @@ import { Menu, Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Sea
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, GOLD, FONT_BODY } from '../constants'
 import TickerText from '../ui/TickerText'
-import { useW } from '../context'
+import { useW, useIconPack } from '../context'
+import FE from './FE'
 
 // Hamburger geometry — used to compute safe inner container left padding
 const HBG_LEFT = 16   // px from bar left edge
@@ -25,14 +26,14 @@ const HBG_GAP  = 16   // breathing room between button and logo
 
 const NAV_MAX_WIDTH = 1200
 
-interface NavItem { id: string; label: string; Icon: LucideIcon }
+interface NavItem { id: string; label: string; Icon: LucideIcon; emoji: string }
 
 const TOP_NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard',   label: 'Feed',     Icon: Compass       },
-  { id: 'voyages',     label: 'Voyages',  Icon: Ship          },
-  { id: 'friends',     label: 'Friends',  Icon: Users         },
-  { id: 'chat',        label: 'Messages', Icon: MessageCircle },
-  { id: 'userprofile', label: 'Profile',  Icon: CircleUser    },
+  { id: 'dashboard',   label: 'Feed',     Icon: Compass,       emoji: '🧭' },
+  { id: 'voyages',     label: 'Voyages',  Icon: Ship,          emoji: '🚢' },
+  { id: 'friends',     label: 'Friends',  Icon: Users,         emoji: '👥' },
+  { id: 'chat',        label: 'Messages', Icon: MessageCircle, emoji: '💬' },
+  { id: 'userprofile', label: 'Profile',  Icon: CircleUser,    emoji: '👤' },
 ]
 
 interface Props {
@@ -45,7 +46,8 @@ interface Props {
 }
 
 export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLabel }: Props) {
-  const w = useW()
+  const w        = useW()
+  const iconPack = useIconPack()
 
   // ── Mobile layout ─────────────────────────────────────────────────────────
   if (isMobile) {
@@ -219,7 +221,7 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
 
           {/* Nav links */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: navGap, flexShrink: 0 }}>
-            {TOP_NAV_ITEMS.map(({ id, label, Icon }) => {
+            {TOP_NAV_ITEMS.map(({ id, label, Icon, emoji }) => {
               const active = section === id
               return (
                 <button
@@ -249,7 +251,10 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.82)' } }}
                   title={!showLabels ? label : undefined}
                 >
-                  <Icon size={15} strokeWidth={active ? 2.5 : 1.75} />
+                  {iconPack !== 'lucide'
+                    ? <FE emoji={emoji} size={15} />
+                    : <Icon size={15} strokeWidth={active ? 2.5 : 1.75} />
+                  }
                   {showLabels && label}
                 </button>
               )

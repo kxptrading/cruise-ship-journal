@@ -31,11 +31,37 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion }  from 'framer-motion'
-import { GOLD, WHITE, FONT_DISPLAY, FONT_BODY, FONT_LOGO } from '../constants'
+import {
+  Ship, Compass, Users, MessageCircle, CircleUser,
+  CalendarDays, Map, Utensils, UtensilsCrossed, Music,
+  Heart, CreditCard, ShoppingBag, Trophy, Luggage, FileText,
+} from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
+import { GOLD, WHITE, FONT_BODY, FONT_LOGO } from '../constants'
 import { NAV, PRIMARY_NAV } from '../constants'
-import FE     from './FE'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
+
+// Lucide icon map keyed by nav item id
+const NAV_ICONS: Record<string, LucideIcon> = {
+  voyages:       Ship,
+  feed:          Compass,
+  dashboard:     Compass,
+  friends:       Users,
+  chat:          MessageCircle,
+  userprofile:   CircleUser,
+  daily:         CalendarDays,
+  itinerary:     Map,
+  food:          Utensils,
+  dining:        UtensilsCrossed,
+  entertainment: Music,
+  foodfav:       Heart,
+  budget:        CreditCard,
+  shopping:      ShoppingBag,
+  highlights:    Trophy,
+  packing:       Luggage,
+  notes:         FileText,
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const SIDEBAR_BG = 'linear-gradient(180deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 60%, var(--t-primary) 100%)'
@@ -145,9 +171,10 @@ export default function Sidebar({
   // ── Nav button renderer ────────────────────────────────────────────────────
   // Renders one nav item in either tablet (icon-only) or desktop (icon+label) mode.
   // customOnClick overrides the default onNav behaviour for journal tab items.
-  const renderNavButton = (id: string, label: string, icon: string, customOnClick?: () => void) => {
+  const renderNavButton = (id: string, label: string, _icon: string, customOnClick?: () => void) => {
     const active = activeId === id
     const handleClick = customOnClick ?? (() => { onNav(id); if (isMobile) onClose() })
+    const Icon = NAV_ICONS[id]
     return (
       <button
         key={id}
@@ -159,18 +186,19 @@ export default function Sidebar({
           width: '100%', textAlign: 'left',
           padding: '10px 14px 10px 10px', minHeight: 44,
           background: active ? 'rgba(201,162,39,0.12)' : 'transparent',
-          color: WHITE, border: 'none',
+          color: active ? GOLD : WHITE, border: 'none',
           borderLeft: `3px solid ${active ? GOLD : 'transparent'}`,
           cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY,
           fontWeight: active ? 700 : 400,
-          transition: 'background 0.15s', letterSpacing: '0.01em',
+          transition: 'background 0.15s, color 0.15s', letterSpacing: '0.01em',
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        <FE emoji={icon} size={18} />
+        {Icon
+          ? <Icon size={17} strokeWidth={active ? 2.5 : 1.75} />
+          : <span style={{ width: 17 }} />
+        }
         <span style={{ flex: 1 }}>{label}</span>
-        {/* Gold dot — indicates this section has content. Hidden when active to
-            avoid competing with the gold left-border active indicator. */}
         {sectionStatus?.has(id) && !active && (
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />
         )}

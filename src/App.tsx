@@ -26,7 +26,7 @@ import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
-import { WCtx, VoyageCtx, UserCtx, useWindowSize } from './context'
+import { WCtx, VoyageCtx, UserCtx, IconPackCtx, useWindowSize, type IconPack } from './context'
 import { applyTheme, getSavedTheme } from './themes'
 import { supabase } from './lib/supabase'
 import { useVoyageData } from './hooks/useVoyageData'
@@ -135,6 +135,16 @@ export default function App() {
   // getSavedTheme reads localStorage synchronously, so the initial state is
   // always the persisted value — no flash of default theme on mount.
   const [theme, setTheme] = useState<string>(getSavedTheme)
+
+  // ── Icon pack ────────────────────────────────────────────────────────────────
+  const [iconPack, setIconPack] = useState<IconPack>(
+    () => (localStorage.getItem('csj-icon-pack') as IconPack | null) ?? 'fluent'
+  )
+
+  const switchIconPack = (pack: IconPack) => {
+    localStorage.setItem('csj-icon-pack', pack)
+    setIconPack(pack)
+  }
 
   // ── Age gate — null means not set, treated as adult ─────────────────────────
   // The age field comes from the user's profile in Supabase. null means the user
@@ -371,6 +381,7 @@ export default function App() {
   // accessibility setting by automatically disabling Framer Motion animations.
   return (
     <MotionConfig reducedMotion="user">
+    <IconPackCtx.Provider value={iconPack}>
     <VoyageCtx.Provider value={voyageId}>
     <UserCtx.Provider value={session?.user?.id ?? null}>
     <WCtx.Provider value={winW}>
@@ -492,7 +503,7 @@ export default function App() {
                 <Route path="/friends"  element={<Friends />} />
                 <Route path="/contacts" element={<Friends />} />
                 <Route path="/chat"          element={<Chat />} />
-                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} />} />
+                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
                 <Route path="/design-system" element={<DesignSystem />} />
                 <Route path="*"              element={<NotFound onNav={navClick} />} />
               </Routes>
@@ -528,6 +539,7 @@ export default function App() {
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>
+    </IconPackCtx.Provider>
     </MotionConfig>
   )
 }

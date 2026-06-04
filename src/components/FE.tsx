@@ -1,14 +1,74 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// components/FE.tsx — Microsoft Fluent Emoji renderer
+// components/FE.tsx — Unified icon renderer
 //
-// Renders emoji as flat SVG images from Microsoft's Fluent Emoji set via unpkg.
-// Falls back to the native text emoji if the image fails to load.
+// Renders icons in the style selected by the user's icon pack preference:
+//   fluent  — Microsoft Fluent Emoji SVGs via unpkg CDN (default)
+//   native  — plain system/device emoji
+//   lucide  — Lucide React SVG line icons; falls back to native for unmapped emoji
 //
 // URL pattern: https://unpkg.com/@lobehub/fluent-emoji-flat@latest/assets/{hex}.svg
 // where {hex} is the emoji codepoints joined with '-' (e.g. 1f602, 1f4b3-fe0f)
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
+import { useIconPack } from '../context'
+import type { LucideIcon } from 'lucide-react'
+import {
+  Anchor, AlertTriangle, Bell, BookOpen, Calendar, CalendarDays,
+  Camera, Compass, CreditCard, DollarSign, DoorOpen, FileText,
+  FolderOpen, Globe, Hand, Image, Lock, Luggage, Map, MapPin,
+  MessageCircle, Moon, Music, Pencil, PencilLine, Plus, Radio,
+  Search, Ship, ShoppingBag, Sparkles, Star, Sunrise, Timer,
+  Trophy, Users, Utensils, UtensilsCrossed, Waves, CloudSun,
+} from 'lucide-react'
+
+// Maps every emoji used in the app to its Lucide equivalent.
+// Emoji without an entry fall back to native text rendering.
+const LUCIDE_MAP: Record<string, LucideIcon> = {
+  '📅': CalendarDays,
+  '🗓':  Calendar,
+  '🗺️': Map,
+  '📍': MapPin,
+  '🚢': Ship,
+  '⛵': Ship,
+  '🚤': Ship,
+  '⚓': Anchor,
+  '🧭': Compass,
+  '🌊': Waves,
+  '🌅': Sunrise,
+  '🌙': Moon,
+  '🌤️': CloudSun,
+  '🍴': Utensils,
+  '🍽️': UtensilsCrossed,
+  '🎭': Music,
+  '⭐': Star,
+  '✨': Sparkles,
+  '💳': CreditCard,
+  '💰': DollarSign,
+  '🛍️': ShoppingBag,
+  '🏆': Trophy,
+  '🧳': Luggage,
+  '📝': FileText,
+  '📖': BookOpen,
+  '✍️': PencilLine,
+  '✏️': Pencil,
+  '👥': Users,
+  '💬': MessageCircle,
+  '🔍': Search,
+  '🔒': Lock,
+  '🔔': Bell,
+  '🌐': Globe,
+  '📷': Camera,
+  '📸': Camera,
+  '🖼️': Image,
+  '🗂️': FolderOpen,
+  '📡': Radio,
+  '⚠️': AlertTriangle,
+  '⏱':  Timer,
+  '👋': Hand,
+  '🚪': DoorOpen,
+  '+':  Plus,
+}
 
 function emojiToHex(emoji: string): string {
   return [...emoji]
@@ -18,8 +78,7 @@ function emojiToHex(emoji: string): string {
 }
 
 function fluentUrl(emoji: string): string {
-  const hex = emojiToHex(emoji)
-  return `https://unpkg.com/@lobehub/fluent-emoji-flat@latest/assets/${hex}.svg`
+  return `https://unpkg.com/@lobehub/fluent-emoji-flat@latest/assets/${emojiToHex(emoji)}.svg`
 }
 
 interface FEProps {
@@ -28,9 +87,23 @@ interface FEProps {
 }
 
 export default function FE({ emoji, size = 36 }: FEProps) {
+  const iconPack = useIconPack()
   const [failed, setFailed] = useState(false)
 
-  if (failed) {
+  if (iconPack === 'lucide') {
+    const LucideIcon = LUCIDE_MAP[emoji]
+    if (LucideIcon) {
+      return <LucideIcon size={size} strokeWidth={1.75} style={{ display: 'inline-block', verticalAlign: 'middle', flexShrink: 0 }} />
+    }
+    // No mapping — fall through to native
+    return (
+      <span style={{ fontSize: size * 0.75, lineHeight: 1, display: 'inline-block', verticalAlign: 'middle' }}>
+        {emoji}
+      </span>
+    )
+  }
+
+  if (iconPack === 'native' || failed) {
     return (
       <span style={{ fontSize: size, lineHeight: 1, display: 'inline-block', verticalAlign: 'middle' }}>
         {emoji}

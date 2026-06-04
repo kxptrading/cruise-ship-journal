@@ -8,6 +8,7 @@ import { WHITE, BORDER, NAVY2, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from
 import { THEMES } from '../../themes'
 import type { Theme } from '../../themes'
 import FE from '../../components/FE'
+import { CalendarDays, Trophy, Luggage, FileText } from 'lucide-react'
 
 interface ThemeGroup {
   label: string
@@ -67,14 +68,20 @@ function ThemeSwatch({ t, active, onThemeChange }: SwatchProps) {
   )
 }
 
+type IconPack = 'fluent' | 'native' | 'lucide'
+
 interface Props {
-  theme:          string
-  onThemeChange?: (id: string) => void
-  age:            number | null
-  onAgeChange?:   (n: number) => void
+  theme:              string
+  onThemeChange?:     (id: string) => void
+  age:                number | null
+  onAgeChange?:       (n: number) => void
+  iconPack?:          IconPack
+  onIconPackChange?:  (pack: IconPack) => void
 }
 
-export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange }: Props) {
+const LUCIDE_PREVIEW = [CalendarDays, Trophy, Luggage, FileText]
+
+export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange, iconPack = 'fluent', onIconPackChange }: Props) {
   const [ageInput, setAgeInput] = useState<string>('')
   const [ageSaved, setAgeSaved] = useState<boolean>(false)
 
@@ -123,6 +130,51 @@ export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange
           {age !== null && !isAdult && (
             <span style={{ fontSize: 11, color: MUTED }}>Budget tracking is hidden for Junior profiles.</span>
           )}
+        </div>
+      </div>
+
+      {/* Icon pack selector */}
+      <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Icon Style</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          {(['fluent', 'native', 'lucide'] as IconPack[]).map(id => {
+            const active = iconPack === id
+            const labels: Record<IconPack, [string, string]> = {
+              fluent:  ['Fluent',  'Colourful Fluent Emoji'],
+              native:  ['Classic', 'Device native emoji'],
+              lucide:  ['Lucide',  'Clean line icons'],
+            }
+            const [label, desc] = labels[id]
+            return (
+              <button
+                key={id}
+                onClick={() => onIconPackChange?.(id)}
+                style={{
+                  border: active ? `2px solid ${NAVY2}` : `1px solid ${BORDER}`,
+                  borderRadius: 12, padding: '10px 10px', cursor: 'pointer',
+                  background: active ? 'rgba(20,41,63,0.06)' : WHITE,
+                  outline: 'none', textAlign: 'left',
+                  boxShadow: active ? `0 0 0 3px rgba(20,41,63,0.12)` : 'none',
+                  transition: 'box-shadow 0.15s, border-color 0.15s',
+                  fontFamily: FONT_BODY,
+                }}
+              >
+                <div style={{ display: 'flex', gap: 3, marginBottom: 7, flexWrap: 'wrap' }}>
+                  {id === 'lucide'
+                    ? LUCIDE_PREVIEW.map((Icon, i) => <Icon key={i} size={20} strokeWidth={1.75} color={NAVY2} />)
+                    : ['📅', '🏆', '🧳', '📝'].map((em, i) =>
+                        id === 'fluent'
+                          ? <FE key={i} emoji={em} size={20} />
+                          : <span key={i} style={{ fontSize: 20, lineHeight: 1 }}>{em}</span>
+                      )
+                  }
+                </div>
+                <div style={{ fontSize: 12, fontWeight: active ? 700 : 600, color: active ? NAVY2 : TEXT }}>{label}</div>
+                <div style={{ fontSize: 10, color: MUTED, marginTop: 2 }}>{desc}</div>
+                {active && <div style={{ fontSize: 10, fontWeight: 700, color: TEAL, marginTop: 4 }}>✓ Active</div>}
+              </button>
+            )
+          })}
         </div>
       </div>
 

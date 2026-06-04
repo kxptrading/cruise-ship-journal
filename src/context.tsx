@@ -13,6 +13,10 @@ export const useVoyageId = (): string | null => useContext(VoyageCtx)
 export const UserCtx = createContext<string | null>(null)
 export const useUserId = (): string | null => useContext(UserCtx)
 
+export type IconPack = 'fluent' | 'native' | 'lucide'
+export const IconPackCtx = createContext<IconPack>('fluent')
+export const useIconPack = (): IconPack => useContext(IconPackCtx)
+
 export function useWindowSize(): number {
   const [w, setW] = useState<number>(() => window.innerWidth)
   useEffect(() => {

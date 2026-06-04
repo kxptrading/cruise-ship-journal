@@ -39,16 +39,18 @@ interface CropState {
 }
 
 interface Props {
-  session:       Session | null
-  allVoyages:    VoyageListRow[]
-  voyage:        Voyage
-  onNav:         (section: string) => void
-  theme:         string
-  onThemeChange: (id: string) => void
-  onAgeChange?:  (age: number) => void
+  session:           Session | null
+  allVoyages:        VoyageListRow[]
+  voyage:            Voyage
+  onNav:             (section: string) => void
+  theme:             string
+  onThemeChange:     (id: string) => void
+  onAgeChange?:      (age: number) => void
+  iconPack?:         'fluent' | 'native' | 'lucide'
+  onIconPackChange?: (pack: 'fluent' | 'native' | 'lucide') => void
 }
 
-export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, onAgeChange }: Props) {
+export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, onAgeChange, iconPack, onIconPackChange }: Props) {
   const userId   = useUserId()
   const w        = useW()
   const isMobile = w < BP.mobile
@@ -214,6 +216,8 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
         <AppearanceBlock
           theme={theme}
           onThemeChange={onThemeChange}
+          iconPack={iconPack}
+          onIconPackChange={onIconPackChange}
           age={profile.age}
           onAgeChange={async (age: number) => {
             setProfile(p => ({ ...p, age }))

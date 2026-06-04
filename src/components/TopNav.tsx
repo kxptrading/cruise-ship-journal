@@ -12,7 +12,7 @@
 //                    Ticker sub-bar below the main bar.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Menu, Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2 } from 'lucide-react'
+import { Menu, Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { WHITE, GOLD, FONT_BODY } from '../constants'
 import TickerText from '../ui/TickerText'
@@ -87,6 +87,23 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
         </button>
 
         <div style={{ flex: 1 }} />
+
+        <button
+          aria-label="Search"
+          onClick={() => onNav('search')}
+          style={{
+            background: section === 'search' ? 'rgba(201,162,39,0.18)' : 'transparent',
+            border: 'none',
+            width: 40, height: 40, flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer',
+            color: section === 'search' ? GOLD : 'rgba(255,255,255,0.85)',
+            borderRadius: 8,
+            WebkitTapHighlightColor: 'transparent',
+          }}
+        >
+          <Search size={22} strokeWidth={section === 'search' ? 2.5 : 1.75} />
+        </button>
 
         <button
           aria-label="Profile"

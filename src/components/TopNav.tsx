@@ -76,13 +76,15 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
           <Menu size={24} strokeWidth={1.75} />
         </button>
 
-        {/* Centre — fixed-width logo prevents layout shift on image load */}
+        {/* Centre — text at dead centre, logo to its left.
+            Shift right by (logoW + gap) / 2 = (28 + 8) / 2 = 18px so the
+            text midpoint lands at 50% rather than the group midpoint. */}
         <button
           onClick={() => onNav('dashboard')}
           aria-label="Deck Days — home"
           style={{
             position: 'absolute', left: '50%', top: '50%',
-            transform: 'translate(-50%, -50%)',
+            transform: 'translate(calc(-50% + 18px), -50%)',
             background: 'none', border: 'none', padding: 0, cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 8,
           }}

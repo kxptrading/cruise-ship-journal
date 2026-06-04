@@ -4,81 +4,79 @@
 
 import { Ship, CalendarDays, Users, MessageCircle, Rss } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { FONT_BODY } from '../constants'
+import { GOLD, FONT_BODY } from '../constants'
 import { useLocation } from 'react-router-dom'
 
-interface TabItem {
-  id:       string
-  label:    string
-  Icon:     LucideIcon
-  action?:  'menu'
-}
+interface TabItem { id: string; label: string; Icon: LucideIcon }
 
 const TABS: TabItem[] = [
-  { id: 'voyages',  label: 'Voyages', Icon: Ship },
-  { id: 'daily',    label: 'Daily',   Icon: CalendarDays },
-  { id: 'feed',     label: 'Feed',    Icon: Rss },
-  { id: 'friends',  label: 'Friends', Icon: Users },
+  { id: 'voyages',  label: 'Voyages', Icon: Ship          },
+  { id: 'daily',    label: 'Daily',   Icon: CalendarDays  },
+  { id: 'feed',     label: 'Feed',    Icon: Rss           },
+  { id: 'friends',  label: 'Friends', Icon: Users         },
   { id: 'chat',     label: 'Chat',    Icon: MessageCircle },
 ]
 
 interface Props {
-  section:     string
-  onNav:       (id: string) => void
-  onMenuOpen:  () => void
+  section:    string
+  onNav:      (id: string) => void
+  onMenuOpen: () => void
 }
 
-export default function BottomNav({ section, onNav, onMenuOpen }: Props) {
+export default function BottomNav({ section, onNav }: Props) {
   const { pathname } = useLocation()
-  // Derive active tab — /voyages/* maps to 'voyages'
   const activeTab = pathname.startsWith('/voyages') ? 'voyages' : (pathname.slice(1) || section)
 
   return (
     <nav
       aria-label="Bottom navigation"
       style={{
-        position:    'fixed',
-        bottom:      0,
-        left:        0,
-        right:       0,
-        zIndex:      500,
-        background:  'var(--t-primary-dk)',
-        borderTop:   '1px solid rgba(255,255,255,0.1)',
-        display:     'flex',
+        position:      'fixed',
+        bottom:        0,
+        left:          0,
+        right:         0,
+        zIndex:        500,
+        background:    'var(--t-primary-dk)',
+        borderTop:     '1px solid rgba(255,255,255,0.08)',
+        display:       'flex',
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {TABS.map(({ id, label, Icon, action }) => {
-        const isMenu  = action === 'menu'
-        const active  = !isMenu && activeTab === id
-        const color   = active ? 'var(--t-primary-lt)' : '#FFFFFF'
+      {TABS.map(({ id, label, Icon }) => {
+        const active = activeTab === id
 
         return (
           <button
             key={id}
             aria-label={label}
             aria-current={active ? 'page' : undefined}
-            onClick={() => isMenu ? onMenuOpen() : onNav(id)}
+            onClick={() => onNav(id)}
             style={{
               flex:           1,
-              minHeight:      44,
+              minHeight:      54,
               display:        'flex',
               flexDirection:  'column',
               alignItems:     'center',
               justifyContent: 'center',
-              gap:            3,
+              gap:            4,
               background:     'transparent',
               border:         'none',
+              borderTop:      `2px solid ${active ? GOLD : 'transparent'}`,
               cursor:         'pointer',
-              color,
-              padding:        '8px 4px',
+              padding:        '10px 4px 8px',
               fontFamily:     FONT_BODY,
-              transition:     'color 0.15s',
+              transition:     'border-color 0.15s, color 0.15s',
               WebkitTapHighlightColor: 'transparent',
+              color: active ? GOLD : 'rgba(255,255,255,0.45)',
             }}
           >
-            <Icon size={22} strokeWidth={active ? 2.5 : 1.75} />
-            <span style={{ fontSize: 10, fontWeight: active ? 700 : 400, letterSpacing: '0.02em' }}>
+            <Icon size={21} strokeWidth={active ? 2.5 : 1.75} />
+            <span style={{
+              fontSize:    10,
+              fontWeight:  active ? 700 : 400,
+              letterSpacing: '0.03em',
+              textTransform: 'uppercase',
+            }}>
               {label}
             </span>
           </button>

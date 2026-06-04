@@ -18,8 +18,8 @@ import {
   Camera, Compass, CreditCard, DollarSign, DoorOpen, FileText,
   FolderOpen, Globe, Hand, Image, Lock, Luggage, Map, MapPin,
   MessageCircle, Moon, Music, Pencil, PencilLine, Plus, Radio,
-  Search, Ship, ShoppingBag, Sparkles, Star, Sunrise, Timer,
-  Trophy, Users, Utensils, UtensilsCrossed, Waves, CloudSun,
+  Rss, Search, Ship, ShoppingBag, Sparkles, Star, Sunrise, Timer,
+  Trophy, User, Users, Utensils, UtensilsCrossed, Waves, CloudSun,
 } from 'lucide-react'
 
 // Maps every emoji used in the app to its Lucide equivalent.
@@ -67,6 +67,8 @@ const LUCIDE_MAP: Record<string, LucideIcon> = {
   '⏱':  Timer,
   '👋': Hand,
   '🚪': DoorOpen,
+  '👤': User,
+  '📻': Rss,
   '+':  Plus,
 }
 

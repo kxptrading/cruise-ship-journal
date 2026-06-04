@@ -6,15 +6,17 @@ import { Ship, CalendarDays, Users, MessageCircle, Rss } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { GOLD, FONT_BODY } from '../constants'
 import { useLocation } from 'react-router-dom'
+import { useIconPack } from '../context'
+import FE from './FE'
 
-interface TabItem { id: string; label: string; Icon: LucideIcon }
+interface TabItem { id: string; label: string; Icon: LucideIcon; emoji: string }
 
 const TABS: TabItem[] = [
-  { id: 'voyages',  label: 'Voyages', Icon: Ship          },
-  { id: 'daily',    label: 'Daily',   Icon: CalendarDays  },
-  { id: 'feed',     label: 'Feed',    Icon: Rss           },
-  { id: 'friends',  label: 'Friends', Icon: Users         },
-  { id: 'chat',     label: 'Chat',    Icon: MessageCircle },
+  { id: 'voyages',  label: 'Voyages', Icon: Ship,          emoji: '🚢' },
+  { id: 'daily',    label: 'Daily',   Icon: CalendarDays,  emoji: '📅' },
+  { id: 'feed',     label: 'Feed',    Icon: Rss,           emoji: '🧭' },
+  { id: 'friends',  label: 'Friends', Icon: Users,         emoji: '👥' },
+  { id: 'chat',     label: 'Chat',    Icon: MessageCircle, emoji: '💬' },
 ]
 
 interface Props {
@@ -25,6 +27,7 @@ interface Props {
 
 export default function BottomNav({ section, onNav }: Props) {
   const { pathname } = useLocation()
+  const iconPack = useIconPack()
   const activeTab = pathname.startsWith('/voyages') ? 'voyages' : (pathname.slice(1) || section)
 
   return (
@@ -42,7 +45,7 @@ export default function BottomNav({ section, onNav }: Props) {
         paddingBottom: 'env(safe-area-inset-bottom)',
       }}
     >
-      {TABS.map(({ id, label, Icon }) => {
+      {TABS.map(({ id, label, Icon, emoji }) => {
         const active = activeTab === id
 
         return (
@@ -70,7 +73,10 @@ export default function BottomNav({ section, onNav }: Props) {
               color: active ? GOLD : 'rgba(255,255,255,0.45)',
             }}
           >
-            <Icon size={21} strokeWidth={active ? 2.5 : 1.75} />
+            {iconPack !== 'lucide'
+              ? <FE emoji={emoji} size={21} />
+              : <Icon size={21} strokeWidth={active ? 2.5 : 1.75} />
+            }
             <span style={{
               fontSize:    10,
               fontWeight:  active ? 700 : 400,

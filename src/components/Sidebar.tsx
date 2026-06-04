@@ -41,6 +41,29 @@ import { GOLD, WHITE, FONT_BODY, FONT_LOGO } from '../constants'
 import { NAV, PRIMARY_NAV } from '../constants'
 import { useFocusTrap } from '../hooks/useFocusTrap'
 import type { Breakpoint } from '../hooks/useBreakpoint'
+import { useIconPack } from '../context'
+import FE from './FE'
+
+// Emoji fallback for fluent/native icon packs
+const NAV_EMOJI: Record<string, string> = {
+  voyages:       '🚢',
+  feed:          '🧭',
+  dashboard:     '🧭',
+  friends:       '👥',
+  chat:          '💬',
+  userprofile:   '👤',
+  daily:         '📅',
+  itinerary:     '🗺️',
+  food:          '🍴',
+  dining:        '🍽️',
+  entertainment: '🎭',
+  foodfav:       '⭐',
+  budget:        '💳',
+  shopping:      '🛍️',
+  highlights:    '🏆',
+  packing:       '🧳',
+  notes:         '📝',
+}
 
 // Lucide icon map keyed by nav item id
 const NAV_ICONS: Record<string, LucideIcon> = {
@@ -171,10 +194,20 @@ export default function Sidebar({
   // ── Nav button renderer ────────────────────────────────────────────────────
   // Renders one nav item in either tablet (icon-only) or desktop (icon+label) mode.
   // customOnClick overrides the default onNav behaviour for journal tab items.
+  const iconPack = useIconPack()
+
   const renderNavButton = (id: string, label: string, _icon: string, customOnClick?: () => void) => {
     const active = activeId === id
     const handleClick = customOnClick ?? (() => { onNav(id); if (isMobile) onClose() })
     const Icon = NAV_ICONS[id]
+    const emoji = NAV_EMOJI[id]
+
+    const renderIcon = () => {
+      if (iconPack !== 'lucide' && emoji) return <FE emoji={emoji} size={17} />
+      if (Icon) return <Icon size={17} strokeWidth={active ? 2.5 : 1.75} />
+      return <span style={{ width: 17 }} />
+    }
+
     return (
       <button
         key={id}
@@ -194,10 +227,7 @@ export default function Sidebar({
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        {Icon
-          ? <Icon size={17} strokeWidth={active ? 2.5 : 1.75} />
-          : <span style={{ width: 17 }} />
-        }
+        {renderIcon()}
         <span style={{ flex: 1 }}>{label}</span>
         {sectionStatus?.has(id) && !active && (
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, opacity: 0.55, flexShrink: 0 }} />

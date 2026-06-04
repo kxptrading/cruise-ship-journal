@@ -76,14 +76,14 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
           <Menu size={24} strokeWidth={1.75} />
         </button>
 
-        {/* Centre — absolutely positioned so it doesn't shift with the right icons */}
-        <div style={{ position: 'absolute', left: '50%', transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+        {/* Centre — text anchored at 50%, logo placed to its left */}
+        <div style={{ position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
           <button
             onClick={() => onNav('dashboard')}
             aria-label="Deck Days — home"
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, pointerEvents: 'auto' }}
           >
-            <img src="/logo.svg" alt="Deck Days" style={{ height: 32, width: 'auto', display: 'block' }} />
+            <img src="/logo.svg" alt="" style={{ height: 28, width: 'auto', display: 'block', flexShrink: 0 }} />
             <span style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY, letterSpacing: '-0.01em', opacity: 0.95, whiteSpace: 'nowrap' }}>
               Deck Days
             </span>

@@ -170,13 +170,46 @@ export const PORT_COORDS: Record<string, [number, number]> = {
   'lanzarote':             [-13.64, 29.05],
   'fuerteventura':         [-14.01, 28.36],
   'la palma':              [-17.89, 28.68],
+  // Norwegian Fjords
+  'olden':                 [6.80,  61.84],
+  'eidfjord':              [6.89,  60.47],
+  'alesund':               [6.15,  62.47],
+  'ålesund':               [6.15,  62.47],
+  'haugesund':             [5.27,  59.41],
+  'skjolden':              [7.61,  61.48],
+  'hellesylt':             [6.87,  62.09],
+  'molde':                 [7.16,  62.74],
+  'kristiansand':          [7.99,  58.15],
+  'geiranger':             [7.20,  62.10],
+  'nordfjordeid':          [6.01,  61.90],
+  'rosendal':              [6.01,  59.98],
+  'ulvik':                 [6.91,  60.57],
+  'hardanger':             [6.50,  60.30],
+  'norheimsund':           [6.14,  60.37],
+  'loen':                  [6.85,  61.87],
+  'maloy':                 [5.11,  61.93],
+  'floro':                 [5.02,  61.60],
+  // British Isles (common IONA ports)
+  'invergordon':           [-4.17, 57.69],
+  'kirkwall':              [-2.96, 58.98],
+  'lerwick':               [-1.15, 60.15],
+  'stornoway':             [-6.39, 58.21],
+  'portree':               [-6.19, 57.41],
+  'holyhead':              [-4.63, 53.31],
 }
 
 export function resolvePort(name: string): [number, number] | null {
   if (!name) return null
   const key = name.trim().toLowerCase()
+  // Direct match
   if (PORT_COORDS[key]) return PORT_COORDS[key]
-  const firstWord = key.split(/[\s,]+/)[0]
-  const partial = Object.entries(PORT_COORDS).find(([k]) => k.includes(firstWord) || firstWord.includes(k))
+  // Partial match — only allow when the dictionary key *contains* the first word
+  // of the search term (e.g. "Geiranger" hits "geirangerfjord").
+  // We intentionally do NOT check the reverse direction (firstWord.includes(k))
+  // because short dictionary keys like "miami" or "nice" would create false
+  // positives for any port name that happens to contain those letters.
+  const firstWord = key.split(/[\s,()]+/)[0]
+  if (firstWord.length < 4) return null
+  const partial = Object.entries(PORT_COORDS).find(([k]) => k.includes(firstWord))
   return partial ? partial[1] : null
 }

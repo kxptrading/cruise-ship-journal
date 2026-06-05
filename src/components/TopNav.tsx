@@ -62,7 +62,8 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
         gap:          12,
         flexShrink:   0,
         zIndex:       200,
-        position:     'relative',
+        position:     'sticky',
+        top:          0,
       }}>
         <button
           aria-label="Open menu"
@@ -151,7 +152,7 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
   const containerPadRight = 32
 
   return (
-    <div style={{ zIndex: 200, flexShrink: 0 }}>
+    <div style={{ zIndex: 200, flexShrink: 0, position: 'sticky', top: 0 }}>
 
       {/* ── Main bar ── */}
       <div style={{

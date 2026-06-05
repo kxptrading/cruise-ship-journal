@@ -178,6 +178,49 @@ export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange
         </div>
       </div>
 
+      {/* Icon preview */}
+      <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${BORDER}` }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Preview</div>
+        <div style={{ background: 'rgba(20,41,63,0.03)', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '14px 12px' }}>
+          {[
+            { label: 'Navigation', icons: [
+              { emoji: '🚢', name: 'Voyages'  },
+              { emoji: '🧭', name: 'Feed'     },
+              { emoji: '👥', name: 'Friends'  },
+              { emoji: '💬', name: 'Chat'     },
+              { emoji: '👤', name: 'Profile'  },
+            ]},
+            { label: 'Sections', icons: [
+              { emoji: '📅', name: 'Daily'    },
+              { emoji: '🗺️', name: 'Itinerary'},
+              { emoji: '🍴', name: 'Food'     },
+              { emoji: '🍽️', name: 'Dining'  },
+              { emoji: '🎭', name: 'Shows'    },
+              { emoji: '⭐', name: 'Favs'     },
+              { emoji: '💳', name: 'Budget'   },
+              { emoji: '🛍️', name: 'Shopping'},
+              { emoji: '🏆', name: 'Highlights'},
+              { emoji: '🧳', name: 'Packing'  },
+              { emoji: '📝', name: 'Notes'    },
+            ]},
+          ].map(group => (
+            <div key={group.label} style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 8 }}>{group.label}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {group.icons.map(({ emoji, name }) => (
+                  <div key={name} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, width: 48 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 10, background: WHITE, border: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <FE emoji={emoji} size={20} />
+                    </div>
+                    <span style={{ fontSize: 9, color: MUTED, textAlign: 'center', lineHeight: 1.2, fontFamily: FONT_BODY }}>{name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Grouped theme swatches */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {GROUPS.map(group => (

@@ -503,7 +503,7 @@ export default function App() {
                 <Route path="/friends"  element={<Friends />} />
                 <Route path="/contacts" element={<Friends />} />
                 <Route path="/chat"          element={<Chat />} />
-                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} onAgeChange={setUserAge} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
+                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
                 <Route path="/design-system" element={<DesignSystem />} />
                 <Route path="*"              element={<NotFound onNav={navClick} />} />
               </Routes>

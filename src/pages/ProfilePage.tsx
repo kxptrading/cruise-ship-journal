@@ -30,7 +30,6 @@ interface UserProfileState {
   favouriteDestination: string
   avatarUrl:            string
   bannerUrl:            string
-  age:                  number | null
 }
 
 interface CropState {
@@ -45,19 +44,18 @@ interface Props {
   onNav:             (section: string) => void
   theme:             string
   onThemeChange:     (id: string) => void
-  onAgeChange?:      (age: number) => void
   iconPack?:         'fluent' | 'native' | 'lucide'
   onIconPackChange?: (pack: 'fluent' | 'native' | 'lucide') => void
 }
 
-export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, onAgeChange, iconPack, onIconPackChange }: Props) {
+export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, iconPack, onIconPackChange }: Props) {
   const userId   = useUserId()
   const w        = useW()
   const isMobile = w < BP.mobile
 
   const [profile, setProfile] = useState<UserProfileState>({
     displayName: '', bio: '', homePort: '', favouriteCruiseLine: '',
-    favouriteDestination: '', avatarUrl: '', bannerUrl: '', age: null,
+    favouriteDestination: '', avatarUrl: '', bannerUrl: '',
   })
   const [loading,         setLoading]         = useState<boolean>(true)
   const [uploadingAvatar, setUploadingAvatar] = useState<boolean>(false)
@@ -74,7 +72,7 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
       .from('profiles')
       .select([
         'display_name', 'bio', 'home_port', 'favourite_cruise_line',
-        'favourite_destination', 'avatar_url', 'banner_url', 'age',
+        'favourite_destination', 'avatar_url', 'banner_url',
         'cabin_preference', 'dining_time', 'dietary', 'currency',
         'home_airport', 'units', 'trait_1', 'trait_2', 'trait_3', 'trait_4',
       ].join(', '))
@@ -93,9 +91,7 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
             favouriteDestination: (data.favourite_destination as string)  ?? '',
             avatarUrl:            (data.avatar_url            as string)  ?? '',
             bannerUrl:            (data.banner_url            as string)  ?? '',
-            age:                  (data.age                   as number | null) ?? null,
           })
-          if (data.age != null) onAgeChange?.(data.age as number)
         }
         setLoading(false)
       })

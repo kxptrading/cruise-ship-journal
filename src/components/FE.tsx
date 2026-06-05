@@ -84,12 +84,13 @@ function fluentUrl(emoji: string): string {
 }
 
 interface FEProps {
-  emoji: string
-  size?: number
+  emoji:      string
+  size?:      number
+  forceMode?: 'fluent' | 'native' | 'lucide'  // overrides context — use for previews
 }
 
-export default function FE({ emoji, size = 36 }: FEProps) {
-  const iconPack = useIconPack()
+export default function FE({ emoji, size = 36, forceMode }: FEProps) {
+  const iconPack = forceMode ?? useIconPack()
   const [failed, setFailed] = useState(false)
 
   if (iconPack === 'lucide') {

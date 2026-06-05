@@ -120,9 +120,7 @@ export default function AppearanceBlock({ theme, onThemeChange, iconPack = 'flue
                   {id === 'lucide'
                     ? LUCIDE_PREVIEW.map((Icon, i) => <Icon key={i} size={20} strokeWidth={1.75} color={NAVY2} />)
                     : ['📅', '🏆', '🧳', '📝'].map((em, i) =>
-                        id === 'fluent'
-                          ? <FE key={i} emoji={em} size={20} />
-                          : <span key={i} style={{ fontSize: 20, lineHeight: 1 }}>{em}</span>
+                        <FE key={i} emoji={em} size={20} forceMode={id as 'fluent' | 'native'} />
                       )
                   }
                 </div>

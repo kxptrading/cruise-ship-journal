@@ -3,7 +3,6 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import type { KeyboardEvent } from 'react'
 import { WHITE, BORDER, NAVY2, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { THEMES } from '../../themes'
 import type { Theme } from '../../themes'
@@ -73,29 +72,13 @@ type IconPack = 'fluent' | 'native' | 'lucide'
 interface Props {
   theme:              string
   onThemeChange?:     (id: string) => void
-  age:                number | null
-  onAgeChange?:       (n: number) => void
   iconPack?:          IconPack
   onIconPackChange?:  (pack: IconPack) => void
 }
 
 const LUCIDE_PREVIEW = [CalendarDays, Trophy, Luggage, FileText]
 
-export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange, iconPack = 'fluent', onIconPackChange }: Props) {
-  const [ageInput, setAgeInput] = useState<string>('')
-  const [ageSaved, setAgeSaved] = useState<boolean>(false)
-
-  const handleAgeBlur = () => {
-    const n = parseInt(ageInput)
-    if (!ageInput) return
-    if (!isNaN(n) && n >= 1 && n <= 120) {
-      onAgeChange?.(n)
-      setAgeSaved(true)
-      window.setTimeout(() => setAgeSaved(false), 1500)
-    }
-  }
-
-  const isAdult = age === null || age >= 18
+export default function AppearanceBlock({ theme, onThemeChange, iconPack = 'fluent', onIconPackChange }: Props) {
 
   return (
     <div style={{ background: WHITE, borderRadius: 20, border: `1px solid ${BORDER}`, padding: '18px 20px', flex: '1 1 0', minWidth: 0 }}>
@@ -106,32 +89,6 @@ export default function AppearanceBlock({ theme, onThemeChange, age, onAgeChange
         <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 22, color: NAVY2, lineHeight: 1 }}>Appearance</h2>
       </div>
 
-      {/* Age / profile type */}
-      <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${BORDER}` }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 10 }}>Profile Type</div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: isAdult ? 'rgba(14,165,233,0.08)' : 'rgba(139,92,246,0.08)', border: `1px solid ${isAdult ? 'rgba(14,165,233,0.3)' : 'rgba(139,92,246,0.3)'}`, borderRadius: 20, padding: '4px 14px' }}>
-            <FE emoji={isAdult ? '🧑' : '🧒'} size={15} />
-            <span style={{ fontSize: 12, fontWeight: 700, color: NAVY2 }}>{isAdult ? 'Adult' : 'Junior'}</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <input
-              type="number"
-              min="1" max="120"
-              placeholder={age !== null ? String(age) : 'Age'}
-              value={ageInput}
-              onChange={e => setAgeInput(e.target.value)}
-              onBlur={handleAgeBlur}
-              onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => { if (e.key === 'Enter') { (e.target as HTMLInputElement).blur() } }}
-              style={{ width: 72, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '6px 10px', fontSize: 13, fontFamily: FONT_BODY, color: TEXT, outline: 'none', textAlign: 'center' }}
-            />
-            {ageSaved && <span style={{ fontSize: 11, fontWeight: 700, color: TEAL }}>✓ Saved</span>}
-          </div>
-          {age !== null && !isAdult && (
-            <span style={{ fontSize: 11, color: MUTED }}>Budget tracking is hidden for Junior profiles.</span>
-          )}
-        </div>
-      </div>
 
       {/* Icon pack selector */}
       <div style={{ marginBottom: 20, paddingBottom: 18, borderBottom: `1px solid ${BORDER}` }}>

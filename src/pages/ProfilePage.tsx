@@ -218,12 +218,6 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
           onThemeChange={onThemeChange}
           iconPack={iconPack}
           onIconPackChange={onIconPackChange}
-          age={profile.age}
-          onAgeChange={async (age: number) => {
-            setProfile(p => ({ ...p, age }))
-            onAgeChange?.(age)
-            await saveProfileField({ age })
-          }}
         />
         <Preferences onSave={saveProfileField} />
       </div>

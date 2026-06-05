@@ -198,7 +198,7 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
       />
 
       <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
-        <PassportMap />
+        <PassportMap allVoyages={allVoyages} />
         <Personality onSave={saveProfileField} />
       </div>
 

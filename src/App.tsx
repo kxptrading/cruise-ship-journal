@@ -32,13 +32,19 @@ import { supabase } from './lib/supabase'
 import { useVoyageData } from './hooks/useVoyageData'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { PAGE_TRANSITION } from './lib/motion'
-import Sidebar      from './components/Sidebar'
-import TopNav       from './components/TopNav'
-import BottomNav    from './components/BottomNav'
-import AuthScreen   from './components/AuthScreen'
-import ErrorBoundary from './components/ErrorBoundary'
-import { Toast }    from './components/ui'
-import Footer      from './components/Footer'
+import Sidebar        from './components/Sidebar'
+import TopNav         from './components/TopNav'
+import BottomNav      from './components/BottomNav'
+import AuthScreen     from './components/AuthScreen'
+import ErrorBoundary  from './components/ErrorBoundary'
+import { Toast }      from './components/ui'
+import Footer         from './components/Footer'
+import SyncStatusPill from './components/SyncStatusPill'
+import OfflineBanner  from './components/OfflineBanner'
+import { useOnlineStatus }  from './hooks/useOnlineStatus'
+import { useSyncStatus }    from './hooks/useSyncStatus'
+import { processSyncQueue } from './services/syncService'
+import { retryFailed }      from './db/syncQueue'
 // Section components — all lazy-loaded so the initial bundle is just the shell
 const Dashboard        = lazy(() => import('./pages/DashboardPage'))
 const Feed             = lazy(() => import('./pages/FeedPage'))
@@ -219,11 +225,18 @@ export default function App() {
   }, [])
 
   // ── Auto-close sidebar when viewport widens past tablet breakpoint ──────────
-  // Without this, a user could open the mobile drawer, resize the window, and
-  // end up with the drawer open on top of the always-visible desktop sidebar.
   useEffect(() => {
     if (!isOverlay) setSidebarOpen(false)
   }, [isOverlay])
+
+  // ── Offline / sync status ────────────────────────────────────────────────────
+  const isOnline   = useOnlineStatus()
+  const syncStatus = useSyncStatus()
+
+  // Flush the sync queue whenever the device comes back online.
+  useEffect(() => {
+    if (isOnline) processSyncQueue().catch(() => {})
+  }, [isOnline])
 
   // ── Data layer ──────────────────────────────────────────────────────────────
   const {
@@ -409,6 +422,8 @@ export default function App() {
             })()}
           />
 
+        <OfflineBanner visible={!isOnline} />
+
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
           <Sidebar
             section={section}
@@ -517,6 +532,12 @@ export default function App() {
         </div>
       </div>
       <Toast message={toast.message} visible={toast.visible} />
+      <SyncStatusPill
+        syncStatus={syncStatus}
+        isMobile={isMobile}
+        onSync={() => processSyncQueue().then(() => syncStatus.refresh())}
+        onRetry={() => retryFailed().then(() => processSyncQueue()).then(() => syncStatus.refresh())}
+      />
       {isMobile && (
         <BottomNav
           section={section}

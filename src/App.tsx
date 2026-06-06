@@ -60,7 +60,8 @@ const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
 const NotFound         = lazy(() => import('./sections/NotFound'))
 const LoginPage        = lazy(() => import('./pages/LoginPage'))
 const SignupPage       = lazy(() => import('./pages/SignupPage'))
-const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'))
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
+const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
@@ -219,6 +220,9 @@ export default function App() {
       // Clear cached voyage ID on sign-in so a different user on the same
       // device never accidentally loads another user's voyage.
       if (event === 'SIGNED_IN') localStorage.removeItem('csj-activeVoyageId')
+      // PASSWORD_RECOVERY fires when the user clicks the reset link in their email.
+      // Navigate them to the set-new-password form before updating session state.
+      if (event === 'PASSWORD_RECOVERY') navigate('/update-password')
       setSession(s)
     })
     return () => subscription.unsubscribe()
@@ -368,9 +372,10 @@ export default function App() {
   if (!session) return (
     <Suspense fallback={null}>
       <Routes>
-        <Route path="/signup" element={<SignupPage />} />
-        <Route path="/reset"  element={<ResetPasswordPage />} />
-        <Route path="*"       element={<LoginPage />} />
+        <Route path="/signup"          element={<SignupPage />} />
+        <Route path="/reset"           element={<ResetPasswordPage />} />
+        <Route path="/update-password" element={<UpdatePasswordPage />} />
+        <Route path="*"                element={<LoginPage />} />
       </Routes>
     </Suspense>
   )
@@ -519,8 +524,9 @@ export default function App() {
                 <Route path="/contacts" element={<Friends />} />
                 <Route path="/chat"          element={<Chat />} />
                 <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
-                <Route path="/design-system" element={<DesignSystem />} />
-                <Route path="*"              element={<NotFound onNav={navClick} />} />
+                <Route path="/design-system"   element={<DesignSystem />} />
+                <Route path="/update-password" element={<UpdatePasswordPage />} />
+                <Route path="*"                element={<NotFound onNav={navClick} />} />
               </Routes>
             </Suspense>
             </ErrorBoundary>

@@ -20,7 +20,7 @@ export default function ResetPasswordPage() {
     if (!email.trim()) { setError('Please enter your email address.'); return }
     setLoading(true)
     const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/`,
+      redirectTo: `${window.location.origin}/update-password`,
     })
     setLoading(false)
     if (err) { setError(err.message); return }

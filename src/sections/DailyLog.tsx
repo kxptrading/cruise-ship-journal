@@ -477,14 +477,17 @@ export default function DailyLogSection({ data, onChange, itinerary, voyage, ini
                     }}>
                     <FE emoji={t.emoji} size={16} />
                     {!w || w >= 360 ? t.label : ''}
-                    {/* Animated underline */}
-                    {tab === t.id && (
-                      <motion.div layoutId="tab-underline"
-                        style={{ position: 'absolute', bottom: -1, height: 2, background: 'var(--t-primary)', borderRadius: 1, left: `${(TABS.findIndex(x => x.id === t.id) / TABS.length) * 100}%`, width: `${100 / TABS.length}%` }}
-                      />
-                    )}
                   </button>
                 ))}
+                {/* CSS-transition underline — avoids Framer Motion layout measurement jank */}
+                <div style={{
+                  position: 'absolute', bottom: -1, height: 2,
+                  background: 'var(--t-primary)', borderRadius: 1,
+                  left: `${(TABS.findIndex(x => x.id === tab) / TABS.length) * 100}%`,
+                  width: `${100 / TABS.length}%`,
+                  transition: 'left 0.2s ease',
+                  pointerEvents: 'none',
+                }} />
               </div>
             </div>
 

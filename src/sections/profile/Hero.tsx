@@ -2,7 +2,7 @@
 // profile/Hero.tsx — Full-bleed banner, circular avatar, and stat strip
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import type { KeyboardEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
@@ -86,13 +86,16 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
 
   const [editingName, setEditingName] = useState<boolean>(false)
   const [nameInput,   setNameInput]   = useState<string>('')
-  const nameInputRef = useRef<HTMLInputElement>(null)
+  const nameInputRef  = useRef<HTMLInputElement>(null)
+  const committedRef  = useRef(false)
 
-  const commitName = () => {
+  const commitName = useCallback(() => {
+    if (committedRef.current) return
+    committedRef.current = true
     const trimmed = nameInput.trim()
     if (trimmed) onNameChange?.(trimmed)
     setEditingName(false)
-  }
+  }, [nameInput, onNameChange])
 
   const [portCount,  setPortCount]  = useState<number | null>(null)
   const [daysLogged, setDaysLogged] = useState<number | null>(null)
@@ -235,7 +238,7 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
                   {displayName}
                 </h1>
                 <button
-                  onClick={() => { setNameInput(displayName); setEditingName(true) }}
+                  onClick={() => { committedRef.current = false; setNameInput(displayName); setEditingName(true) }}
                   title="Edit name"
                   style={{
                     background: '#F3F4F6', border: `1px solid ${BORDER}`,

@@ -10,8 +10,9 @@ import type { ContactRow as ContactRowData } from './hooks'
 import { X } from 'lucide-react'
 
 interface Props {
-  contact:  ContactRowData
-  showRemove?: boolean
+  contact:       ContactRowData
+  showRemove?:   boolean
+  onViewProfile?: () => void
 }
 
 function Avatar({ url, name, size = 40 }: { url: string | null; name: string; size?: number }) {
@@ -26,7 +27,7 @@ function Avatar({ url, name, size = 40 }: { url: string | null; name: string; si
   )
 }
 
-export default function ContactRow({ contact, showRemove = false }: Props) {
+export default function ContactRow({ contact, showRemove = false, onViewProfile }: Props) {
   const decline = useDeclineRequest()
 
   return (
@@ -38,18 +39,32 @@ export default function ContactRow({ contact, showRemove = false }: Props) {
       transition={{ duration: 0.2 }}
       style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}
     >
-      <Avatar url={contact.avatarUrl} name={contact.displayName} />
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-          {contact.displayName}
-        </div>
-        {contact.email && (
-          <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {contact.email}
+      {/* Clickable left section — avatar + name */}
+      <button
+        onClick={onViewProfile}
+        disabled={!onViewProfile}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 12, flex: 1, minWidth: 0,
+          background: 'none', border: 'none', padding: 0, textAlign: 'left',
+          cursor: onViewProfile ? 'pointer' : 'default',
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        <Avatar url={contact.avatarUrl} name={contact.displayName} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {contact.displayName}
           </div>
+          {contact.email && (
+            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, marginTop: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {contact.email}
+            </div>
+          )}
+        </div>
+        {onViewProfile && (
+          <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, flexShrink: 0, paddingRight: 4 }}>›</span>
         )}
-      </div>
+      </button>
 
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexShrink: 0 }}>
         <FamilyToggle requestId={contact.requestId} isFamily={contact.isFamily} />

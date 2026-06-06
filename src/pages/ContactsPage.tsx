@@ -10,6 +10,8 @@ import {
   useContacts, useSendFriendRequest, useAcceptRequest, useDeclineRequest, useSearchUsers,
 } from '@/features/contacts/hooks'
 import ContactRow from '@/features/contacts/ContactRow'
+import FriendProfile from '@/features/contacts/FriendProfile'
+import type { ContactRow as ContactRowData } from '@/features/contacts/hooks'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { STAGGER, FADE_UP } from '@/lib/motion'
@@ -30,8 +32,9 @@ function Avatar({ url, name, size = 38 }: { url: string | null; name: string; si
 export default function ContactsPage() {
   const w      = useW()
   const userId = useUserId()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [debouncedQ,  setDebouncedQ]  = useState('')
+  const [searchQuery,    setSearchQuery]    = useState('')
+  const [debouncedQ,     setDebouncedQ]     = useState('')
+  const [selectedFriend, setSelectedFriend] = useState<ContactRowData | null>(null)
 
   const { data: contacts, isLoading } = useContacts()
   const { data: searchResults = [] }  = useSearchUsers(debouncedQ)
@@ -52,6 +55,15 @@ export default function ContactsPage() {
   ])
 
   const familyCount = (contacts?.accepted ?? []).filter(c => c.isFamily).length
+
+  if (selectedFriend) {
+    return (
+      <FriendProfile
+        friend={{ userId: selectedFriend.userId, displayName: selectedFriend.displayName, avatarUrl: selectedFriend.avatarUrl }}
+        onBack={() => setSelectedFriend(null)}
+      />
+    )
+  }
 
   return (
     <div>
@@ -201,7 +213,7 @@ export default function ContactsPage() {
               .sort((a, b) => (b.isFamily ? 1 : 0) - (a.isFamily ? 1 : 0))
               .map(c => (
                 <motion.div key={c.requestId} variants={FADE_UP}>
-                  <ContactRow contact={c} showRemove />
+                  <ContactRow contact={c} showRemove onViewProfile={() => setSelectedFriend(c)} />
                 </motion.div>
               ))
             }

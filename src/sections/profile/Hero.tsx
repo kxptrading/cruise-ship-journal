@@ -7,7 +7,7 @@ import type { KeyboardEvent } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { NAVY2, GOLD, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY } from '../../constants'
-import { useW } from '../../context'
+import { useW, useUserId } from '../../context'
 import FE from '../../components/FE'
 
 const BANNER_H      = 260
@@ -82,6 +82,7 @@ interface Props {
 
 export default function Hero({ profile, session, allVoyages, currentVoyage, onUploadAvatar, onUploadBanner, uploadingAvatar, uploadingBanner, onNameChange }: Props) {
   const w        = useW()
+  const userId   = useUserId()
   const isMobile = w < 640
 
   const [editingName, setEditingName] = useState<boolean>(false)
@@ -93,9 +94,16 @@ export default function Hero({ profile, session, allVoyages, currentVoyage, onUp
     if (committedRef.current) return
     committedRef.current = true
     const trimmed = nameInput.trim()
-    if (trimmed) onNameChange?.(trimmed)
+    if (trimmed && userId) {
+      onNameChange?.(trimmed)
+      supabase
+        .from('profiles')
+        .update({ display_name: trimmed })
+        .eq('user_id', userId)
+        .then(({ error }) => { if (error) console.error('Name save failed:', error) })
+    }
     setEditingName(false)
-  }, [nameInput, onNameChange])
+  }, [nameInput, onNameChange, userId])
 
   const [portCount,  setPortCount]  = useState<number | null>(null)
   const [daysLogged, setDaysLogged] = useState<number | null>(null)

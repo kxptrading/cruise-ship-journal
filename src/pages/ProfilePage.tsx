@@ -97,16 +97,12 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
       })
   }, [userId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const saveProfileField = useCallback(async (dbUpdates: Record<string, unknown>): Promise<boolean> => {
-    if (!userId) return false
+  const saveProfileField = useCallback(async (dbUpdates: Record<string, unknown>): Promise<void> => {
+    if (!userId) return
     const { error } = await supabase
       .from('profiles')
       .upsert({ user_id: userId, ...dbUpdates }, { onConflict: 'user_id' })
-    if (error) {
-      console.error('Profile save error:', error)
-      return false
-    }
-    return true
+    if (error) console.error('Profile save error:', error)
   }, [userId])
 
   const today = new Date()
@@ -133,15 +129,8 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
     return `${publicUrl}?t=${Date.now()}`
   }
 
-  const handleNameChange = async (newName: string) => {
-    const prev = profile.displayName
+  const handleNameChange = (newName: string) => {
     setProfile(p => ({ ...p, displayName: newName }))
-    const ok = await saveProfileField({ display_name: newName })
-    if (!ok) {
-      setProfile(p => ({ ...p, displayName: prev }))
-      setUploadError('Name could not be saved — please try again.')
-      setTimeout(() => setUploadError(''), 4000)
-    }
   }
 
   const handleAvatarFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -23,9 +23,10 @@ interface Props {
   section:    string
   onNav:      (id: string) => void
   onMenuOpen: () => void
+  badges?:    Record<string, number>
 }
 
-export default function BottomNav({ section, onNav }: Props) {
+export default function BottomNav({ section, onNav, badges = {} }: Props) {
   const { pathname } = useLocation()
   const iconPack = useIconPack()
   const activeTab = pathname.startsWith('/voyages') ? 'voyages' : (pathname.slice(1) || section)
@@ -73,10 +74,15 @@ export default function BottomNav({ section, onNav }: Props) {
               color: active ? GOLD : 'rgba(255,255,255,0.45)',
             }}
           >
-            {iconPack !== 'lucide'
-              ? <FE emoji={emoji} size={21} />
-              : <Icon size={21} strokeWidth={active ? 2.5 : 1.75} />
-            }
+            <span style={{ position: 'relative', display: 'inline-flex' }}>
+              {iconPack !== 'lucide'
+                ? <FE emoji={emoji} size={21} />
+                : <Icon size={21} strokeWidth={active ? 2.5 : 1.75} />
+              }
+              {(badges[id] ?? 0) > 0 && (
+                <span style={{ position: 'absolute', top: -2, right: -3, width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1.5px solid var(--t-primary-dk)' }} />
+              )}
+            </span>
             <span style={{
               fontSize:    10,
               fontWeight:  active ? 700 : 400,

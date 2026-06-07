@@ -43,9 +43,10 @@ interface Props {
   isMobile:     boolean
   onMenuOpen:   () => void
   voyageLabel?: string
+  badges?:      Record<string, number>
 }
 
-export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLabel }: Props) {
+export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLabel, badges = {} }: Props) {
   const w        = useW()
   const iconPack = useIconPack()
 
@@ -271,10 +272,15 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
                   onMouseLeave={e => { if (!active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.82)' } }}
                   title={!showLabels ? label : undefined}
                 >
-                  {iconPack !== 'lucide'
-                    ? <FE emoji={emoji} size={15} />
-                    : <Icon size={15} strokeWidth={active ? 2.5 : 1.75} />
-                  }
+                  <span style={{ position: 'relative', display: 'inline-flex' }}>
+                    {iconPack !== 'lucide'
+                      ? <FE emoji={emoji} size={15} />
+                      : <Icon size={15} strokeWidth={active ? 2.5 : 1.75} />
+                    }
+                    {(badges[id] ?? 0) > 0 && (
+                      <span style={{ position: 'absolute', top: -3, right: -4, width: 7, height: 7, borderRadius: '50%', background: '#EF4444', border: '1.5px solid var(--t-primary-dk)' }} />
+                    )}
+                  </span>
                   {showLabels && label}
                 </button>
               )

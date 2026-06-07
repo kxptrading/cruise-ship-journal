@@ -103,11 +103,12 @@ interface Props {
   voyageCount:   number
   sectionStatus: Set<string> | null | undefined
   isAdult:       boolean
+  badges?:       Record<string, number>
 }
 
 export default function Sidebar({
   section, onNav, bp, isOpen, onClose,
-  user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult,
+  user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult, badges = {},
 }: Props) {
   const isMobile   = bp === 'mobile'
   const isTablet   = bp === 'tablet'
@@ -202,10 +203,19 @@ export default function Sidebar({
     const Icon = NAV_ICONS[id]
     const emoji = NAV_EMOJI[id]
 
+    const hasBadge = (badges[id] ?? 0) > 0
+
     const renderIcon = () => {
-      if (iconPack !== 'lucide' && emoji) return <FE emoji={emoji} size={17} />
-      if (Icon) return <Icon size={17} strokeWidth={active ? 2.5 : 1.75} />
-      return <span style={{ width: 17 }} />
+      const icon = iconPack !== 'lucide' && emoji
+        ? <FE emoji={emoji} size={17} />
+        : Icon ? <Icon size={17} strokeWidth={active ? 2.5 : 1.75} /> : <span style={{ width: 17 }} />
+      if (!hasBadge) return icon
+      return (
+        <span style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+          {icon}
+          <span style={{ position: 'absolute', top: -3, right: -4, width: 8, height: 8, borderRadius: '50%', background: '#EF4444', border: '1.5px solid var(--t-primary-dk)', flexShrink: 0 }} />
+        </span>
+      )
     }
 
     return (

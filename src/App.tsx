@@ -43,6 +43,7 @@ import SyncStatusPill from './components/SyncStatusPill'
 import OfflineBanner  from './components/OfflineBanner'
 import { useOnlineStatus }  from './hooks/useOnlineStatus'
 import { useSyncStatus }    from './hooks/useSyncStatus'
+import { useUnreadCounts }  from './hooks/useUnreadCounts'
 import { processSyncQueue } from './services/syncService'
 import { retryFailed }      from './db/syncQueue'
 // Section components — all lazy-loaded so the initial bundle is just the shell
@@ -254,6 +255,13 @@ export default function App() {
     handleCoverPhotoChange,
   } = useVoyageData({ session, showToast })
 
+  // ── Notification badges ─────────────────────────────────────────────────────
+  const unread = useUnreadCounts()
+  const navBadges: Record<string, number> = {
+    chat: unread.chat,
+    feed: unread.feed ? 1 : 0,
+  }
+
   // ── URL-driven voyage switch ────────────────────────────────────────────────
   // When the user navigates to /voyages/:id, load that voyage's data even if
   // a different voyage was previously active in localStorage.
@@ -425,6 +433,7 @@ export default function App() {
                 data.voyage.cruiseDescription,
               ) || undefined
             })()}
+            badges={navBadges}
           />
 
         <OfflineBanner visible={!isOnline} />
@@ -450,6 +459,7 @@ export default function App() {
             voyageCount={allVoyages.length}
             sectionStatus={sectionStatus}
             isAdult={isAdult}
+            badges={navBadges}
           />
 
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
@@ -549,6 +559,7 @@ export default function App() {
           section={section}
           onNav={navClick}
           onMenuOpen={() => setSidebarOpen(true)}
+          badges={navBadges}
         />
       )}
       {/* Fixed footer — sidebar is now auto-hide so footer spans the full width. */}

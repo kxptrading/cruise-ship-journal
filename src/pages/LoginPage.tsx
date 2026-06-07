@@ -75,10 +75,7 @@ export default function LoginPage() {
           </motion.button>
         </form>
 
-        <div style={{ textAlign: 'center', marginTop: 20, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <Link to="/signup" style={{ fontSize: 13, color: 'var(--t-primary)', fontWeight: 600, fontFamily: FONT_BODY, textDecoration: 'none' }}>
-            New to Deck Days? Create an account →
-          </Link>
+        <div style={{ textAlign: 'center', marginTop: 20 }}>
           <Link to="/reset" style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, textDecoration: 'none' }}>
             Forgot password?
           </Link>

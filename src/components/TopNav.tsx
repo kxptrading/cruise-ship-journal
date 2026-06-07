@@ -52,86 +52,106 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
   // ── Mobile layout ─────────────────────────────────────────────────────────
   if (isMobile) {
     return (
-      <div style={{
-        height:       52,
-        background:   'var(--t-primary-dk)',
-        borderBottom: '1px solid rgba(255,255,255,0.1)',
-        display:      'flex',
-        alignItems:   'center',
-        padding:      '0 14px',
-        gap:          12,
-        flexShrink:   0,
-        zIndex:       200,
-        position:     'relative',
-      }}>
-        <button
-          aria-label="Open menu"
-          onClick={onMenuOpen}
-          style={{
-            background: 'transparent', border: 'none',
-            width: 40, height: 40, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', color: WHITE,
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <Menu size={24} strokeWidth={1.75} />
-        </button>
+      <div style={{ flexShrink: 0, zIndex: 200, position: 'relative' }}>
+        {/* ── Main bar ── */}
+        <div style={{
+          height:       52,
+          background:   'var(--t-primary-dk)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          display:      'flex',
+          alignItems:   'center',
+          padding:      '0 14px',
+          gap:          12,
+          position:     'relative',
+        }}>
+          <button
+            aria-label="Open menu"
+            onClick={onMenuOpen}
+            style={{
+              background: 'transparent', border: 'none',
+              width: 40, height: 40, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', color: WHITE,
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <Menu size={24} strokeWidth={1.75} />
+          </button>
 
-        {/* Centre — text at dead centre, logo to its left.
-            Shift right by (logoW + gap) / 2 = (28 + 8) / 2 = 18px so the
-            text midpoint lands at 50% rather than the group midpoint. */}
-        <button
-          onClick={() => onNav('dashboard')}
-          aria-label="Deck Days — home"
-          style={{
-            position: 'absolute', left: '50%', top: '50%',
-            transform: 'translate(calc(-50% - 18px), -50%)',
-            background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}
-        >
-          <img src="/logo.svg" alt="" style={{ height: 28, width: 28, display: 'block', flexShrink: 0, objectFit: 'contain' }} />
-          <span style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY, letterSpacing: '-0.01em', opacity: 0.95, whiteSpace: 'nowrap' }}>
-            Deck Days
-          </span>
-        </button>
+          {/* Centre — text at dead centre, logo to its left.
+              Shift right by (logoW + gap) / 2 = (28 + 8) / 2 = 18px so the
+              text midpoint lands at 50% rather than the group midpoint. */}
+          <button
+            onClick={() => onNav('dashboard')}
+            aria-label="Deck Days — home"
+            style={{
+              position: 'absolute', left: '50%', top: '50%',
+              transform: 'translate(calc(-50% - 18px), -50%)',
+              background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 8,
+            }}
+          >
+            <img src="/logo.svg" alt="" style={{ height: 28, width: 28, display: 'block', flexShrink: 0, objectFit: 'contain' }} />
+            <span style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY, letterSpacing: '-0.01em', opacity: 0.95, whiteSpace: 'nowrap' }}>
+              Deck Days
+            </span>
+          </button>
 
-        <div style={{ flex: 1 }} />
+          <div style={{ flex: 1 }} />
 
-        <button
-          aria-label="Search"
-          onClick={() => onNav('search')}
-          style={{
-            background: section === 'search' ? 'rgba(201,162,39,0.18)' : 'transparent',
-            border: 'none',
-            width: 40, height: 40, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-            color: section === 'search' ? GOLD : 'rgba(255,255,255,0.85)',
-            borderRadius: 8,
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <Search size={22} strokeWidth={section === 'search' ? 2.5 : 1.75} />
-        </button>
+          <button
+            aria-label="Search"
+            onClick={() => onNav('search')}
+            style={{
+              background: section === 'search' ? 'rgba(201,162,39,0.18)' : 'transparent',
+              border: 'none',
+              width: 40, height: 40, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              color: section === 'search' ? GOLD : 'rgba(255,255,255,0.85)',
+              borderRadius: 8,
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <Search size={22} strokeWidth={section === 'search' ? 2.5 : 1.75} />
+          </button>
 
-        <button
-          aria-label="Profile"
-          onClick={() => onNav('userprofile')}
-          style={{
-            background: section === 'userprofile' ? 'rgba(201,162,39,0.18)' : 'transparent',
-            border: 'none',
-            width: 40, height: 40, flexShrink: 0,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer',
-            color: section === 'userprofile' ? GOLD : 'rgba(255,255,255,0.85)',
-            borderRadius: 8,
-            WebkitTapHighlightColor: 'transparent',
-          }}
-        >
-          <UserCircle2 size={24} strokeWidth={section === 'userprofile' ? 2.5 : 1.75} />
-        </button>
+          <button
+            aria-label="Profile"
+            onClick={() => onNav('userprofile')}
+            style={{
+              background: section === 'userprofile' ? 'rgba(201,162,39,0.18)' : 'transparent',
+              border: 'none',
+              width: 40, height: 40, flexShrink: 0,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer',
+              color: section === 'userprofile' ? GOLD : 'rgba(255,255,255,0.85)',
+              borderRadius: 8,
+              WebkitTapHighlightColor: 'transparent',
+            }}
+          >
+            <UserCircle2 size={24} strokeWidth={section === 'userprofile' ? 2.5 : 1.75} />
+          </button>
+        </div>
+
+        {/* ── Ticker sub-bar ── */}
+        <div style={{
+          height:     26,
+          background: 'var(--t-primary-dk)',
+          borderTop:  '1px solid rgba(255,255,255,0.06)',
+          overflow:   'hidden',
+          display:    'flex',
+          alignItems: 'center',
+          gap:        8,
+          padding:    '0 14px',
+        }}>
+          <span style={{ fontSize: 12, flexShrink: 0 }}>⚓</span>
+          <TickerText
+            text={voyageLabel || 'Deck Days - Cruise Journal - Capture every day at sea!!!'}
+            style={{ fontSize: 11, color: 'rgba(255,255,255,0.65)', fontWeight: 400, fontFamily: FONT_BODY, letterSpacing: '0.02em' }}
+          />
+          <span style={{ fontSize: 12, flexShrink: 0 }}>⚓</span>
+        </div>
       </div>
     )
   }

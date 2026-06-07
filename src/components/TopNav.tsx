@@ -29,7 +29,7 @@ const NAV_MAX_WIDTH = 1200
 interface NavItem { id: string; label: string; Icon: LucideIcon; emoji: string }
 
 const TOP_NAV_ITEMS: NavItem[] = [
-  { id: 'dashboard',   label: 'Feed',     Icon: Compass,       emoji: '🧭' },
+  { id: 'feed',        label: 'Feed',     Icon: Compass,       emoji: '🧭' },
   { id: 'voyages',     label: 'Voyages',  Icon: Ship,          emoji: '🚢' },
   { id: 'friends',     label: 'Friends',  Icon: Users,         emoji: '👥' },
   { id: 'chat',        label: 'Messages', Icon: MessageCircle, emoji: '💬' },

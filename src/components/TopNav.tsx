@@ -284,7 +284,7 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
         }}>
           <span style={{ fontSize: 13, flexShrink: 0 }}>⚓</span>
           <TickerText
-            text={voyageLabel || 'Deck Days - Cruise Journal - Capture every days at sea!!!'}
+            text={voyageLabel || 'Deck Days - Cruise Journal - Capture every day at sea!!!'}
             style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', fontWeight: 400, fontFamily: FONT_BODY, letterSpacing: '0.02em' }}
           />
           <span style={{ fontSize: 13, flexShrink: 0 }}>⚓</span>

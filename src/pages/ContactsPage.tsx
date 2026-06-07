@@ -70,11 +70,11 @@ export default function ContactsPage() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ margin: '0 0 4px', fontSize: w < BP.mobile ? 24 : 30, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
-          Contacts
+          Buddies
         </h1>
         {!isLoading && contacts && (
           <p style={{ margin: 0, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
-            {contacts.accepted.length} contact{contacts.accepted.length !== 1 ? 's' : ''}
+            {contacts.accepted.length} buddy{contacts.accepted.length !== 1 ? 's' : ''}
             {familyCount > 0 && ` · ${familyCount} family`}
           </p>
         )}
@@ -179,7 +179,7 @@ export default function ContactsPage() {
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT_BODY }}>
-            My Contacts
+            My Buddies
           </div>
           {familyCount > 0 && (
             <span style={{ fontSize: 12, color: '#2563EB', fontWeight: 600, fontFamily: FONT_BODY, background: '#EFF6FF', border: '1px solid #BFDBFE', borderRadius: 20, padding: '2px 10px' }}>
@@ -199,7 +199,7 @@ export default function ContactsPage() {
           <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16 }}>
             <EmptyState
               icon="👥"
-              heading="No contacts yet"
+              heading="No buddies yet"
               body="Search for people above to connect with them. Once connected, you can mark them as Family to share family-only posts."
             />
           </div>

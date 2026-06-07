@@ -239,7 +239,7 @@ export default function Sidebar({
   // ── Nav section ────────────────────────────────────────────────────────────
   const Nav = () => (
     <nav style={{ flex: 1, padding: '16px 0 8px', overflowY: 'auto' }}>
-      {/* Primary nav — always visible: Dashboard, Feed, Voyages, Friends, Chat, Profile */}
+      {/* Primary nav — always visible: Dashboard, Feed, Voyages, Buddies, Chat, Profile */}
       <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', fontFamily: FONT_LOGO, fontWeight: 700, letterSpacing: '-0.02em', padding: '0 14px 8px' }}>
         Deck Days
       </div>

@@ -238,7 +238,7 @@ export default function FriendProfile({ friend, onBack }: Props) {
   return (
     <div style={{ fontFamily: FONT_BODY }}>
       <button onClick={onBack} style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'transparent', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 600, color: MUTED, fontFamily: FONT_BODY, marginBottom: 20 }}>
-        ← Back to Friends
+        ← Back to Buddies
       </button>
 
       {loading ? (

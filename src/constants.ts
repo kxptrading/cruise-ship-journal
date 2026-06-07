@@ -72,7 +72,7 @@ export interface NavItem {
 export const PRIMARY_NAV: NavItem[] = [
   { id: 'voyages',  label: 'My Voyages', icon: '🚢' },
   { id: 'feed',     label: 'Feed',       icon: '📡' },
-  { id: 'friends',  label: 'Friends',    icon: '👥' },
+  { id: 'friends',  label: 'Buddies',    icon: '👥' },
   { id: 'chat',     label: 'Messages',   icon: '💬' },
 ]
 

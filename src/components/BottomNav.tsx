@@ -15,7 +15,7 @@ const TABS: TabItem[] = [
   { id: 'voyages',  label: 'Voyages', Icon: Ship,          emoji: '🚢' },
   { id: 'daily',    label: 'Daily',   Icon: CalendarDays,  emoji: '📅' },
   { id: 'feed',     label: 'Feed',    Icon: Rss,           emoji: '🧭' },
-  { id: 'friends',  label: 'Friends', Icon: Users,         emoji: '👥' },
+  { id: 'friends',  label: 'Buddies', Icon: Users,         emoji: '👥' },
   { id: 'chat',     label: 'Chat',    Icon: MessageCircle, emoji: '💬' },
 ]
 

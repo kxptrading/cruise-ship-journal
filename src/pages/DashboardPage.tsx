@@ -21,6 +21,7 @@ import BudgetBreakdown  from '@/features/voyages/dashboard/BudgetBreakdown'
 import ItineraryTimeline from '@/features/voyages/dashboard/ItineraryTimeline'
 import RecentPosts      from '@/features/voyages/dashboard/RecentPosts'
 import PhotoSummaryCard from '@/features/voyages/dashboard/PhotoSummaryCard'
+import VoyageMemoryWall from '@/features/voyages/dashboard/VoyageMemoryWall'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import FE from '../components/FE'
@@ -248,6 +249,11 @@ export default function Dashboard({
           </>
         )}
       </motion.div>
+
+      {/* Voyage Memory Wall — masonry photo grid */}
+      {voyageId && (
+        <VoyageMemoryWall voyageId={voyageId} limit={16} onViewAll={() => onNav('gallery')} />
+      )}
 
       {/* Budget breakdown (only when there's spending data) */}
       {spent > 0 && <BudgetBreakdown budget={budget} />}

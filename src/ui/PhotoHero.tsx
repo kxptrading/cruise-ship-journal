@@ -23,9 +23,10 @@ interface Props {
   height?:       number
   aspectRatio?:  string            // e.g. "16/9" — overrides height when set
   borderRadius?: number
+  postIds?:      string[]          // enables reactions in the lightbox
 }
 
-export default function PhotoHero({ paths, caption, badge, dayType = 'default', height = 180, aspectRatio, borderRadius = 14 }: Props) {
+export default function PhotoHero({ paths, caption, badge, dayType = 'default', height = 180, aspectRatio, borderRadius = 14, postIds }: Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
   const [imgError,    setImgError]    = useState(false)
 
@@ -123,7 +124,7 @@ export default function PhotoHero({ paths, caption, badge, dayType = 'default', 
       {/* Lightbox */}
       <AnimatePresence>
         {lightboxIdx !== null && (
-          <PhotoLightbox paths={paths} startAt={lightboxIdx} onClose={() => setLightboxIdx(null)} />
+          <PhotoLightbox paths={paths} startAt={lightboxIdx} onClose={() => setLightboxIdx(null)} postIds={postIds} />
         )}
       </AnimatePresence>
     </>

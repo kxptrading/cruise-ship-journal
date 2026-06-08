@@ -133,6 +133,7 @@ export default function JournalPostCard({ post, voyageId }: Props) {
               dayType={dayType}
               aspectRatio="16/9"
               borderRadius={0}
+              postIds={photos.map(() => post.id)}
             />
             {/* Overlay badges: location · weather · rating */}
             <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, display: 'flex', gap: 5, flexWrap: 'wrap', pointerEvents: 'none' }}>

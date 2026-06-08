@@ -8,6 +8,7 @@ import { WHITE, BORDER, MUTED, GOLD, NAVY2, FONT_DISPLAY, FONT_BODY, BP } from '
 import { useW } from '@/context'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
+import PhotoReactions from '@/ui/PhotoReactions'
 
 interface MemoryEntry {
   url:      string
@@ -113,26 +114,32 @@ function MemoryLightbox({ entries, startIdx, voyageId, onClose }: LightboxProps)
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
           onClick={e => e.stopPropagation()}
-          style={{ marginTop: 16, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', borderRadius: 14, padding: '12px 18px', maxWidth: 'min(90vw, 620px)', width: '100%', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}
+          style={{ marginTop: 16, background: 'rgba(255,255,255,0.07)', backdropFilter: 'blur(12px)', borderRadius: 14, padding: '12px 18px', maxWidth: 'min(90vw, 620px)', width: '100%', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', gap: 10 }}
         >
-          <div style={{ minWidth: 0 }}>
-            {entry.title && (
-              <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', fontFamily: FONT_DISPLAY, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {entry.title}
+          {/* Title + metadata */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+            <div style={{ minWidth: 0 }}>
+              {entry.title && (
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', fontFamily: FONT_DISPLAY, marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.title}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 12px' }}>
+                {entry.location && <span style={{ fontSize: 12, color: GOLD, fontFamily: FONT_BODY }}>📍 {entry.location}</span>}
+                {entry.date    && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: FONT_BODY }}>📅 {formatDate(entry.date)}</span>}
+                {entry.isPoD   && <span style={{ fontSize: 12, color: GOLD, fontFamily: FONT_BODY }}>⭐ Photo of the Day</span>}
               </div>
-            )}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '3px 12px' }}>
-              {entry.location && <span style={{ fontSize: 12, color: GOLD, fontFamily: FONT_BODY }}>📍 {entry.location}</span>}
-              {entry.date    && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: FONT_BODY }}>📅 {formatDate(entry.date)}</span>}
-              {entry.isPoD   && <span style={{ fontSize: 12, color: GOLD, fontFamily: FONT_BODY }}>⭐ Photo of the Day</span>}
             </div>
+            <button
+              onClick={() => { onClose(); navigate(`/voyages/${voyageId}/posts/${entry.postId}`) }}
+              style={{ flexShrink: 0, background: 'none', border: `1px solid ${GOLD}60`, borderRadius: 10, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: GOLD, fontFamily: FONT_BODY, fontWeight: 600, whiteSpace: 'nowrap' }}
+            >
+              View Post →
+            </button>
           </div>
-          <button
-            onClick={() => { onClose(); navigate(`/voyages/${voyageId}/posts/${entry.postId}`) }}
-            style={{ flexShrink: 0, background: 'none', border: `1px solid ${GOLD}60`, borderRadius: 10, padding: '6px 12px', cursor: 'pointer', fontSize: 12, color: GOLD, fontFamily: FONT_BODY, fontWeight: 600, whiteSpace: 'nowrap' }}
-          >
-            View Post →
-          </button>
+
+          {/* Reactions */}
+          <PhotoReactions photoPath={entry.path} postId={entry.postId} variant="dark" />
         </motion.div>
       </AnimatePresence>
 

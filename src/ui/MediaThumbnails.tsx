@@ -10,14 +10,16 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { BORDER } from '@/constants'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import { X, ChevronLeft, ChevronRight } from 'lucide-react'
+import PhotoReactions from './PhotoReactions'
 
 interface LightboxProps {
-  paths:   string[]
-  startAt: number
-  onClose: () => void
+  paths:    string[]
+  startAt:  number
+  onClose:  () => void
+  postIds?: string[]   // parallel array — enables reactions when provided
 }
 
-export function PhotoLightbox({ paths, startAt, onClose }: LightboxProps) {
+export function PhotoLightbox({ paths, startAt, onClose, postIds }: LightboxProps) {
   const [idx, setIdx]   = useState(startAt)
   const [dir, setDir]   = useState(0)
 
@@ -94,11 +96,21 @@ export function PhotoLightbox({ paths, startAt, onClose }: LightboxProps) {
 
       {/* Dot indicator */}
       {paths.length > 1 && (
-        <div style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
+        <div style={{ position: 'fixed', bottom: postIds ? 68 : 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: 6 }}>
           {paths.map((_, i) => (
             <button key={i} onClick={e => { e.stopPropagation(); setDir(i > idx ? 1 : -1); setIdx(i) }}
               style={{ width: i === idx ? 20 : 8, height: 8, borderRadius: 4, background: i === idx ? '#fff' : 'rgba(255,255,255,0.35)', border: 'none', cursor: 'pointer', transition: 'all 0.2s', padding: 0 }} />
           ))}
+        </div>
+      )}
+
+      {/* Reactions — only when postIds provided */}
+      {postIds?.[idx] && (
+        <div
+          onClick={e => e.stopPropagation()}
+          style={{ position: 'fixed', bottom: 20, left: '50%', transform: 'translateX(-50%)', display: 'flex', justifyContent: 'center' }}
+        >
+          <PhotoReactions photoPath={paths[idx]} postId={postIds[idx]} variant="dark" />
         </div>
       )}
     </motion.div>

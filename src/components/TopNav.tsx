@@ -114,7 +114,10 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <Search size={22} strokeWidth={section === 'search' ? 2.5 : 1.75} />
+            {iconPack !== 'lucide'
+              ? <FE emoji="🔍" size={22} />
+              : <Search size={22} strokeWidth={section === 'search' ? 2.5 : 1.75} />
+            }
           </button>
 
           <button
@@ -131,7 +134,10 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
               WebkitTapHighlightColor: 'transparent',
             }}
           >
-            <UserCircle2 size={24} strokeWidth={section === 'userprofile' ? 2.5 : 1.75} />
+            {iconPack !== 'lucide'
+              ? <FE emoji="👤" size={24} />
+              : <UserCircle2 size={24} strokeWidth={section === 'userprofile' ? 2.5 : 1.75} />
+            }
           </button>
         </div>
 

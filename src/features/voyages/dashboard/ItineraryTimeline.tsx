@@ -19,13 +19,14 @@ function formatDate(iso: string): string {
 }
 
 interface Props {
-  itinerary:  ItineraryDay[]
-  dailyLogs:  DailyLog[]
-  currentDay: number | null
-  onViewDay:  (dayIndex: number) => void
+  itinerary:    ItineraryDay[]
+  dailyLogs:    DailyLog[]
+  currentDay:   number | null
+  onViewDay:    (dayIndex: number) => void
+  photosByDate?: Record<string, string>  // date (YYYY-MM-DD) → resolved photo URL
 }
 
-export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, onViewDay }: Props) {
+export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, onViewDay, photosByDate }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -69,6 +70,8 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
           const rating    = log?.rating || 0
           const logged    = !!(log?.highlights || log?.bestMoment || log?.activity)
 
+          const photoUrl = day.date && photosByDate ? photosByDate[day.date] : undefined
+
           return (
             <button
               key={i}
@@ -76,8 +79,8 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
               onClick={() => onViewDay(i)}
               style={{
                 flexShrink:      0,
-                width:           120,
-                padding:         '12px 12px 10px',
+                width:           130,
+                padding:         0,
                 borderRadius:    12,
                 cursor:          'pointer',
                 border:          isCurrent ? `2px solid ${GOLD}` : `1px solid ${BORDER}`,
@@ -89,6 +92,7 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
                 transition:      'transform 0.15s, box-shadow 0.15s, opacity 0.15s',
                 opacity:         isPast && !logged ? 0.6 : 1,
                 outline:         'none',
+                overflow:        'hidden',
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.transform = 'translateY(-2px)'
@@ -99,51 +103,74 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
                 e.currentTarget.style.boxShadow = isCurrent ? `0 0 0 3px ${GOLD}28` : 'none'
               }}
             >
-              {/* Day badge + weather */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: isCurrent ? GOLD : MUTED, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {/* Photo or themed placeholder */}
+              <div style={{ position: 'relative', height: 72, overflow: 'hidden' }}>
+                {photoUrl ? (
+                  <img
+                    src={photoUrl}
+                    alt={day.port || `Day ${dayNum}`}
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24,
+                    background: isSea
+                      ? 'linear-gradient(135deg, #0C4A6E 0%, #0369A1 60%, #0EA5E9 100%)'
+                      : 'linear-gradient(135deg, #064E3B 0%, #059669 60%, #34D399 100%)',
+                  }}>
+                    {isSea ? '🌊' : '📍'}
+                  </div>
+                )}
+                {/* Day badge overlay */}
+                <div style={{ position: 'absolute', top: 5, left: 6, fontSize: 9, fontWeight: 700, color: isCurrent ? GOLD : '#fff', textTransform: 'uppercase', letterSpacing: '0.06em', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
                   Day {dayNum}
                 </div>
-                {weather && <span style={{ fontSize: 14, lineHeight: 1 }}>{WX_EMOJI[weather] || '🌤️'}</span>}
+                {weather && (
+                  <div style={{ position: 'absolute', top: 4, right: 5, fontSize: 13, lineHeight: 1 }}>
+                    {WX_EMOJI[weather] || '🌤️'}
+                  </div>
+                )}
+                {isCurrent && (
+                  <div style={{ position: 'absolute', bottom: 5, left: 6, fontSize: 8, fontWeight: 700, color: '#1C2B3A', background: GOLD, borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                    Today
+                  </div>
+                )}
               </div>
 
-              {/* Port name */}
-              <div style={{ fontSize: 12, fontWeight: 600, color: isSea ? MUTED : 'var(--t-primary-dk)', lineHeight: 1.25, marginBottom: 3 }}>
-                {isSea ? <span style={{ color: '#60A5FA' }}>🌊 At Sea</span> : day.port}
+              {/* Content */}
+              <div style={{ padding: '8px 10px 10px' }}>
+                {/* Port name */}
+                <div style={{ fontSize: 12, fontWeight: 600, color: isSea ? '#60A5FA' : 'var(--t-primary-dk)', lineHeight: 1.25, marginBottom: 3 }}>
+                  {isSea ? 'At Sea' : day.port}
+                </div>
+
+                {/* Date */}
+                {day.date && (
+                  <div style={{ fontSize: 10, color: MUTED, lineHeight: 1.3 }}>{formatDate(day.date)}</div>
+                )}
+
+                {/* Arrive / depart */}
+                {!isSea && (day.arrive || day.depart) && (
+                  <div style={{ fontSize: 9, color: MUTED, marginTop: 3 }}>
+                    {day.arrive && <span>In {day.arrive}</span>}
+                    {day.arrive && day.depart && <span> · </span>}
+                    {day.depart && <span>Out {day.depart}</span>}
+                  </div>
+                )}
+
+                {/* Star rating */}
+                {rating > 0 && (
+                  <div style={{ marginTop: 5, fontSize: 10, color: GOLD, lineHeight: 1 }}>
+                    {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}
+                  </div>
+                )}
+
+                {/* Logged indicator */}
+                {logged && !isCurrent && (
+                  <div style={{ marginTop: 4, width: 6, height: 6, borderRadius: '50%', background: TEAL }} />
+                )}
               </div>
-
-              {/* Date */}
-              {day.date && (
-                <div style={{ fontSize: 10, color: MUTED, lineHeight: 1.3 }}>{formatDate(day.date)}</div>
-              )}
-
-              {/* Arrive / depart */}
-              {!isSea && (day.arrive || day.depart) && (
-                <div style={{ fontSize: 9, color: MUTED, marginTop: 3, fontFamily: FONT_BODY }}>
-                  {day.arrive && <span>In {day.arrive}</span>}
-                  {day.arrive && day.depart && <span> · </span>}
-                  {day.depart && <span>Out {day.depart}</span>}
-                </div>
-              )}
-
-              {/* Star rating */}
-              {rating > 0 && (
-                <div style={{ marginTop: 5, fontSize: 10, color: GOLD, lineHeight: 1 }}>
-                  {'★'.repeat(rating)}{'☆'.repeat(5 - rating)}
-                </div>
-              )}
-
-              {/* Today pill */}
-              {isCurrent && (
-                <div style={{ marginTop: 5, display: 'inline-block', fontSize: 9, fontWeight: 700, color: GOLD, border: `1px solid ${GOLD}60`, borderRadius: 8, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-                  Today
-                </div>
-              )}
-
-              {/* Logged indicator */}
-              {logged && !isCurrent && (
-                <div style={{ marginTop: 4, width: 6, height: 6, borderRadius: '50%', background: TEAL }} />
-              )}
             </button>
           )
         })}

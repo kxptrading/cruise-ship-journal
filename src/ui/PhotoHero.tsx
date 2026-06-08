@@ -16,15 +16,16 @@ const DAY_GRADIENTS: Record<string, string> = {
 }
 
 interface Props {
-  paths:        string[]           // storage paths (converted via publicUrl)
-  caption?:     string
-  badge?:       string             // e.g., "⭐ Photo of the Day"
-  dayType?:     keyof typeof DAY_GRADIENTS
-  height?:      number
+  paths:         string[]           // storage paths (converted via publicUrl)
+  caption?:      string
+  badge?:        string             // e.g., "⭐ Photo of the Day"
+  dayType?:      keyof typeof DAY_GRADIENTS
+  height?:       number
+  aspectRatio?:  string            // e.g. "16/9" — overrides height when set
   borderRadius?: number
 }
 
-export default function PhotoHero({ paths, caption, badge, dayType = 'default', height = 180, borderRadius = 14 }: Props) {
+export default function PhotoHero({ paths, caption, badge, dayType = 'default', height = 180, aspectRatio, borderRadius = 14 }: Props) {
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null)
   const [imgError,    setImgError]    = useState(false)
 
@@ -40,13 +41,14 @@ export default function PhotoHero({ paths, caption, badge, dayType = 'default', 
         aria-label={caption ?? 'Photo'}
         onClick={() => hasPhoto && setLightboxIdx(0)}
         style={{
-          position:     'relative',
-          height,
+          position:    'relative',
+          height:      aspectRatio ? undefined : height,
+          aspectRatio: aspectRatio ?? undefined,
           borderRadius,
-          overflow:     'hidden',
-          cursor:       hasPhoto ? 'zoom-in' : 'default',
-          background:   gradient,
-          flexShrink:   0,
+          overflow:    'hidden',
+          cursor:      hasPhoto ? 'zoom-in' : 'default',
+          background:  gradient,
+          flexShrink:  0,
         }}
       >
         {/* Photo */}

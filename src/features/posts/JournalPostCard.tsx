@@ -124,17 +124,34 @@ export default function JournalPostCard({ post, voyageId }: Props) {
           <div style={{ height: 3, background: 'linear-gradient(90deg, var(--t-primary-dk), var(--t-primary), var(--t-accent))', flexShrink: 0 }} />
         )}
 
-        {/* Hero photo */}
+        {/* Hero photo — 16:9 with badge overlay */}
         {photos.length > 0 && (
-          <div style={{ margin: 0 }}>
+          <div style={{ position: 'relative' }}>
             <PhotoHero
               paths={photos}
-              caption={post.title ?? undefined}
               badge={isPoD ? '⭐ Photo of the Day' : undefined}
               dayType={dayType}
-              height={200}
+              aspectRatio="16/9"
               borderRadius={0}
             />
+            {/* Overlay badges: location · weather · rating */}
+            <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, display: 'flex', gap: 5, flexWrap: 'wrap', pointerEvents: 'none' }}>
+              {post.location && (
+                <span style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, fontFamily: FONT_BODY }}>
+                  📍 {post.location}
+                </span>
+              )}
+              {weather[0] && (
+                <span style={{ background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 10, fontFamily: FONT_BODY }}>
+                  {({ Sunny: '☀️', Cloudy: '☁️', Rainy: '🌧️', Windy: '💨', Hot: '🌡️', Mild: '🌤️', Cool: '❄️' } as Record<string, string>)[weather[0]] ?? ''} {weather[0]}
+                </span>
+              )}
+              {rating !== null && rating > 0 && (
+                <span style={{ background: 'rgba(201,162,39,0.85)', backdropFilter: 'blur(4px)', color: '#fff', fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 10, fontFamily: FONT_BODY }}>
+                  {'★'.repeat(rating)}
+                </span>
+              )}
+            </div>
           </div>
         )}
 
@@ -145,7 +162,8 @@ export default function JournalPostCard({ post, voyageId }: Props) {
               {post.post_date && (
                 <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>{formatDate(post.post_date)}</span>
               )}
-              {post.location && (
+              {/* Location shown on image badge when photo exists; show inline only for text-only posts */}
+              {post.location && photos.length === 0 && (
                 <span style={{ fontSize: 12, color: TEAL, fontWeight: 600, fontFamily: FONT_BODY }}>
                   <FE emoji="📍" size={12} /> {post.location}
                 </span>
@@ -222,8 +240,8 @@ export default function JournalPostCard({ post, voyageId }: Props) {
             </p>
           )}
 
-          {/* Metadata snippets */}
-          {(rating !== null || weather.length > 0) && (
+          {/* Metadata snippets — only shown for text-only posts (photo posts show these as image badges) */}
+          {photos.length === 0 && (rating !== null || weather.length > 0) && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 6 }}>
               {rating !== null && (
                 <span style={{ fontSize: 12, color: GOLD }}>

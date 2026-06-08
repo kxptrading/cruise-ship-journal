@@ -9,7 +9,7 @@
 //   dashboard/RecentPosts.tsx    — 3-up recent log cards
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
 import { motion } from 'framer-motion'
 import { NAVY2, WHITE, BORDER, MUTED, TEAL, sty, FONT_BODY, BP } from '../constants'
 import { useW, useVoyageId } from '../context'
@@ -60,8 +60,29 @@ export default function Dashboard({
   const voyageId = useVoyageId()
 
   const { data: voyagePosts = [] } = usePostsByVoyage(voyageId)
-  const firstPhotoPath = voyagePosts.flatMap(p => p.media_paths ?? []).find(Boolean)
-  const heroPhotoUrl   = firstPhotoPath ? publicUrl(firstPhotoPath) : undefined
+
+  // Pick a random hero photo once when posts first load — changes on every page load
+  const heroPickedRef  = useRef(false)
+  const [heroPhotoUrl, setHeroPhotoUrl] = useState<string | undefined>()
+  useEffect(() => {
+    if (heroPickedRef.current || !voyagePosts.length) return
+    const paths = voyagePosts.flatMap(p => p.media_paths ?? []).filter(Boolean)
+    if (paths.length > 0) {
+      heroPickedRef.current = true
+      setHeroPhotoUrl(publicUrl(paths[Math.floor(Math.random() * paths.length)]))
+    }
+  }, [voyagePosts])
+
+  // Map of date → resolved photo URL for ItineraryTimeline thumbnails
+  const photosByDate = useMemo<Record<string, string>>(() => {
+    const map: Record<string, string> = {}
+    for (const post of voyagePosts) {
+      if (post.post_date && (post.media_paths ?? []).length > 0 && !map[post.post_date]) {
+        map[post.post_date] = publicUrl(post.media_paths[0])
+      }
+    }
+    return map
+  }, [voyagePosts])
 
   // ── Time of day + stars ───────────────────────────────────────────────────────
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(getTimeOfDay)
@@ -141,6 +162,9 @@ export default function Dashboard({
         timeOfDay={timeOfDay} stars={stars} onNav={onNav} scrollY={scrollY}
         itinerary={itinerary} heroPhotoUrl={heroPhotoUrl}
       />
+
+      {/* Memories captured — visual anchor above stats */}
+      <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
 
       {/* Metric cards */}
       <motion.div
@@ -225,9 +249,6 @@ export default function Dashboard({
         )}
       </motion.div>
 
-      {/* Photo summary — memories captured stat card */}
-      <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
-
       {/* Budget breakdown (only when there's spending data) */}
       {spent > 0 && <BudgetBreakdown budget={budget} />}
 
@@ -236,6 +257,7 @@ export default function Dashboard({
         itinerary={itinerary}
         dailyLogs={dailyLogs}
         currentDay={currentDay}
+        photosByDate={photosByDate}
         onViewDay={dayIdx => {
           if (onViewDay) onViewDay(dayIdx)
           else onNav('daily')

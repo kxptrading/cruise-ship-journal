@@ -15,7 +15,7 @@ import { Pencil, Trash2 } from 'lucide-react'
 import type { PostRow } from './hooks'
 import { useDeletePost, useUpdatePost } from './hooks'
 import type { Audience } from '@/types/models'
-import MediaThumbnails from '@/ui/MediaThumbnails'
+import PhotoHero from '@/ui/PhotoHero'
 
 // ── Quick audience popover ────────────────────────────────────────────────────
 
@@ -91,6 +91,15 @@ export default function JournalPostCard({ post, voyageId }: Props) {
   const rating = typeof meta.rating === 'number' ? meta.rating : null
   const weather: string[] = Array.isArray(meta.weather) ? (meta.weather as string[]) : []
 
+  const isPoD = meta.is_photo_of_day === true
+  const togglePoD = async () => {
+    await updatePost.mutateAsync({ id: post.id, metadata: { ...meta, is_photo_of_day: !isPoD } })
+  }
+
+  const photos      = post.media_paths ?? []
+  const locationStr = (post.location ?? '').toLowerCase()
+  const dayType     = locationStr.includes('sea') ? 'at-sea' : 'port'
+
   const handleDelete = async () => {
     await deletePost.mutateAsync({ postId: post.id, voyageId })
     setConfirmDel(false)
@@ -110,8 +119,24 @@ export default function JournalPostCard({ post, voyageId }: Props) {
           boxShadow:    '0 1px 4px rgba(0,0,0,0.05)',
         }}
       >
-        {/* Accent strip */}
-        <div style={{ height: 3, background: 'linear-gradient(90deg, var(--t-primary-dk), var(--t-primary), var(--t-accent))', flexShrink: 0 }} />
+        {/* Accent strip — only shown when no hero photo */}
+        {photos.length === 0 && (
+          <div style={{ height: 3, background: 'linear-gradient(90deg, var(--t-primary-dk), var(--t-primary), var(--t-accent))', flexShrink: 0 }} />
+        )}
+
+        {/* Hero photo */}
+        {photos.length > 0 && (
+          <div style={{ margin: 0 }}>
+            <PhotoHero
+              paths={photos}
+              caption={post.title ?? undefined}
+              badge={isPoD ? '⭐ Photo of the Day' : undefined}
+              dayType={dayType}
+              height={200}
+              borderRadius={0}
+            />
+          </div>
+        )}
 
         <div style={{ padding: '14px 16px 16px' }}>
           {/* Header row */}
@@ -130,6 +155,17 @@ export default function JournalPostCard({ post, voyageId }: Props) {
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: 4, flexShrink: 0, position: 'relative' }}>
+              {/* Photo of the Day toggle — only shown when post has photos */}
+              {photos.length > 0 && (
+                <button
+                  onClick={togglePoD}
+                  title={isPoD ? 'Remove Photo of the Day' : 'Mark as Photo of the Day'}
+                  style={{ background: isPoD ? `${GOLD}22` : 'none', border: `1px solid ${isPoD ? GOLD : BORDER}`, borderRadius: 8, padding: '4px 8px', cursor: 'pointer', fontSize: 14, color: isPoD ? GOLD : MUTED, lineHeight: 1 }}
+                >
+                  {isPoD ? '⭐' : '☆'}
+                </button>
+              )}
+
               {/* Quick audience toggle */}
               <button
                 onClick={() => setAudiencePop(v => !v)}
@@ -185,8 +221,6 @@ export default function JournalPostCard({ post, voyageId }: Props) {
               )}
             </p>
           )}
-
-          {(post.media_paths ?? []).length > 0 && <MediaThumbnails paths={post.media_paths} maxShow={3} size="sm" />}
 
           {/* Metadata snippets */}
           {(rating !== null || weather.length > 0) && (

@@ -64,17 +64,19 @@ const ShoppingLog    = lazy(() => import('@/sections/ShoppingLog'))
 const Highlights     = lazy(() => import('@/sections/Highlights'))
 const PackingList    = lazy(() => import('@/sections/PackingList'))
 const Notes          = lazy(() => import('@/sections/Notes'))
+const MemoryGallery  = lazy(() => import('@/features/voyages/MemoryGallery'))
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
 // 'voyage' is the default tab — shown first when navigating from My Voyages.
 // 'posts' and the journal sections follow.
 
-type Tab = 'voyage' | 'posts' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
+type Tab = 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
            'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes'
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'voyage',        label: 'Details',       emoji: '🚢' },
   { id: 'posts',         label: 'Posts',         emoji: '📝' },
+  { id: 'gallery',       label: 'Gallery',       emoji: '📸' },
   { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
   { id: 'itinerary',     label: 'Itinerary',     emoji: '🗺️' },
   { id: 'budget',        label: 'Budget',        emoji: '💳' },
@@ -283,6 +285,10 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
             {/* 'posts' tab — fully React Query, self-fetching via PostList */}
             {activeTab === 'posts' && voyageId && (
               <PostList voyageId={voyageId} />
+            )}
+            {/* 'gallery' tab — memory gallery grouped by day / location */}
+            {activeTab === 'gallery' && voyageId && (
+              <MemoryGallery voyageId={voyageId} />
             )}
             {/* Legacy tabs — receive data + update from useVoyageData (via App.tsx props) */}
             {activeTab === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={0} />}

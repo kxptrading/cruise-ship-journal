@@ -17,7 +17,7 @@ interface LightboxProps {
   onClose: () => void
 }
 
-function Lightbox({ paths, startAt, onClose }: LightboxProps) {
+export function PhotoLightbox({ paths, startAt, onClose }: LightboxProps) {
   const [idx, setIdx]   = useState(startAt)
   const [dir, setDir]   = useState(0)
 
@@ -144,7 +144,7 @@ export default function MediaThumbnails({ paths, maxShow = 4, size = 'md' }: Pro
 
       <AnimatePresence>
         {lightbox !== null && (
-          <Lightbox paths={paths} startAt={lightbox} onClose={() => setLightbox(null)} />
+          <PhotoLightbox paths={paths} startAt={lightbox} onClose={() => setLightbox(null)} />
         )}
       </AnimatePresence>
     </>

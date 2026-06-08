@@ -22,21 +22,22 @@ interface Star {
 }
 
 interface Props {
-  w:            number
-  voyage:       Voyage
-  voyagePct:    number | null
-  currentDay:   number | null
-  voyageNights: number
-  daysLeft:     number
-  barPct:       number
-  timeOfDay:    TimeOfDay
-  stars:        Star[]
-  onNav:        (id: string) => void
-  scrollY?:     MotionValue<number>
-  itinerary?:   ItineraryDay[]
+  w:             number
+  voyage:        Voyage
+  voyagePct:     number | null
+  currentDay:    number | null
+  voyageNights:  number
+  daysLeft:      number
+  barPct:        number
+  timeOfDay:     TimeOfDay
+  stars:         Star[]
+  onNav:         (id: string) => void
+  scrollY?:      MotionValue<number>
+  itinerary?:    ItineraryDay[]
+  heroPhotoUrl?: string
 }
 
-export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav, scrollY, itinerary }: Props) {
+export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNights, daysLeft, barPct, timeOfDay, stars, onNav, scrollY, itinerary, heroPhotoUrl }: Props) {
   const [showProgressTooltip, setShowProgressTooltip] = useState(false)
 
   const currentPort = (itinerary && currentDay && currentDay >= 1)
@@ -89,10 +90,10 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
         </>
       )}
 
-      {/* Cover photo — parallax applied */}
-      {voyage.coverPhotoUrl && (
+      {/* Cover photo — falls back to first post photo from journal */}
+      {(voyage.coverPhotoUrl || heroPhotoUrl) && (
         <motion.img
-          src={voyage.coverPhotoUrl}
+          src={voyage.coverPhotoUrl || heroPhotoUrl}
           alt="Voyage cover"
           style={{
             position: 'absolute', left: 0, right: 0, top: '-15%', width: '100%', height: '130%',
@@ -109,7 +110,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
       }} />
 
       {/* Decorative rings (no cover photo) */}
-      {!voyage.coverPhotoUrl && (
+      {!voyage.coverPhotoUrl && !heroPhotoUrl && (
         <>
           <div style={{ position: 'absolute', right: -60, top: -60, width: 300, height: 300, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.13)', pointerEvents: 'none', zIndex: 1 }} />
           <div style={{ position: 'absolute', right: -20, top: -20, width: 180, height: 180, borderRadius: '50%', border: '1px solid rgba(245,158,11,0.08)', pointerEvents: 'none', zIndex: 1 }} />

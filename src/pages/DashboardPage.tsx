@@ -20,6 +20,9 @@ import VoyageHero       from '@/features/voyages/VoyageHero'
 import BudgetBreakdown  from '@/features/voyages/dashboard/BudgetBreakdown'
 import ItineraryTimeline from '@/features/voyages/dashboard/ItineraryTimeline'
 import RecentPosts      from '@/features/voyages/dashboard/RecentPosts'
+import PhotoSummaryCard from '@/features/voyages/dashboard/PhotoSummaryCard'
+import { usePostsByVoyage } from '@/features/posts/hooks'
+import { publicUrl } from '@/features/posts/mediaStorage'
 import FE from '../components/FE'
 import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedAuthor } from '../types'
 import type { TimeOfDay } from '../lib/atmosphere'
@@ -55,6 +58,10 @@ export default function Dashboard({
 }: Props) {
   const w        = useW()
   const voyageId = useVoyageId()
+
+  const { data: voyagePosts = [] } = usePostsByVoyage(voyageId)
+  const firstPhotoPath = voyagePosts.flatMap(p => p.media_paths ?? []).find(Boolean)
+  const heroPhotoUrl   = firstPhotoPath ? publicUrl(firstPhotoPath) : undefined
 
   // ── Time of day + stars ───────────────────────────────────────────────────────
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(getTimeOfDay)
@@ -132,7 +139,7 @@ export default function Dashboard({
         w={w} voyage={voyage} voyagePct={voyagePct} currentDay={currentDay}
         voyageNights={voyageNights} daysLeft={daysLeft} barPct={barPct}
         timeOfDay={timeOfDay} stars={stars} onNav={onNav} scrollY={scrollY}
-        itinerary={itinerary}
+        itinerary={itinerary} heroPhotoUrl={heroPhotoUrl}
       />
 
       {/* Metric cards */}
@@ -217,6 +224,9 @@ export default function Dashboard({
           </>
         )}
       </motion.div>
+
+      {/* Photo summary — memories captured stat card */}
+      <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
 
       {/* Budget breakdown (only when there's spending data) */}
       {spent > 0 && <BudgetBreakdown budget={budget} />}

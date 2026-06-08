@@ -11,6 +11,7 @@ import type { FeedRow } from './hooks'
 import MediaThumbnails from '@/ui/MediaThumbnails'
 import { useUserId } from '@/context'
 import { publicUrl } from '@/features/posts/mediaStorage'
+import UserSafetyMenu from '@/features/safety/UserSafetyMenu'
 
 const BODY_PREVIEW = 240
 
@@ -121,6 +122,11 @@ export default function FeedItem({ item }: Props) {
             {isOwnPost && <AudiencePill audience={item.audience} />}
           </div>
         </div>
+
+        {/* Safety menu — only for other users' posts */}
+        {!isOwnPost && (
+          <UserSafetyMenu targetUserId={item.user_id} postId={item.id} reportType="post" />
+        )}
 
         {/* Rating badge — top-right */}
         {rating > 0 && (

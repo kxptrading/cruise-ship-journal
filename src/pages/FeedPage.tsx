@@ -47,6 +47,7 @@ import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { STAGGER, FADE_UP } from '@/lib/motion'
 import type { Audience } from '@/types/models'
+import { useMyBlocks, useMyMutes } from '@/features/safety/hooks'
 
 // Filter type includes 'all' in addition to the three Audience values.
 // 'private' is omitted because private posts are never in this feed.
@@ -64,11 +65,12 @@ export default function FeedPage() {
   const [filter, setFilter] = useState<Filter>('all')
   // useFeed() calls get_feed() RPC — returns only posts the viewer is allowed to see.
   const { data: items = [], isLoading, error, refetch } = useFeed()
+  const { data: blockedIds = [] } = useMyBlocks()
+  const { data: mutedIds   = [] } = useMyMutes()
 
-  // Client-side audience filter. 'all' shows everything; other values show only
-  // posts matching that audience. This is fast (no re-fetch) since all authorised
-  // items are already in the cache.
-  const visible = filter === 'all' ? items : items.filter(i => i.audience === filter)
+  // Exclude blocked and muted users from the feed, then apply audience filter.
+  const safe    = items.filter(i => !blockedIds.includes(i.user_id) && !mutedIds.includes(i.user_id))
+  const visible = filter === 'all' ? safe : safe.filter(i => i.audience === filter)
 
   return (
     <div>
@@ -78,16 +80,16 @@ export default function FeedPage() {
           <h1 style={{ margin: 0, fontSize: w < BP.mobile ? 24 : 30, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
             Feed
           </h1>
-          {!isLoading && items.length > 0 && (
+          {!isLoading && safe.length > 0 && (
             <p style={{ margin: '4px 0 0', fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
-              {items.length} post{items.length !== 1 ? 's' : ''} from your contacts
+              {safe.length} post{safe.length !== 1 ? 's' : ''} from your contacts
             </p>
           )}
         </div>
         {/* Audience filter chips — hidden when the bucket is empty */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
           {FILTERS.map(f => {
-            const count  = f.value === 'all' ? items.length : items.filter(i => i.audience === f.value).length
+            const count  = f.value === 'all' ? safe.length : safe.filter(i => i.audience === f.value).length
             const active = filter === f.value
             // Hide empty audience buckets to avoid confusing inactive buttons.
             if (f.value !== 'all' && count === 0) return null
@@ -120,7 +122,7 @@ export default function FeedPage() {
       )}
 
       {/* Empty feed — guides user to find friends since feed requires contacts */}
-      {!isLoading && items.length === 0 && (
+      {!isLoading && safe.length === 0 && (
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20 }}>
           <EmptyState
             icon="📡"
@@ -132,7 +134,7 @@ export default function FeedPage() {
       )}
 
       {/* Filter produced empty results — shown when items exist but none match the active filter */}
-      {!isLoading && items.length > 0 && visible.length === 0 && (
+      {!isLoading && safe.length > 0 && visible.length === 0 && (
         <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '28px 24px', textAlign: 'center' }}>
           <p style={{ margin: 0, fontSize: 14, color: MUTED, fontFamily: FONT_BODY }}>No {filter} posts from your contacts yet.</p>
         </div>
@@ -140,7 +142,7 @@ export default function FeedPage() {
 
       {/* Feed items — staggered entrance animation; mode="popLayout" animates items
           in/out when the filter changes, giving a smooth removal/addition effect. */}
-      {!isLoading && visible.length > 0 && (
+      {!isLoading && safe.length > 0 && visible.length > 0 && (
         <AnimatePresence mode="popLayout">
           <motion.div key={filter} variants={STAGGER} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {visible.map(item => (

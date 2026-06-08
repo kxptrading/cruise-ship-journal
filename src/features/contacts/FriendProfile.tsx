@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { NAVY, NAVY2, GOLD, CREAM, WHITE, BORDER, TEXT, MUTED, FONT_DISPLAY, FONT_BODY } from '@/constants'
 import FE from '@/components/FE'
+import UserSafetyMenu from '@/features/safety/UserSafetyMenu'
 
 interface BadgeDef {
   key:   string
@@ -268,7 +269,10 @@ export default function FriendProfile({ friend, onBack }: Props) {
 
                 <div style={{ flex: 1, minWidth: 0, paddingBottom: 4 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(3,105,161,0.6)', textTransform: 'uppercase', letterSpacing: '0.14em', marginBottom: 6 }}>CAPTAIN'S LOG</div>
-                  <h1 style={{ margin: '0 0 8px', fontFamily: FONT_DISPLAY, fontSize: 30, color: NAVY2, lineHeight: 1.05 }}>{displayName}</h1>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                  <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontSize: 30, color: NAVY2, lineHeight: 1.05 }}>{displayName}</h1>
+                  <UserSafetyMenu targetUserId={friend.userId} reportType="profile" variant="light" />
+                </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                     {currentVoyage?.ship_name && (
                       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: isActivelySailing ? '#15803D' : MUTED, background: isActivelySailing ? '#DCFCE7' : '#F3F4F6', border: `1px solid ${isActivelySailing ? '#86EFAC' : BORDER}`, borderRadius: 20, padding: '4px 12px' }}>

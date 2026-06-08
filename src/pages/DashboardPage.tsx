@@ -21,7 +21,8 @@ import BudgetBreakdown  from '@/features/voyages/dashboard/BudgetBreakdown'
 import ItineraryTimeline from '@/features/voyages/dashboard/ItineraryTimeline'
 import RecentPosts      from '@/features/voyages/dashboard/RecentPosts'
 import PhotoSummaryCard from '@/features/voyages/dashboard/PhotoSummaryCard'
-import VoyageMemoryWall from '@/features/voyages/dashboard/VoyageMemoryWall'
+import VoyageMemoryWall  from '@/features/voyages/dashboard/VoyageMemoryWall'
+import HighlightsGallery from '@/features/voyages/dashboard/HighlightsGallery'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import FE from '../components/FE'
@@ -166,6 +167,9 @@ export default function Dashboard({
 
       {/* Memories captured — visual anchor above stats */}
       <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
+
+      {/* Voyage highlights — auto-curated best-of categories */}
+      {voyageId && <HighlightsGallery voyageId={voyageId} />}
 
       {/* Metric cards */}
       <motion.div

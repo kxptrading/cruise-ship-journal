@@ -5,8 +5,9 @@
 import { NAVY, MUTED, BORDER, TEXT, BP, sty } from '../constants'
 import { useW, useUserId } from '../context'
 import { PgHdr, Fld, Row2, Inp, TA, Stars, Lbl } from '../components/ui'
-import MediaUploader   from '@/ui/MediaUploader'
-import MediaThumbnails from '@/ui/MediaThumbnails'
+import MediaUploader      from '@/ui/MediaUploader'
+import MediaThumbnails    from '@/ui/MediaThumbnails'
+import FoodJourneyGallery from './FoodJourneyGallery'
 import FE from '../components/FE'
 import type { FoodLog } from '../types'
 
@@ -35,6 +36,9 @@ export default function FoodLogSection({ data, onChange }: Props) {
   return (
     <div>
       <PgHdr icon="🍴" title="Food Log" sub="Track every delicious bite — from buffet discoveries to specialty dining gems" />
+
+      {/* Food Journey gallery — visual-first, shown when photos exist */}
+      <FoodJourneyGallery foodLogs={data} />
 
       {data.length === 0 && (
         <div style={{ ...sty.card, textAlign: 'center', padding: '56px 32px', color: MUTED }}>

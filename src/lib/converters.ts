@@ -78,6 +78,7 @@ interface FoodLogRow {
   rating?:        number | null
   cost?:          string | null
   order_again?:   string | null
+  photos?:        string[] | null
 }
 
 interface DiningLogRow {
@@ -296,7 +297,7 @@ export function fromDbFoodLogs(rows: FoodLogRow[]): FoodLog[] {
     rating:     r.rating        ?? 0,
     cost:       r.cost          ?? '',
     orderAgain: r.order_again   ?? '',
-    photos:     [],   // photos are stored client-side in FoodLog state; not persisted to food_logs table
+    photos:     (r.photos as string[] | null) ?? [],
   }))
 }
 
@@ -316,6 +317,7 @@ export function toDbFoodLogs(voyageId: string, arr: FoodLog[]) {
     rating:        m.rating     || null,
     cost:          m.cost       || null,
     order_again:   m.orderAgain || null,
+    photos:        m.photos?.length ? m.photos : [],
   }))
 }
 

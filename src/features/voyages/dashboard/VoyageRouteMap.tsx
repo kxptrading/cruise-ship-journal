@@ -254,7 +254,11 @@ export default function VoyageRouteMap({ voyage, itinerary, dailyLogs, onNav, on
       zoom:             5,
       scrollWheelZoom:  false,
       zoomControl:      true,
+      keyboard:         false, // prevent Leaflet stealing focus on init (causes page scroll)
     })
+    // Blur the container immediately — Leaflet focuses it internally during init
+    // which triggers the browser to scroll <main> to bring the map into view.
+    mapDivRef.current.blur()
     mapRef.current = map
 
     // CartoDB Voyager tiles — clean ocean look
@@ -385,7 +389,7 @@ export default function VoyageRouteMap({ voyage, itinerary, dailyLogs, onNav, on
 
       {/* ── Map canvas ─────────────────────────────────────────── */}
       <div style={{ position: 'relative', height: mapHeight }}>
-        <div ref={mapDivRef} style={{ height: mapHeight, width: '100%' }} />
+        <div ref={mapDivRef} tabIndex={-1} style={{ height: mapHeight, width: '100%' }} />
 
         {/* Night counter badge */}
         {nights > 0 && (

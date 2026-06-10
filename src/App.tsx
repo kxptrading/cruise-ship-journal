@@ -235,6 +235,11 @@ export default function App() {
     if (!isOverlay) setSidebarOpen(false)
   }, [isOverlay])
 
+  // ── Scroll to top on every route change ──────────────────────────────────────
+  useEffect(() => {
+    if (mainRef.current) mainRef.current.scrollTop = 0
+  }, [location.pathname])
+
   // ── Offline / sync status ────────────────────────────────────────────────────
   const isOnline   = useOnlineStatus()
   const syncStatus = useSyncStatus()
@@ -412,7 +417,7 @@ export default function App() {
     <VoyageCtx.Provider value={voyageId}>
     <UserCtx.Provider value={session?.user?.id ?? null}>
     <WCtx.Provider value={winW}>
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
+      <div className="app-shell" style={{ display: 'flex', flexDirection: 'column', background: CREAM, fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif', fontSize: baseFontSize }}>
 
         <TopNav
             section={section}

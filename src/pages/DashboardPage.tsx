@@ -30,8 +30,8 @@ import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEn
 import type { TimeOfDay } from '../lib/atmosphere'
 import type { MotionValue } from 'framer-motion'
 
-// Lazy-load the heavy map so dashboard initial render is fast
-const PortsMap = lazy(() => import('@/features/voyages/dashboard/PortsMap'))
+// Lazy-load the heavy map (Leaflet bundle) so dashboard initial render is fast
+const VoyageRouteMap = lazy(() => import('@/features/voyages/dashboard/VoyageRouteMap'))
 
 interface Star {
   id: number; x: number; y: number; size: number; delay: number; duration: number
@@ -274,18 +274,22 @@ export default function Dashboard({
         }}
       />
 
-      {/* Ports map — lazy loaded */}
-      {itinerary.some(d => d.port && !d.port.toLowerCase().includes('sea')) && (
-        <Suspense fallback={
-          <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
-            <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>Loading map…</div>
-            </div>
+      {/* Voyage route map — lazy loaded (Leaflet bundle) */}
+      <Suspense fallback={
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
+          <div style={{ height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>Loading route map…</div>
           </div>
-        }>
-          <PortsMap itinerary={itinerary} />
-        </Suspense>
-      )}
+        </div>
+      }>
+        <VoyageRouteMap
+          voyage={voyage}
+          itinerary={itinerary}
+          dailyLogs={dailyLogs}
+          onNav={onNav}
+          onViewDay={onViewDay}
+        />
+      </Suspense>
 
       {/* Recent posts */}
       <RecentPosts

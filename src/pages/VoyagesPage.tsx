@@ -85,7 +85,7 @@ export default function VoyagesPage() {
 
       {/* Loading skeletons — shown while useVoyages is fetching */}
       {isLoading && (
-        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gridAutoRows: 'minmax(280px, auto)', gap: 16 }}>
           {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
         </div>
       )}
@@ -108,10 +108,10 @@ export default function VoyagesPage() {
           variants={STAGGER}
           initial="hidden"
           animate="visible"
-          style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 16 }}
+          style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gridAutoRows: 'minmax(280px, auto)', gap: 16 }}
         >
           {voyages.map(voyage => (
-            <motion.div key={voyage.id} variants={FADE_UP}>
+            <motion.div key={voyage.id} variants={FADE_UP} style={{ display: 'flex' }}>
               <VoyageCard
                 voyage={voyage}
                 // postCounts may still be loading — default 0 shows the badge

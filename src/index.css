@@ -43,10 +43,21 @@
 
 html, body, #root {
   height: 100%;
+  overflow: hidden;          /* prevent body-level scroll bleed on mobile */
+  overscroll-behavior: none; /* suppress iOS rubber-band / Android pull-to-refresh */
 }
 
 html {
   scroll-behavior: smooth;
+}
+
+/* Fill exactly the visible viewport on mobile browsers with a collapsible
+   address bar. 100svh = "small" viewport (chrome fully shown = most conservative).
+   Falls back to 100vh on browsers that don't support svh units. */
+.app-shell {
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
 }
 
 /* ── Custom scrollbar ─────────────────────────────────────────────────────── */

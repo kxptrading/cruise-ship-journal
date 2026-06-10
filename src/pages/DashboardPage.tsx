@@ -9,7 +9,7 @@
 //   dashboard/RecentPosts.tsx    — 3-up recent log cards
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { NAVY2, WHITE, BORDER, MUTED, TEAL, sty, FONT_BODY, BP } from '../constants'
 import { useW, useVoyageId } from '../context'
@@ -31,7 +31,6 @@ import type { TimeOfDay } from '../lib/atmosphere'
 import type { MotionValue } from 'framer-motion'
 
 // Lazy-load the heavy map (Leaflet bundle) so dashboard initial render is fast
-const VoyageRouteMap = lazy(() => import('@/features/voyages/dashboard/VoyageRouteMap'))
 
 interface Star {
   id: number; x: number; y: number; size: number; delay: number; duration: number
@@ -273,23 +272,6 @@ export default function Dashboard({
           else onNav('daily')
         }}
       />
-
-      {/* Voyage route map — lazy loaded (Leaflet bundle) */}
-      <Suspense fallback={
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
-          <div style={{ height: 360, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>Loading route map…</div>
-          </div>
-        </div>
-      }>
-        <VoyageRouteMap
-          voyage={voyage}
-          itinerary={itinerary}
-          dailyLogs={dailyLogs}
-          onNav={onNav}
-          onViewDay={onViewDay}
-        />
-      </Suspense>
 
       {/* Recent posts */}
       <RecentPosts

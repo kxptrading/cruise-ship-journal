@@ -124,10 +124,14 @@ export default function DailyLogSection({ data, onChange, itinerary, voyage, ini
     if (next < 0 || next >= data.length) return
     setDayDir(next > day ? 1 : -1)
     setDay(next)
-    // Scroll the day pill into view
+    // Scroll only the day-strip container horizontally — never scrollIntoView
+    // as it walks the ancestor chain and scrolls the page vertically.
     window.setTimeout(() => {
-      const pill = dayStripRef.current?.querySelector(`[data-day="${next}"]`) as HTMLElement
-      pill?.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' })
+      const container = dayStripRef.current
+      const pill = container?.querySelector(`[data-day="${next}"]`) as HTMLElement | null
+      if (!container || !pill) return
+      const target = pill.offsetLeft - (container.offsetWidth / 2) + (pill.offsetWidth / 2)
+      container.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
     }, 30)
   }, [day, data.length])
 

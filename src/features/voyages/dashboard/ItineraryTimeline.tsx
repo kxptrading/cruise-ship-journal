@@ -31,8 +31,13 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
 
   useEffect(() => {
     if (!currentDay || !scrollRef.current) return
-    const card = scrollRef.current.querySelector(`[data-day="${currentDay}"]`) as HTMLElement | null
-    if (card) card.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' })
+    const container = scrollRef.current
+    const card = container.querySelector(`[data-day="${currentDay}"]`) as HTMLElement | null
+    if (!card) return
+    // Scroll only the horizontal container — never call scrollIntoView here because
+    // it walks the full ancestor chain and scrolls <main> vertically on page load.
+    const target = card.offsetLeft - (container.offsetWidth / 2) + (card.offsetWidth / 2)
+    container.scrollTo({ left: Math.max(0, target), behavior: 'smooth' })
   }, [currentDay])
 
   const hasPorts = itinerary.some(d => d.port)

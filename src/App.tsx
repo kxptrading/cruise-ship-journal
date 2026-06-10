@@ -70,7 +70,9 @@ const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
 const PostEditorPage   = lazy(() => import('./pages/PostEditorPage'))
 const PostDetailPage   = lazy(() => import('./pages/PostDetailPage'))
 const AdminReportsPage = lazy(() => import('./pages/AdminReportsPage'))
+const AdminPage        = lazy(() => import('./pages/AdminPage'))
 import type { Session } from '@supabase/supabase-js'
+import { useIsAdmin } from './features/safety/hooks'
 
 // All valid section IDs — anything else renders NotFound
 const KNOWN_SECTIONS = new Set([
@@ -260,6 +262,9 @@ export default function App() {
     createVoyage: createVoyageData,
     handleCoverPhotoChange,
   } = useVoyageData({ session, showToast })
+
+  // ── Admin status ────────────────────────────────────────────────────────────
+  const { data: isAdmin } = useIsAdmin()
 
   // ── Notification badges ─────────────────────────────────────────────────────
   const unread = useUnreadCounts()
@@ -465,6 +470,7 @@ export default function App() {
             voyageCount={allVoyages.length}
             sectionStatus={sectionStatus}
             isAdult={isAdult}
+            isAdmin={isAdmin === true}
             badges={navBadges}
           />
 
@@ -540,6 +546,7 @@ export default function App() {
                 <Route path="/contacts" element={<Friends />} />
                 <Route path="/chat"          element={<Chat />} />
                 <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
+                <Route path="/admin"             element={<AdminPage />} />
                 <Route path="/admin/reports"    element={<AdminReportsPage />} />
                 <Route path="/design-system"   element={<DesignSystem />} />
                 <Route path="/update-password" element={<UpdatePasswordPage />} />

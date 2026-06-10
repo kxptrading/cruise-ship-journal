@@ -34,7 +34,7 @@ import { AnimatePresence, motion }  from 'framer-motion'
 import {
   Ship, Compass, Users, MessageCircle, CircleUser,
   CalendarDays, Map, Utensils, UtensilsCrossed, Music,
-  Heart, CreditCard, ShoppingBag, Trophy, Luggage, FileText,
+  Heart, CreditCard, ShoppingBag, Trophy, Luggage, FileText, ShieldCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { GOLD, WHITE, FONT_BODY, FONT_LOGO } from '../constants'
@@ -84,6 +84,7 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   highlights:    Trophy,
   packing:       Luggage,
   notes:         FileText,
+  admin:         ShieldCheck,
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -103,12 +104,13 @@ interface Props {
   voyageCount:   number
   sectionStatus: Set<string> | null | undefined
   isAdult:       boolean
+  isAdmin?:      boolean
   badges?:       Record<string, number>
 }
 
 export default function Sidebar({
   section, onNav, bp, isOpen, onClose,
-  user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult, badges = {},
+  user, onSignOut, voyageName, voyageCount, sectionStatus, isAdult, isAdmin = false, badges = {},
 }: Props) {
   const isMobile   = bp === 'mobile'
   const isTablet   = bp === 'tablet'
@@ -267,6 +269,13 @@ export default function Sidebar({
             renderNavButton(id, label, icon, () => navToJournalTab(id))
           )}
         </>
+      )}
+
+      {/* Admin link — only shown to admins */}
+      {isAdmin && (
+        <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 4 }}>
+          {renderNavButton('admin', 'Admin', 'admin')}
+        </div>
       )}
     </nav>
   )

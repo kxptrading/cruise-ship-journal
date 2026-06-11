@@ -46,9 +46,9 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>
           Itinerary Timeline
-        </div>
+        </h2>
         <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>Click any day to open log</span>
       </div>
 

@@ -33,9 +33,9 @@ export default function RecentPosts({ dailyLogs, itinerary, onNav, onViewDay }: 
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>
           Recent Posts
-        </div>
+        </h2>
         <button
           onClick={() => onNav('feed')}
           style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, color: 'var(--t-primary)', fontFamily: FONT_BODY, fontWeight: 600, padding: 0 }}

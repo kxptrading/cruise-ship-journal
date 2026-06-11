@@ -139,9 +139,9 @@ export default function MyVoyagesStrip({ currentVoyageId, onSwitch }: Props) {
     <div style={{ marginBottom: 20 }}>
       {/* Section header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT_BODY }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
           My Voyages
-        </div>
+        </h2>
         <button
           onClick={() => navigate('/voyages')}
           style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, color: 'var(--t-primary)', fontFamily: FONT_BODY, fontWeight: 600, padding: '2px 0' }}

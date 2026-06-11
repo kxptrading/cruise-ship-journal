@@ -395,7 +395,7 @@ export default function App() {
   if (!authChecked) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
       <div style={{ textAlign: 'center' }}>
-        <img src="/logo.svg" alt="Deck Days" style={{ height: 64, width: 'auto', marginBottom: 16, opacity: 0.9 }} />
+        <img src="/logo.svg" alt="Deck Days" style={{ height: 64, width: 'auto', display: 'block', margin: '0 auto 16px', opacity: 0.9 }} />
         <div style={{ color: NAVY, fontSize: 18 }}>Loading...</div>
       </div>
     </div>
@@ -451,7 +451,7 @@ export default function App() {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
         <div style={{ textAlign: 'center' }}>
-          <img src="/logo.svg" alt="Deck Days" style={{ height: 64, width: 'auto', marginBottom: 16, opacity: 0.9 }} />
+          <img src="/logo.svg" alt="Deck Days" style={{ height: 64, width: 'auto', display: 'block', margin: '0 auto 16px', opacity: 0.9 }} />
           <div style={{ color: NAVY, fontSize: 18 }}>Loading your voyage journal...</div>
         </div>
       </div>

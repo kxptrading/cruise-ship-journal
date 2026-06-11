@@ -195,7 +195,7 @@ function VoyageSection({ voyage, defaultOpen }: { voyage: VoyageRow; defaultOpen
               transition={{ duration: 0.22 }}
               style={{ overflow: 'hidden' }}
             >
-              <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 18px 18px' }}>
+              <div style={{ padding: '0 18px 18px' }}>
 
                 {isLoading && (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 5 }}>

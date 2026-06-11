@@ -11,7 +11,7 @@
 
 import type { CSSProperties, ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { BORDER, WHITE } from '../../constants'
+import { BORDER, WHITE, TEXT, MUTED } from '../../constants'
 
 export type CardVariant = 'flat' | 'elevated' | 'glass'
 
@@ -79,8 +79,8 @@ export function CardHeader({ title, sub, action, style }: CardHeaderProps) {
   return (
     <div style={{ padding: '18px 20px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, ...style }}>
       <div>
-        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: '#1C2B3A', letterSpacing: '-0.01em' }}>{title}</h3>
-        {sub && <p style={{ margin: '3px 0 0', fontSize: 13, color: '#6B7280' }}>{sub}</p>}
+        <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: TEXT, letterSpacing: '-0.01em' }}>{title}</h3>
+        {sub && <p style={{ margin: '3px 0 0', fontSize: 13, color: MUTED }}>{sub}</p>}
       </div>
       {action && <div style={{ flexShrink: 0 }}>{action}</div>}
     </div>

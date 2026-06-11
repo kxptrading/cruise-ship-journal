@@ -52,7 +52,7 @@ const BADGE_DEFS: BadgeDef[] = [
   { key: 'foodie',       emoji: '🍽️', name: 'Foodie',        color: '#F43F5E', howTo: 'Log 5 or more entries in the Food Log.' },
   { key: 'topRated',     emoji: '⭐', name: 'Top Rated',     color: '#F59E0B', howTo: 'Achieve an average day rating of 4 ★ or higher.' },
   { key: 'entertained',  emoji: '🎭', name: 'Entertained',   color: '#7C3AED', howTo: 'Add at least 3 entries in the Entertainment Log.' },
-  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     color: '#14293F', howTo: 'Keep total spend at or below the set budget.' },
+  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     color: NAVY2, howTo: 'Keep total spend at or below the set budget.' },
   { key: 'photographer', emoji: '📸', name: 'Photographer',  color: '#0D9488', howTo: 'Upload at least one photo.' },
   { key: 'fullHouse',    emoji: '🏆', name: 'Full House',    color: '#F59E0B', howTo: 'Log every single night of the voyage.' },
 ]

@@ -1,5 +1,5 @@
 import LegalPage from './legal/LegalPage'
-import { NAVY2, GOLD, WHITE, BORDER, FONT_BODY } from '@/constants'
+import { NAVY2, GOLD, WHITE, BORDER, MUTED, TEXT, LIGHT, FONT_BODY } from '@/constants'
 
 const TOPICS = [
   { icon: '🔒', label: 'Privacy & Data', note: 'Data requests, deletion, GDPR enquiries', email: 'kiran.x.parmar@gmail.com', subject: 'Privacy Enquiry' },
@@ -27,7 +27,7 @@ export default function ContactPage() {
             href={`mailto:${topic.email}?subject=${encodeURIComponent(topic.subject)}`}
             style={{
               display: 'block', padding: '16px 18px',
-              background: '#F9F7F3', border: `1px solid ${BORDER}`,
+              background: LIGHT, border: `1px solid ${BORDER}`,
               borderRadius: 12, textDecoration: 'none',
               transition: 'border-color 0.15s, box-shadow 0.15s',
             }}
@@ -44,7 +44,7 @@ export default function ContactPage() {
           >
             <div style={{ fontSize: 24, marginBottom: 8 }}>{topic.icon}</div>
             <div style={{ fontSize: 13.5, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, marginBottom: 4 }}>{topic.label}</div>
-            <div style={{ fontSize: 12, color: '#7A8594', fontFamily: FONT_BODY, lineHeight: 1.5 }}>{topic.note}</div>
+            <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, lineHeight: 1.5 }}>{topic.note}</div>
           </a>
         ))}
       </div>
@@ -61,7 +61,7 @@ export default function ContactPage() {
           href="mailto:kiran.x.parmar@gmail.com"
           style={{
             display: 'inline-block', marginTop: 12,
-            background: GOLD, color: '#1C2B3A',
+            background: GOLD, color: TEXT,
             padding: '8px 20px', borderRadius: 8,
             fontSize: 13, fontWeight: 700, fontFamily: FONT_BODY,
             textDecoration: 'none', transition: 'opacity 0.15s',
@@ -88,15 +88,15 @@ export default function ContactPage() {
               ['Copyright takedowns', '5 business days'],
             ].map(([topic, time]) => (
               <tr key={topic}>
-                <td style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER}`, color: '#1C2B3A' }}>{topic}</td>
-                <td style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER}`, color: '#7A8594', textAlign: 'right' }}>{time}</td>
+                <td style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER}`, color: TEXT }}>{topic}</td>
+                <td style={{ padding: '8px 0', borderBottom: `1px solid ${BORDER}`, color: MUTED, textAlign: 'right' }}>{time}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      <p style={{ marginTop: 24, fontSize: 13, color: '#7A8594', fontFamily: FONT_BODY, lineHeight: 1.6 }}>
+      <p style={{ marginTop: 24, fontSize: 13, color: MUTED, fontFamily: FONT_BODY, lineHeight: 1.6 }}>
         <strong>Deck Days</strong> is an independent cruise journal app operated by KXP Technologies and is
         not affiliated with any cruise line, travel agent, or booking platform.
       </p>

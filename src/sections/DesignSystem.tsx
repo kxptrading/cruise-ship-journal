@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { FONT_DISPLAY, FONT_BODY, MUTED, TEAL, GOLD } from '../constants'
+import { FONT_DISPLAY, FONT_BODY, MUTED, TEXT, TEAL, GOLD } from '../constants'
 import { Card, CardHeader, CardBody, CardFooter }    from '../components/ui/card'
 import { SectionBox }                                 from '../components/ui/section-box'
 import { MetricCard }                                 from '../components/ui/metric-card'
@@ -84,7 +84,7 @@ export default function DesignSystem() {
           <div style={{ background: 'linear-gradient(135deg, var(--t-primary) 0%, var(--t-primary-dk) 100%)', borderRadius: 14, padding: 20 }}>
             <Card variant="glass">
               <CardHeader title="Glass card" sub="Frosted-glass effect for hero panels" />
-              <CardBody><p style={{ margin: 0, fontSize: 14, color: '#1C2B3A' }}>Semi-transparent background with backdrop blur.</p></CardBody>
+              <CardBody><p style={{ margin: 0, fontSize: 14, color: TEXT }}>Semi-transparent background with backdrop blur.</p></CardBody>
             </Card>
           </div>
         </Group>

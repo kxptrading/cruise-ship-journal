@@ -5,7 +5,7 @@
 import { useState } from 'react'
 import { motion, useTransform } from 'framer-motion'
 import type { MotionValue } from 'framer-motion'
-import { GOLD, WHITE, BP, FONT_DISPLAY, FONT_BODY } from '../../constants'
+import { GOLD, WHITE, TEXT, BP, FONT_DISPLAY, FONT_BODY } from '../../constants'
 import { Donut } from '../../components/ui'
 import { getTimeGradient, getVignetteRGB } from '../../lib/atmosphere'
 import type { TimeOfDay } from '../../lib/atmosphere'
@@ -159,7 +159,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
             )}
 
             {!voyage.shipName && (
-              <button onClick={() => onNav('voyage')} style={{ background: GOLD, color: '#1C2B3A', border: 'none', borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY, marginBottom: 10 }}>
+              <button onClick={() => onNav('voyage')} style={{ background: GOLD, color: TEXT, border: 'none', borderRadius: 12, padding: '9px 20px', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_BODY, marginBottom: 10 }}>
                 Set Up Your Voyage →
               </button>
             )}

@@ -38,7 +38,7 @@
 import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { NAVY2, GOLD, TEAL, WHITE, BORDER, MUTED, FONT_DISPLAY, FONT_BODY, sty, BP } from '@/constants'
+import { NAVY2, GOLD, TEAL, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY, sty, BP } from '@/constants'
 import { useW } from '@/context'
 import { useVoyage } from '@/features/voyages/hooks'
 import { SkeletonCard } from '@/components/ui/skeleton'
@@ -178,7 +178,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => navigate(`/voyages/${voyageId}/posts/new`)}
-              style={{ ...sty.btn, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '8px 16px', background: GOLD + 'EE', color: '#1C2B3A', boxShadow: 'none' }}
+              style={{ ...sty.btn, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '8px 16px', background: GOLD + 'EE', color: TEXT, boxShadow: 'none' }}
             >
               <Plus size={14} strokeWidth={2.5} /> New Post
             </button>

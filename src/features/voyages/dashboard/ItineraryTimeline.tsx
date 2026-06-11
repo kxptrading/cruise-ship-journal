@@ -3,7 +3,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useRef, useEffect } from 'react'
-import { WHITE, BORDER, MUTED, NAVY2, GOLD, TEAL, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import { WHITE, BORDER, MUTED, NAVY2, TEXT, GOLD, TEAL, FONT_DISPLAY, FONT_BODY } from '@/constants'
 import type { ItineraryDay, DailyLog } from '@/types'
 
 const WX_EMOJI: Record<string, string> = {
@@ -137,7 +137,7 @@ export default function ItineraryTimeline({ itinerary, dailyLogs, currentDay, on
                   </div>
                 )}
                 {isCurrent && (
-                  <div style={{ position: 'absolute', bottom: 5, left: 6, fontSize: 8, fontWeight: 700, color: '#1C2B3A', background: GOLD, borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                  <div style={{ position: 'absolute', bottom: 5, left: 6, fontSize: 8, fontWeight: 700, color: TEXT, background: GOLD, borderRadius: 6, padding: '1px 5px', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
                     Today
                   </div>
                 )}

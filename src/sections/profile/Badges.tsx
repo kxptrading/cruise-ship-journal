@@ -93,7 +93,7 @@ const BADGE_DEFS: BadgeDef[] = [
   { key: 'foodie',       emoji: '🍽️', name: 'Foodie',       color: '#F43F5E', desc: 'Logged 5 or more meals',                    howTo: 'Log 5 or more entries in the Food Log section — each meal, snack, or drink counts.' },
   { key: 'topRated',     emoji: '⭐', name: 'Top Rated',     color: '#F59E0B', desc: 'Average day rating of 4 stars or above',     howTo: 'Rate your days in the Daily Log. An average of 4 ★ or higher across all rated days earns this badge.' },
   { key: 'entertained',  emoji: '🎭', name: 'Entertained',   color: '#7C3AED', desc: 'Logged 3 or more entertainment entries',     howTo: 'Add at least 3 shows, events, or activities in the Entertainment Log.' },
-  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     color: '#14293F', desc: 'Total spend within your budget',             howTo: 'Set a budget in the Budget Tracker and keep your total expenses at or below it.' },
+  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     color: NAVY2, desc: 'Total spend within your budget',             howTo: 'Set a budget in the Budget Tracker and keep your total expenses at or below it.' },
   { key: 'photographer', emoji: '📸', name: 'Photographer',  color: '#0D9488', desc: 'Added at least one photo',                  howTo: 'Upload at least one photo in the Daily Log or via the Feed composer.' },
   { key: 'fullHouse',    emoji: '🏆', name: 'Full House',    color: '#F59E0B', desc: 'Logged every day of the voyage',             howTo: 'Write a journal entry for every single night of your voyage. Set the total nights in Voyage Details first.' },
 ]

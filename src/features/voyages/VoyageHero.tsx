@@ -130,8 +130,8 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
       {/* ── Floating glass content card ────────────────────────────────────────── */}
       <div style={{
         position: 'absolute', bottom: 14, left: 14, right: 14, zIndex: 3,
-        background: 'rgba(10,22,38,0.55)',
-        backdropFilter: 'blur(14px)',
+        background: 'rgba(10,22,38,0.30)',
+        backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(14px)',
         borderRadius: 16,
         padding: `${w < BP.mobile ? 14 : 18}px ${w < BP.mobile ? 14 : 20}px`,

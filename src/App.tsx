@@ -377,9 +377,8 @@ export default function App() {
   // ── Layout values ───────────────────────────────────────────────────────────
   const baseFontSize = isMobile ? 15 : bp === 'tablet' ? 15.5 : 16
   const mainPad      = isMobile ? '20px 12px' : bp === 'tablet' ? '32px 28px' : '44px 52px'
-  // Extra bottom clearance on mobile so content isn't hidden behind the BottomNav
-  // Mobile: 80px clears the BottomNav. Tablet/desktop: 120px clears the fixed Footer.
-  const mainPadBottom = isMobile ? '80px' : '120px'
+  // Extra bottom clearance on mobile so content isn't hidden behind the BottomNav.
+  const mainPadBottom = isMobile ? '80px' : '48px'
 
   // ── Scroll tracking — fed into VoyageHero for parallax/fade ────────────────
   // useScroll with a container ref tracks the overflow-y scroll on <main>, not
@@ -621,6 +620,8 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
+            {/* Footer scrolls with content — only on desktop (mobile uses BottomNav) */}
+            {!isMobile && <Footer />}
           </main>
           </div>
         </div>
@@ -639,18 +640,6 @@ export default function App() {
           onMenuOpen={() => setSidebarOpen(true)}
           badges={navBadges}
         />
-      )}
-      {/* Fixed footer — sidebar is now auto-hide so footer spans the full width. */}
-      {!isMobile && (
-        <div style={{
-          position: 'fixed',
-          bottom: 0,
-          left:   0,
-          right:  0,
-          zIndex: 150,
-        }}>
-          <Footer />
-        </div>
       )}
     </WCtx.Provider>
     </UserCtx.Provider>

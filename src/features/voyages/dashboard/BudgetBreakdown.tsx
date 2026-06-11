@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { WHITE, BORDER, MUTED, TEAL, ROSE, GOLD, FONT_BODY, FONT_DISPLAY } from '@/constants'
+import { WHITE, BORDER, MUTED, NAVY2, TEAL, ROSE, GOLD, FONT_BODY, FONT_DISPLAY } from '@/constants'
 import type { Budget } from '@/types'
 
 const CATEGORIES = ['Excursions', 'Drinks', 'Shopping', 'Dining', 'Other'] as const
@@ -47,7 +47,7 @@ export default function BudgetBreakdown({ budget }: Props) {
   if (!spent) {
     return (
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
-        <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>Budget Breakdown</h2>
+        <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>Budget Breakdown</h2>
         <div style={{ fontSize: 14, color: MUTED, fontFamily: FONT_BODY }}>No spending recorded yet.</div>
       </div>
     )
@@ -59,7 +59,7 @@ export default function BudgetBreakdown({ budget }: Props) {
     <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
           Budget Breakdown
         </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

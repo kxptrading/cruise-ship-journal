@@ -2,7 +2,7 @@
 // sections/dashboard/RecentPosts.tsx — 3-up grid of latest daily log posts
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { WHITE, BORDER, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, BP } from '@/constants'
+import { WHITE, BORDER, MUTED, NAVY2, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, BP } from '@/constants'
 import { useW } from '@/context'
 import type { DailyLog, ItineraryDay } from '@/types'
 import { motion } from 'framer-motion'
@@ -33,7 +33,7 @@ export default function RecentPosts({ dailyLogs, itinerary, onNav, onViewDay }: 
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
           Recent Posts
         </h2>
         <button

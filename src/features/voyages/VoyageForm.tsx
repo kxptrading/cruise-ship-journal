@@ -93,8 +93,8 @@ export default function VoyageDetails({ data, onChange }: Props) {
           <Row2>
             <Fld label="Breakfast Time" half><Inp value={data.breakfastTime} onChange={(v: string) => set('breakfastTime', v)} placeholder="e.g. 07:00 – 10:00" /></Fld>
             <Fld label="Lunch Time" half><Inp value={data.lunchTime} onChange={(v: string) => set('lunchTime', v)} placeholder="e.g. 12:00 – 14:00" /></Fld>
+            <Fld label="Dining Time" half><Inp value={data.diningTime} onChange={(v: string) => set('diningTime', v)} placeholder="e.g. 18:30 — Main Dining Room" /></Fld>
           </Row2>
-          <Fld label="Dining Time"><Inp value={data.diningTime} onChange={(v: string) => set('diningTime', v)} placeholder="e.g. 18:30 — Main Dining Room" /></Fld>
           <Row2>
             <Fld label="Room Location" half>
               <select

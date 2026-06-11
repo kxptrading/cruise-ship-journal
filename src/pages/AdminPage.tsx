@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users, FileText, Flag, Shield, BarChart2,
   Trash2, AlertTriangle, CheckCircle, XCircle,
-  RefreshCw, Search, ChevronDown,
+  RefreshCw, Search, ChevronDown, ChevronRight, X,
+  TrendingUp, Globe, Lock, UserX, UserCheck, Anchor,
 } from 'lucide-react'
 import { WHITE, BORDER, NAVY2, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, TEXT } from '@/constants'
 import { useIsAdmin, useReports, useModerationAction } from '@/features/safety/hooks'
@@ -38,21 +39,70 @@ function initials(name: string | null, email: string | null): string {
   return '??'
 }
 
-// ── StatCard ──────────────────────────────────────────────────────────────────
+// ── DashboardCard ─────────────────────────────────────────────────────────────
 
-function StatCard({ icon, label, value, color, sub }: {
-  icon: string; label: string; value: number | string; color: string; sub?: string
+interface BreakdownBar { label: string; value: number; color: string }
+
+function DashboardCard({ icon, label, value, color, bars, trend, trendIcon, onClick, active }: {
+  icon: React.ReactNode; label: string; value: number | string; color: string
+  bars?: BreakdownBar[]; trend?: string; trendIcon?: React.ReactNode
+  onClick?: () => void; active?: boolean
 }) {
+  const [hovered, setHovered] = useState(false)
+  const total = bars ? bars.reduce((s, b) => s + b.value, 0) : 0
+
   return (
-    <div style={{
-      background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16,
-      padding: '18px 20px', display: 'flex', flexDirection: 'column', gap: 6,
-      borderTop: `3px solid ${color}`, boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-    }}>
-      <div style={{ fontSize: 22 }}>{icon}</div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: NAVY2, fontFamily: 'Georgia,serif', lineHeight: 1 }}>{value}</div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>{label}</div>
-      {sub && <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>{sub}</div>}
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: WHITE,
+        border: `1.5px solid ${active ? color : hovered && onClick ? color + '55' : BORDER}`,
+        borderTop: `3px solid ${color}`,
+        borderRadius: 16, padding: '18px 20px',
+        cursor: onClick ? 'pointer' : 'default',
+        transform: hovered && onClick ? 'translateY(-2px)' : 'none',
+        transition: 'all 0.18s',
+        boxShadow: hovered && onClick ? '0 4px 16px rgba(0,0,0,0.08)' : '0 1px 4px rgba(0,0,0,0.05)',
+        display: 'flex', flexDirection: 'column', gap: 8,
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ width: 36, height: 36, borderRadius: 10, background: color + '18', display: 'flex', alignItems: 'center', justifyContent: 'center', color }}>
+          {icon}
+        </div>
+        {onClick && <ChevronRight size={14} color={active ? color : MUTED} style={{ marginTop: 2, transition: 'color 0.15s', transform: active ? 'rotate(90deg)' : 'none' }} />}
+      </div>
+
+      <div>
+        <div style={{ fontSize: 30, fontWeight: 700, color: NAVY2, fontFamily: 'Georgia,serif', lineHeight: 1, marginBottom: 2 }}>{value}</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>{label}</div>
+      </div>
+
+      {bars && bars.length > 0 && total > 0 && (
+        <div>
+          <div style={{ display: 'flex', height: 4, borderRadius: 4, overflow: 'hidden', gap: 1 }}>
+            {bars.filter(b => b.value > 0).map(b => (
+              <div key={b.label} style={{ flex: b.value / total, background: b.color, transition: 'flex 0.3s' }} />
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+            {bars.map(b => (
+              <span key={b.label} style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 10, color: MUTED, fontFamily: FONT_BODY }}>
+                <span style={{ width: 7, height: 7, borderRadius: 2, background: b.color, display: 'inline-block' }} />
+                {b.value} {b.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {trend && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>
+          {trendIcon}{trend}
+        </div>
+      )}
     </div>
   )
 }
@@ -290,7 +340,156 @@ const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
 // ── OverviewTab ───────────────────────────────────────────────────────────────
 
 function OverviewTab() {
-  const { data: stats, isLoading, refetch } = useAdminStats()
+  const { data: stats, isLoading: statsLoading, refetch } = useAdminStats()
+  const { data: allUsers = [], isLoading: usersLoading } = useAdminUsers('all', '')
+  const { data: allPosts = [], isLoading: postsLoading } = useAdminPosts('all')
+  const [detail, setDetail] = useState<string | null>(null)
+
+  const isLoading = statsLoading || usersLoading || postsLoading
+
+  const weekAgo       = new Date(Date.now() - 7 * 86400000)
+  const activeUsers   = allUsers.filter(u => !u.is_banned && !u.is_suspended && !u.is_admin)
+  const adminUsers    = allUsers.filter(u => u.is_admin)
+  const bannedUsers   = allUsers.filter(u => u.is_banned)
+  const suspUsers     = allUsers.filter(u => u.is_suspended)
+  const newThisWeek   = allUsers.filter(u => u.created_at && new Date(u.created_at) >= weekAgo)
+  const publicPosts   = allPosts.filter(p => p.audience === 'public')
+  const familyPosts   = allPosts.filter(p => p.audience === 'family')
+  const privatePosts  = allPosts.filter(p => p.audience === 'private')
+  const withPhotos    = allPosts.filter(p => (p.media_paths ?? []).length > 0)
+  const flaggedUsers  = [...bannedUsers, ...suspUsers]
+
+  const toggle = (key: string) => setDetail(prev => prev === key ? null : key)
+
+  const DetailPanel = () => {
+    if (!detail) return null
+    const content: Record<string, React.ReactNode> = {
+      users: (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: 8, marginBottom: 16 }}>
+            {[
+              { label: 'Active',    count: activeUsers.length,  color: GREEN },
+              { label: 'Admins',    count: adminUsers.length,   color: '#2563EB' },
+              { label: 'Suspended', count: suspUsers.length,    color: AMBER },
+              { label: 'Banned',    count: bannedUsers.length,  color: RED },
+            ].map(s => (
+              <div key={s.label} style={{ background: s.color + '12', border: `1px solid ${s.color}30`, borderRadius: 10, padding: '10px 14px' }}>
+                <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: 'Georgia,serif' }}>{s.count}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          {adminUsers.length > 0 && (
+            <>
+              <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY, marginBottom: 8 }}>Admins</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {adminUsers.map(u => (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#EFF6FF', borderRadius: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#2563EB', color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{initials(u.display_name, u.email)}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: NAVY2, fontFamily: FONT_BODY }}>{u.display_name || u.email}</div>
+                      <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>{u.email}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </>
+      ),
+      new_users: (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, marginBottom: 12 }}>
+            {newThisWeek.length} new user{newThisWeek.length !== 1 ? 's' : ''} in the last 7 days
+          </div>
+          {newThisWeek.length === 0
+            ? <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>No new signups this week.</div>
+            : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {newThisWeek.map(u => (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: TEAL + '10', borderRadius: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: TEAL, color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{initials(u.display_name, u.email)}</div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: NAVY2, fontFamily: FONT_BODY }}>{u.display_name || u.email || 'Unknown'}</div>
+                      <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>Joined {u.created_at ? fmt(u.created_at) : '—'}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+          }
+        </>
+      ),
+      posts: (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8, marginBottom: 16 }}>
+            {[
+              { label: 'Public',  count: publicPosts.length,  color: GREEN,     icon: <Globe size={14} /> },
+              { label: 'Family',  count: familyPosts.length,  color: '#2563EB', icon: <UserCheck size={14} /> },
+              { label: 'Private', count: privatePosts.length, color: MUTED,     icon: <Lock size={14} /> },
+            ].map(s => (
+              <div key={s.label} style={{ background: s.color + '12', border: `1px solid ${s.color}30`, borderRadius: 10, padding: '12px', textAlign: 'center' }}>
+                <div style={{ color: s.color, display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{s.icon}</div>
+                <div style={{ fontSize: 22, fontWeight: 700, color: s.color, fontFamily: 'Georgia,serif' }}>{s.count}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>
+            {withPhotos.length} posts include photos. Use the Posts tab to review and moderate individual posts.
+          </div>
+        </>
+      ),
+      reports: (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, marginBottom: 8 }}>
+            {(stats?.open_reports ?? 0) > 0 ? `${stats?.open_reports} open report${(stats?.open_reports ?? 0) !== 1 ? 's' : ''} need attention` : 'Queue is clear — no open reports'}
+          </div>
+          <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY, marginBottom: 12 }}>Switch to the Reports tab to view and action individual reports.</div>
+          {(stats?.open_reports ?? 0) > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#FEF2F2', border: `1px solid ${RED}30`, borderRadius: 10, padding: '12px 16px' }}>
+              <AlertTriangle size={16} color={RED} />
+              <span style={{ fontSize: 13, color: RED, fontFamily: FONT_BODY, fontWeight: 600 }}>Action required: review open reports in the Reports tab</span>
+            </div>
+          )}
+        </>
+      ),
+      flagged: (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, marginBottom: 12 }}>
+            {flaggedUsers.length} flagged user{flaggedUsers.length !== 1 ? 's' : ''}
+          </div>
+          {flaggedUsers.length === 0
+            ? <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>No banned or suspended users.</div>
+            : <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {flaggedUsers.map(u => (
+                  <div key={u.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: u.is_banned ? '#FEF2F2' : '#FFFBEB', borderRadius: 8 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: '50%', background: u.is_banned ? RED : AMBER, color: WHITE, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0 }}>{initials(u.display_name, u.email)}</div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: NAVY2, fontFamily: FONT_BODY }}>{u.display_name || u.email || 'Unknown'}</div>
+                      <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>{u.email}</div>
+                    </div>
+                    <span style={{ fontSize: 10, fontWeight: 700, background: u.is_banned ? '#FEF2F2' : '#FFFBEB', color: u.is_banned ? RED : AMBER, border: `1px solid ${u.is_banned ? RED : AMBER}40`, borderRadius: 6, padding: '2px 7px', fontFamily: FONT_BODY }}>
+                      {u.is_banned ? 'BANNED' : 'SUSPENDED'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+          }
+        </>
+      ),
+      voyages: (
+        <>
+          <div style={{ fontSize: 13, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY, marginBottom: 8 }}>
+            {stats?.total_voyages ?? 0} voyages across {stats?.total_users ?? 0} users
+          </div>
+          <div style={{ fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
+            {stats?.total_users ? `Avg ${((stats.total_voyages ?? 0) / stats.total_users).toFixed(1)} voyages per user. ` : ''}
+            Each voyage contains itineraries, daily logs, food &amp; dining entries, and travel media.
+          </div>
+        </>
+      ),
+    }
+    return <>{content[detail] ?? null}</>
+  }
 
   return (
     <div>
@@ -300,19 +499,89 @@ function OverviewTab() {
           <RefreshCw size={11} /> Refresh
         </button>
       </div>
+
       {isLoading ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
-          {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton-shimmer" style={{ height: 110, borderRadius: 14 }} />)}
+          {[1,2,3,4,5,6].map(i => <div key={i} className="skeleton-shimmer" style={{ height: 140, borderRadius: 14 }} />)}
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
-          <StatCard icon="👥" label="Total Users"    value={stats?.total_users     ?? 0} color="var(--t-primary)" />
-          <StatCard icon="🚢" label="Total Voyages"  value={stats?.total_voyages   ?? 0} color={TEAL} />
-          <StatCard icon="📝" label="Total Posts"    value={stats?.total_posts     ?? 0} color={GOLD} />
-          <StatCard icon="🚨" label="Open Reports"   value={stats?.open_reports    ?? 0} color={RED}   sub={stats?.open_reports ? 'Needs attention' : 'All clear'} />
-          <StatCard icon="🔒" label="Banned Users"   value={stats?.banned_users    ?? 0} color={RED} />
-          <StatCard icon="⏸️"  label="Suspended"      value={stats?.suspended_users ?? 0} color={AMBER} />
-        </div>
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, marginBottom: detail ? 16 : 0 }}>
+            <DashboardCard
+              icon={<Users size={18} />} label="Total Users" value={stats?.total_users ?? 0} color={NAVY2}
+              bars={[
+                { label: 'Active',    value: activeUsers.length,  color: GREEN },
+                { label: 'Suspended', value: suspUsers.length,    color: AMBER },
+                { label: 'Banned',    value: bannedUsers.length,  color: RED },
+              ]}
+              trend={`${adminUsers.length} admin${adminUsers.length !== 1 ? 's' : ''}`}
+              trendIcon={<Shield size={10} />}
+              onClick={() => toggle('users')} active={detail === 'users'}
+            />
+            <DashboardCard
+              icon={<TrendingUp size={18} />} label="New This Week" value={newThisWeek.length} color={TEAL}
+              trend={`of ${stats?.total_users ?? 0} total users`}
+              onClick={() => toggle('new_users')} active={detail === 'new_users'}
+            />
+            <DashboardCard
+              icon={<FileText size={18} />} label="Total Posts" value={stats?.total_posts ?? 0} color={GOLD}
+              bars={[
+                { label: 'Public',  value: publicPosts.length,  color: GREEN },
+                { label: 'Family',  value: familyPosts.length,  color: '#2563EB' },
+                { label: 'Private', value: privatePosts.length, color: MUTED },
+              ]}
+              trend={`${withPhotos.length} with photos`}
+              trendIcon={<Globe size={10} />}
+              onClick={() => toggle('posts')} active={detail === 'posts'}
+            />
+            <DashboardCard
+              icon={<Flag size={18} />} label="Open Reports" value={stats?.open_reports ?? 0}
+              color={(stats?.open_reports ?? 0) > 0 ? RED : GREEN}
+              trend={(stats?.open_reports ?? 0) > 0 ? 'Needs attention' : 'Queue is clear'}
+              trendIcon={(stats?.open_reports ?? 0) > 0 ? <AlertTriangle size={10} /> : <CheckCircle size={10} />}
+              onClick={() => toggle('reports')} active={detail === 'reports'}
+            />
+            <DashboardCard
+              icon={<UserX size={18} />} label="Flagged Users" value={flaggedUsers.length}
+              color={flaggedUsers.length > 0 ? AMBER : GREEN}
+              bars={flaggedUsers.length > 0 ? [
+                { label: 'Banned',    value: bannedUsers.length, color: RED },
+                { label: 'Suspended', value: suspUsers.length,   color: AMBER },
+              ] : undefined}
+              trend={flaggedUsers.length === 0 ? 'No flagged users' : `${bannedUsers.length} banned · ${suspUsers.length} suspended`}
+              onClick={() => toggle('flagged')} active={detail === 'flagged'}
+            />
+            <DashboardCard
+              icon={<Anchor size={18} />} label="Total Voyages" value={stats?.total_voyages ?? 0} color={TEAL}
+              trend={stats?.total_users ? `avg ${((stats.total_voyages ?? 0) / stats.total_users).toFixed(1)} per user` : undefined}
+              trendIcon={<TrendingUp size={10} />}
+              onClick={() => toggle('voyages')} active={detail === 'voyages'}
+            />
+          </div>
+
+          <AnimatePresence>
+            {detail && (
+              <motion.div
+                key={detail}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.2 }}
+                style={{ overflow: 'hidden' }}
+              >
+                <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>Detail view</div>
+                    <button onClick={() => setDetail(null)} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '3px 8px', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontFamily: FONT_BODY }}>
+                      <X size={11} /> Close
+                    </button>
+                  </div>
+                  <DetailPanel />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </>
       )}
     </div>
   )

@@ -28,7 +28,11 @@ export interface Voyage {
   phone:            string
   guestServices:    string
   musterStation:    string
-  diningTime:          string
+  diningTime:       string
+  breakfastTime:    string
+  lunchTime:        string
+  roomLocation:     string   // nautical: Fore | Midship | Aft
+  safeboxPin:       string
   coverPhotoUrl:       string
   cruiseDescription:   string   // free-text description of the cruise
 }
@@ -255,7 +259,8 @@ export const EMPTY_VOYAGE: Voyage = {
   departureDate: '', returnDate: '', departurePort: '', totalNights: '',
   companion1: '', companion2: '', companion3: '', companion4: '',
   emergencyContact: '', phone: '', guestServices: '', musterStation: '',
-  diningTime: '', coverPhotoUrl: '', cruiseDescription: '',
+  diningTime: '', breakfastTime: '', lunchTime: '', roomLocation: '', safeboxPin: '',
+  coverPhotoUrl: '', cruiseDescription: '',
 }
 
 export interface UseVoyageDataReturn {

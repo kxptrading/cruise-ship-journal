@@ -31,7 +31,11 @@ interface VoyageRow {
   phone?:             string | null
   guest_services?:    string | null
   muster_station?:    string | null
-  dining_time?:          string | null
+  dining_time?:       string | null
+  breakfast_time?:    string | null
+  lunch_time?:        string | null
+  room_location?:     string | null
+  safebox_pin?:       string | null
   cover_photo_url?:      string | null
   cruise_description?:   string | null
 }
@@ -175,7 +179,11 @@ export function fromDbVoyage(row: VoyageRow): Voyage {
     phone:            row.phone             ?? '',
     guestServices:    row.guest_services    ?? '',
     musterStation:    row.muster_station    ?? '',
-    diningTime:          row.dining_time          ?? '',
+    diningTime:       row.dining_time    ?? '',
+    breakfastTime:    row.breakfast_time ?? '',
+    lunchTime:        row.lunch_time     ?? '',
+    roomLocation:     row.room_location  ?? '',
+    safeboxPin:       row.safebox_pin    ?? '',
     coverPhotoUrl:       row.cover_photo_url      ?? '',
     cruiseDescription:   row.cruise_description   ?? '',
   }
@@ -199,7 +207,11 @@ export function toDbVoyage(v: Voyage) {
     phone:             v.phone            || null,
     guest_services:    v.guestServices    || null,
     muster_station:    v.musterStation    || null,
-    dining_time:          v.diningTime          || null,
+    dining_time:       v.diningTime    || null,
+    breakfast_time:    v.breakfastTime || null,
+    lunch_time:        v.lunchTime     || null,
+    room_location:     v.roomLocation  || null,
+    safebox_pin:       v.safeboxPin    || null,
     cover_photo_url:      v.coverPhotoUrl       || null,
     cruise_description:   v.cruiseDescription   || null,
   }

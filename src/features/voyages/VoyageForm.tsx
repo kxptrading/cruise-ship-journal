@@ -2,7 +2,9 @@
 // sections/VoyageDetails.tsx — Voyage setup form
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { BP, sty, MUTED, NAVY2, GOLD, FONT_BODY } from '@/constants'
+import { useState } from 'react'
+import { Eye, EyeOff } from 'lucide-react'
+import { BP, sty, MUTED, NAVY2, GOLD, BORDER, FONT_BODY } from '@/constants'
 import { useW } from '@/context'
 import { PgHdr, Box, Fld, Row2, Inp, TA } from '@/components/ui'
 import FE from '@/components/FE'
@@ -16,6 +18,7 @@ interface Props {
 export default function VoyageDetails({ data, onChange }: Props) {
   const w  = useW()
   const cs = { ...sty.card, padding: w < BP.mobile ? 16 : '22px 24px' }
+  const [showPin, setShowPin] = useState(false)
 
   const set = (f: keyof Voyage, v: string) => {
     const updated: Voyage = { ...data, [f]: v }
@@ -82,16 +85,57 @@ export default function VoyageDetails({ data, onChange }: Props) {
           ))}
         </Box>
 
-        <Box title="IMPORTANT NUMBERS">
+        <Box title="IMPORTANT CRUISE INFORMATION">
           <Row2>
-            <Fld label="Emergency Contact" half><Inp value={data.emergencyContact} onChange={(v: string) => set('emergencyContact', v)} /></Fld>
-            <Fld label="Phone" half><Inp value={data.phone} onChange={(v: string) => set('phone', v)} /></Fld>
+            <Fld label="Service Desk Number" half><Inp value={data.guestServices} onChange={(v: string) => set('guestServices', v)} placeholder="e.g. 911 or ext. 20" /></Fld>
+            <Fld label="Muster Station" half><Inp value={data.musterStation} onChange={(v: string) => set('musterStation', v)} placeholder="e.g. Station C" /></Fld>
           </Row2>
           <Row2>
-            <Fld label="Guest Services" half><Inp value={data.guestServices} onChange={(v: string) => set('guestServices', v)} /></Fld>
-            <Fld label="Muster Station" half><Inp value={data.musterStation} onChange={(v: string) => set('musterStation', v)} /></Fld>
+            <Fld label="Breakfast Time" half><Inp value={data.breakfastTime} onChange={(v: string) => set('breakfastTime', v)} placeholder="e.g. 07:00 – 10:00" /></Fld>
+            <Fld label="Lunch Time" half><Inp value={data.lunchTime} onChange={(v: string) => set('lunchTime', v)} placeholder="e.g. 12:00 – 14:00" /></Fld>
           </Row2>
           <Fld label="Dining Time"><Inp value={data.diningTime} onChange={(v: string) => set('diningTime', v)} placeholder="e.g. 18:30 — Main Dining Room" /></Fld>
+          <Row2>
+            <Fld label="Room Location" half>
+              <select
+                value={data.roomLocation}
+                onChange={e => set('roomLocation', e.target.value)}
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: 8,
+                  border: `1px solid ${BORDER}`, background: '#fff',
+                  fontSize: 14, fontFamily: FONT_BODY, color: data.roomLocation ? NAVY2 : MUTED,
+                  appearance: 'none', cursor: 'pointer',
+                }}
+              >
+                <option value="">Select position…</option>
+                <option value="Fore">Fore (Forward)</option>
+                <option value="Midship">Midship (Middle)</option>
+                <option value="Aft">Aft (Rear)</option>
+              </select>
+            </Fld>
+            <Fld label="Safebox PIN" half>
+              <div style={{ position: 'relative' }}>
+                <Inp
+                  type={showPin ? 'text' : 'password'}
+                  value={data.safeboxPin}
+                  onChange={(v: string) => set('safeboxPin', v)}
+                  placeholder="••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPin(p => !p)}
+                  aria-label={showPin ? 'Hide PIN' : 'Show PIN'}
+                  style={{
+                    position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', color: MUTED, padding: 2,
+                    display: 'flex', alignItems: 'center',
+                  }}
+                >
+                  {showPin ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </Fld>
+          </Row2>
         </Box>
 
       </div>

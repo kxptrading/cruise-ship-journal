@@ -70,6 +70,7 @@ export interface NavItem {
 
 // Primary navigation — shown at the top of the sidebar
 export const PRIMARY_NAV: NavItem[] = [
+  { id: 'dashboard', label: 'Home',       icon: '🏠' },
   { id: 'voyages',  label: 'My Voyages', icon: '🚢' },
   { id: 'feed',     label: 'Feed',       icon: '📡' },
   { id: 'friends',  label: 'Buddies',    icon: '👥' },

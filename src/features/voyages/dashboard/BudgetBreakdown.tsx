@@ -47,7 +47,7 @@ export default function BudgetBreakdown({ budget }: Props) {
   if (!spent) {
     return (
       <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8, fontFamily: FONT_BODY }}>Budget Breakdown</div>
+        <h2 style={{ margin: '0 0 8px', fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>Budget Breakdown</h2>
         <div style={{ fontSize: 14, color: MUTED, fontFamily: FONT_BODY }}>No spending recorded yet.</div>
       </div>
     )
@@ -59,9 +59,9 @@ export default function BudgetBreakdown({ budget }: Props) {
     <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 14, padding: '20px 22px', marginBottom: 16 }}>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>
+        <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: '#14293F', fontFamily: FONT_DISPLAY }}>
           Budget Breakdown
-        </div>
+        </h2>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {overBudget && (
             <motion.span

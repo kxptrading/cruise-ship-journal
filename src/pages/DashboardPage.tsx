@@ -20,6 +20,7 @@ import VoyageHero       from '@/features/voyages/VoyageHero'
 import BudgetBreakdown  from '@/features/voyages/dashboard/BudgetBreakdown'
 import ItineraryTimeline from '@/features/voyages/dashboard/ItineraryTimeline'
 import RecentPosts      from '@/features/voyages/dashboard/RecentPosts'
+import MyVoyagesStrip  from '@/features/voyages/dashboard/MyVoyagesStrip'
 import PhotoSummaryCard from '@/features/voyages/dashboard/PhotoSummaryCard'
 import VoyageMemoryWall  from '@/features/voyages/dashboard/VoyageMemoryWall'
 import HighlightsGallery from '@/features/voyages/dashboard/HighlightsGallery'
@@ -163,6 +164,9 @@ export default function Dashboard({
         timeOfDay={timeOfDay} stars={stars} onNav={onNav} scrollY={scrollY}
         itinerary={itinerary} heroPhotoUrl={heroPhotoUrl}
       />
+
+      {/* My voyages quick-nav strip */}
+      <MyVoyagesStrip currentVoyageId={voyageId} />
 
       {/* Memories captured — visual anchor above stats */}
       <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />

@@ -60,6 +60,10 @@ html {
   overflow: hidden;
 }
 
+/* ── Hide scrollbar on horizontal strips ──────────────────────────────────── */
+.voyage-strip { scrollbar-width: none; }
+.voyage-strip::-webkit-scrollbar { display: none; }
+
 /* ── Custom scrollbar ─────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;

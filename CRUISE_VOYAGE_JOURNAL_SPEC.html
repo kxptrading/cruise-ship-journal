@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cruise Voyage Journal — Architecture & Build Spec</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; max-width: 980px; margin: 2em auto; padding: 0 1em; color: #172B4D; line-height: 1.55; }
+  h1 { font-size: 28px; border-bottom: 2px solid #DFE1E6; padding-bottom: 8px; }
+  h2 { font-size: 22px; margin-top: 1.8em; border-bottom: 1px solid #DFE1E6; padding-bottom: 4px; }
+  h3 { font-size: 17px; margin-top: 1.4em; }
+  h4 { font-size: 15px; margin-top: 1.2em; color: #42526E; }
+  p, li { font-size: 14px; }
+  table { border-collapse: collapse; margin: 0.8em 0; width: 100%; }
+  th, td { border: 1px solid #DFE1E6; padding: 6px 10px; text-align: left; font-size: 13px; vertical-align: top; }
+  th { background: #F4F5F7; font-weight: 600; }
+  code { background: #F4F5F7; padding: 1px 5px; border-radius: 3px; font-size: 13px; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre { background: #F4F5F7; padding: 12px 14px; border-radius: 4px; overflow-x: auto; font-size: 12.5px; line-height: 1.45; font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+  pre code { background: transparent; padding: 0; }
+  blockquote { border-left: 4px solid #4C9AFF; background: #DEEBFF; padding: 10px 16px; margin: 1em 0; border-radius: 2px; color: #172B4D; }
+  hr { border: none; border-top: 1px solid #DFE1E6; margin: 2em 0; }
+  ul, ol { padding-left: 1.6em; }
+  li { margin: 0.25em 0; }
+  .footer { color: #6B778C; font-style: italic; font-size: 13px; }
+</style>
+</head>
+<body>
+
+<h1>Cruise Voyage Journal — Architecture &amp; Build Spec</h1>
+
+<blockquote>
+Working spec for the Cruise Voyage Journal web app. This document is the source of truth for product behavior, data model, page structure, and architectural rules. Update this page as decisions change.
+</blockquote>
+
+<hr>
+
+<h2>1. Product Overview</h2>
+
+<p>A <strong>journal-first</strong> web app for documenting cruise voyages. Users keep private day-by-day journals organized by voyage. Individual posts can be <strong>opt-in shared</strong> to a social Feed visible to the user's contacts. The journal is the primary surface; the Feed is secondary.</p>
+
+<h3>Core Principles</h3>
+
+<ol>
+  <li><strong>Journal-first.</strong> Voyages and their posts are the primary surface. The Feed is a secondary view.</li>
+  <li><strong>Privacy by default.</strong> New posts are <code>private</code> until the user explicitly chooses an audience.</li>
+  <li><strong>Per-post sharing only.</strong> Sharing happens on individual posts. There is no "share entire voyage" action.</li>
+  <li><strong>Three-state audience model.</strong> Each post is <code>private</code>, <code>family</code>, or <code>public</code>. No multi-group system.</li>
+  <li><strong>Live edits propagate.</strong> Shared posts are <em>not</em> snapshot-copied to the Feed. Edits and deletes propagate immediately.</li>
+  <li><strong>Edit-confirm guardrail.</strong> Editing a non-private post shows a banner reminding the user of the current audience.</li>
+  <li><strong>Flat chronological Feed.</strong> Feed is not grouped by voyage; each item links back to its source voyage.</li>
+</ol>
+
+<hr>
+
+<h2>2. Recommended Tech Stack</h2>
+
+<p>Opinionated defaults. Swap any layer; the architecture sections below are stack-agnostic.</p>
+
+<table>
+  <thead><tr><th>Layer</th><th>Choice</th><th>Rationale</th></tr></thead>
+  <tbody>
+    <tr><td>Language</td><td>TypeScript</td><td>Type-safety across data model</td></tr>
+    <tr><td>Framework</td><td>React 18</td><td>Component model fits the page/tree spec</td></tr>
+    <tr><td>Build</td><td>Vite</td><td>Fast dev server, simple config</td></tr>
+    <tr><td>Routing</td><td>React Router v6</td><td>Standard, file-route friendly</td></tr>
+    <tr><td>Server state</td><td>TanStack Query (React Query)</td><td>Cache + invalidation for live-edit propagation</td></tr>
+    <tr><td>Client state</td><td>Zustand</td><td>Lightweight, no boilerplate</td></tr>
+    <tr><td>Styling</td><td>Tailwind CSS</td><td>Matches component-first design</td></tr>
+    <tr><td>Forms</td><td>React Hook Form + Zod</td><td>Validated composer/editor</td></tr>
+    <tr><td>Backend</td><td>Node + Express OR Supabase</td><td>Either works; Supabase saves boilerplate for auth + storage</td></tr>
+    <tr><td>Database</td><td>PostgreSQL</td><td>Relational fit (voyages → posts → media)</td></tr>
+    <tr><td>Media storage</td><td>S3 / Supabase Storage</td><td>Photo uploads</td></tr>
+    <tr><td>Auth</td><td>Supabase Auth OR Auth0</td><td>Email + social login</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>3. Data Model</h2>
+
+<h3>TypeScript interfaces</h3>
+
+<pre><code>// src/types/models.ts
+
+export type UUID = string;
+export type ISODate = string;
+
+export type Audience = 'private' | 'family' | 'public';
+
+export interface User {
+  id: UUID;
+  email: string;
+  displayName: string;
+  avatarUrl?: string;
+  createdAt: ISODate;
+}
+
+export interface Voyage {
+  id: UUID;
+  userId: UUID;            // owner
+  title: string;           // e.g. "Mediterranean — Sept 2026"
+  shipName?: string;
+  cruiseLine?: string;
+  startDate: ISODate;
+  endDate: ISODate;
+  coverImageUrl?: string;
+  itinerary?: PortStop[];  // optional
+  createdAt: ISODate;
+  updatedAt: ISODate;
+}
+
+export interface PortStop {
+  date: ISODate;
+  portName: string;
+  notes?: string;
+}
+
+export interface Post {
+  id: UUID;
+  voyageId: UUID;
+  userId: UUID;            // denormalized from voyage.userId for query speed
+  title?: string;
+  body: string;
+  postDate: ISODate;       // the date the entry describes (can differ from createdAt)
+  location?: string;
+  mediaIds: UUID[];
+  audience: Audience;      // default: 'private'
+  createdAt: ISODate;
+  updatedAt: ISODate;
+}
+
+export interface Media {
+  id: UUID;
+  postId: UUID;
+  url: string;
+  type: 'image' | 'video';
+  width?: number;
+  height?: number;
+}
+
+export interface Contact {
+  id: UUID;
+  ownerId: UUID;           // the user who owns this contact entry
+  contactUserId: UUID;     // the user being contacted
+  isFamily: boolean;       // single tag, no multi-group system
+  createdAt: ISODate;
+}
+</code></pre>
+
+<h3>Defaults</h3>
+
+<ul>
+  <li><code>Post.audience</code> defaults to <code>'private'</code> on creation.</li>
+  <li><code>Contact.isFamily</code> defaults to <code>false</code>.</li>
+  <li><code>Voyage</code> has no audience field — only individual posts are shareable.</li>
+</ul>
+
+<h3>Indexing recommendations (Postgres)</h3>
+
+<pre><code>CREATE INDEX idx_posts_voyage      ON posts (voyage_id, post_date DESC);
+CREATE INDEX idx_posts_user        ON posts (user_id, created_at DESC);
+CREATE INDEX idx_posts_feed        ON posts (audience, created_at DESC)
+                                  WHERE audience IN ('family','public');
+CREATE INDEX idx_contacts_owner    ON contacts (owner_id, contact_user_id);
+CREATE INDEX idx_contacts_reverse  ON contacts (contact_user_id, owner_id);
+</code></pre>
+
+<p>The partial index on <code>posts(audience, created_at)</code> keeps the Feed query fast and excludes private posts entirely.</p>
+
+<hr>
+
+<h2>4. Routing / Pages</h2>
+
+<table>
+  <thead><tr><th>Route</th><th>Page</th><th>Auth</th></tr></thead>
+  <tbody>
+    <tr><td><code>/login</code></td><td>LoginPage</td><td>public</td></tr>
+    <tr><td><code>/signup</code></td><td>SignupPage</td><td>public</td></tr>
+    <tr><td><code>/</code> → <code>/voyages</code></td><td>redirect</td><td>private</td></tr>
+    <tr><td><code>/voyages</code></td><td>VoyagesPage (My Voyages)</td><td>private</td></tr>
+    <tr><td><code>/voyages/new</code></td><td>VoyageEditorPage (create)</td><td>private</td></tr>
+    <tr><td><code>/voyages/:voyageId</code></td><td>VoyageDetailPage</td><td>private</td></tr>
+    <tr><td><code>/voyages/:voyageId/edit</code></td><td>VoyageEditorPage (edit)</td><td>private</td></tr>
+    <tr><td><code>/voyages/:voyageId/posts/new</code></td><td>PostComposerPage</td><td>private</td></tr>
+    <tr><td><code>/voyages/:voyageId/posts/:postId</code></td><td>PostDetailPage</td><td>private</td></tr>
+    <tr><td><code>/voyages/:voyageId/posts/:postId/edit</code></td><td>PostEditorPage</td><td>private</td></tr>
+    <tr><td><code>/feed</code></td><td>FeedPage</td><td>private</td></tr>
+    <tr><td><code>/contacts</code></td><td>ContactsPage</td><td>private</td></tr>
+    <tr><td><code>/profile</code></td><td>ProfilePage</td><td>private</td></tr>
+  </tbody>
+</table>
+
+<h3>Page-level specs</h3>
+
+<h4>VoyagesPage</h4>
+<ul>
+  <li>Header: "My Voyages" + <code>[+ New Voyage]</code> button</li>
+  <li>Body: grid/list of <code>VoyageCard</code> (cover image, title, date range, post count)</li>
+  <li>Click → <code>/voyages/:voyageId</code></li>
+</ul>
+
+<h4>VoyageDetailPage</h4>
+<ul>
+  <li>Header: voyage title, dates, ship, <code>[Edit Voyage]</code></li>
+  <li>Subheader: <code>[+ New Post]</code></li>
+  <li>Body: reverse-chronological list of <code>PostCard</code></li>
+  <li>Each <code>PostCard</code> shows <code>AudiencePill</code> (Private/Family/Public) inline and <code>[Edit]</code> / <code>[Delete]</code> actions</li>
+</ul>
+
+<h4>PostComposerPage / PostEditorPage</h4>
+<p>Same component, mode-toggled.</p>
+<ul>
+  <li>Fields: voyage picker (defaulted from route), date, title, body, media uploader, location</li>
+  <li><code>AudienceSelector</code> — segmented control: <code>[Private] [Family] [Public]</code></li>
+  <li>New post: default <code>Private</code></li>
+  <li>Edit mode: if existing <code>audience != 'private'</code>, show <code>EditConfirmBanner</code> at top (see §6)</li>
+  <li><code>[Save]</code> / <code>[Cancel]</code></li>
+</ul>
+
+<h4>FeedPage</h4>
+<ul>
+  <li>Header: "Feed"</li>
+  <li>Body: flat chronological list of <code>FeedItem</code></li>
+  <li>Each <code>FeedItem</code> shows: author avatar + name, relative timestamp, voyage breadcrumb (linkable), post content preview, media, audience pill on own posts</li>
+  <li>Reads live from the underlying <code>Post</code> (no snapshot)</li>
+  <li>Filter chip (future): All / Family / Public</li>
+</ul>
+
+<h4>ContactsPage</h4>
+<ul>
+  <li>Search input</li>
+  <li>Rows: avatar, name, email, <code>[Family]</code> toggle (boolean checkbox)</li>
+  <li>Add contact via email lookup or invite</li>
+</ul>
+
+<h4>ProfilePage</h4>
+<ul>
+  <li>Avatar, display name, email</li>
+  <li>Logout</li>
+</ul>
+
+<hr>
+
+<h2>5. Component Tree</h2>
+
+<pre><code>App
+├── AppShell
+│   ├── TopNav  (Voyages | Feed | Contacts | Profile)
+│   └── &lt;Outlet/&gt;
+│
+├── VoyagesPage
+│   ├── VoyageCard (× N)
+│   └── NewVoyageButton
+│
+├── VoyageEditorPage          (create + edit shared)
+│   ├── VoyageForm
+│   └── ItineraryEditor       (optional, port stops)
+│
+├── VoyageDetailPage
+│   ├── VoyageHeader
+│   ├── NewPostButton
+│   └── PostList
+│       └── PostCard (× N)
+│           ├── AudiencePill
+│           ├── MediaThumbnails
+│           └── PostActions   (Edit, Delete, Change audience)
+│
+├── PostComposerPage / PostEditorPage   (shared)
+│   ├── EditConfirmBanner     (visible only in edit mode when audience != 'private')
+│   ├── VoyagePicker
+│   ├── DateField
+│   ├── TitleField
+│   ├── BodyEditor
+│   ├── MediaUploader
+│   ├── LocationField
+│   └── AudienceSelector      (segmented control)
+│
+├── PostDetailPage
+│   ├── PostHeader (author, voyage breadcrumb, audience pill)
+│   ├── MediaGallery
+│   ├── PostBody
+│   └── PostActions
+│
+├── FeedPage
+│   └── FeedItem (× N)
+│       ├── AuthorChip
+│       ├── VoyageBreadcrumb
+│       ├── PostPreview
+│       └── MediaThumbnails
+│
+├── ContactsPage
+│   ├── ContactSearch
+│   └── ContactRow (× N)
+│       └── FamilyToggle
+│
+└── ProfilePage
+    ├── AvatarUploader
+    └── ProfileForm
+</code></pre>
+
+<h3>Shared / primitive components</h3>
+
+<pre><code>ui/
+├── AudiencePill.tsx        (read-only chip: Private | Family | Public)
+├── AudienceSelector.tsx    (segmented control for editing)
+├── EditConfirmBanner.tsx
+├── MediaUploader.tsx
+├── MediaThumbnails.tsx
+├── Avatar.tsx
+├── DateField.tsx
+└── Modal.tsx
+</code></pre>
+
+<hr>
+
+<h2>6. Audience &amp; Sharing Rules</h2>
+
+<h3>Three-state audience</h3>
+
+<table>
+  <thead><tr><th>Value</th><th>Meaning</th><th>Visible in Feed</th></tr></thead>
+  <tbody>
+    <tr><td><code>private</code></td><td>Journal-only</td><td>Never</td></tr>
+    <tr><td><code>family</code></td><td>Contacts where <code>isFamily == true</code></td><td>Yes — to Family contacts only</td></tr>
+    <tr><td><code>public</code></td><td>All contacts</td><td>Yes — to all contacts</td></tr>
+  </tbody>
+</table>
+
+<h3>AudienceSelector behavior</h3>
+<ul>
+  <li>Segmented control with three states. Always shows current state.</li>
+  <li>Default for new posts: <code>private</code>.</li>
+  <li>Changing audience is a single click; saved on form submit.</li>
+</ul>
+
+<h3>EditConfirmBanner spec</h3>
+
+<p>Shown on <code>PostEditorPage</code> only when entering edit mode and <code>post.audience != 'private'</code>.</p>
+
+<blockquote>
+ⓘ This post is currently visible to <strong>{Family|Public}</strong>. Your edit will be visible immediately.
+&nbsp;&nbsp;[ Change audience ▾ ] &nbsp;&nbsp; [ Got it ]
+</blockquote>
+
+<ul>
+  <li><code>[Got it]</code> dismisses for this edit session.</li>
+  <li><code>[Change audience ▾]</code> opens the <code>AudienceSelector</code> inline (or scrolls to it).</li>
+  <li>Reappears every time the user enters edit mode (not stored as "dismissed forever").</li>
+</ul>
+
+<h3>Edit propagation semantics</h3>
+<ul>
+  <li>Edits to a shared Post update the Feed live. The Feed reads the source row; there is no snapshot table.</li>
+  <li>Deletes remove the Post from all Feeds immediately.</li>
+  <li>Audience changes take effect immediately: setting <code>public → private</code> removes the post from all Feeds on the next read.</li>
+</ul>
+
+<hr>
+
+<h2>7. Feed Visibility Logic</h2>
+
+<p>Single source of truth for visibility. Implement once in the data layer.</p>
+
+<h3>Pseudocode</h3>
+
+<pre><code>function canSeeInFeed(viewer: User, post: Post, author: User): boolean {
+  if (post.audience === 'private') return false;
+  if (viewer.id === author.id) return true;  // own posts always visible to self
+  const contact = getContact(authorId: author.id, contactUserId: viewer.id);
+  if (!contact) return false;                // not a contact of the author
+  if (post.audience === 'public') return true;
+  if (post.audience === 'family') return contact.isFamily;
+  return false;
+}
+</code></pre>
+
+<h3>SQL — Feed query for a given viewer</h3>
+
+<pre><code>SELECT p.*
+FROM posts p
+JOIN contacts c
+  ON c.owner_id = p.user_id          -- author owns the contact entry
+ AND c.contact_user_id = $viewerId   -- viewer is the contact
+WHERE p.audience IN ('public', 'family')
+  AND (p.audience = 'public' OR c.is_family = true)
+UNION ALL
+SELECT p.*
+FROM posts p
+WHERE p.user_id = $viewerId
+  AND p.audience IN ('public', 'family')   -- viewer's own shared posts
+ORDER BY created_at DESC
+LIMIT 50;
+</code></pre>
+
+<p><strong>Notes:</strong></p>
+<ul>
+  <li>The contact relationship is <strong>author-owned</strong>: only the author's contacts can see the author's posts. A viewer being in their own contact list of the author is what grants access.</li>
+  <li><code>private</code> posts are never returned. The partial index on <code>posts(audience)</code> excludes them at the index level.</li>
+</ul>
+
+<hr>
+
+<h2>8. Folder Structure</h2>
+
+<pre><code>src/
+├── main.tsx
+├── App.tsx
+├── router.tsx
+│
+├── pages/
+│   ├── VoyagesPage.tsx
+│   ├── VoyageDetailPage.tsx
+│   ├── VoyageEditorPage.tsx
+│   ├── PostComposerPage.tsx
+│   ├── PostEditorPage.tsx
+│   ├── PostDetailPage.tsx
+│   ├── FeedPage.tsx
+│   ├── ContactsPage.tsx
+│   ├── ProfilePage.tsx
+│   ├── LoginPage.tsx
+│   └── SignupPage.tsx
+│
+├── features/
+│   ├── voyages/
+│   │   ├── VoyageCard.tsx
+│   │   ├── VoyageForm.tsx
+│   │   ├── ItineraryEditor.tsx
+│   │   └── hooks.ts          (useVoyages, useVoyage, useCreateVoyage, ...)
+│   │
+│   ├── posts/
+│   │   ├── PostCard.tsx
+│   │   ├── PostList.tsx
+│   │   ├── PostEditorForm.tsx
+│   │   ├── EditConfirmBanner.tsx
+│   │   ├── AudienceSelector.tsx
+│   │   ├── AudiencePill.tsx
+│   │   └── hooks.ts          (usePost, usePostsByVoyage, useUpdatePost, ...)
+│   │
+│   ├── feed/
+│   │   ├── FeedItem.tsx
+│   │   ├── feedVisibility.ts (canSeeInFeed)
+│   │   └── hooks.ts          (useFeed)
+│   │
+│   ├── contacts/
+│   │   ├── ContactRow.tsx
+│   │   ├── FamilyToggle.tsx
+│   │   └── hooks.ts
+│   │
+│   └── auth/
+│       ├── AuthProvider.tsx
+│       └── hooks.ts
+│
+├── ui/                        (shared primitives)
+│   ├── Avatar.tsx
+│   ├── Modal.tsx
+│   ├── DateField.tsx
+│   ├── MediaUploader.tsx
+│   └── MediaThumbnails.tsx
+│
+├── types/
+│   └── models.ts
+│
+├── lib/
+│   ├── api.ts                 (REST client OR Supabase client)
+│   ├── queryClient.ts         (React Query setup)
+│   └── format.ts              (date/relative time helpers)
+│
+└── styles/
+    └── tailwind.css
+</code></pre>
+
+<hr>
+
+<h2>9. Data Layer / API Surface</h2>
+
+<h3>REST endpoints (if rolling own backend)</h3>
+
+<pre><code>GET    /api/voyages
+POST   /api/voyages
+GET    /api/voyages/:id
+PATCH  /api/voyages/:id
+DELETE /api/voyages/:id
+
+GET    /api/voyages/:id/posts
+POST   /api/voyages/:id/posts
+GET    /api/posts/:id
+PATCH  /api/posts/:id            // body OR audience can change
+DELETE /api/posts/:id
+
+GET    /api/feed                 // applies feed visibility for the viewer
+GET    /api/contacts
+POST   /api/contacts
+PATCH  /api/contacts/:id         // toggle isFamily
+DELETE /api/contacts/:id
+
+GET    /api/me
+PATCH  /api/me
+</code></pre>
+
+<h3>React Query hook surface</h3>
+
+<pre><code>// voyages
+useVoyages()
+useVoyage(voyageId)
+useCreateVoyage()
+useUpdateVoyage()
+useDeleteVoyage()
+
+// posts
+usePostsByVoyage(voyageId)
+usePost(postId)
+useCreatePost()
+useUpdatePost()           // invalidates ['feed'] when audience or body changes
+useDeletePost()           // invalidates ['feed']
+
+// feed
+useFeed()                 // single live query, server applies visibility
+
+// contacts
+useContacts()
+useUpsertContact()
+useToggleFamily(contactId)
+</code></pre>
+
+<h3>Cache invalidation rules</h3>
+<ul>
+  <li><code>useUpdatePost</code> and <code>useDeletePost</code> MUST invalidate <code>['feed']</code> so live-edit propagation is visible without a page refresh.</li>
+  <li><code>useToggleFamily</code> MUST invalidate <code>['feed']</code> because audience-by-family resolution changes for that viewer.</li>
+  <li>Voyage edits do not affect the Feed (no voyage-level audience).</li>
+</ul>
+
+<hr>
+
+<h2>10. Implementation Order (suggested milestones)</h2>
+
+<ol>
+  <li><strong>Bootstrap</strong> — Vite + React + TS + Tailwind + Router skeleton; auth stub (mock user).</li>
+  <li><strong>Data layer</strong> — types, mock API or Supabase wire-up, React Query setup.</li>
+  <li><strong>Voyages CRUD</strong> — VoyagesPage, VoyageEditorPage, VoyageDetailPage shells (no posts yet).</li>
+  <li><strong>Posts CRUD</strong> — Composer/Editor with <code>AudienceSelector</code> (default Private). PostCard + PostList in VoyageDetail.</li>
+  <li><strong>EditConfirmBanner</strong> — show when editing non-private post.</li>
+  <li><strong>Contacts</strong> — ContactsPage + <code>FamilyToggle</code>.</li>
+  <li><strong>Feed</strong> — FeedPage + <code>canSeeInFeed</code> + live invalidation.</li>
+  <li><strong>Media</strong> — upload + thumbnails.</li>
+  <li><strong>Auth polish</strong> — real auth, signup flow, password reset.</li>
+  <li><strong>Polish</strong> — empty states, loading skeletons, error boundaries.</li>
+</ol>
+
+<hr>
+
+<h2>11. Open Questions / Future</h2>
+
+<ul>
+  <li><strong>Comments / reactions on Feed items.</strong> Not in scope yet.</li>
+  <li><strong>Voyage cover image upload.</strong> Use same <code>MediaUploader</code> once built.</li>
+  <li><strong>Push notifications</strong> for new shared posts from Family — likely Phase 2.</li>
+  <li><strong>Offline composing</strong> for at-sea use — local-first store with sync on reconnect. Phase 2+.</li>
+  <li><strong>Export voyage as PDF/photobook</strong> — natural future feature, not architectural blocker.</li>
+  <li><strong>Voyage templates</strong> ("Caribbean 7-day") — UI sugar, no data-model change.</li>
+  <li><strong>Multiple media per post ordering</strong> — current model uses <code>mediaIds: UUID[]</code>; order = array order.</li>
+  <li><strong>Soft delete vs hard delete on posts</strong> — current spec: hard delete propagates. Revisit if undo is wanted.</li>
+</ul>
+
+<hr>
+
+<h2>12. Glossary</h2>
+
+<ul>
+  <li><strong>Voyage</strong> — top-level container for a single cruise; the journal "book."</li>
+  <li><strong>Post</strong> — single entry within a voyage; the journal "page."</li>
+  <li><strong>Audience</strong> — <code>private</code> | <code>family</code> | <code>public</code>; per-post.</li>
+  <li><strong>Feed</strong> — flat chronological view of shared posts from contacts + self.</li>
+  <li><strong>Family</strong> — a single boolean tag on a Contact. Not a group; not extensible to other tags.</li>
+  <li><strong>Live-edit propagation</strong> — edits to shared posts appear in Feed immediately; no snapshot.</li>
+</ul>
+
+<hr>
+
+<p class="footer">Spec version: 0.1 — keep updated as decisions land.</p>
+
+</body>
+</html>

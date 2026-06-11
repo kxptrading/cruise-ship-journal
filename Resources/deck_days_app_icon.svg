@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="sunGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7C96B"/><stop offset="1" stop-color="#F3B544"/>
+    </linearGradient>
+    <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7CC7F2"/><stop offset="0.45" stop-color="#1F78C8"/><stop offset="1" stop-color="#163A63"/>
+    </linearGradient>
+  </defs>
+  <rect width="1024" height="1024" rx="180" fill="#163A63"/>
+  <g transform="translate(0,-10)">
+    <circle cx="512" cy="290" r="180" fill="url(#sunGrad)"/>
+    <g fill="white" opacity="0.9">
+      <path d="M350 250c24-26 58-24 79 2h-79z"/>
+      <path d="M595 246c26-28 62-26 87 2h-87z"/>
+    </g>
+    <g fill="white">
+      <path d="M175 520 C 285 410, 388 426, 480 550 C 414 550, 351 596, 270 590 C 232 586, 195 560, 175 520 Z" fill="url(#waveGrad)"/>
+      <path d="M849 520 C 739 410, 636 426, 544 550 C 610 550, 673 596, 754 590 C 792 586, 829 560, 849 520 Z" fill="url(#waveGrad)"/>
+      <path d="M213 501 C 301 440, 393 456, 466 550 C 414 521, 338 516, 278 540 C 250 546, 226 531, 213 501 Z" fill="white"/>
+      <path d="M811 501 C 723 440, 631 456, 558 550 C 610 521, 686 516, 746 540 C 774 546, 798 531, 811 501 Z" fill="white"/>
+      <path d="M146 640 C 288 615, 428 640, 512 670 C 370 686, 265 683, 146 640 Z" fill="#F7F4EC" stroke="#163A63" stroke-width="5"/>
+      <path d="M878 640 C 736 615, 596 640, 512 670 C 654 686, 759 683, 878 640 Z" fill="#F7F4EC" stroke="#163A63" stroke-width="5"/>
+      <path d="M125 672 Q 512 632 899 672 L 870 710 Q 512 684 154 710 Z" fill="#163A63"/>
+    </g>
+    <g transform="translate(512,435)">
+      <path d="M0 -145 L102 -110 L84 88 Q 56 113 0 132 Q -56 113 -84 88 L-102 -110 Z" fill="white" stroke="#163A63" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M0 -20 L76 -2 L61 74 Q 42 94 0 108 Q -42 94 -61 74 L-76 -2 Z" fill="#163A63"/>
+      <path d="M-129 -150 Q 0 -194 129 -150 L 122 -115 Q 0 -147 -122 -115 Z" fill="white" stroke="#163A63" stroke-width="7"/>
+      <path d="M-100 -190 Q 0 -222 100 -190 L 92 -160 Q 0 -184 -92 -160 Z" fill="white" stroke="#163A63" stroke-width="7"/>
+      <path d="M0 -262 L 0 -215" stroke="#163A63" stroke-width="9"/>
+      <path d="M0 -262 L -18 -236 L 18 -236 Z" fill="#163A63"/>
+      <g fill="#163A63">
+        <circle cx="-58" cy="-74" r="5"/><circle cx="-33" cy="-66" r="5"/><circle cx="33" cy="-66" r="5"/><circle cx="58" cy="-74" r="5"/>
+      </g>
+    </g>
+  </g>
+</svg>

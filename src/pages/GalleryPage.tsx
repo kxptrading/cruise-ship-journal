@@ -136,7 +136,7 @@ function VoyageSection({ voyage, defaultOpen }: { voyage: VoyageRow; defaultOpen
           style={{
             width: '100%', background: 'none', border: 'none', cursor: 'pointer',
             display: 'flex', alignItems: 'center', gap: 14,
-            padding: '14px 18px', textAlign: 'left',
+            padding: '0 18px', height: 80, textAlign: 'left',
           }}
         >
           {/* Cover thumbnail */}
@@ -156,9 +156,9 @@ function VoyageSection({ voyage, defaultOpen }: { voyage: VoyageRow; defaultOpen
             <div style={{ fontSize: 16, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1.2 }}>
               {title}
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 3, flexWrap: 'wrap', alignItems: 'center' }}>
-              {subtitle && <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>{subtitle}</span>}
-              {dateRange && <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>· {dateRange}</span>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 3, alignItems: 'center', overflow: 'hidden' }}>
+              {subtitle && <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{subtitle}</span>}
+              {dateRange && <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, whiteSpace: 'nowrap', flexShrink: 0 }}>· {dateRange}</span>}
             </div>
           </div>
 

@@ -64,6 +64,7 @@ const SignupPage       = lazy(() => import('./pages/SignupPage'))
 const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
 const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
+const GalleryPage      = lazy(() => import('./pages/GalleryPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
 const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
@@ -586,7 +587,8 @@ export default function App() {
                       />
                     : <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
                 } />
-                <Route path="/feed" element={<Feed />} />
+                <Route path="/feed"    element={<Feed />} />
+                <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
                 {/* Legacy section routes — redirect to /voyages so old bookmarks don't 404 */}
                 {['voyage','itinerary','daily','food','dining','entertainment','foodfav','budget','shopping','highlights','packing','notes'].map(path => (

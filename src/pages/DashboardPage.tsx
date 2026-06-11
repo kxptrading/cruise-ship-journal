@@ -48,6 +48,7 @@ interface Props {
   sectionStatus?: Set<string>
   onChange:       (updated: DailyLog[]) => void
   onNav:          (section: string) => void
+  onSwitch?:      (id: string) => void
   showToast?:     (msg: string) => void
   onViewDay?:     (dayIndex: number) => void
   onViewProfile?: (author: FeedAuthor) => void
@@ -56,7 +57,7 @@ interface Props {
 
 export default function Dashboard({
   voyage, itinerary, dailyLogs, budget, packing, foodLogs, diningLog,
-  sectionStatus, onNav, onViewDay, scrollY,
+  sectionStatus, onNav, onSwitch, onViewDay, scrollY,
 }: Props) {
   const w        = useW()
   const voyageId = useVoyageId()
@@ -166,7 +167,7 @@ export default function Dashboard({
       />
 
       {/* My voyages quick-nav strip */}
-      <MyVoyagesStrip currentVoyageId={voyageId} />
+      <MyVoyagesStrip currentVoyageId={voyageId} onSwitch={onSwitch} />
 
       {/* Memories captured — visual anchor above stats */}
       <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />

@@ -125,9 +125,10 @@ function MiniCard({ voyage, currentVoyageId, onClick }: {
 
 interface Props {
   currentVoyageId: string | null
+  onSwitch?:       (id: string) => void
 }
 
-export default function MyVoyagesStrip({ currentVoyageId }: Props) {
+export default function MyVoyagesStrip({ currentVoyageId, onSwitch }: Props) {
   const navigate = useNavigate()
   const { data: voyages = [], isLoading } = useVoyages()
 
@@ -168,7 +169,7 @@ export default function MyVoyagesStrip({ currentVoyageId }: Props) {
             <MiniCard
               voyage={v}
               currentVoyageId={currentVoyageId}
-              onClick={() => navigate(`/voyages/${v.id}`)}
+              onClick={() => onSwitch ? onSwitch(v.id) : navigate(`/voyages/${v.id}`)}
             />
           </div>
         ))}

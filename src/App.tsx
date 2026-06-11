@@ -576,6 +576,7 @@ export default function App() {
                         packing={data.packing} foodLogs={data.foodLogs}
                         diningLog={data.diningLog} sectionStatus={sectionStatus}
                         onChange={v => update('dailyLogs', v)} onNav={navClick}
+                        onSwitch={switchVoyage}
                         showToast={showToast} onViewDay={setSelectedDay}
                         scrollY={scrollY}
                         onViewProfile={(author) => {

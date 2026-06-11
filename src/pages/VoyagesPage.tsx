@@ -62,12 +62,12 @@ export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => v
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: w < BP.mobile ? 24 : 30, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
+          <h2 style={{ margin: 0, fontSize: 18, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
             My Voyages
-          </h1>
+          </h2>
           {/* Only show count after load to avoid '0 voyages' flash while loading */}
           {!isLoading && voyages.length > 0 && (
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
+            <p style={{ margin: '2px 0 0', fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>
               {voyages.length} voyage{voyages.length !== 1 ? 's' : ''} logged
             </p>
           )}

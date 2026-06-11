@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, Images } from 'lucide-react'
+import { ChevronDown } from 'lucide-react'
 import {
   WHITE, BORDER, MUTED, GOLD, NAVY2, TEAL, FONT_BODY, FONT_DISPLAY, BP,
 } from '@/constants'
@@ -300,13 +300,10 @@ export default function GalleryPage() {
     <div>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-          <Images size={22} color={NAVY2} />
-          <h1 style={{ margin: 0, fontSize: w < BP.mobile ? 24 : 28, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
-            Gallery
-          </h1>
-        </div>
-        <p style={{ margin: 0, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}>
+        <h2 style={{ margin: '0 0 2px', fontSize: 18, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY }}>
+          Gallery
+        </h2>
+        <p style={{ margin: 0, fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>
           All your voyage photos, organised by trip.
         </p>
       </div>

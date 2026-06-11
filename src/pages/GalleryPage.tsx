@@ -334,7 +334,7 @@ export default function GalleryPage() {
         <motion.div variants={STAGGER} initial="hidden" animate="visible" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {voyages.map((voyage, i) => (
             <motion.div key={voyage.id} variants={FADE_UP}>
-              <VoyageSection voyage={voyage} defaultOpen={i === 0} />
+              <VoyageSection voyage={voyage} defaultOpen={false} />
             </motion.div>
           ))}
         </motion.div>

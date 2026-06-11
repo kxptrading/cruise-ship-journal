@@ -71,6 +71,20 @@ const PostEditorPage   = lazy(() => import('./pages/PostEditorPage'))
 const PostDetailPage   = lazy(() => import('./pages/PostDetailPage'))
 const AdminReportsPage = lazy(() => import('./pages/AdminReportsPage'))
 const AdminPage        = lazy(() => import('./pages/AdminPage'))
+// Legal / help pages — all lazy-loaded; accessible to auth and non-auth users
+const TermsPage              = lazy(() => import('./pages/legal/TermsPage'))
+const PrivacyPage            = lazy(() => import('./pages/legal/PrivacyPage'))
+const CookiesPage            = lazy(() => import('./pages/legal/CookiesPage'))
+const AcceptableUsePage      = lazy(() => import('./pages/legal/AcceptableUsePage'))
+const CommunityGuidelinesPage = lazy(() => import('./pages/legal/CommunityGuidelinesPage'))
+const ContentPolicyPage      = lazy(() => import('./pages/legal/ContentPolicyPage'))
+const HelpPage               = lazy(() => import('./pages/HelpPage'))
+const SafetyPage             = lazy(() => import('./pages/SafetyPage'))
+const DeleteAccountPage      = lazy(() => import('./pages/DeleteAccountPage'))
+const AccessibilityPage      = lazy(() => import('./pages/AccessibilityPage'))
+const FamilyPage             = lazy(() => import('./pages/FamilyPage'))
+const ContactPage            = lazy(() => import('./pages/ContactPage'))
+const LegalShell             = lazy(() => import('./pages/legal/LegalShell'))
 import type { Session } from '@supabase/supabase-js'
 import { useIsAdmin } from './features/safety/hooks'
 
@@ -394,19 +408,56 @@ export default function App() {
         <Route path="/signup"          element={<SignupPage />} />
         <Route path="/reset"           element={<ResetPasswordPage />} />
         <Route path="/update-password" element={<UpdatePasswordPage />} />
+        {/* Legal / help pages — accessible without authentication */}
+        <Route path="/legal/terms"               element={<LegalShell><TermsPage /></LegalShell>} />
+        <Route path="/legal/privacy"             element={<LegalShell><PrivacyPage /></LegalShell>} />
+        <Route path="/legal/cookies"             element={<LegalShell><CookiesPage /></LegalShell>} />
+        <Route path="/legal/acceptable-use"      element={<LegalShell><AcceptableUsePage /></LegalShell>} />
+        <Route path="/legal/community-guidelines" element={<LegalShell><CommunityGuidelinesPage /></LegalShell>} />
+        <Route path="/legal/content-policy"      element={<LegalShell><ContentPolicyPage /></LegalShell>} />
+        <Route path="/help"            element={<LegalShell><HelpPage /></LegalShell>} />
+        <Route path="/safety"          element={<LegalShell><SafetyPage /></LegalShell>} />
+        <Route path="/delete-account"  element={<LegalShell><DeleteAccountPage /></LegalShell>} />
+        <Route path="/accessibility"   element={<LegalShell><AccessibilityPage /></LegalShell>} />
+        <Route path="/family-safety"   element={<LegalShell><FamilyPage /></LegalShell>} />
+        <Route path="/contact"         element={<LegalShell><ContactPage /></LegalShell>} />
         <Route path="*"                element={<LoginPage />} />
       </Routes>
     </Suspense>
   )
 
-  if (!loaded || !voyageId) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>⚓</div>
-        <div style={{ color: NAVY, fontSize: 18 }}>Loading your voyage journal...</div>
+  // Legal/help routes bypass the voyage-loading gate — they need no voyage data
+  const STATIC_PATHS = new Set(['/help','/safety','/delete-account','/accessibility','/family-safety','/contact'])
+  const isStaticRoute = location.pathname.startsWith('/legal') || STATIC_PATHS.has(location.pathname)
+
+  if (!loaded || !voyageId) {
+    if (isStaticRoute) return (
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/legal/terms"               element={<TermsPage />} />
+          <Route path="/legal/privacy"             element={<PrivacyPage />} />
+          <Route path="/legal/cookies"             element={<CookiesPage />} />
+          <Route path="/legal/acceptable-use"      element={<AcceptableUsePage />} />
+          <Route path="/legal/community-guidelines" element={<CommunityGuidelinesPage />} />
+          <Route path="/legal/content-policy"      element={<ContentPolicyPage />} />
+          <Route path="/help"           element={<HelpPage />} />
+          <Route path="/safety"         element={<SafetyPage />} />
+          <Route path="/delete-account" element={<DeleteAccountPage />} />
+          <Route path="/accessibility"  element={<AccessibilityPage />} />
+          <Route path="/family-safety"  element={<FamilyPage />} />
+          <Route path="/contact"        element={<ContactPage />} />
+        </Routes>
+      </Suspense>
+    )
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: CREAM, fontFamily: 'Georgia,serif' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>⚓</div>
+          <div style={{ color: NAVY, fontSize: 18 }}>Loading your voyage journal...</div>
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ── Layout ──────────────────────────────────────────────────────────────────
   // Three React contexts are provided here at the root level:
@@ -548,6 +599,19 @@ export default function App() {
                 <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
                 <Route path="/admin"             element={<AdminPage />} />
                 <Route path="/admin/reports"    element={<AdminReportsPage />} />
+                {/* Legal / help pages — inside app shell for authenticated users */}
+                <Route path="/legal/terms"               element={<TermsPage />} />
+                <Route path="/legal/privacy"             element={<PrivacyPage />} />
+                <Route path="/legal/cookies"             element={<CookiesPage />} />
+                <Route path="/legal/acceptable-use"      element={<AcceptableUsePage />} />
+                <Route path="/legal/community-guidelines" element={<CommunityGuidelinesPage />} />
+                <Route path="/legal/content-policy"      element={<ContentPolicyPage />} />
+                <Route path="/help"           element={<HelpPage />} />
+                <Route path="/safety"         element={<SafetyPage />} />
+                <Route path="/delete-account" element={<DeleteAccountPage />} />
+                <Route path="/accessibility"  element={<AccessibilityPage />} />
+                <Route path="/family-safety"  element={<FamilyPage />} />
+                <Route path="/contact"        element={<ContactPage />} />
                 <Route path="/design-system"   element={<DesignSystem />} />
                 <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="*"                element={<NotFound onNav={navClick} />} />

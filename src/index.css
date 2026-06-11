@@ -281,6 +281,47 @@ body::before {
   animation: shimmer 1.6s ease-in-out infinite;
 }
 
+/* ── Legal page typography ────────────────────────────────────────────── */
+.legal-content section { margin-bottom: 8px; }
+.legal-content h2 {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 17px;
+  font-weight: 400;
+  color: #1B3A5C;
+  margin: 32px 0 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #E0DBD0;
+}
+.legal-content h2:first-of-type { margin-top: 0; }
+.legal-content h3 {
+  font-size: 11px;
+  font-weight: 700;
+  color: #1B3A5C;
+  margin: 20px 0 7px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+.legal-content p { margin: 0 0 12px; }
+.legal-content p:last-child { margin-bottom: 0; }
+.legal-content ul, .legal-content ol { margin: 2px 0 14px 22px; padding: 0; }
+.legal-content ol { list-style-type: decimal; }
+.legal-content li { margin-bottom: 5px; line-height: 1.65; }
+.legal-content a { color: #1B3A5C; text-decoration: underline; text-underline-offset: 2px; }
+.legal-content a:hover { color: #C9A227; }
+.legal-content strong { font-weight: 700; color: #1C2B3A; }
+.legal-content em { font-style: italic; }
+.legal-content hr { border: none; border-top: 1px solid #E0DBD0; margin: 28px 0; }
+.legal-note {
+  background: #FEF9EC;
+  border-left: 3px solid #C9A227;
+  padding: 10px 14px;
+  margin: 14px 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  border-radius: 0 6px 6px 0;
+  color: #5A4A1A;
+}
+
 /* ── Honour OS-level reduced-motion preference ─────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

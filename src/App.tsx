@@ -529,7 +529,7 @@ export default function App() {
           {/* <main> is the sole overflow-y scroll container.
               Its ref feeds the Framer Motion useScroll hook for parallax effects.
               overflow-x: hidden prevents horizontal scroll from animated page transitions. */}
-          <main ref={mainRef} role="main" aria-label="Main content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+          <main ref={mainRef} role="main" aria-label="Main content" style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
             {/* AnimatePresence mode="wait" ensures the exiting page fully unmounts
                 before the entering page begins animating. The key is the full
                 pathname so sub-route changes also trigger the transition. */}
@@ -540,7 +540,7 @@ export default function App() {
               initial="initial"
               animate="animate"
               exit="exit"
-              style={{ padding: mainPad, paddingBottom: mainPadBottom }}
+              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: 1 }}
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             {/* ErrorBoundary is keyed by pathname so a crash in one section

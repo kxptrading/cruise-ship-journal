@@ -145,22 +145,6 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
               {voyage.shipName || 'Your Voyage Awaits'}
             </h1>
 
-            {/* "Currently in [port]" pill — only when voyage is actively sailing today */}
-            {currentDay !== null && currentPort && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginBottom: 8 }}
-              >
-                <div style={{ background: 'rgba(201,162,39,0.25)', border: '1px solid rgba(201,162,39,0.5)', borderRadius: 20, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, animation: 'pulse 1.6s ease-in-out infinite' }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY }}>
-                    {currentPortIsSea ? 'Currently at sea' : `Currently in ${currentPort}`}
-                  </span>
-                </div>
-              </motion.div>
-            )}
 
             {(voyage.departurePort || voyage.departureDate) && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 12 : 0, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>

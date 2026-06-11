@@ -205,11 +205,6 @@ function VoyageSection({ voyage, defaultOpen }: { voyage: VoyageRow; defaultOpen
                   </div>
                 )}
 
-                {!isLoading && photoCount === 0 && (
-                  <div style={{ textAlign: 'center', padding: '24px 0', color: MUTED, fontSize: 13, fontFamily: FONT_BODY }}>
-                    No photos in this voyage yet.
-                  </div>
-                )}
 
                 {!isLoading && photoCount > 0 && (
                   <>

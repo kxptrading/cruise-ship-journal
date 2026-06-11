@@ -127,16 +127,10 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
         </svg>
       </div>
 
-      {/* ── Floating glass content card ────────────────────────────────────────── */}
+      {/* ── Floating content card ────────────────────────────────────────────── */}
       <div style={{
         position: 'absolute', bottom: 14, left: 14, right: 14, zIndex: 3,
-        background: 'rgba(10,22,38,0.30)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderRadius: 16,
         padding: `${w < BP.mobile ? 14 : 18}px ${w < BP.mobile ? 14 : 20}px`,
-        border: '1px solid rgba(255,255,255,0.12)',
-        boxShadow: '0 4px 24px rgba(0,0,0,0.25)',
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20 }}>
           <div style={{ flex: 1, minWidth: 0 }}>

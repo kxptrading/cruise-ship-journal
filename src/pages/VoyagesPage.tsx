@@ -36,7 +36,7 @@ import { STAGGER, FADE_UP } from '@/lib/motion'
 import FE from '@/components/FE'
 import { Plus } from 'lucide-react'
 
-export default function VoyagesPage() {
+export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => void }) {
   const navigate  = useNavigate()
   const w         = useW()
   const { data: voyages = [], isLoading, error } = useVoyages()
@@ -117,7 +117,7 @@ export default function VoyagesPage() {
                 // postCounts may still be loading — default 0 shows the badge
                 // as empty rather than flashing a spinner inside the card.
                 postCount={postCounts[voyage.id] ?? 0}
-                onClick={() => navigate(`/voyages/${voyage.id}`)}
+                onClick={() => onSwitch ? onSwitch(voyage.id) : navigate(`/voyages/${voyage.id}`)}
               />
             </motion.div>
           ))}

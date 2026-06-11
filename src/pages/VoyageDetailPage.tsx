@@ -67,8 +67,7 @@ const Notes          = lazy(() => import('@/sections/Notes'))
 const MemoryGallery  = lazy(() => import('@/features/voyages/MemoryGallery'))
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
-// 'voyage' is the default tab — shown first when navigating from My Voyages.
-// 'posts' and the journal sections follow.
+// 'posts' is the default tab (index view). Journal sections and voyage details follow.
 
 type Tab = 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
            'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes'
@@ -121,11 +120,11 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
 
   // ── Tab state — URL-driven ─────────────────────────────────────────────────
   // Initialise from ?tab= so sidebar journal links open the right section.
-  // If the param is missing or invalid, default to 'posts'.
+  // If the ?tab= param is missing or invalid, default to the posts view.
   const tabParam   = searchParams.get('tab') as Tab | null
   const validTabs  = new Set(TABS.map(t => t.id))
   const [activeTab, setActiveTab] = useState<Tab>(
-    tabParam && validTabs.has(tabParam) ? tabParam : 'voyage'
+    tabParam && validTabs.has(tabParam) ? tabParam : 'posts'
   )
 
   // Sync activeTab when ?tab= changes (e.g. user clicks a different Sidebar link

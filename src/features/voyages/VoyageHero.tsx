@@ -105,7 +105,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
       {/* Vignette */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        background: `linear-gradient(to bottom, rgba(${vr},${vg},${vb},0.0) 15%, rgba(${vr},${vg},${vb},0.75) 100%)`,
+        background: `linear-gradient(to bottom, rgba(${vr},${vg},${vb},0.0) 0%, rgba(${vr},${vg},${vb},0.55) 55%, rgba(${vr},${vg},${vb},0.92) 100%)`,
         zIndex: 1,
       }} />
 
@@ -136,12 +136,12 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
           <div style={{ flex: 1, minWidth: 0 }}>
 
             {(voyage.cruiseLine || voyage.shipName) && (
-              <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.8)', letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY, marginBottom: 5 }}>
+              <div style={{ fontSize: 11, color: WHITE, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY, marginBottom: 5, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.7)' }}>
                 {voyage.cruiseLine || 'Deck Days'}
               </div>
             )}
 
-            <h1 style={{ margin: '0 0 8px', fontSize: w < BP.mobile ? 26 : 32, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.05, textShadow: '0 1px 6px rgba(0,0,0,0.25)' }}>
+            <h1 style={{ margin: '0 0 8px', fontSize: w < BP.mobile ? 30 : 36, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.05, textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7)' }}>
               {voyage.shipName || 'Your Voyage Awaits'}
             </h1>
 
@@ -155,7 +155,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
               >
                 <div style={{ background: 'rgba(201,162,39,0.25)', border: '1px solid rgba(201,162,39,0.5)', borderRadius: 20, padding: '3px 10px', display: 'flex', alignItems: 'center', gap: 5 }}>
                   <div style={{ width: 6, height: 6, borderRadius: '50%', background: GOLD, animation: 'pulse 1.6s ease-in-out infinite' }} />
-                  <span style={{ fontSize: 11, fontWeight: 700, color: GOLD, fontFamily: FONT_BODY }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY }}>
                     {currentPortIsSea ? 'Currently at sea' : `Currently in ${currentPort}`}
                   </span>
                 </div>
@@ -163,14 +163,14 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
             )}
 
             {(voyage.departurePort || voyage.departureDate) && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 12 : 0 }}>
-                {voyage.departurePort && <span style={{ fontSize: 12, color: GOLD, fontWeight: 600 }}><FE emoji="📍" size={13} /> {voyage.departurePort}</span>}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 12 : 0, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                {voyage.departurePort && <span style={{ fontSize: 13, color: WHITE, fontWeight: 700 }}><FE emoji="📍" size={13} /> {voyage.departurePort}</span>}
                 {voyage.departureDate && (
-                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: 500 }}>
+                  <span style={{ fontSize: 13, color: WHITE, fontWeight: 600 }}>
                     <FE emoji="📅" size={13} /> {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
                   </span>
                 )}
-                {voyage.cabin && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}><FE emoji="🚪" size={13} /> Cabin {voyage.cabin}</span>}
+                {voyage.cabin && <span style={{ fontSize: 13, color: WHITE, fontWeight: 600 }}><FE emoji="🚪" size={13} /> Cabin {voyage.cabin}</span>}
               </div>
             )}
 
@@ -183,8 +183,8 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
             {voyagePct !== null && (
               <div style={{ position: 'relative' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
-                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.75)', letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 600 }}>Voyage Progress</span>
-                  <span style={{ fontSize: 10, color: GOLD, fontWeight: 700, fontFamily: FONT_BODY }}>
+                  <span style={{ fontSize: 11, color: WHITE, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Voyage Progress</span>
+                  <span style={{ fontSize: 11, color: WHITE, fontWeight: 700, fontFamily: FONT_BODY, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                     {daysLeft === 0 ? 'Voyage Complete ✓' : `${daysLeft} day${daysLeft !== 1 ? 's' : ''} left`}
                   </span>
                 </div>
@@ -248,9 +248,9 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
 
             {(voyage.companion1 || voyage.companion2) && (
               <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.7)', textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 600 }}>With:</span>
+                <span style={{ fontSize: 11, color: WHITE, textTransform: 'uppercase', letterSpacing: '0.07em', fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>With:</span>
                 {[voyage.companion1, voyage.companion2, voyage.companion3, voyage.companion4].filter(Boolean).map((c, i) => (
-                  <div key={i} style={{ background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.25)', borderRadius: 20, padding: '2px 10px', fontSize: 11, color: 'rgba(255,255,255,0.9)', fontWeight: 500 }}>{c}</div>
+                  <div key={i} style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid rgba(255,255,255,0.35)', borderRadius: 20, padding: '2px 10px', fontSize: 12, color: WHITE, fontWeight: 600, textShadow: '0 1px 3px rgba(0,0,0,0.8)' }}>{c}</div>
                 ))}
               </div>
             )}
@@ -261,15 +261,15 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
               <div style={{ position: 'relative', width: 80, height: 80 }}>
                 <Donut pct={voyagePct || 0} size={80} color={GOLD} bg="rgba(255,255,255,0.15)" thick={6} />
                 <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: currentDay ? 24 : 18, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
+                  <div style={{ fontSize: currentDay ? 24 : 18, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
                     {currentDay || voyageNights}
                   </div>
-                  <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.7)', marginTop: 2, fontWeight: 600 }}>
+                  <div style={{ fontSize: 9, color: WHITE, marginTop: 2, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                     {currentDay ? `of ${voyageNights}` : 'nights'}
                   </div>
                 </div>
               </div>
-              <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4, fontWeight: 600 }}>
+              <div style={{ fontSize: 10, color: WHITE, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 4, fontWeight: 700, textShadow: '0 1px 3px rgba(0,0,0,0.9)' }}>
                 {currentDay ? 'Current Day' : 'Duration'}
               </div>
             </div>

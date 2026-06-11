@@ -65,6 +65,7 @@ const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
 const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
 const GalleryPage      = lazy(() => import('./pages/GalleryPage'))
+const SearchPage       = lazy(() => import('./pages/SearchPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
 const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
@@ -589,6 +590,7 @@ export default function App() {
                 } />
                 <Route path="/feed"    element={<Feed />} />
                 <Route path="/gallery" element={<GalleryPage />} />
+                <Route path="/search"  element={<SearchPage />} />
                 <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
                 {/* Legacy section routes — redirect to /voyages so old bookmarks don't 404 */}
                 {['voyage','itinerary','daily','food','dining','entertainment','foodfav','budget','shopping','highlights','packing','notes'].map(path => (

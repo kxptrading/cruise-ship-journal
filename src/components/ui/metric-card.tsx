@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useRef, useState } from 'react'
+import type { ReactNode } from 'react'
 import { motion, animate } from 'framer-motion'
 import { WHITE, BORDER, FONT_DISPLAY, FONT_BODY, MUTED } from '../../constants'
 import FE from '../FE'
@@ -107,7 +108,7 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 }
 
 export interface MetricCardProps {
-  icon:       string           // emoji shown in coloured badge
+  icon:       ReactNode        // lucide icon element (inherits badge colour); emoji strings still supported
   value:      string | number  // numeric values animate; strings display as-is
   label:      string
   sub?:       string
@@ -128,26 +129,29 @@ export function MetricCard({ icon, value, label, sub, color, pct, ring, alert, s
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
+      whileHover={{ y: -4, boxShadow: '0 2px 6px rgba(0,0,0,0.05), 0 16px 40px rgba(0,0,0,0.12)' }}
       style={{
-        background: `linear-gradient(135deg, ${WHITE} 60%, ${color}18 100%)`,
-        borderRadius: 14,
-        border: `1px solid ${BORDER}`,
-        padding: '20px 22px',
+        background: WHITE,
+        borderRadius: 20,
+        border: 'none',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)',
+        padding: '22px 24px',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
-        minHeight: 148,
+        minHeight: 156,
       }}
     >
       {/* Top row: icon badge + optional donut */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
         <div style={{
           width: 40, height: 40, borderRadius: 12,
-          background: color + '22',
+          background: alert ? '#DC262614' : color + '14',
+          color: alert ? '#DC2626' : color,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           flexShrink: 0,
         }}>
-          <FE emoji={icon} size={26} />
+          {typeof icon === 'string' ? <FE emoji={icon} size={24} /> : icon}
         </div>
         {ring !== undefined && (
           <AnimatedDonut pct={ring} size={52} color={color} thick={5} alert={alert} />
@@ -156,7 +160,7 @@ export function MetricCard({ icon, value, label, sub, color, pct, ring, alert, s
 
       {/* Bottom row: value + label + sub + progress bar */}
       <div>
-        <div style={{ fontSize: 24, fontWeight: 400, color: 'var(--t-primary-dk)', fontFamily: FONT_DISPLAY, lineHeight: 1, marginBottom: 3 }}>
+        <div style={{ fontSize: 26, fontWeight: 400, color: 'var(--t-primary-dk)', fontFamily: FONT_DISPLAY, lineHeight: 1, marginBottom: 4 }}>
           {displayed}
         </div>
         <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: sub ? 6 : 0, fontFamily: FONT_BODY }}>

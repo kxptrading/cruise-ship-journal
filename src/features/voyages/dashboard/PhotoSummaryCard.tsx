@@ -6,6 +6,7 @@ import { WHITE, BORDER, MUTED, GOLD, NAVY2, FONT_BODY, FONT_DISPLAY } from '@/co
 import { publicUrl } from '@/features/posts/mediaStorage'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { PhotoLightbox } from '@/ui/MediaThumbnails'
+import { Camera, Images } from 'lucide-react'
 
 interface Props {
   voyageId:   string | null | undefined
@@ -40,7 +41,7 @@ export default function PhotoSummaryCard({ voyageId, onViewGallery }: Props) {
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 20 }}>📸</span>
+            <Camera size={20} strokeWidth={1.8} color={MUTED} />
             <div>
               <div style={{ fontSize: 22, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1 }}>
                 {totalPhotos}
@@ -114,7 +115,7 @@ export default function PhotoSummaryCard({ voyageId, onViewGallery }: Props) {
                 fontSize: 11, color: GOLD, fontWeight: 700, fontFamily: FONT_BODY,
               }}
             >
-              <span style={{ fontSize: 18 }}>🖼️</span>
+              <Images size={18} strokeWidth={1.8} />
               Gallery
             </motion.button>
           )}

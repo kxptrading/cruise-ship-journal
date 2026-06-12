@@ -10,11 +10,13 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useMemo, useRef } from 'react'
+import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
-import { NAVY2, WHITE, BORDER, MUTED, TEAL, sty, FONT_BODY, BP } from '../constants'
+import { NAVY2, WHITE, BORDER, MUTED, LIGHT, TEAL, GOLD, ROSE, PLUM, sty, FONT_BODY, FONT_DISPLAY, BP } from '../constants'
+import { BookOpen, MapPin, Wallet, Star, UtensilsCrossed, Luggage, CheckCircle2, Anchor } from 'lucide-react'
 import { useW, useVoyageId } from '../context'
 import { getTimeOfDay } from '../lib/atmosphere'
-import { STAGGER, FADE_UP } from '../lib/motion'
+import { STAGGER, FADE_UP, REVEAL } from '../lib/motion'
 import { MetricCard } from '../components/ui/metric-card'
 import VoyageHero       from '@/features/voyages/VoyageHero'
 import BudgetBreakdown  from '@/features/voyages/dashboard/BudgetBreakdown'
@@ -26,7 +28,6 @@ import VoyageMemoryWall  from '@/features/voyages/dashboard/VoyageMemoryWall'
 import HighlightsGallery from '@/features/voyages/dashboard/HighlightsGallery'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
-import FE from '../components/FE'
 import type { Voyage, ItineraryDay, DailyLog, Budget, Packing, FoodLog, DiningEntry, FeedAuthor } from '../types'
 import type { TimeOfDay } from '../lib/atmosphere'
 import type { MotionValue } from 'framer-motion'
@@ -35,6 +36,46 @@ import type { MotionValue } from 'framer-motion'
 
 interface Star {
   id: number; x: number; y: number; size: number; delay: number; duration: number
+}
+
+// ── Apple-style scroll choreography ──────────────────────────────────────────
+// Each dashboard block rises into place as it enters the viewport.
+
+function Reveal({ children }: { children: ReactNode }) {
+  return (
+    <motion.div
+      variants={REVEAL}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '0px 0px -40px 0px' }}
+      style={{ willChange: 'transform, opacity, filter' }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// Large centered section header — eyebrow label over an oversized display title.
+
+function SectionHeading({ eyebrow, title, sub, w }: { eyebrow: string; title: string; sub?: string; w: number }) {
+  const mobile = w < BP.mobile
+  return (
+    <Reveal>
+      <div style={{ textAlign: 'center', padding: mobile ? '28px 16px 18px' : '44px 24px 26px' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.16em', fontFamily: FONT_BODY, marginBottom: 8 }}>
+          {eyebrow}
+        </div>
+        <h2 style={{ margin: 0, fontSize: mobile ? 22 : 30, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1.15 }}>
+          {title}
+        </h2>
+        {sub && (
+          <p style={{ margin: '10px auto 0', maxWidth: 480, fontSize: mobile ? 13 : 15, color: MUTED, lineHeight: 1.6, fontFamily: FONT_BODY }}>
+            {sub}
+          </p>
+        )}
+      </div>
+    </Reveal>
+  )
 }
 
 interface Props {
@@ -166,25 +207,47 @@ export default function Dashboard({
         itinerary={itinerary} heroPhotoUrl={heroPhotoUrl}
       />
 
+      {/* Apple-style statement — sets the tone before the content blocks */}
+      {(voyage.shipName || voyage.departureDate) && (
+        <SectionHeading
+          w={w}
+          eyebrow="Deck Days"
+          title="Every day at sea. Beautifully remembered."
+          sub="Your photos, ports, meals and moments — gathered into one living journal of the voyage."
+        />
+      )}
+
       {/* My voyages quick-nav strip */}
-      <MyVoyagesStrip currentVoyageId={voyageId} onSwitch={onSwitch} />
+      <Reveal>
+        <MyVoyagesStrip currentVoyageId={voyageId} onSwitch={onSwitch} />
+      </Reveal>
 
       {/* Memories captured — visual anchor above stats */}
-      <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
+      <Reveal>
+        <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
+      </Reveal>
 
       {/* Voyage highlights — auto-curated best-of categories */}
-      {voyageId && <HighlightsGallery voyageId={voyageId} />}
+      {voyageId && (
+        <Reveal>
+          <HighlightsGallery voyageId={voyageId} />
+        </Reveal>
+      )}
 
       {/* Metric cards */}
+      {(voyage.shipName || voyage.departureDate) && (
+        <SectionHeading w={w} eyebrow="By the numbers" title="Your voyage at a glance." />
+      )}
       <motion.div
         variants={STAGGER}
         initial="hidden"
-        animate="visible"
-        style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 10, marginBottom: 16 }}
+        whileInView="visible"
+        viewport={{ once: true, margin: '0px 0px -60px 0px' }}
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: w < BP.mobile ? 10 : 14, marginBottom: 16 }}
       >
         <motion.div variants={FADE_UP} style={{ cursor: 'pointer' }} onClick={() => onNav('daily')}>
           <MetricCard
-            icon="📖"
+            icon={<BookOpen size={20} strokeWidth={1.8} />}
             value={nights > 0 ? `${logged} / ${nights}` : logged > 0 ? String(logged) : '—'}
             label="Days Logged"
             color={NAVY2}
@@ -194,7 +257,7 @@ export default function Dashboard({
 
         <motion.div variants={FADE_UP} style={{ cursor: 'pointer' }} onClick={() => onNav('itinerary')}>
           <MetricCard
-            icon="📍"
+            icon={<MapPin size={20} strokeWidth={1.8} />}
             value={ports > 0 ? String(ports) : '—'}
             label="Ports"
             color={TEAL}
@@ -203,7 +266,7 @@ export default function Dashboard({
 
         <motion.div variants={FADE_UP} style={{ cursor: 'pointer' }} onClick={() => onNav('budget')}>
           <MetricCard
-            icon="💳"
+            icon={<Wallet size={20} strokeWidth={1.8} />}
             value={spent > 0 ? `£${spent.toFixed(0)}` : '£—'}
             label={budgetOver ? 'Over Budget!' : 'Total Spent'}
             sub={budgetAmt > 0 ? `of £${budgetAmt.toFixed(0)}` : undefined}
@@ -216,11 +279,11 @@ export default function Dashboard({
 
         <motion.div variants={FADE_UP} style={{ cursor: 'pointer' }} onClick={() => onNav('daily')}>
           <MetricCard
-            icon="⭐"
+            icon={<Star size={20} strokeWidth={1.8} />}
             value={avgRating > 0 ? avgRating.toFixed(1) : '—'}
             label="Avg Rating"
             sub={ratingsArr.length > 0 ? `${ratingsArr.length} day${ratingsArr.length !== 1 ? 's' : ''} rated` : undefined}
-            color="#F59E0B"
+            color={GOLD}
             sparkline={ratingSparkline.some(v => v) ? ratingSparkline : undefined}
           />
         </motion.div>
@@ -229,28 +292,28 @@ export default function Dashboard({
           <>
             <motion.div variants={FADE_UP} style={{ cursor: 'pointer' }} onClick={() => onNav('food')}>
               <MetricCard
-                icon="🍽️"
+                icon={<UtensilsCrossed size={20} strokeWidth={1.8} />}
                 value={diningCount > 0 ? String(diningCount) : '—'}
                 label="Dining Entries"
-                color="#F97316"
+                color={ROSE}
               />
             </motion.div>
 
             <motion.div variants={FADE_UP} style={{ cursor: 'pointer' }} onClick={() => onNav('packing')}>
               <MetricCard
-                icon="🧳"
+                icon={<Luggage size={20} strokeWidth={1.8} />}
                 value={totalPackingItems > 0 ? String(totalPackingItems) : '—'}
                 label="Items Packed"
-                color="#8B5CF6"
+                color={PLUM}
               />
             </motion.div>
 
             <motion.div variants={FADE_UP} style={{ cursor: 'pointer', gridColumn: 'span 2' }} onClick={() => onNav('highlights')}>
               <MetricCard
-                icon="🏆"
+                icon={<CheckCircle2 size={20} strokeWidth={1.8} />}
                 value={`${completedCount} / ${totalSections}`}
                 label="Journal Complete"
-                color={completedCount === totalSections ? '#22C55E' : NAVY2}
+                color={completedCount === totalSections ? TEAL : NAVY2}
                 pct={Math.round((completedCount / totalSections) * 100)}
               />
             </motion.div>
@@ -260,51 +323,65 @@ export default function Dashboard({
 
       {/* Voyage Memory Wall — masonry photo grid */}
       {voyageId && (
-        <VoyageMemoryWall voyageId={voyageId} limit={16} onViewAll={() => onNav('gallery')} />
+        <Reveal>
+          <VoyageMemoryWall voyageId={voyageId} limit={16} onViewAll={() => onNav('gallery')} />
+        </Reveal>
       )}
 
       {/* Budget breakdown (only when there's spending data) */}
-      {spent > 0 && <BudgetBreakdown budget={budget} />}
+      {spent > 0 && (
+        <Reveal>
+          <BudgetBreakdown budget={budget} />
+        </Reveal>
+      )}
 
       {/* Itinerary timeline */}
-      <ItineraryTimeline
-        itinerary={itinerary}
-        dailyLogs={dailyLogs}
-        currentDay={currentDay}
-        photosByDate={photosByDate}
-        onViewDay={dayIdx => {
-          if (onViewDay) onViewDay(dayIdx)
-          else onNav('daily')
-        }}
-      />
+      <Reveal>
+        <ItineraryTimeline
+          itinerary={itinerary}
+          dailyLogs={dailyLogs}
+          currentDay={currentDay}
+          photosByDate={photosByDate}
+          onViewDay={dayIdx => {
+            if (onViewDay) onViewDay(dayIdx)
+            else onNav('daily')
+          }}
+        />
+      </Reveal>
 
       {/* Recent posts */}
-      <RecentPosts
-        dailyLogs={dailyLogs}
-        itinerary={itinerary}
-        onNav={onNav}
-        onViewDay={onViewDay}
-      />
+      <Reveal>
+        <RecentPosts
+          dailyLogs={dailyLogs}
+          itinerary={itinerary}
+          onNav={onNav}
+          onViewDay={onViewDay}
+        />
+      </Reveal>
 
       {/* Empty state — no voyage set up */}
       {!voyage.shipName && !voyage.departureDate && (
-        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 20, padding: w < BP.mobile ? '40px 20px' : '56px 32px', textAlign: 'center', marginTop: 16 }}>
-          <div style={{ marginBottom: 14 }}><FE emoji="🌊" size={48} /></div>
-          <div style={{ fontSize: 24, fontWeight: 400, color: NAVY2, fontFamily: "'Fredoka One', cursive", marginBottom: 8 }}>
-            Your voyage awaits
+        <Reveal>
+          <div style={{ background: WHITE, borderRadius: 24, boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.06)', padding: w < BP.mobile ? '48px 24px' : '64px 40px', textAlign: 'center', marginTop: 16 }}>
+            <div style={{ width: 72, height: 72, borderRadius: '50%', background: LIGHT, border: `1px solid ${BORDER}`, color: NAVY2, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 22px' }}>
+              <Anchor size={30} strokeWidth={1.5} />
+            </div>
+            <div style={{ fontSize: w < BP.mobile ? 24 : 32, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1.15, marginBottom: 10 }}>
+              Your voyage awaits.
+            </div>
+            <div style={{ fontSize: w < BP.mobile ? 13 : 15, color: MUTED, lineHeight: 1.7, maxWidth: 'min(440px, 100%)', margin: '0 auto 26px', fontFamily: FONT_BODY }}>
+              Set up your voyage details to unlock the dashboard — itinerary timeline, budget breakdown, ports map, and more.
+            </div>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <button onClick={() => onNav('voyage')} className="btn-primary" style={{ ...sty.btn, fontSize: 14, padding: '12px 28px', borderRadius: 980 }}>
+                Set Up Voyage →
+              </button>
+              <button onClick={() => onNav('feed')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 980, padding: '12px 28px', cursor: 'pointer', fontSize: 14, fontFamily: FONT_BODY, fontWeight: 600, color: MUTED }}>
+                View Feed
+              </button>
+            </div>
           </div>
-          <div style={{ fontSize: 14, color: MUTED, lineHeight: 1.7, maxWidth: 'min(380px, 100%)', margin: '0 auto 24px', fontFamily: FONT_BODY }}>
-            Set up your voyage details to unlock the dashboard — itinerary timeline, budget breakdown, ports map, and more.
-          </div>
-          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => onNav('voyage')} className="btn-primary" style={{ ...sty.btn, fontSize: 13, padding: '9px 20px' }}>
-              Set Up Voyage →
-            </button>
-            <button onClick={() => onNav('feed')} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 12, padding: '9px 20px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: MUTED }}>
-              View Feed
-            </button>
-          </div>
-        </div>
+        </Reveal>
       )}
     </div>
   )

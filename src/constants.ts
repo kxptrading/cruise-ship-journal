@@ -37,8 +37,8 @@ export const SECTION_COLORS: Record<string, string> = {
 }
 
 // ── Typography ────────────────────────────────────────────────────────────────
-export const FONT_DISPLAY = "'Fredoka One', cursive"
-export const FONT_BODY    = "'Nunito', sans-serif"
+export const FONT_DISPLAY = 'Georgia, "Times New Roman", serif'
+export const FONT_BODY    = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
 export const FONT_LOGO    = "'Space Grotesk', sans-serif"
 
 // ── Responsive breakpoints (px) ───────────────────────────────────────────────

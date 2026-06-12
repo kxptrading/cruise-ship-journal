@@ -31,6 +31,15 @@ export const FADE_UP: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } as Transition },
 }
 
+// ── Scroll-triggered section reveal ───────────────────────────────────────────
+// Pair with whileInView + viewport={{ once: true }}. Sections start soft-focus
+// and resolve into sharp focus as they scroll into view.
+
+export const REVEAL: Variants = {
+  hidden:  { opacity: 0, y: 18, filter: 'blur(3px)' },
+  visible: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } as Transition },
+}
+
 // ── Stagger container ─────────────────────────────────────────────────────────
 // Wrap a list in a motion.div with these variants; children use FADE_UP.
 // staggerChildren cascades the child delay automatically.

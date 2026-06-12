@@ -10,7 +10,7 @@ import { Donut } from '../../components/ui'
 import { getTimeGradient, getVignetteRGB } from '../../lib/atmosphere'
 import type { TimeOfDay } from '../../lib/atmosphere'
 import type { Voyage, ItineraryDay } from '../../types'
-import FE from '../../components/FE'
+import { MapPin, CalendarDays, DoorClosed } from 'lucide-react'
 
 interface Star {
   id:       number | string
@@ -48,26 +48,28 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
   const seaDays = itinerary
     ? itinerary.filter(d => !d.port || d.port.toLowerCase() === 'at sea').length
     : null
-  const HERO_H = w < BP.mobile ? 210 : 260
+  const HERO_H = w < BP.mobile ? 260 : 340
   const tg = getTimeGradient(timeOfDay)
   const [vr, vg, vb] = getVignetteRGB(timeOfDay)
 
   const defaultScrollY = useTransform(() => 0)
   const sy = scrollY ?? defaultScrollY
-  const heroOpacity = useTransform(sy, [0, 180], [1, 0.4])
-  const heroFilter  = useTransform(sy, [0, 180], ['blur(0px)', 'blur(4px)'])
+  const heroOpacity = useTransform(sy, [0, 220], [1, 0.5])
   // Parallax: background moves at 40% of scroll speed
   const bgY = useTransform(sy, [0, 300], [0, 120])
 
   return (
-    <motion.div style={{ opacity: heroOpacity, filter: heroFilter, willChange: 'opacity, filter' }}>
+    <motion.div style={{ opacity: heroOpacity, willChange: 'opacity' }}>
     <div style={{
-      position: 'relative', height: HERO_H, borderRadius: 20,
+      position: 'relative', height: HERO_H, borderRadius: 24,
       marginBottom: 16, overflow: 'hidden',
-      boxShadow: '0 10px 40px rgba(3,105,161,0.3)',
+      boxShadow: '0 20px 60px rgba(3,105,161,0.25), 0 4px 16px rgba(0,0,0,0.08)',
     }}>
       {/* Parallax background layer — extends beyond bounds so parallax shift doesn't show edges */}
       <motion.div
+        initial={{ scale: 1.06 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
         style={{
           position: 'absolute', left: 0, right: 0, top: '-15%', bottom: '-15%',
           background: tg || 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 50%, var(--t-primary) 100%)',
@@ -86,7 +88,6 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
               animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s`,
             }} />
           ))}
-          <div className="moon-icon" style={{ position: 'absolute', top: 14, right: 58, pointerEvents: 'none' }}><FE emoji="🌙" size={28} /></div>
         </>
       )}
 
@@ -95,6 +96,9 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
         <motion.img
           src={voyage.coverPhotoUrl || heroPhotoUrl}
           alt="Voyage cover"
+          initial={{ scale: 1.06 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.6, ease: [0.22, 1, 0.36, 1] }}
           style={{
             position: 'absolute', left: 0, right: 0, top: '-15%', width: '100%', height: '130%',
             objectFit: 'cover', display: 'block', y: bgY, willChange: 'transform',
@@ -117,44 +121,52 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
         </>
       )}
 
-      {/* Waves */}
-      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, overflow: 'hidden', lineHeight: 0, pointerEvents: 'none', zIndex: 2 }}>
-        <svg className="hero-wave-1" viewBox="0 0 1440 60" preserveAspectRatio="none" style={{ width: '150%', height: 38, display: 'block', marginLeft: '-10%' }}>
-          <path d="M0,40 C240,0 480,60 720,30 C960,0 1200,50 1440,20 L1440,60 L0,60 Z" fill="rgba(255,255,255,0.07)" />
-        </svg>
-        <svg className="hero-wave-2" viewBox="0 0 1440 40" preserveAspectRatio="none" style={{ position: 'absolute', bottom: 0, width: '150%', height: 24, display: 'block', marginLeft: '-10%' }}>
-          <path d="M0,20 C300,40 600,0 900,20 C1100,35 1280,10 1440,20 L1440,40 L0,40 Z" fill="rgba(255,255,255,0.05)" />
-        </svg>
-      </div>
-
       {/* ── Floating content card ────────────────────────────────────────────── */}
       <div style={{
-        position: 'absolute', bottom: 14, left: 14, right: 14, zIndex: 3,
-        padding: `${w < BP.mobile ? 14 : 18}px ${w < BP.mobile ? 14 : 20}px`,
+        position: 'absolute', bottom: 16, left: 16, right: 16, zIndex: 3,
+        padding: `${w < BP.mobile ? 14 : 20}px ${w < BP.mobile ? 14 : 24}px`,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 20 }}>
           <div style={{ flex: 1, minWidth: 0 }}>
 
             {(voyage.cruiseLine || voyage.shipName) && (
-              <div style={{ fontSize: 11, color: WHITE, letterSpacing: '0.14em', textTransform: 'uppercase', fontWeight: 700, fontFamily: FONT_BODY, marginBottom: 5, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.7)' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 600, fontFamily: FONT_BODY, marginBottom: 6, textShadow: '0 1px 4px rgba(0,0,0,0.9), 0 2px 10px rgba(0,0,0,0.7)' }}
+              >
                 {voyage.cruiseLine || 'Deck Days'}
-              </div>
+              </motion.div>
             )}
 
-            <h1 style={{ margin: '0 0 8px', fontSize: w < BP.mobile ? 30 : 36, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.05, textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7)' }}>
+            <motion.h1
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              style={{ margin: '0 0 8px', fontSize: w < BP.mobile ? 30 : 40, fontWeight: 400, color: WHITE, fontFamily: FONT_DISPLAY, lineHeight: 1.08, textShadow: '0 2px 6px rgba(0,0,0,0.9), 0 4px 20px rgba(0,0,0,0.7)' }}
+            >
               {voyage.shipName || 'Your Voyage Awaits'}
-            </h1>
+            </motion.h1>
 
 
             {(voyage.departurePort || voyage.departureDate) && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 18px', marginBottom: voyagePct !== null ? 12 : 0, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
-                {voyage.departurePort && <span style={{ fontSize: 13, color: WHITE, fontWeight: 700 }}><FE emoji="📍" size={13} /> {voyage.departurePort}</span>}
-                {voyage.departureDate && (
-                  <span style={{ fontSize: 13, color: WHITE, fontWeight: 600 }}>
-                    <FE emoji="📅" size={13} /> {voyage.departureDate}{voyage.returnDate ? ` → ${voyage.returnDate}` : ''}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 20px', marginBottom: voyagePct !== null ? 14 : 0, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
+                {voyage.departurePort && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.92)', fontWeight: 500, fontFamily: FONT_BODY }}>
+                    <MapPin size={14} strokeWidth={2} /> {voyage.departurePort}
                   </span>
                 )}
-                {voyage.cabin && <span style={{ fontSize: 13, color: WHITE, fontWeight: 600 }}><FE emoji="🚪" size={13} /> Cabin {voyage.cabin}</span>}
+                {voyage.departureDate && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.92)', fontWeight: 500, fontFamily: FONT_BODY }}>
+                    <CalendarDays size={14} strokeWidth={2} /> {voyage.departureDate}{voyage.returnDate ? ` — ${voyage.returnDate}` : ''}
+                  </span>
+                )}
+                {voyage.cabin && (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: 'rgba(255,255,255,0.92)', fontWeight: 500, fontFamily: FONT_BODY }}>
+                    <DoorClosed size={14} strokeWidth={2} /> Cabin {voyage.cabin}
+                  </span>
+                )}
               </div>
             )}
 
@@ -165,7 +177,21 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
             )}
 
             {voyagePct !== null && (
-              <div style={{ position: 'relative' }}>
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                style={{
+                  position: 'relative',
+                  background: 'rgba(12,22,38,0.38)',
+                  backdropFilter: 'blur(18px) saturate(1.5)',
+                  WebkitBackdropFilter: 'blur(18px) saturate(1.5)',
+                  border: '1px solid rgba(255,255,255,0.16)',
+                  borderRadius: 16,
+                  padding: '12px 16px',
+                  maxWidth: 520,
+                }}
+              >
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                   <span style={{ fontSize: 11, color: WHITE, letterSpacing: '0.07em', textTransform: 'uppercase', fontFamily: FONT_BODY, fontWeight: 700, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>Voyage Progress</span>
                   <span style={{ fontSize: 11, color: WHITE, fontWeight: 700, fontFamily: FONT_BODY, textShadow: '0 1px 4px rgba(0,0,0,0.9)' }}>
@@ -227,7 +253,7 @@ export default function VoyageHero({ w, voyage, voyagePct, currentDay, voyageNig
                     </div>
                   </motion.div>
                 )}
-              </div>
+              </motion.div>
             )}
 
             {(voyage.companion1 || voyage.companion2) && (

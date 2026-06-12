@@ -2,9 +2,8 @@
 
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ChevronRight, Plus } from 'lucide-react'
+import { ChevronRight, Plus, Ship } from 'lucide-react'
 import { NAVY2, MUTED, WHITE, GOLD, BORDER, FONT_DISPLAY, FONT_BODY, TEAL } from '@/constants'
-import FE from '@/components/FE'
 import { useVoyages } from '@/features/voyages/hooks'
 import type { VoyageRow } from '@/features/voyages/hooks'
 
@@ -67,7 +66,7 @@ function MiniCard({ voyage, currentVoyageId, onClick }: {
             background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <FE emoji="🚢" size={32} />
+            <Ship size={28} strokeWidth={1.5} color="rgba(255,255,255,0.7)" />
           </div>
         )}
         {/* Status pill */}

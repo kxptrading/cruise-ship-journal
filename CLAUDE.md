@@ -55,7 +55,8 @@ src/
     PostDetailPage.tsx       /voyages/:id/posts/:postId
     FeedPage.tsx             /feed  (React Query, get_feed RPC)
     ContactsPage.tsx         /contacts + /friends
-    ProfilePage.tsx          /userprofile
+    ProfilePage.tsx          /userprofile  (identity: hero, passport map, personality, badges)
+    SettingsPage.tsx         /settings     (Appearance, Preferences, Settings & Export)
 
   features/
     voyages/            — VoyageCard, VoyageForm, ItineraryEditor, VoyageHero,
@@ -77,8 +78,8 @@ src/
     MediaThumbnails.tsx — responsive grid with swipe lightbox
 
   components/
-    Sidebar.tsx         — nav shell: PRIMARY_NAV always; Your Journal only on /voyages/:id
-    TopNav.tsx          — Deck Days wordmark + auth nav icons
+    TopNav.tsx          — sole desktop nav: wordmark (→ home), nav links, search,
+                          profile dropdown (email, Profile, Admin, Sign out)
     BottomNav.tsx       — mobile tab bar (voyage-aware active state)
     ui/                 — Card, Button, MetricCard, StarRating, Skeleton,
                           EmptyState, AudienceSelector, SectionBox, Label, Input
@@ -86,7 +87,6 @@ src/
   hooks/
     useVoyageData.ts    — legacy debounced write-through for journal sections
     useFeedData.ts      — legacy feed data (dashboard social feed)
-    useFocusTrap.ts     — keyboard focus trap for mobile drawer
     useBreakpoint.ts
 
   lib/

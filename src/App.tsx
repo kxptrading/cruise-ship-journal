@@ -32,7 +32,6 @@ import { supabase } from './lib/supabase'
 import { useVoyageData } from './hooks/useVoyageData'
 import { useBreakpoint } from './hooks/useBreakpoint'
 import { PAGE_TRANSITION } from './lib/motion'
-import Sidebar        from './components/Sidebar'
 import TopNav         from './components/TopNav'
 import BottomNav      from './components/BottomNav'
 import AuthScreen     from './components/AuthScreen'
@@ -57,6 +56,7 @@ const VoyageDetails    = lazy(() => import('./features/voyages/VoyageForm'))
 const Friends          = lazy(() => import('./pages/ContactsPage'))
 const Chat             = lazy(() => import('./sections/Chat'))
 const UserProfile      = lazy(() => import('./pages/ProfilePage'))
+const SettingsPage     = lazy(() => import('./pages/SettingsPage'))
 const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
 const NotFound         = lazy(() => import('./sections/NotFound'))
 const LoginPage        = lazy(() => import('./pages/LoginPage'))
@@ -116,7 +116,7 @@ function fmtDate(iso: string | null): string {
   return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-// Builds the readable label shown in the Sidebar TickerText.
+// Builds the readable label shown in the TopNav TickerText.
 // The dot separator ( · ) gives clear visual hierarchy between the name and dates.
 function buildVoyageLabel(name: string | null | undefined, from: string | null | undefined, to: string | null | undefined, description?: string | null): string {
   const n = name || ''
@@ -149,7 +149,6 @@ export default function App() {
   const winW      = useWindowSize()
   const bp        = useBreakpoint()
   const isMobile  = bp === 'mobile'
-  const isOverlay = isMobile   // sidebar becomes a drawer only on mobile
 
   // ── Auth ────────────────────────────────────────────────────────────────────
   const [session,     setSession]     = useState<Session | null>(null)
@@ -198,7 +197,6 @@ export default function App() {
 
   const [selectedDay,  setSelectedDay]  = useState<number | null>(null)
   const [dailyJumpDay, setDailyJumpDay] = useState<number | null>(null)
-  const [sidebarOpen,  setSidebarOpen]  = useState<boolean>(false)
   const [feedFriend,   setFeedFriend]   = useState<FeedFriend | null>(null)
 
   // ── Toast ───────────────────────────────────────────────────────────────────
@@ -247,11 +245,6 @@ export default function App() {
     })
     return () => subscription.unsubscribe()
   }, [])
-
-  // ── Auto-close sidebar when viewport widens past tablet breakpoint ──────────
-  useEffect(() => {
-    if (!isOverlay) setSidebarOpen(false)
-  }, [isOverlay])
 
   // ── Scroll to top on every route change ──────────────────────────────────────
   useEffect(() => {
@@ -327,8 +320,8 @@ export default function App() {
   }
 
   // ── Section completion status ───────────────────────────────────────────────
-  // A Set of section IDs that have meaningful data — used by Sidebar (dots)
-  // and Feed (journal completion score).
+  // A Set of section IDs that have meaningful data — used by the Dashboard
+  // (Journal Complete metric) and Feed (journal completion score).
   //
   // useMemo is important here: `data` is a stable object reference from
   // useVoyageData, so this recalculates only when data actually changes.
@@ -373,7 +366,6 @@ export default function App() {
     }
     setSelectedDay(null)
     if (id !== 'daily') setDailyJumpDay(null)
-    if (isOverlay) setSidebarOpen(false)
   }
 
   // ── Layout values ───────────────────────────────────────────────────────────
@@ -479,9 +471,10 @@ export default function App() {
         <TopNav
             section={section}
             onNav={navClick}
-            isOverlay={isOverlay}
             isMobile={isMobile}
-            onMenuOpen={() => setSidebarOpen(true)}
+            userEmail={session?.user?.email}
+            onSignOut={() => supabase.auth.signOut()}
+            isAdmin={isAdmin === true}
             voyageLabel={(() => {
               // Only show the voyage name when the user is on a specific voyage
               // page (/voyages/:id). Everywhere else show the welcome message.
@@ -502,30 +495,6 @@ export default function App() {
         <OfflineBanner visible={!isOnline} />
 
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          <Sidebar
-            section={section}
-            onNav={navClick}
-            bp={bp}
-            isOpen={sidebarOpen}
-            onClose={() => setSidebarOpen(false)}
-            user={session?.user}
-            onSignOut={() => supabase.auth.signOut()}
-            voyageName={(() => {
-              const row = allVoyages.find(v => v.id === voyageId)
-              return buildVoyageLabel(
-                row?.ship_name ?? data.voyage.shipName,
-                row?.departure_date ?? data.voyage.departureDate,
-                row?.return_date    ?? data.voyage.returnDate,
-                data.voyage.cruiseDescription,
-              )
-            })()}
-            voyageCount={allVoyages.length}
-            sectionStatus={sectionStatus}
-            isAdult={isAdult}
-            isAdmin={isAdmin === true}
-            badges={navBadges}
-          />
-
           <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
           {/* <main> is the sole overflow-y scroll container.
               Its ref feeds the Framer Motion useScroll hook for parallax effects.
@@ -600,7 +569,8 @@ export default function App() {
                 <Route path="/friends"  element={<Friends />} />
                 <Route path="/contacts" element={<Friends />} />
                 <Route path="/chat"          element={<Chat />} />
-                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} theme={theme} onThemeChange={switchTheme} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
+                <Route path="/userprofile"   element={<UserProfile session={session} allVoyages={allVoyages} voyage={data.voyage} onNav={navClick} />} />
+                <Route path="/settings"      element={<SettingsPage session={session} theme={theme} onThemeChange={switchTheme} iconPack={iconPack} onIconPackChange={switchIconPack} />} />
                 <Route path="/admin"             element={<AdminPage />} />
                 <Route path="/admin/reports"    element={<AdminReportsPage />} />
                 {/* Legal / help pages — inside app shell for authenticated users */}
@@ -642,7 +612,6 @@ export default function App() {
         <BottomNav
           section={section}
           onNav={navClick}
-          onMenuOpen={() => setSidebarOpen(true)}
           badges={navBadges}
         />
       )}

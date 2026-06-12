@@ -4,6 +4,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { useGsapReveal } from '../hooks/useGsapReveal'
 import { useUserId, useW } from '../context'
 import { BP, FONT_BODY } from '../constants'
 import ImageCropper from '../components/ImageCropper'
@@ -16,9 +17,6 @@ import Personality  from '@/sections/profile/Personality'
 import Badges       from '@/sections/profile/Badges'
 import Companions   from '@/sections/profile/Companions'
 import VoyagesStrip from '@/sections/profile/VoyagesStrip'
-import Preferences      from '@/sections/profile/Preferences'
-import SettingsBlock    from '@/sections/profile/SettingsBlock'
-import AppearanceBlock  from '@/sections/profile/AppearanceBlock'
 
 const BANNER_ASPECT = 840 / 220
 
@@ -38,17 +36,13 @@ interface CropState {
 }
 
 interface Props {
-  session:           Session | null
-  allVoyages:        VoyageListRow[]
-  voyage:            Voyage
-  onNav:             (section: string) => void
-  theme:             string
-  onThemeChange:     (id: string) => void
-  iconPack?:         'fluent' | 'native' | 'lucide'
-  onIconPackChange?: (pack: 'fluent' | 'native' | 'lucide') => void
+  session:    Session | null
+  allVoyages: VoyageListRow[]
+  voyage:     Voyage
+  onNav:      (section: string) => void
 }
 
-export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav, theme, onThemeChange, iconPack, onIconPackChange }: Props) {
+export default function UserProfile({ session, allVoyages, voyage: _voyage, onNav }: Props) {
   const userId   = useUserId()
   const w        = useW()
   const isMobile = w < BP.mobile
@@ -159,6 +153,10 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
     else                   setUploadingBanner(false)
   }
 
+  // Scroll-reveal: each top-level section fades up as it enters the viewport.
+  // Re-runs once `loading` flips and the real sections mount.
+  const revealRef = useGsapReveal<HTMLDivElement>([loading])
+
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6B7280', fontSize: 14, fontFamily: FONT_BODY }}>
       Loading profile…
@@ -166,7 +164,7 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
   )
 
   return (
-    <div style={{ fontFamily: FONT_BODY }}>
+    <div ref={revealRef} style={{ fontFamily: FONT_BODY }}>
 
       {cropState && (
         <ImageCropper
@@ -206,21 +204,6 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
       <Companions onNav={onNav} />
 
       <VoyagesStrip allVoyages={allVoyages} onViewAll={() => onNav?.('voyage')} />
-
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
-        <AppearanceBlock
-          theme={theme}
-          onThemeChange={onThemeChange}
-          iconPack={iconPack}
-          onIconPackChange={onIconPackChange}
-        />
-        <Preferences onSave={saveProfileField} />
-      </div>
-
-      <SettingsBlock
-        onSignOut={() => supabase.auth.signOut()}
-        displayName={profile.displayName || session?.user?.email?.split('@')[0] || 'My'}
-      />
 
       <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />
       <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerFileSelect} />

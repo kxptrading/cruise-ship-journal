@@ -1,28 +1,30 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // components/TopNav.tsx — Fully responsive top navigation banner
 //
-// Mobile  (<768px) → inline hamburger + logo + wordmark. No ticker, no links.
-//                    BottomNav owns all navigation on mobile.
+// The top banner is the app's single navigation surface on desktop.
 //
-// Desktop (≥768px) → hamburger pinned to absolute left edge of the full bar.
-//                    Inner max-width container holds logo + wordmark + nav links.
-//                    containerPadLeft is always ≥ hamburgerEnd + gap so nothing
-//                    ever overlaps regardless of screen width.
+// Mobile  (<768px) → logo + wordmark centred, search + profile menu on the
+//                    right. BottomNav owns primary navigation on mobile.
+//
+// Desktop (≥768px) → inner max-width container holds logo + wordmark + nav
+//                    links + search + profile menu.
 //                    Nav labels hide below 1080px (icon-only mode).
 //                    Ticker sub-bar below the main bar.
+//
+// PROFILE MENU:
+//   The CircleUser button at the far right opens a dropdown with the signed-in
+//   email, Profile link, Admin link (admins only), and Sign out. This replaces
+//   the retired sidebar's footer. Closes on outside click and Escape.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { Menu, Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search } from 'lucide-react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search, Settings, ShieldCheck, LogOut } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { WHITE, GOLD, FONT_BODY } from '../constants'
+import { gsap, prefersReducedMotion } from '../lib/gsap'
+import { WHITE, GOLD, BORDER, MUTED, TEXT, FONT_BODY } from '../constants'
 import TickerText from '../ui/TickerText'
 import { useW, useIconPack } from '../context'
 import FE from './FE'
-
-// Hamburger geometry — used to compute safe inner container left padding
-const HBG_LEFT = 16   // px from bar left edge
-const HBG_W    = 40   // button width
-const HBG_GAP  = 16   // breathing room between button and logo
 
 const NAV_MAX_WIDTH = 1200
 
@@ -33,20 +35,155 @@ const TOP_NAV_ITEMS: NavItem[] = [
   { id: 'voyages',     label: 'Voyages',  Icon: Ship,          emoji: '🚢' },
   { id: 'friends',     label: 'Friends',  Icon: Users,         emoji: '👥' },
   { id: 'chat',        label: 'Messages', Icon: MessageCircle, emoji: '💬' },
-  { id: 'userprofile', label: 'Profile',  Icon: CircleUser,    emoji: '👤' },
 ]
 
 interface Props {
   section:      string
   onNav:        (id: string) => void
-  isOverlay:    boolean
   isMobile:     boolean
-  onMenuOpen:   () => void
   voyageLabel?: string
   badges?:      Record<string, number>
+  userEmail?:   string
+  onSignOut:    () => void
+  isAdmin?:     boolean
 }
 
-export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLabel, badges = {} }: Props) {
+// ── Profile dropdown ──────────────────────────────────────────────────────────
+// Trigger button + anchored menu. Owns its open state; closes on outside
+// click, Escape, or after any menu action.
+
+function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize }: {
+  section:    string
+  onNav:      (id: string) => void
+  userEmail?: string
+  onSignOut:  () => void
+  isAdmin?:   boolean
+  iconSize:   number
+}) {
+  const [open, setOpen] = useState(false)
+  const wrapRef  = useRef<HTMLDivElement>(null)
+  const menuRef  = useRef<HTMLDivElement>(null)
+  const iconPack = useIconPack()
+  const active   = section === 'userprofile'
+
+  // Dropdown entrance: quick scale + fade from the trigger corner, then the
+  // menu items cascade in.
+  useLayoutEffect(() => {
+    if (!open || !menuRef.current || prefersReducedMotion()) return
+    const ctx = gsap.context(() => {
+      gsap.fromTo(menuRef.current,
+        { autoAlpha: 0, y: -8, scale: 0.96, transformOrigin: 'top right' },
+        { autoAlpha: 1, y: 0, scale: 1, duration: 0.22, ease: 'power3.out' },
+      )
+      gsap.fromTo(menuRef.current!.children,
+        { autoAlpha: 0, y: -6 },
+        { autoAlpha: 1, y: 0, duration: 0.25, ease: 'power2.out', stagger: 0.04, delay: 0.05, clearProps: 'opacity,visibility,transform' },
+      )
+    }, menuRef)
+    return () => ctx.revert()
+  }, [open])
+
+  useEffect(() => {
+    if (!open) return
+    const onDown = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDown)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDown)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const act = (fn: () => void) => () => { setOpen(false); fn() }
+
+  const itemStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 10,
+    width: '100%', textAlign: 'left',
+    padding: '10px 14px', minHeight: 40,
+    background: 'transparent', border: 'none', cursor: 'pointer',
+    fontSize: 13, fontWeight: 500, color: TEXT, fontFamily: FONT_BODY,
+    WebkitTapHighlightColor: 'transparent',
+  }
+  const hover = (e: React.MouseEvent<HTMLButtonElement>, on: boolean) => {
+    e.currentTarget.style.background = on ? 'rgba(0,0,0,0.04)' : 'transparent'
+  }
+
+  return (
+    <div ref={wrapRef} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        aria-label="Account menu"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        onClick={() => setOpen(v => !v)}
+        style={{
+          background: active || open ? 'rgba(201,162,39,0.18)' : 'transparent',
+          border: 'none',
+          width: 40, height: 40, flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          cursor: 'pointer',
+          color: active || open ? GOLD : 'rgba(255,255,255,0.85)',
+          borderRadius: 8,
+          WebkitTapHighlightColor: 'transparent',
+        }}
+      >
+        {iconPack !== 'lucide'
+          ? <FE emoji="👤" size={iconSize} />
+          : <UserCircle2 size={iconSize} strokeWidth={active || open ? 2.5 : 1.75} />
+        }
+      </button>
+
+      {open && (
+        <div
+          ref={menuRef}
+          role="menu"
+          style={{
+            position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+            minWidth: 220, background: WHITE,
+            border: `1px solid ${BORDER}`, borderRadius: 12,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 12px 40px rgba(0,0,0,0.14)',
+            padding: '6px 0', zIndex: 300, overflow: 'hidden',
+          }}
+        >
+          {userEmail && (
+            <div style={{ padding: '8px 14px 10px', borderBottom: `1px solid ${BORDER}`, marginBottom: 4 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', fontFamily: FONT_BODY, marginBottom: 3 }}>
+                Signed in as
+              </div>
+              <div style={{ fontSize: 13, color: TEXT, fontFamily: FONT_BODY, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {userEmail}
+              </div>
+            </div>
+          )}
+
+          <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(() => onNav('userprofile'))}>
+            <CircleUser size={16} strokeWidth={1.75} color={MUTED} /> Profile
+          </button>
+
+          <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(() => onNav('settings'))}>
+            <Settings size={16} strokeWidth={1.75} color={MUTED} /> Settings
+          </button>
+
+          {isAdmin && (
+            <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(() => onNav('admin'))}>
+              <ShieldCheck size={16} strokeWidth={1.75} color={MUTED} /> Admin
+            </button>
+          )}
+
+          <div style={{ height: 1, background: BORDER, margin: '4px 0' }} />
+
+          <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(onSignOut)}>
+            <LogOut size={16} strokeWidth={1.75} color={MUTED} /> Sign out
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default function TopNav({ section, onNav, isMobile, voyageLabel, badges = {}, userEmail, onSignOut, isAdmin = false }: Props) {
   const w        = useW()
   const iconPack = useIconPack()
 
@@ -65,20 +202,6 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
           gap:          12,
           position:     'relative',
         }}>
-          <button
-            aria-label="Open menu"
-            onClick={onMenuOpen}
-            style={{
-              background: 'transparent', border: 'none',
-              width: 40, height: 40, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: WHITE,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            <Menu size={24} strokeWidth={1.75} />
-          </button>
-
           {/* Centre — text at dead centre, logo to its left.
               Shift right by (logoW + gap) / 2 = (28 + 8) / 2 = 18px so the
               text midpoint lands at 50% rather than the group midpoint. */}
@@ -120,25 +243,14 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
             }
           </button>
 
-          <button
-            aria-label="Profile"
-            onClick={() => onNav('userprofile')}
-            style={{
-              background: section === 'userprofile' ? 'rgba(201,162,39,0.18)' : 'transparent',
-              border: 'none',
-              width: 40, height: 40, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-              color: section === 'userprofile' ? GOLD : 'rgba(255,255,255,0.85)',
-              borderRadius: 8,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            {iconPack !== 'lucide'
-              ? <FE emoji="👤" size={24} />
-              : <UserCircle2 size={24} strokeWidth={section === 'userprofile' ? 2.5 : 1.75} />
-            }
-          </button>
+          <ProfileMenu
+            section={section}
+            onNav={onNav}
+            userEmail={userEmail}
+            onSignOut={onSignOut}
+            isAdmin={isAdmin}
+            iconSize={24}
+          />
         </div>
 
         {/* ── Ticker sub-bar ── */}
@@ -173,9 +285,7 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
   const navPadding    = showLabels ? '7px 12px' : '7px 10px'
   const navGap        = w < 1000 ? 2 : 4
 
-  // Left padding of the inner container — always clears the hamburger button
-  const containerPadLeft  = HBG_LEFT + HBG_W + HBG_GAP   // = 72px
-  const containerPadRight = 32
+  const containerPadX = 32
 
   return (
     <div style={{ zIndex: 200, flexShrink: 0, position: 'relative' }}>
@@ -188,41 +298,15 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
         position:     'relative',
       }}>
 
-        {/* Hamburger — absolute left edge, independent of the container */}
-        <button
-          aria-label="Open menu"
-          onClick={onMenuOpen}
-          style={{
-            position:  'absolute',
-            left:      HBG_LEFT,
-            top:       '50%',
-            transform: 'translateY(-50%)',
-            width:     HBG_W,
-            height:    HBG_W,
-            background: 'transparent',
-            border:     'none',
-            display:    'flex', alignItems: 'center', justifyContent: 'center',
-            cursor:     'pointer',
-            color:      'rgba(255,255,255,0.8)',
-            WebkitTapHighlightColor: 'transparent',
-            transition: 'color 0.15s',
-            zIndex:     1,
-          }}
-          onMouseEnter={e => { e.currentTarget.style.color = WHITE }}
-          onMouseLeave={e => { e.currentTarget.style.color = 'rgba(255,255,255,0.8)' }}
-        >
-          <Menu size={20} strokeWidth={1.75} />
-        </button>
-
-        {/* Inner container — padded to always clear the hamburger on the left */}
+        {/* Inner container */}
         <div style={{
           maxWidth:   NAV_MAX_WIDTH,
           margin:     '0 auto',
           height:     '100%',
           display:    'flex',
           alignItems: 'center',
-          paddingLeft:  containerPadLeft,
-          paddingRight: containerPadRight,
+          paddingLeft:  containerPadX,
+          paddingRight: containerPadX,
           gap:          12,
           boxSizing:    'border-box',
         }}>
@@ -291,6 +375,40 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
                 </button>
               )
             })}
+
+            {/* Search */}
+            <button
+              aria-label="Search"
+              aria-current={section === 'search' ? 'page' : undefined}
+              onClick={() => onNav('search')}
+              title="Search"
+              style={{
+                background: section === 'search' ? 'rgba(201,162,39,0.18)' : 'transparent',
+                border: 'none',
+                width: 36, height: 36, flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer',
+                color: section === 'search' ? GOLD : 'rgba(255,255,255,0.82)',
+                borderRadius: 8,
+                WebkitTapHighlightColor: 'transparent',
+              }}
+              onMouseEnter={e => { if (section !== 'search') { e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; e.currentTarget.style.color = WHITE } }}
+              onMouseLeave={e => { if (section !== 'search') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'rgba(255,255,255,0.82)' } }}
+            >
+              {iconPack !== 'lucide'
+                ? <FE emoji="🔍" size={16} />
+                : <Search size={16} strokeWidth={section === 'search' ? 2.5 : 1.75} />
+              }
+            </button>
+
+            <ProfileMenu
+              section={section}
+              onNav={onNav}
+              userEmail={userEmail}
+              onSignOut={onSignOut}
+              isAdmin={isAdmin}
+              iconSize={18}
+            />
           </nav>
         </div>
       </div>
@@ -308,8 +426,8 @@ export default function TopNav({ section, onNav, isMobile, onMenuOpen, voyageLab
           height:      '100%',
           display:     'flex',
           alignItems:  'center',
-          paddingLeft:  containerPadLeft,
-          paddingRight: containerPadRight,
+          paddingLeft:  containerPadX,
+          paddingRight: containerPadX,
           gap:          8,
           overflow:     'hidden',
           boxSizing:    'border-box',

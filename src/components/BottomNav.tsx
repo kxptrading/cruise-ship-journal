@@ -20,10 +20,9 @@ const TABS: TabItem[] = [
 ]
 
 interface Props {
-  section:    string
-  onNav:      (id: string) => void
-  onMenuOpen: () => void
-  badges?:    Record<string, number>
+  section: string
+  onNav:   (id: string) => void
+  badges?: Record<string, number>
 }
 
 export default function BottomNav({ section, onNav, badges = {} }: Props) {

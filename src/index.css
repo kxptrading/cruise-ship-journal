@@ -204,6 +204,9 @@ body::before {
   animation: starTwinkle ease-in-out infinite;
 }
 
+/* ── Story memories gallery — hide native scrollbar (WebKit) ─────────────────── */
+.story-gallery::-webkit-scrollbar { display: none; }
+
 /* ── Story scroll cue ──────────────────────────────────────────────────────── */
 @keyframes storyBounce {
   0%, 100% { transform: translateY(0);   opacity: 0.65; }

@@ -133,18 +133,18 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
     const scroller = document.querySelector(SCROLLER)
     if (!scroller) return
 
-    const cleanups: (() => void)[] = []
-
     const ctx = gsap.context(() => {
-      // Parallax: each layer drifts across its scene, scrubbed to scroll.
+      // Parallax: each layer drifts across its scene, scrubbed to scroll. A
+      // slightly higher scrub value lerps the motion so it tracks the scroller
+      // smoothly instead of snapping frame-to-frame.
       gsap.utils.toArray<HTMLElement>('[data-parallax]').forEach(el => {
         const depth = parseFloat(el.dataset.parallax || '0')
         const scene = (el.closest('[data-scene]') as HTMLElement) || el
         gsap.fromTo(el,
           { yPercent: depth },
           {
-            yPercent: -depth, ease: 'none',
-            scrollTrigger: { trigger: scene, scroller, start: 'top bottom', end: 'bottom top', scrub: 0.6 },
+            yPercent: -depth, ease: 'none', force3D: true,
+            scrollTrigger: { trigger: scene, scroller, start: 'top bottom', end: 'bottom top', scrub: 1 },
           },
         )
       })
@@ -159,42 +159,37 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
         })
       })
 
-      // Pinned horizontal carousel: while pinned full-screen, vertical scroll
-      // drives the image track left→right; once it reaches the end the pin
-      // releases and the page continues to the next section. With few images
-      // the track barely overflows, so it scrubs briefly and moves straight on.
-      const carousel = gsap.utils.toArray<HTMLElement>('[data-carousel]')[0]
-      const track    = gsap.utils.toArray<HTMLElement>('[data-carousel-track]')[0]
-      if (carousel && track) {
-        const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
-        if (distance() > 0) {
-          const setHeight = () => { carousel.style.height = `${scroller.clientHeight}px` }
-          setHeight()
-          carousel.style.overflow = 'hidden'  // GSAP drives the pan; disable native scroll while pinned
-          ScrollTrigger.addEventListener('refreshInit', setHeight)
-          cleanups.push(() => {
-            ScrollTrigger.removeEventListener('refreshInit', setHeight)
-            carousel.style.height = ''
-            carousel.style.overflow = ''
-          })
-          gsap.to(track, {
-            x: () => -distance(), ease: 'none',
-            scrollTrigger: {
-              trigger: carousel, scroller, start: 'top top', end: () => `+=${distance()}`,
-              pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
-            },
-          })
-        }
-      }
-
       // Recompute once content (and lazy images) settle.
       requestAnimationFrame(() => ScrollTrigger.refresh())
       const t = window.setTimeout(() => ScrollTrigger.refresh(), 600)
-      cleanups.push(() => window.clearTimeout(t))
+      return () => window.clearTimeout(t)
     }, root)
 
-    return () => { cleanups.forEach(fn => fn()); ctx.revert() }
+    return () => ctx.revert()
   }, [photoUrls.length, ports.length, quotes.length, dining.length, hasVoyage])
+
+  // ── Memories gallery: native horizontal scroll ──────────────────────────────
+  // Native scrolling runs on the compositor thread, so it stays smooth where the
+  // previous GSAP pin+scrub (transform-pinned inside a custom scroller) was not.
+  // A wheel handler maps vertical wheel → horizontal pan while the strip still
+  // has room; at either end the wheel passes through so the page keeps scrolling.
+  const galleryRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = galleryRef.current
+    if (!el || prefersReducedMotion()) return
+    const onWheel = (e: WheelEvent) => {
+      if (e.deltaY === 0 || Math.abs(e.deltaX) > Math.abs(e.deltaY)) return
+      const max = el.scrollWidth - el.clientWidth
+      if (max <= 0) return
+      const next = el.scrollLeft + e.deltaY
+      if ((e.deltaY > 0 && el.scrollLeft < max - 1) || (e.deltaY < 0 && el.scrollLeft > 1)) {
+        el.scrollLeft = Math.max(0, Math.min(max, next))
+        e.preventDefault()
+      }
+    }
+    el.addEventListener('wheel', onWheel, { passive: false })
+    return () => el.removeEventListener('wheel', onWheel)
+  }, [photoUrls.length])
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (!hasVoyage) {
@@ -390,41 +385,47 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
         </section>
       )}
 
-      {/* ─────────────── CHAPTER 03 — pinned horizontal gallery ─────────────── */}
+      {/* ─────────────── CHAPTER 03 — horizontal gallery ─────────────── */}
       {photoUrls.length > 0 && (
-        <section style={{ ...fullBleed, background: NAVY2 }}>
-          {/* Baseline (no-JS / reduced-motion): a natively swipeable strip so every
-              photo stays reachable. The effect upgrades this to a pinned scrub. */}
-          <div data-carousel style={{ position: 'relative', display: 'flex', alignItems: 'center', overflowX: 'auto', overflowY: 'hidden', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-            {/* Corner label */}
-            <div style={{ position: 'absolute', top: mobile ? 22 : 36, left: mobile ? 22 : 48, zIndex: 2, ...kicker, color: GOLD }}>
+        <section style={{ ...fullBleed, background: NAVY2, padding: mobile ? '70px 0' : '110px 0', overflow: 'hidden' }}>
+          <div style={{ ...col, display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, marginBottom: mobile ? 24 : 34 }}>
+            <span style={{ ...kicker, color: GOLD }}>
               The Gallery · {Math.min(photoUrls.length, 8)} {Math.min(photoUrls.length, 8) === 1 ? 'photo' : 'photos'}
-            </div>
-            {/* Scroll hint */}
-            <div style={{ position: 'absolute', bottom: mobile ? 20 : 32, right: mobile ? 22 : 48, zIndex: 2, ...caption, color: 'rgba(255,255,255,0.6)', fontStyle: 'normal' }}>
-              Scroll to pan →
-            </div>
+            </span>
+            <span style={{ ...caption, color: 'rgba(255,255,255,0.55)', fontStyle: 'normal', whiteSpace: 'nowrap' }}>
+              Scroll or swipe to explore →
+            </span>
+          </div>
 
-            <div data-carousel-track style={{ display: 'flex', alignItems: 'center', flexShrink: 0, gap: mobile ? 16 : 28, padding: mobile ? '0 22px' : '0 6vw', height: '100%', willChange: 'transform' }}>
-              {photoUrls.slice(0, 8).map((url, i) => (
-                <figure
-                  key={url}
-                  style={{
-                    position: 'relative', flexShrink: 0, margin: 0,
-                    width: mobile ? '78vw' : 'clamp(300px, 36vw, 480px)',
-                    height: mobile ? '56vh' : '66vh',
-                    borderRadius: 16, overflow: 'hidden',
-                    boxShadow: '0 30px 80px rgba(0,0,0,0.4)',
-                    backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center',
-                  }}
-                >
-                  <figcaption style={{ position: 'absolute', left: 16, bottom: 14, display: 'flex', gap: 8, alignItems: 'baseline', ...caption, fontStyle: 'normal', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
-                    <span style={{ color: GOLD, fontWeight: 700 }}>{String(i + 1).padStart(2, '0')}</span>
-                    <span style={{ color: 'rgba(255,255,255,0.75)' }}>/ {String(Math.min(photoUrls.length, 8)).padStart(2, '0')}</span>
-                  </figcaption>
-                </figure>
-              ))}
-            </div>
+          {/* Native horizontal scroll — smooth on the compositor; wheel is mapped
+              to horizontal pan by the effect above. */}
+          <div
+            ref={galleryRef}
+            className="story-gallery"
+            style={{
+              display: 'flex', gap: mobile ? 16 : 28, padding: mobile ? '0 22px' : '0 6vw',
+              overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory',
+              WebkitOverflowScrolling: 'touch', msOverflowStyle: 'none', scrollbarWidth: 'none',
+            }}
+          >
+            {photoUrls.slice(0, 8).map((url, i) => (
+              <figure
+                key={url}
+                style={{
+                  position: 'relative', flexShrink: 0, margin: 0, scrollSnapAlign: 'center',
+                  width: mobile ? '80vw' : 'clamp(300px, 34vw, 460px)',
+                  height: mobile ? '56vh' : '68vh',
+                  borderRadius: 16, overflow: 'hidden',
+                  boxShadow: '0 16px 40px rgba(0,0,0,0.35)',
+                  backgroundImage: `url(${url})`, backgroundSize: 'cover', backgroundPosition: 'center',
+                }}
+              >
+                <figcaption style={{ position: 'absolute', left: 16, bottom: 14, display: 'flex', gap: 8, alignItems: 'baseline', ...caption, fontStyle: 'normal', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
+                  <span style={{ color: GOLD, fontWeight: 700 }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span style={{ color: 'rgba(255,255,255,0.75)' }}>/ {String(Math.min(photoUrls.length, 8)).padStart(2, '0')}</span>
+                </figcaption>
+              </figure>
+            ))}
           </div>
         </section>
       )}

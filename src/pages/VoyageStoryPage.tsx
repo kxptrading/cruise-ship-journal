@@ -16,6 +16,7 @@
 
 import { useLayoutEffect, useRef, useState, useEffect, useMemo } from 'react'
 import type { CSSProperties } from 'react'
+import { Link } from 'react-router-dom'
 import { gsap, ScrollTrigger, SCROLLER, prefersReducedMotion } from '../lib/gsap'
 import {
   NAVY2, GOLD, CREAM, WHITE, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY, BP,
@@ -491,9 +492,9 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
             <button onClick={() => onNav('daily')} style={{ background: WHITE, color: NAVY2, border: 'none', borderRadius: 980, padding: '13px 30px', fontSize: 15, fontWeight: 600, fontFamily: FONT_BODY, cursor: 'pointer' }}>
               Open the journal →
             </button>
-            <button onClick={() => onNav('gallery')} style={{ background: 'transparent', color: WHITE, border: '1px solid rgba(255,255,255,0.5)', borderRadius: 980, padding: '13px 30px', fontSize: 15, fontWeight: 600, fontFamily: FONT_BODY, cursor: 'pointer' }}>
+            <Link to="/gallery" style={{ background: 'transparent', color: WHITE, border: '1px solid rgba(255,255,255,0.5)', borderRadius: 980, padding: '13px 30px', fontSize: 15, fontWeight: 600, fontFamily: FONT_BODY, cursor: 'pointer', textDecoration: 'none', display: 'inline-block' }}>
               View gallery
-            </button>
+            </Link>
           </div>
         </div>
       </section>

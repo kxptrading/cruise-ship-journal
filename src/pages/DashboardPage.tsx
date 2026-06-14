@@ -222,6 +222,13 @@ export default function Dashboard({
         <MyVoyagesStrip currentVoyageId={voyageId} onSwitch={onSwitch} />
       </Reveal>
 
+      {/* Budget breakdown (only when there's spending data) */}
+      {spent > 0 && (
+        <Reveal>
+          <BudgetBreakdown budget={budget} />
+        </Reveal>
+      )}
+
       {/* Memories captured — visual anchor above stats */}
       <Reveal>
         <PhotoSummaryCard voyageId={voyageId} onViewGallery={() => onNav('gallery')} />
@@ -325,13 +332,6 @@ export default function Dashboard({
       {voyageId && (
         <Reveal>
           <VoyageMemoryWall voyageId={voyageId} limit={16} onViewAll={() => onNav('gallery')} />
-        </Reveal>
-      )}
-
-      {/* Budget breakdown (only when there's spending data) */}
-      {spent > 0 && (
-        <Reveal>
-          <BudgetBreakdown budget={budget} />
         </Reveal>
       )}
 

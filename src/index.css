@@ -204,6 +204,13 @@ body::before {
   animation: starTwinkle ease-in-out infinite;
 }
 
+/* ── Story scroll cue ──────────────────────────────────────────────────────── */
+@keyframes storyBounce {
+  0%, 100% { transform: translateY(0);   opacity: 0.65; }
+  50%      { transform: translateY(8px); opacity: 1;    }
+}
+.story-bounce { animation: storyBounce 1.8s ease-in-out infinite; }
+
 /* ── Night moon float ──────────────────────────────────────────────────────── */
 @keyframes moonFloat {
   0%, 100% { transform: translateY(0)    rotate(-8deg); }

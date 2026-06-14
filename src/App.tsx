@@ -46,7 +46,7 @@ import { useUnreadCounts }  from './hooks/useUnreadCounts'
 import { processSyncQueue } from './services/syncService'
 import { retryFailed }      from './db/syncQueue'
 // Section components — all lazy-loaded so the initial bundle is just the shell
-const Dashboard        = lazy(() => import('./pages/DashboardPage'))
+const VoyageStoryPage  = lazy(() => import('./pages/VoyageStoryPage'))
 const Feed             = lazy(() => import('./pages/FeedPage'))
 const DayDetail        = lazy(() => import('./sections/DayDetail'))
 const VoyageProfile    = lazy(() => import('./features/voyages/VoyageProfile'))
@@ -541,19 +541,11 @@ export default function App() {
                 {/* ── Legacy section routes (preserved during migration) ── */}
                 <Route path="/" element={
                   selectedDay === null
-                    ? <Dashboard
+                    ? <VoyageStoryPage
                         voyage={data.voyage} itinerary={data.itinerary}
                         dailyLogs={data.dailyLogs} budget={data.budget}
-                        packing={data.packing} foodLogs={data.foodLogs}
-                        diningLog={data.diningLog} sectionStatus={sectionStatus}
-                        onChange={v => update('dailyLogs', v)} onNav={navClick}
-                        onSwitch={switchVoyage}
-                        showToast={showToast} onViewDay={setSelectedDay}
-                        scrollY={scrollY}
-                        onViewProfile={(author) => {
-                          setFeedFriend({ userId: author.userId ?? '', displayName: author.name, avatarUrl: author.avatarUrl, requestId: '', email: '' })
-                          navClick('friends')
-                        }}
+                        foodLogs={data.foodLogs} diningLog={data.diningLog}
+                        onNav={navClick} onViewDay={setSelectedDay}
                       />
                     : <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
                 } />
@@ -595,9 +587,11 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
-            {/* Footer scrolls with content — only on desktop (mobile uses BottomNav) */}
-            {!isMobile && <Footer />}
           </main>
+          {/* Footer is locked to the bottom of the viewport: it sits outside the
+              scrolling <main> (a sibling in this flex column), so it stays static
+              while content scrolls above it. Desktop only (mobile uses BottomNav). */}
+          {!isMobile && <Footer />}
           </div>
         </div>
       </div>

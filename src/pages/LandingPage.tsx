@@ -11,17 +11,20 @@
 
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { useWindowSize } from '../context'
+import { useWindowSize, WCtx } from '../context'
 import {
-  NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, TEAL, ROSE, PLUM, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
+  NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
 } from '../constants'
-import { BookOpen, MapPin, Image as ImageIcon, Users, Wallet, Compass, Star, UtensilsCrossed, Luggage } from 'lucide-react'
+import { BookOpen, MapPin, Image as ImageIcon, Users, Wallet, Compass } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Footer from '../components/Footer'
-import { MetricCard } from '../components/ui/metric-card'
-import BudgetBreakdown from '../features/voyages/dashboard/BudgetBreakdown'
-import ItineraryTimeline from '../features/voyages/dashboard/ItineraryTimeline'
-import type { ItineraryDay, DailyLog, Budget } from '../types'
+// Real journal-section components, rendered with sample data as live previews.
+import VoyageForm from '../features/voyages/VoyageForm'
+import ItineraryEditor from '../features/voyages/ItineraryEditor'
+import BudgetTracker from '../sections/BudgetTracker'
+import DiningLog from '../sections/DiningLog'
+import Notes from '../sections/Notes'
+import type { Voyage, ItineraryDay, Budget, DiningEntry, Note } from '../types'
 
 // Smooth wave that starts and ends at the same height, so two copies tile cleanly.
 const WAVE_PATH = 'M0,60 C240,110 480,10 720,60 C960,110 1200,10 1440,60 L1440,120 L0,120 Z'
@@ -75,28 +78,34 @@ const FEATURES: Feature[] = [
 ]
 
 // ── In-app preview ───────────────────────────────────────────────────────────
-// Rendered from the REAL app components (MetricCard, BudgetBreakdown,
-// ItineraryTimeline) seeded with fictional sample data — the genuine developed
-// look and feel, with no real or privately-owned user content.
+// Each preview renders a REAL journal-section component (VoyageForm,
+// ItineraryEditor, DiningLog, BudgetTracker, Notes) seeded with fictional sample
+// data — the genuine developed pages, with no real or privately-owned content.
+// Wrapped in WCtx so the components see the current width, and made static
+// (pointer-events:none, cropped with a fade) so they read as screen grabs.
+const PREVIEW_VOYAGE = {
+  shipName: 'Azure Horizon', cruiseLine: 'Celestia Cruises', cabin: '10412', deck: '10',
+  departureDate: '2026-05-04', returnDate: '2026-05-11', departurePort: 'Barcelona, Spain',
+  totalNights: '7', companion1: 'Sam', companion2: 'Priya', companion3: '', companion4: '',
+  emergencyContact: 'Jordan Lee', phone: '+44 7700 900123', guestServices: 'Dial 0',
+  musterStation: 'B', diningTime: 'Late · 8:30pm', breakfastTime: '7:30am', lunchTime: '12:30pm',
+  roomLocation: 'Midship', safeboxPin: '', coverPhotoUrl: '',
+  cruiseDescription: 'A week through the western Mediterranean.',
+} as unknown as Voyage
+
 const PREVIEW_ITINERARY: ItineraryDay[] = [
   { date: '2026-05-04', port: 'Barcelona', arrive: '',      depart: '18:00' },
   { date: '2026-05-05', port: 'At sea',    arrive: '',      depart: ''      },
   { date: '2026-05-06', port: 'Naples',    arrive: '08:00', depart: '19:00' },
   { date: '2026-05-07', port: 'Santorini', arrive: '07:00', depart: '21:00' },
   { date: '2026-05-08', port: 'Mykonos',   arrive: '09:00', depart: '18:00' },
-  { date: '2026-05-09', port: 'At sea',    arrive: '',      depart: ''      },
-  { date: '2026-05-10', port: 'Rome',      arrive: '06:00', depart: ''      },
 ]
 
-const PREVIEW_LOGS = [
-  { weather: ['Sunny'],  rating: 5, highlights: 'Sagrada Família at golden hour' },
-  { weather: ['Mild'],   rating: 4, highlights: 'Sea day — spa and sun deck' },
-  { weather: ['Hot'],    rating: 5, highlights: 'Pizza in the old town' },
-  { weather: ['Sunny'],  rating: 5, highlights: 'Caldera sunset' },
-  { weather: ['Sunny'],  rating: 4, highlights: 'Windmills and blue bays' },
-  { weather: ['Cloudy'], rating: 4, highlights: '' },
-  { weather: ['Mild'],   rating: 0, highlights: '' },
-] as unknown as DailyLog[]
+const PREVIEW_DINING = [
+  { id: 'd1', venue: 'La Terrazza',  date: '2026-05-06', meal: 'Dinner', ordered: 'Seafood linguine',          rating: 5, notes: 'Best pasta of the trip.' },
+  { id: 'd2', venue: 'Aurora Grill', date: '2026-05-07', meal: 'Dinner', ordered: 'Ribeye, peppercorn sauce',  rating: 4, notes: 'Cooked perfectly.' },
+  { id: 'd3', venue: 'Sakura',       date: '2026-05-08', meal: 'Lunch',  ordered: 'Omakase set',               rating: 5, notes: 'Worth the cover charge.' },
+] as unknown as DiningEntry[]
 
 const PREVIEW_BUDGET = {
   budget: '1000',
@@ -106,9 +115,13 @@ const PREVIEW_BUDGET = {
     { date: '2026-05-04', item: 'Cava & tapas',      category: 'Drinks',     amount: '90'  },
     { date: '2026-05-08', item: 'Ceramics',          category: 'Shopping',   amount: '120' },
     { date: '2026-05-06', item: 'Speciality dinner', category: 'Dining',     amount: '110' },
-    { date: '2026-05-05', item: 'Spa day',           category: 'Other',      amount: '95'  },
   ],
 } as Budget
+
+const PREVIEW_NOTES = [
+  { id: 'n1', title: 'Packing reminders', content: 'Bring the good camera and a power adapter. Formal night is day 3.' },
+  { id: 'n2', title: 'For next time',     content: 'Book Santorini excursions early — the catamaran sold out fast.' },
+] as unknown as Note[]
 
 function BrowserFrame({ title, children }: { title: string; children: ReactNode }) {
   const dot = (c: string): CSSProperties => ({ width: 10, height: 10, borderRadius: '50%', background: c, display: 'inline-block' })
@@ -123,37 +136,30 @@ function BrowserFrame({ title, children }: { title: string; children: ReactNode 
   )
 }
 
-function LivePreview({ mobile }: { mobile: boolean }) {
+// A real page rendered as a static, cropped "screen grab".
+function PagePreview({ title, w, children }: { title: string; w: number; children: ReactNode }) {
+  const crop = w < BP.mobile ? 360 : 460
+  return (
+    <BrowserFrame title={title}>
+      <div style={{ position: 'relative', maxHeight: crop, overflow: 'hidden' }}>
+        <div style={{ pointerEvents: 'none' }}>
+          <WCtx.Provider value={w}>{children}</WCtx.Provider>
+        </div>
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 60, background: `linear-gradient(transparent, ${CREAM})` }} />
+      </div>
+    </BrowserFrame>
+  )
+}
+
+function LivePreview({ mobile, w }: { mobile: boolean; w: number }) {
   const noop = () => {}
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 22 : 32 }}>
-
-      {/* Dashboard — real MetricCards */}
-      <BrowserFrame title="deck-days.com — Dashboard">
-        <div style={{ borderRadius: 12, padding: mobile ? '16px 18px' : '18px 22px', background: SEA, color: WHITE, marginBottom: 14 }}>
-          <div style={{ fontFamily: FONT_BODY, fontSize: 10, fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', color: GOLD }}>Sample voyage</div>
-          <div style={{ fontFamily: FONT_DISPLAY, fontSize: mobile ? 22 : 28, fontWeight: 400, marginTop: 4 }}>Mediterranean Odyssey</div>
-          <div style={{ fontFamily: FONT_BODY, fontSize: 12, color: 'rgba(255,255,255,0.8)', marginTop: 4 }}>7 nights · Barcelona → Rome</div>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: mobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 12 }}>
-          <MetricCard icon={<BookOpen size={20} strokeWidth={1.8} />}        value="5 / 7"  label="Days Logged" color={NAVY2} sparkline={[1, 1, 1, 1, 1, 1, 0]} />
-          <MetricCard icon={<MapPin size={20} strokeWidth={1.8} />}          value={5}      label="Ports"       color={TEAL} />
-          <MetricCard icon={<Wallet size={20} strokeWidth={1.8} />}          value="£745"   label="Spent" sub="of £1,000" color={TEAL} pct={75} />
-          <MetricCard icon={<Star size={20} strokeWidth={1.8} />}            value="4.6"    label="Avg Rating"  color={GOLD} sparkline={[5, 4, 5, 5, 4, 4, 0]} />
-          <MetricCard icon={<UtensilsCrossed size={20} strokeWidth={1.8} />} value={12}     label="Dining"      color={ROSE} />
-          <MetricCard icon={<Luggage size={20} strokeWidth={1.8} />}         value="22 / 24" label="Packed"     color={PLUM} pct={92} />
-        </div>
-      </BrowserFrame>
-
-      {/* Budget — real BudgetBreakdown */}
-      <BrowserFrame title="deck-days.com — Budget">
-        <BudgetBreakdown budget={PREVIEW_BUDGET} />
-      </BrowserFrame>
-
-      {/* Itinerary — real ItineraryTimeline */}
-      <BrowserFrame title="deck-days.com — Itinerary">
-        <ItineraryTimeline itinerary={PREVIEW_ITINERARY} dailyLogs={PREVIEW_LOGS} currentDay={4} onViewDay={noop} />
-      </BrowserFrame>
+      <PagePreview title="deck-days.com — Voyage Details" w={w}><VoyageForm     data={PREVIEW_VOYAGE}    onChange={noop} /></PagePreview>
+      <PagePreview title="deck-days.com — Itinerary"      w={w}><ItineraryEditor data={PREVIEW_ITINERARY} onChange={noop} /></PagePreview>
+      <PagePreview title="deck-days.com — Restaurant Log" w={w}><DiningLog       data={PREVIEW_DINING}    onChange={noop} /></PagePreview>
+      <PagePreview title="deck-days.com — Budget"         w={w}><BudgetTracker   data={PREVIEW_BUDGET}    onChange={noop} /></PagePreview>
+      <PagePreview title="deck-days.com — Notes"          w={w}><Notes           data={PREVIEW_NOTES}     onChange={noop} /></PagePreview>
     </div>
   )
 }
@@ -244,7 +250,7 @@ export default function LandingPage() {
           <h2 style={{ margin: '0 0 26px', fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
             The actual app, with everything in its place.
           </h2>
-          <LivePreview mobile={mobile} />
+          <LivePreview mobile={mobile} w={w} />
           <p style={{ textAlign: 'center', margin: '16px 0 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
             Real app screens, shown with sample data — no private content.
           </p>

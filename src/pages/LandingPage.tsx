@@ -26,7 +26,8 @@ import ItineraryEditor from '../features/voyages/ItineraryEditor'
 import BudgetTracker from '../sections/BudgetTracker'
 import DiningLog from '../sections/DiningLog'
 import Notes from '../sections/Notes'
-import type { Voyage, ItineraryDay, Budget, DiningEntry, Note } from '../types'
+import DailyLogSection from '../sections/DailyLog'
+import type { Voyage, ItineraryDay, Budget, DiningEntry, Note, DailyLog } from '../types'
 
 // Smooth wave that starts and ends at the same height, so two copies tile cleanly.
 const WAVE_PATH = 'M0,60 C240,110 480,10 720,60 C960,110 1200,10 1440,60 L1440,120 L0,120 Z'
@@ -125,6 +126,18 @@ const PREVIEW_NOTES = [
   { id: 'n2', title: 'For next time',     content: 'Book Santorini excursions early — the catamaran sold out fast.' },
 ] as unknown as Note[]
 
+const PREVIEW_DAILY = [
+  {
+    date: '2026-05-04', port: 'Barcelona', weather: ['Sunny'],
+    highlights: 'Sagrada Família at golden hour, then tapas through the Gothic Quarter.',
+    breakfast: 'Buffet on deck 14', lunch: 'Pan con tomate ashore', dinner: 'Seafood linguine at La Terrazza',
+    drink: 'Cava', activity: 'Old town walking tour', duration: '3h', excCost: '0', excNotes: 'Self-guided',
+    entertainment: 'Welcome-aboard show', bestMoment: 'Sailing past the harbour at sunset.', rating: 5, isPublic: true,
+  },
+  { date: '2026-05-05', port: 'At sea',  weather: ['Mild'], highlights: 'Spa morning and a long, slow lunch.', breakfast: '', lunch: '', dinner: '', drink: '', activity: '', duration: '', excCost: '', excNotes: '', entertainment: '', bestMoment: '', rating: 4, isPublic: false },
+  { date: '2026-05-06', port: 'Naples',  weather: ['Hot'],  highlights: 'Day trip to Pompeii.',               breakfast: '', lunch: '', dinner: '', drink: '', activity: '', duration: '', excCost: '', excNotes: '', entertainment: '', bestMoment: '', rating: 5, isPublic: true },
+] as unknown as DailyLog[]
+
 function BrowserFrame({ title, children }: { title: string; children: ReactNode }) {
   const dot = (c: string): CSSProperties => ({ width: 10, height: 10, borderRadius: '50%', background: c, display: 'inline-block' })
   return (
@@ -154,26 +167,22 @@ function PagePreview({ title, ctxW, mobile, children }: { title: string; ctxW: n
   )
 }
 
-// Horizontal carousel of the five real pages. The track is panned by scroll via
-// GSAP (see the effect in LandingPage); native overflow-x is the reduced-motion
-// fallback. data-carousel / data-carousel-track are the GSAP hooks.
-function LiveCarousel({ mobile, w }: { mobile: boolean; w: number }) {
-  const noop = () => {}
+// Horizontal carousel of real pages. The track is panned by scroll via GSAP
+// (see the effect in LandingPage); native overflow-x is the reduced-motion / touch
+// fallback. data-carousel / data-carousel-track are the GSAP hooks. Kept to a few
+// cards each so the pan stays fluid and every screen is seen before the section
+// scrolls past — longer tracks outrun the available scroll.
+function LiveCarousel({ mobile, w, items }: { mobile: boolean; w: number; items: { title: string; node: ReactNode }[] }) {
   const cardW: CSSProperties['width'] = mobile ? '84vw' : 520
   const ctxW = mobile ? Math.max(260, Math.round(w * 0.84) - 40) : 480
-  const card = (title: string, node: ReactNode) => (
-    <div style={{ flexShrink: 0, width: cardW }}>
-      <PagePreview title={title} ctxW={ctxW} mobile={mobile}>{node}</PagePreview>
-    </div>
-  )
   return (
     <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
       <div data-carousel-track style={{ display: 'flex', gap: mobile ? 16 : 28, padding: mobile ? '8px 16px 26px' : '12px 6vw 34px', willChange: 'transform' }}>
-        {card('deck-days.com — Voyage Details', <VoyageForm     data={PREVIEW_VOYAGE}    onChange={noop} />)}
-        {card('deck-days.com — Itinerary',      <ItineraryEditor data={PREVIEW_ITINERARY} onChange={noop} />)}
-        {card('deck-days.com — Restaurant Log', <DiningLog       data={PREVIEW_DINING}    onChange={noop} />)}
-        {card('deck-days.com — Budget',         <BudgetTracker   data={PREVIEW_BUDGET}    onChange={noop} />)}
-        {card('deck-days.com — Notes',          <Notes           data={PREVIEW_NOTES}     onChange={noop} />)}
+        {items.map(it => (
+          <div key={it.title} style={{ flexShrink: 0, width: cardW }}>
+            <PagePreview title={it.title} ctxW={ctxW} mobile={mobile}>{it.node}</PagePreview>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -194,11 +203,11 @@ export default function LandingPage() {
     const scroller = scrollRef.current
     if (!scroller || prefersReducedMotion()) return
 
-    // Desktop only drives the carousel pan via scroll; on touch it stays a
-    // native horizontal swipe strip (scroll-jacking a wide track feels wrong on
-    // a phone, where the user is already scrolling vertically).
-    const carousel = scroller.querySelector('[data-carousel]') as HTMLElement | null
-    if (carousel && !mobile) carousel.style.overflowX = 'hidden'
+    // Desktop drives each carousel's pan via scroll; on touch they stay native
+    // horizontal swipe strips (scroll-jacking a wide track feels wrong on a phone,
+    // where the user is already scrolling vertically).
+    const carousels = Array.from(scroller.querySelectorAll<HTMLElement>('[data-carousel]'))
+    if (!mobile) carousels.forEach(c => { c.style.overflowX = 'hidden' })
 
     const ctx = gsap.context(() => {
       // Hero — gentle staggered intro on load.
@@ -212,16 +221,24 @@ export default function LandingPage() {
           .to(el, { autoAlpha: 0, y: -50, ease: 'power2.in', duration: 1 })
       })
 
-      // Preview carousel — pan the track horizontally with scroll (desktop).
-      const track = carousel?.querySelector('[data-carousel-track]') as HTMLElement | null
-      if (carousel && track && !mobile) {
-        const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
-        if (distance() > 0) {
-          gsap.fromTo(track, { x: 0 }, {
-            x: () => -distance(), ease: 'none',
-            scrollTrigger: { trigger: carousel, scroller, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true },
-          })
-        }
+      // Each preview carousel pans with scroll, alternating direction: the top
+      // one moves right→left on scroll-down, the next left→right, and so on. A
+      // lead-in/out keeps the motion visible even when only a few cards overflow.
+      if (!mobile) {
+        carousels.forEach((carousel, i) => {
+          const track = carousel.querySelector('[data-carousel-track]') as HTMLElement | null
+          if (!track) return
+          const lead = () => carousel.offsetWidth * 0.3
+          const span = () => Math.max(0, track.scrollWidth - carousel.offsetWidth) + lead()
+          const reverse = i % 2 === 1
+          gsap.fromTo(track,
+            { x: () => (reverse ? -span() : lead()) },
+            {
+              x: () => (reverse ? lead() : -span()), ease: 'none',
+              scrollTrigger: { trigger: carousel, scroller, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true },
+            },
+          )
+        })
       }
 
       requestAnimationFrame(() => ScrollTrigger.refresh())
@@ -229,7 +246,7 @@ export default function LandingPage() {
       return () => window.clearTimeout(t)
     }, scroller)
 
-    return () => { if (carousel) carousel.style.overflowX = ''; ctx.revert() }
+    return () => { carousels.forEach(c => { c.style.overflowX = '' }); ctx.revert() }
   }, [mobile])
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
@@ -245,6 +262,19 @@ export default function LandingPage() {
     padding: mobile ? '12px 24px' : '14px 30px', fontSize: 15, fontWeight: 600,
     fontFamily: FONT_BODY, cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
   }
+
+  // Preview cards split into two shorter carousels for fluid scroll panning.
+  const noop = () => {}
+  const cardsA = [
+    { title: 'deck-days.com — Voyage Details', node: <VoyageForm     data={PREVIEW_VOYAGE}    onChange={noop} /> },
+    { title: 'deck-days.com — Itinerary',      node: <ItineraryEditor data={PREVIEW_ITINERARY} onChange={noop} /> },
+    { title: 'deck-days.com — Restaurant Log', node: <DiningLog       data={PREVIEW_DINING}    onChange={noop} /> },
+  ]
+  const cardsB = [
+    { title: 'deck-days.com — Daily Log', node: <DailyLogSection data={PREVIEW_DAILY} onChange={noop} itinerary={PREVIEW_ITINERARY} voyage={PREVIEW_VOYAGE} initialDay={0} /> },
+    { title: 'deck-days.com — Budget',    node: <BudgetTracker   data={PREVIEW_BUDGET} onChange={noop} /> },
+    { title: 'deck-days.com — Notes',     node: <Notes           data={PREVIEW_NOTES}  onChange={noop} /> },
+  ]
 
   return (
     // The global CSS locks html/body/#root to the viewport with overflow:hidden
@@ -307,8 +337,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── In-app preview — real components, sample data ──────── */}
-      <section style={{ background: CREAM, padding: mobile ? '36px 0 56px' : '56px 0 90px', overflow: 'hidden' }}>
+      {/* ── In-app preview, part 1 — plan the voyage ───────────── */}
+      <section style={{ background: CREAM, padding: mobile ? '36px 0 48px' : '56px 0 72px', overflow: 'hidden' }}>
         <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 8, textAlign: mobile ? 'left' : 'center' }}>A look inside</div>
           <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
@@ -316,11 +346,8 @@ export default function LandingPage() {
           </h2>
         </div>
         <div style={{ marginTop: mobile ? 26 : 38 }}>
-          <LiveCarousel mobile={mobile} w={w} />
+          <LiveCarousel mobile={mobile} w={w} items={cardsA} />
         </div>
-        <p style={{ ...col, textAlign: 'center', margin: '18px auto 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
-          Real app screens, shown with sample data — no private content. Scroll to pan.
-        </p>
       </section>
 
       {/* ── Features ───────────────────────────────────────────── */}
@@ -340,6 +367,22 @@ export default function LandingPage() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ── In-app preview, part 2 — write & remember ──────────── */}
+      <section style={{ background: CREAM, padding: mobile ? '8px 0 64px' : '16px 0 100px', overflow: 'hidden' }}>
+        <div style={col} data-reveal>
+          <div style={{ ...kicker, color: GOLD, marginBottom: 8, textAlign: mobile ? 'left' : 'center' }}>Write & remember</div>
+          <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
+            Log each day, track the budget, keep your notes.
+          </h2>
+        </div>
+        <div style={{ marginTop: mobile ? 26 : 38 }}>
+          <LiveCarousel mobile={mobile} w={w} items={cardsB} />
+        </div>
+        <p style={{ ...col, textAlign: 'center', margin: '18px auto 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
+          Real app screens, shown with sample data — no private content.
+        </p>
       </section>
 
       {/* ── Closing CTA ────────────────────────────────────────── */}

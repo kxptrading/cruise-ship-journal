@@ -9,8 +9,10 @@
 // .wave-* rules in index.css), symbolising the sea.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { useLayoutEffect, useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { gsap, ScrollTrigger, prefersReducedMotion } from '../lib/gsap'
 import { useWindowSize, WCtx } from '../context'
 import {
   NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
@@ -136,14 +138,15 @@ function BrowserFrame({ title, children }: { title: string; children: ReactNode 
   )
 }
 
-// A real page rendered as a static, cropped "screen grab".
-function PagePreview({ title, w, children }: { title: string; w: number; children: ReactNode }) {
-  const crop = w < BP.mobile ? 360 : 460
+// A real page rendered as a static, cropped "screen grab". `ctxW` is the width
+// the embedded component lays out for (fed via WCtx); `mobile` controls the crop.
+function PagePreview({ title, ctxW, mobile, children }: { title: string; ctxW: number; mobile: boolean; children: ReactNode }) {
+  const crop = mobile ? 340 : 420
   return (
     <BrowserFrame title={title}>
       <div style={{ position: 'relative', maxHeight: crop, overflow: 'hidden' }}>
         <div style={{ pointerEvents: 'none' }}>
-          <WCtx.Provider value={w}>{children}</WCtx.Provider>
+          <WCtx.Provider value={ctxW}>{children}</WCtx.Provider>
         </div>
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 60, background: `linear-gradient(transparent, ${CREAM})` }} />
       </div>
@@ -151,15 +154,27 @@ function PagePreview({ title, w, children }: { title: string; w: number; childre
   )
 }
 
-function LivePreview({ mobile, w }: { mobile: boolean; w: number }) {
+// Horizontal carousel of the five real pages. The track is panned by scroll via
+// GSAP (see the effect in LandingPage); native overflow-x is the reduced-motion
+// fallback. data-carousel / data-carousel-track are the GSAP hooks.
+function LiveCarousel({ mobile, w }: { mobile: boolean; w: number }) {
   const noop = () => {}
+  const cardW: CSSProperties['width'] = mobile ? '84vw' : 520
+  const ctxW = mobile ? Math.max(260, Math.round(w * 0.84) - 40) : 480
+  const card = (title: string, node: ReactNode) => (
+    <div style={{ flexShrink: 0, width: cardW }}>
+      <PagePreview title={title} ctxW={ctxW} mobile={mobile}>{node}</PagePreview>
+    </div>
+  )
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: mobile ? 22 : 32 }}>
-      <PagePreview title="deck-days.com — Voyage Details" w={w}><VoyageForm     data={PREVIEW_VOYAGE}    onChange={noop} /></PagePreview>
-      <PagePreview title="deck-days.com — Itinerary"      w={w}><ItineraryEditor data={PREVIEW_ITINERARY} onChange={noop} /></PagePreview>
-      <PagePreview title="deck-days.com — Restaurant Log" w={w}><DiningLog       data={PREVIEW_DINING}    onChange={noop} /></PagePreview>
-      <PagePreview title="deck-days.com — Budget"         w={w}><BudgetTracker   data={PREVIEW_BUDGET}    onChange={noop} /></PagePreview>
-      <PagePreview title="deck-days.com — Notes"          w={w}><Notes           data={PREVIEW_NOTES}     onChange={noop} /></PagePreview>
+    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 16 : 28, padding: mobile ? '8px 16px 26px' : '12px 6vw 34px', willChange: 'transform' }}>
+        {card('deck-days.com — Voyage Details', <VoyageForm     data={PREVIEW_VOYAGE}    onChange={noop} />)}
+        {card('deck-days.com — Itinerary',      <ItineraryEditor data={PREVIEW_ITINERARY} onChange={noop} />)}
+        {card('deck-days.com — Restaurant Log', <DiningLog       data={PREVIEW_DINING}    onChange={noop} />)}
+        {card('deck-days.com — Budget',         <BudgetTracker   data={PREVIEW_BUDGET}    onChange={noop} />)}
+        {card('deck-days.com — Notes',          <Notes           data={PREVIEW_NOTES}     onChange={noop} />)}
+      </div>
     </div>
   )
 }
@@ -167,6 +182,55 @@ function LivePreview({ mobile, w }: { mobile: boolean; w: number }) {
 export default function LandingPage() {
   const w = useWindowSize()
   const mobile = w < BP.mobile
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // ── Scroll choreography ─────────────────────────────────────────────────────
+  // This page scrolls inside its own container (scrollRef), not <main>, so every
+  // ScrollTrigger is bound to that scroller. Sections fade/slide in as they enter
+  // and back out as they leave (scrubbed), and the preview carousel is panned
+  // right→left on scroll-down (and back on scroll-up). All no-ops under reduced
+  // motion, where the carousel falls back to a native horizontal swipe strip.
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current
+    if (!scroller || prefersReducedMotion()) return
+
+    // Desktop only drives the carousel pan via scroll; on touch it stays a
+    // native horizontal swipe strip (scroll-jacking a wide track feels wrong on
+    // a phone, where the user is already scrolling vertically).
+    const carousel = scroller.querySelector('[data-carousel]') as HTMLElement | null
+    if (carousel && !mobile) carousel.style.overflowX = 'hidden'
+
+    const ctx = gsap.context(() => {
+      // Hero — gentle staggered intro on load.
+      gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
+
+      // Sections — fade/slide in from below, hold, then out to above (scrubbed).
+      gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach(el => {
+        gsap.timeline({ scrollTrigger: { trigger: el, scroller, start: 'top 92%', end: 'bottom 8%', scrub: 1 } })
+          .fromTo(el, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 1 })
+          .to(el, { duration: 1.6 })
+          .to(el, { autoAlpha: 0, y: -50, ease: 'power2.in', duration: 1 })
+      })
+
+      // Preview carousel — pan the track horizontally with scroll (desktop).
+      const track = carousel?.querySelector('[data-carousel-track]') as HTMLElement | null
+      if (carousel && track && !mobile) {
+        const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
+        if (distance() > 0) {
+          gsap.fromTo(track, { x: 0 }, {
+            x: () => -distance(), ease: 'none',
+            scrollTrigger: { trigger: carousel, scroller, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true },
+          })
+        }
+      }
+
+      requestAnimationFrame(() => ScrollTrigger.refresh())
+      const t = window.setTimeout(() => ScrollTrigger.refresh(), 600)
+      return () => window.clearTimeout(t)
+    }, scroller)
+
+    return () => { if (carousel) carousel.style.overflowX = ''; ctx.revert() }
+  }, [mobile])
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
   const kicker: CSSProperties = { fontFamily: FONT_BODY, fontSize: 12, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' }
@@ -190,8 +254,8 @@ export default function LandingPage() {
     <div style={{ background: CREAM, height: '100%', display: 'flex', flexDirection: 'column' }}>
 
       {/* Scrolling content area. position:relative anchors the absolute header so
-          it scrolls with the content. */}
-      <div style={{ position: 'relative', flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
+          it scrolls with the content; ref feeds the GSAP ScrollTriggers. */}
+      <div ref={scrollRef} style={{ position: 'relative', flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
       {/* ── Header ─────────────────────────────────────────────── */}
       <header style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}>
@@ -213,7 +277,7 @@ export default function LandingPage() {
 
       {/* ── Hero ───────────────────────────────────────────────── */}
       <section style={{ position: 'relative', background: SEA, color: WHITE, overflow: 'hidden', minHeight: mobile ? 600 : 700, display: 'flex', alignItems: 'center', paddingTop: mobile ? 92 : 110, paddingBottom: 200 }}>
-        <div style={{ ...col, position: 'relative', zIndex: 2 }}>
+        <div data-hero style={{ ...col, position: 'relative', zIndex: 2 }}>
           <div style={{ ...kicker, color: GOLD, marginBottom: 18 }}>The voyage journal</div>
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 'clamp(34px, 10vw, 44px)' : 'clamp(46px, 6vw, 76px)', lineHeight: 1.06, letterSpacing: '-0.01em', maxWidth: 780 }}>
             Every day at sea, beautifully remembered.
@@ -233,7 +297,7 @@ export default function LandingPage() {
 
       {/* ── Statement ──────────────────────────────────────────── */}
       <section style={{ background: CREAM, padding: mobile ? '64px 0 8px' : '110px 0 24px' }}>
-        <div style={col}>
+        <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>What is Deck Days</div>
           <p style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 22 : 'clamp(24px, 3.4vw, 36px)', lineHeight: 1.3, maxWidth: 820 }}>
             A cruise is hundreds of small moments — a port at dawn, a dish you'd order again,
@@ -244,22 +308,24 @@ export default function LandingPage() {
       </section>
 
       {/* ── In-app preview — real components, sample data ──────── */}
-      <section style={{ background: CREAM, padding: mobile ? '36px 0 16px' : '56px 0 28px' }}>
-        <div style={col}>
+      <section style={{ background: CREAM, padding: mobile ? '36px 0 56px' : '56px 0 90px', overflow: 'hidden' }}>
+        <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 8, textAlign: mobile ? 'left' : 'center' }}>A look inside</div>
-          <h2 style={{ margin: '0 0 26px', fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
+          <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
             The actual app, with everything in its place.
           </h2>
-          <LivePreview mobile={mobile} w={w} />
-          <p style={{ textAlign: 'center', margin: '16px 0 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
-            Real app screens, shown with sample data — no private content.
-          </p>
         </div>
+        <div style={{ marginTop: mobile ? 26 : 38 }}>
+          <LiveCarousel mobile={mobile} w={w} />
+        </div>
+        <p style={{ ...col, textAlign: 'center', margin: '18px auto 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
+          Real app screens, shown with sample data — no private content. Scroll to pan.
+        </p>
       </section>
 
       {/* ── Features ───────────────────────────────────────────── */}
       <section style={{ background: CREAM, padding: mobile ? '32px 0 64px' : '56px 0 110px' }}>
-        <div style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24 }}>
+        <div data-reveal style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24 }}>
           {FEATURES.map(({ Icon, title, body }) => (
             <div key={title} style={{ background: WHITE, border: '1px solid #E0DBD0', borderRadius: 16, padding: mobile ? '24px 22px' : '30px 28px' }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(201,162,39,0.12)', color: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
@@ -278,7 +344,7 @@ export default function LandingPage() {
 
       {/* ── Closing CTA ────────────────────────────────────────── */}
       <section style={{ position: 'relative', background: SEA, color: WHITE, overflow: 'hidden', padding: mobile ? '80px 0 200px' : '120px 0 220px' }}>
-        <div style={{ ...col, position: 'relative', zIndex: 2, textAlign: 'center' }}>
+        <div data-reveal style={{ ...col, position: 'relative', zIndex: 2, textAlign: 'center' }}>
           <h2 style={{ margin: '0 auto', maxWidth: 680, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 'clamp(28px, 8vw, 36px)' : 'clamp(34px, 4.6vw, 52px)', lineHeight: 1.12 }}>
             Your next voyage deserves to be remembered.
           </h2>

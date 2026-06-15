@@ -560,6 +560,11 @@ export default function App() {
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/search"  element={<SearchPage />} />
                 <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
+                {/* Public-only auth routes: once signed in, send these to home so
+                    a user who logged in at /login (or /signup) lands in the app
+                    instead of NotFound. */}
+                <Route path="/login"  element={<Navigate to="/" replace />} />
+                <Route path="/signup" element={<Navigate to="/" replace />} />
                 {/* Legacy section routes — redirect to /voyages so old bookmarks don't 404 */}
                 {['voyage','itinerary','daily','food','dining','entertainment','foodfav','budget','shopping','highlights','packing','notes'].map(path => (
                   <Route key={path} path={`/${path}`} element={<Navigate to="/voyages" replace />} />

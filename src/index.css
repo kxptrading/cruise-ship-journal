@@ -207,6 +207,16 @@ body::before {
 /* ── Story memories gallery — hide native scrollbar (WebKit) ─────────────────── */
 .story-gallery::-webkit-scrollbar { display: none; }
 
+/* ── Landing page ocean waves ────────────────────────────────────────────────
+   Each wave layer is a 200%-wide track holding two identical wave SVGs; drifting
+   the track left by 50% moves it exactly one tile width, so the motion loops
+   seamlessly. Layers run at different speeds for depth (parallax of the sea). */
+@keyframes oceanWaveDrift { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes oceanWaveBob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+.wave-layer { position: absolute; left: 0; right: 0; bottom: 0; will-change: transform; }
+.wave-track { width: 200%; display: flex; will-change: transform; animation: oceanWaveDrift linear infinite; }
+.wave-track > svg { width: 50%; height: 100%; display: block; flex-shrink: 0; }
+
 /* ── Story scroll cue ──────────────────────────────────────────────────────── */
 @keyframes storyBounce {
   0%, 100% { transform: translateY(0);   opacity: 0.65; }

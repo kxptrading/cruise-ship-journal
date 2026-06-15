@@ -60,7 +60,9 @@ const SettingsPage     = lazy(() => import('./pages/SettingsPage'))
 const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
 const NotFound         = lazy(() => import('./sections/NotFound'))
 const LoginPage        = lazy(() => import('./pages/LoginPage'))
+const LandingPage      = lazy(() => import('./pages/LandingPage'))
 const SignupPage       = lazy(() => import('./pages/SignupPage'))
+const ComingSoonPage   = lazy(() => import('./pages/ComingSoonPage'))
 const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
 const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
@@ -398,7 +400,12 @@ export default function App() {
   if (!session) return (
     <Suspense fallback={null}>
       <Routes>
-        <Route path="/signup"          element={<SignupPage />} />
+        {/* Public marketing landing page for logged-out visitors */}
+        <Route path="/"                element={<LandingPage />} />
+        <Route path="/login"           element={<LoginPage />} />
+        {/* Sign-ups disabled pre-launch — dummy placeholder. To re-enable,
+            swap this back to <SignupPage />. */}
+        <Route path="/signup"          element={<ComingSoonPage />} />
         <Route path="/reset"           element={<ResetPasswordPage />} />
         <Route path="/update-password" element={<UpdatePasswordPage />} />
         {/* Legal / help pages — accessible without authentication */}

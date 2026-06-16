@@ -276,21 +276,13 @@ export default function LandingPage() {
       // Hero — gentle staggered intro on load.
       gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
 
-      // Sections — on desktop, fade/slide in from below, hold (most of the range),
-      // then gently back out; on mobile, a lighter one-time fade-in (no scrubbed
-      // fade-out, which feels fussy on a small screen).
+      // Sections — fade/slide in from below as they enter and stay visible
+      // (no scrubbed fade-out, which made content disappear on the way down).
       gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach(el => {
-        if (mobile) {
-          gsap.fromTo(el, { autoAlpha: 0, y: 26 }, {
-            autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
-            scrollTrigger: { trigger: el, scroller, start: 'top 88%', toggleActions: 'play none none reverse' },
-          })
-        } else {
-          gsap.timeline({ scrollTrigger: { trigger: el, scroller, start: 'top 90%', end: 'bottom 10%', scrub: 1 } })
-            .fromTo(el, { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 1 })
-            .to(el, { duration: 3 }) // long hold — visible for most of its time on screen
-            .to(el, { autoAlpha: 0, y: -28, ease: 'power2.in', duration: 1 })
-        }
+        gsap.fromTo(el, { autoAlpha: 0, y: 32 }, {
+          autoAlpha: 1, y: 0, duration: 0.8, ease: 'power2.out',
+          scrollTrigger: { trigger: el, scroller, start: 'top 85%', toggleActions: 'play none none reverse' },
+        })
       })
 
       // Each preview gallery is pinned to the screen and its track is scrolled
@@ -485,18 +477,18 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── Features ───────────────────────────────────────────── */}
+      {/* ── Features — cards in the feed's blue, on the cream page ─── */}
       <section style={{ background: CREAM, padding: mobile ? '32px 0 64px' : '56px 0 110px' }}>
         <div data-reveal style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24 }}>
           {FEATURES.map(({ Icon, title, body }) => (
-            <div key={title} style={{ background: WHITE, border: '1px solid #E0DBD0', borderRadius: 16, padding: mobile ? '24px 22px' : '30px 28px' }}>
-              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(201,162,39,0.12)', color: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
+            <div key={title} style={{ background: SEA, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: mobile ? '24px 22px' : '30px 28px' }}>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(201,162,39,0.18)', color: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
                 <Icon size={22} strokeWidth={1.8} />
               </div>
-              <h3 style={{ margin: '0 0 8px', fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: 19, lineHeight: 1.2 }}>
+              <h3 style={{ margin: '0 0 8px', fontFamily: FONT_DISPLAY, fontWeight: 400, color: WHITE, fontSize: 19, lineHeight: 1.2 }}>
                 {title}
               </h3>
-              <p style={{ margin: 0, fontFamily: FONT_BODY, color: TEXT, fontSize: 14.5, lineHeight: 1.6 }}>
+              <p style={{ margin: 0, fontFamily: FONT_BODY, color: 'rgba(255,255,255,0.82)', fontSize: 14.5, lineHeight: 1.6 }}>
                 {body}
               </p>
             </div>

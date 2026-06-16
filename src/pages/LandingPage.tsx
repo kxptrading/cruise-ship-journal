@@ -27,6 +27,8 @@ import BudgetTracker from '../sections/BudgetTracker'
 import DiningLog from '../sections/DiningLog'
 import Notes from '../sections/Notes'
 import DailyLogSection from '../sections/DailyLog'
+import FeedItem from '../features/feed/FeedItem'
+import type { FeedRow } from '../features/feed/hooks'
 import type { Voyage, ItineraryDay, Budget, DiningEntry, Note, DailyLog } from '../types'
 
 // Smooth wave that starts and ends at the same height, so two copies tile cleanly.
@@ -125,6 +127,27 @@ const PREVIEW_NOTES = [
   { id: 'n1', title: 'Packing reminders', content: 'Bring the good camera and a power adapter. Formal night is day 3.' },
   { id: 'n2', title: 'For next time',     content: 'Book Santorini excursions early — the catamaran sold out fast.' },
 ] as unknown as Note[]
+
+// Sample feed posts (text-only — no media, so nothing to fetch and no private
+// content). created_at is relative to now so the timestamps read naturally.
+const PREVIEW_FEED = [
+  {
+    id: 'p1', user_id: 'u1', voyage_id: 'v1',
+    author_display_name: 'Priya Sharma', author_avatar_url: null,
+    ship_name: 'Azure Horizon', cruise_line: 'Celestia Cruises', audience: 'public',
+    title: '', body: 'Sailed past the Santorini caldera at sunset and the whole deck went quiet. Easily the best evening of the trip. 🌅',
+    location: 'Santorini, Greece', post_date: '2026-05-07',
+    created_at: new Date(Date.now() - 2 * 3600000).toISOString(), media_paths: [], metadata: {},
+  },
+  {
+    id: 'p2', user_id: 'u2', voyage_id: 'v1',
+    author_display_name: 'The Bennetts', author_avatar_url: null,
+    ship_name: 'Azure Horizon', cruise_line: 'Celestia Cruises', audience: 'family',
+    title: '', body: 'Pompeii today with the kids — they actually loved it. Gelato in Naples afterwards. Shared with family only. 🍦',
+    location: 'Naples, Italy', post_date: '2026-05-06',
+    created_at: new Date(Date.now() - 26 * 3600000).toISOString(), media_paths: [], metadata: {},
+  },
+] as unknown as FeedRow[]
 
 const PREVIEW_DAILY = [
   {
@@ -351,6 +374,37 @@ export default function LandingPage() {
         </div>
         <div style={{ marginTop: mobile ? 26 : 38 }}>
           <LiveCarousel mobile={mobile} w={w} items={cardsA} />
+        </div>
+      </section>
+
+      {/* ── Social Feed — the standout feature ─────────────────── */}
+      <section style={{ background: SEA, color: WHITE, padding: mobile ? '64px 0' : '110px 0', overflow: 'hidden' }}>
+        <div data-reveal style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 32 : 56, alignItems: 'center' }}>
+          {/* Copy */}
+          <div>
+            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>What sets it apart</div>
+            <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 26 : 'clamp(30px, 3.6vw, 46px)', lineHeight: 1.15 }}>
+              Private by default. Social only when you choose.
+            </h2>
+            <p style={{ margin: '18px 0 0', maxWidth: 460, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: 'rgba(255,255,255,0.86)' }}>
+              Your journal is yours alone — until you decide to share. Post a single moment to family,
+              or to all your contacts, and they can react and comment. Most cruise apps stop at planning;
+              Deck Days turns the voyage into something you share, on your terms.
+            </p>
+            <ul style={{ margin: '22px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {['Per-post audience: private, family or public', 'Reactions and comments from your contacts', 'Nothing is shared unless you opt in'].map(t => (
+                <li key={t} style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: FONT_BODY, fontSize: mobile ? 14 : 15, color: 'rgba(255,255,255,0.92)' }}>
+                  <Users size={16} strokeWidth={1.8} color={GOLD} style={{ flexShrink: 0 }} />
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Feed preview — real FeedItem cards, sample posts, static */}
+          <div style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 480, width: '100%', marginInline: mobile ? 'auto' : 0 }}>
+            {PREVIEW_FEED.map(item => <FeedItem key={item.id} item={item} />)}
+          </div>
         </div>
       </section>
 

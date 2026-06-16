@@ -174,6 +174,14 @@ const PREVIEW_FEED_FRIENDS = [
     location: 'Santorini, Greece', post_date: '2026-06-13',
     created_at: new Date(Date.now() - 2 * 86400000).toISOString(), media_paths: [], metadata: {},
   },
+  {
+    id: 'f4', user_id: 'u6', voyage_id: 'v5',
+    author_display_name: 'Grandad Joe', author_avatar_url: null,
+    ship_name: 'Northern Light', cruise_line: 'Celestia Cruises', audience: 'family',
+    title: '', body: 'Formal night tonight — even managed the bow tie. Your nan looked a picture. 🥂',
+    location: 'At sea', post_date: '2026-06-12',
+    created_at: new Date(Date.now() - 3 * 86400000).toISOString(), media_paths: [], metadata: {},
+  },
 ] as unknown as FeedRow[]
 
 const PREVIEW_DAILY = [
@@ -249,6 +257,21 @@ export default function LandingPage() {
     const carousels = Array.from(scroller.querySelectorAll<HTMLElement>('[data-carousel]'))
     if (!mobile) carousels.forEach(c => { c.style.overflowX = 'hidden' })
 
+    // "What sets it apart" feed: on desktop the viewport becomes a fixed window so
+    // its post track can be scrolled (the section is pinned in the context below).
+    const feedSection  = scroller.querySelector('[data-feed-section]')  as HTMLElement | null
+    const feedViewport = scroller.querySelector('[data-feed-viewport]') as HTMLElement | null
+    const feedTrack    = feedViewport?.querySelector('[data-feed-track]') as HTMLElement | null
+    let feedPins = false
+    if (!mobile && feedSection && feedViewport && feedTrack) {
+      feedViewport.style.height = '460px'
+      feedViewport.style.overflow = 'hidden'
+      feedViewport.style.borderRadius = '20px'
+      // Only pin if the whole section fits the viewport (else it would clip).
+      feedPins = feedSection.offsetHeight <= scroller.clientHeight
+      if (!feedPins) { feedViewport.style.height = ''; feedViewport.style.overflow = ''; feedViewport.style.borderRadius = '' }
+    }
+
     const ctx = gsap.context(() => {
       // Hero — gentle staggered intro on load.
       gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
@@ -295,12 +318,32 @@ export default function LandingPage() {
         })
       }
 
+      // Pin "What sets it apart" when centred and scroll its feed through the
+      // posts — pausing the section in focus while the feed flows past.
+      if (feedPins && feedSection && feedViewport && feedTrack) {
+        const dist = () => Math.max(0, feedTrack.scrollHeight - feedViewport.clientHeight)
+        if (dist() > 0) {
+          gsap.fromTo(feedTrack, { y: 0 }, {
+            y: () => -dist(), ease: 'none',
+            scrollTrigger: {
+              trigger: feedSection, scroller,
+              start: 'center center', end: () => '+=' + dist(),
+              pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
+            },
+          })
+        }
+      }
+
       requestAnimationFrame(() => ScrollTrigger.refresh())
       const t = window.setTimeout(() => ScrollTrigger.refresh(), 600)
       return () => window.clearTimeout(t)
     }, scroller)
 
-    return () => { carousels.forEach(c => { c.style.overflowX = '' }); ctx.revert() }
+    return () => {
+      carousels.forEach(c => { c.style.overflowX = '' })
+      if (feedViewport) { feedViewport.style.height = ''; feedViewport.style.overflow = ''; feedViewport.style.borderRadius = '' }
+      ctx.revert()
+    }
   }, [mobile])
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
@@ -405,8 +448,10 @@ export default function LandingPage() {
       </section>
 
       {/* ── Social Feed — the standout feature ─────────────────── */}
-      <section style={{ background: SEA, color: WHITE, padding: mobile ? '64px 0' : '110px 0', overflow: 'hidden' }}>
-        <div data-reveal style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 32 : 56, alignItems: 'center' }}>
+      {/* data-feed-section: on desktop this pins while the feed scrolls through
+          its posts (see the effect), demonstrating the feed in motion. */}
+      <section data-feed-section style={{ background: SEA, color: WHITE, padding: mobile ? '64px 0' : '84px 0', overflow: 'hidden' }}>
+        <div style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 32 : 56, alignItems: 'center' }}>
           {/* Copy */}
           <div>
             <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>What sets it apart</div>
@@ -429,9 +474,13 @@ export default function LandingPage() {
             </ul>
           </div>
 
-          {/* Feed preview — real FeedItem cards (family & friends), static */}
-          <div style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 480, width: '100%', marginInline: mobile ? 'auto' : 0 }}>
-            {[...PREVIEW_FEED, ...PREVIEW_FEED_FRIENDS].slice(0, 3).map(item => <FeedItem key={item.id} item={item} />)}
+          {/* Feed preview — real FeedItem cards (family & friends), static.
+              On desktop the viewport is fixed-height and the track is scrubbed
+              vertically while the section is pinned (set up in the effect). */}
+          <div data-feed-viewport style={{ position: 'relative', maxWidth: 480, width: '100%', marginInline: mobile ? 'auto' : 0 }}>
+            <div data-feed-track style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 14, willChange: 'transform' }}>
+              {[...PREVIEW_FEED, ...PREVIEW_FEED_FRIENDS].slice(0, mobile ? 3 : 6).map(item => <FeedItem key={item.id} item={item} />)}
+            </div>
           </div>
         </div>
       </section>

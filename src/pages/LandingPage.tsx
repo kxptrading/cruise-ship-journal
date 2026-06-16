@@ -292,6 +292,11 @@ export default function LandingPage() {
       if (!feedPins) { feedViewport.style.height = ''; feedViewport.style.overflow = ''; feedViewport.style.borderRadius = '' }
     }
 
+    // Features cards: on desktop pin them in focus for a scroll span so they
+    // dwell long enough to read. Only pin if the section fits the viewport.
+    const featuresSection = scroller.querySelector('[data-features-section]') as HTMLElement | null
+    const featuresPin = !mobile && !!featuresSection && featuresSection.offsetHeight <= scroller.clientHeight
+
     const ctx = gsap.context(() => {
       // Hero — gentle staggered intro on load.
       gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
@@ -360,6 +365,23 @@ export default function LandingPage() {
             },
           })
         }
+      }
+
+      // Pin the Features cards when centred and, while pinned, fade them in one
+      // by one (scrubbed to scroll), then hold them all in focus before
+      // releasing — so each card has a moment to be read. The span is ~1.4× a
+      // screen (vs the plain ~0.9× pin) to fit the staggered reveal plus dwell.
+      if (featuresPin && featuresSection) {
+        const cards = gsap.utils.toArray<HTMLElement>('[data-feature-card]')
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: featuresSection, scroller,
+            start: 'center center', end: () => '+=' + Math.round(scroller.clientHeight * 1.4),
+            pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
+          },
+        })
+        tl.from(cards, { autoAlpha: 0, y: 28, ease: 'power2.out', duration: 1, stagger: 1 })
+          .to({}, { duration: 1.6 }) // hold all cards visible before unpinning
       }
 
       // Refresh after first paint and again once async content (feed cards,
@@ -467,7 +489,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── In-app preview, part 1 — plan the voyage ───────────── */}
-      <section style={{ background: CREAM, padding: mobile ? '36px 0 48px' : '56px 0 72px', overflow: 'hidden' }}>
+      <section style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0', overflow: 'hidden' }}>
         <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 8, textAlign: mobile ? 'left' : 'center' }}>A look inside</div>
           <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
@@ -475,14 +497,17 @@ export default function LandingPage() {
           </h2>
         </div>
         <div style={{ marginTop: mobile ? 26 : 38 }}>
-          <LiveCarousel mobile={mobile} w={w} items={cardsA} />
+          <LiveCarousel mobile={mobile} w={w} items={[...cardsA, ...cardsB]} />
         </div>
+        <p style={{ ...col, textAlign: 'center', margin: '18px auto 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
+          Real app screens, shown with sample data — no private content.
+        </p>
       </section>
 
       {/* ── Social Feed — the standout feature ─────────────────── */}
       {/* data-feed-section: on desktop this pins while the feed scrolls through
           its posts (see the effect), demonstrating the feed in motion. */}
-      <section data-feed-section style={{ background: SEA, color: WHITE, padding: mobile ? '64px 0' : '84px 0', overflow: 'hidden' }}>
+      <section data-feed-section style={{ background: SEA, color: WHITE, padding: mobile ? '48px 0' : '72px 0', overflow: 'hidden' }}>
         <div style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : '1fr 1fr', gap: mobile ? 32 : 56, alignItems: 'center' }}>
           {/* Copy */}
           <div>
@@ -518,10 +543,14 @@ export default function LandingPage() {
       </section>
 
       {/* ── Features — cards in the feed's blue, on the cream page ─── */}
-      <section style={{ background: CREAM, padding: mobile ? '32px 0 64px' : '56px 0 110px' }}>
-        <div data-reveal style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24 }}>
+      {/* data-features-section: on desktop this pins when centred and holds for a
+          scroll span so the cards dwell in focus, giving time to read them. */}
+      <section data-features-section style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0' }}>
+        {/* On desktop the cards fade in one-by-one while the section is pinned
+            (see the effect); on mobile they simply reveal together. */}
+        <div {...(mobile ? { 'data-reveal': '' } : {})} style={{ ...col, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24 }}>
           {FEATURES.map(({ Icon, title, body }) => (
-            <div key={title} style={{ background: SEA, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: mobile ? '24px 22px' : '30px 28px' }}>
+            <div key={title} data-feature-card style={{ background: SEA, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: mobile ? '24px 22px' : '30px 28px' }}>
               <div style={{ width: 44, height: 44, borderRadius: 12, background: 'rgba(201,162,39,0.18)', color: GOLD, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 18 }}>
                 <Icon size={22} strokeWidth={1.8} />
               </div>
@@ -536,24 +565,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── In-app preview, part 2 — write & remember ──────────── */}
-      <section style={{ background: CREAM, padding: mobile ? '8px 0 40px' : '16px 0 48px', overflow: 'hidden' }}>
-        <div style={col} data-reveal>
-          <div style={{ ...kicker, color: GOLD, marginBottom: 8, textAlign: mobile ? 'left' : 'center' }}>Write & remember</div>
-          <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
-            Log each day, track the budget, keep your notes.
-          </h2>
-        </div>
-        <div style={{ marginTop: mobile ? 26 : 38 }}>
-          <LiveCarousel mobile={mobile} w={w} items={cardsB} />
-        </div>
-        <p style={{ ...col, textAlign: 'center', margin: '18px auto 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
-          Real app screens, shown with sample data — no private content.
-        </p>
-      </section>
-
       {/* ── Pricing ────────────────────────────────────────────── */}
-      <section style={{ background: CREAM, padding: mobile ? '48px 0 64px' : '64px 0 100px' }}>
+      <section style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0' }}>
         <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Pricing</div>
           <h2 style={{ margin: '0 auto', maxWidth: 720, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 26 : 'clamp(28px, 3.6vw, 44px)', lineHeight: 1.15, textAlign: 'center' }}>

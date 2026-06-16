@@ -313,17 +313,18 @@ export default function LandingPage() {
       // right→left on scroll-down, next left→right. On screens too short to pin
       // cleanly, fall back to a non-pinned pan.
       if (!mobile) {
-        carousels.forEach((carousel, i) => {
+        carousels.forEach(carousel => {
           const track = carousel.querySelector('[data-carousel-track]') as HTMLElement | null
           if (!track) return
           const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
           if (distance() <= 0) return
-          const reverse = i % 2 === 1
+          // Both galleries behave identically: pin when centred and pan
+          // right→left through every screenshot, then release.
           if (carousel.offsetHeight <= scroller.clientHeight - 20) {
             gsap.fromTo(track,
-              { x: () => (reverse ? -distance() : 0) },
+              { x: 0 },
               {
-                x: () => (reverse ? 0 : -distance()), ease: 'none',
+                x: () => -distance(), ease: 'none',
                 scrollTrigger: {
                   trigger: carousel, scroller,
                   start: 'center center', end: () => '+=' + distance(),
@@ -335,9 +336,9 @@ export default function LandingPage() {
             const lead = () => carousel.offsetWidth * 0.1
             const span = () => distance() + lead()
             gsap.fromTo(track,
-              { x: () => (reverse ? -span() : lead()) },
+              { x: () => lead() },
               {
-                x: () => (reverse ? lead() : -span()), ease: 'none',
+                x: () => -span(), ease: 'none',
                 scrollTrigger: { trigger: carousel, scroller, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true },
               },
             )

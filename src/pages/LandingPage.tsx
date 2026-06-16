@@ -138,32 +138,20 @@ const PREVIEW_DAILY = [
   { date: '2026-05-06', port: 'Naples',  weather: ['Hot'],  highlights: 'Day trip to Pompeii.',               breakfast: '', lunch: '', dinner: '', drink: '', activity: '', duration: '', excCost: '', excNotes: '', entertainment: '', bestMoment: '', rating: 5, isPublic: true },
 ] as unknown as DailyLog[]
 
-function BrowserFrame({ title, children }: { title: string; children: ReactNode }) {
-  const dot = (c: string): CSSProperties => ({ width: 10, height: 10, borderRadius: '50%', background: c, display: 'inline-block' })
+// A real page rendered as a static, cropped "screen grab" — a clean rounded card
+// (no browser chrome). `ctxW` is the width the embedded component lays out for
+// (fed via WCtx); `mobile` controls the crop.
+function PagePreview({ ctxW, mobile, children }: { ctxW: number; mobile: boolean; children: ReactNode }) {
+  const crop = mobile ? 360 : 470
   return (
-    <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E0DBD0', background: WHITE, boxShadow: '0 24px 64px rgba(20,41,63,0.20)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#F1EEE7', borderBottom: '1px solid #E0DBD0' }}>
-        <span style={dot('#E0655B')} /><span style={dot('#E6B23E')} /><span style={dot('#5BB463')} />
-        <div style={{ flex: 1, textAlign: 'center', fontFamily: FONT_BODY, fontSize: 11, color: MUTED }}>{title}</div>
-      </div>
-      <div style={{ background: CREAM, padding: 18 }}>{children}</div>
-    </div>
-  )
-}
-
-// A real page rendered as a static, cropped "screen grab". `ctxW` is the width
-// the embedded component lays out for (fed via WCtx); `mobile` controls the crop.
-function PagePreview({ title, ctxW, mobile, children }: { title: string; ctxW: number; mobile: boolean; children: ReactNode }) {
-  const crop = mobile ? 340 : 420
-  return (
-    <BrowserFrame title={title}>
-      <div style={{ position: 'relative', maxHeight: crop, overflow: 'hidden' }}>
+    <div style={{ borderRadius: 16, overflow: 'hidden', border: '1px solid #E0DBD0', background: CREAM }}>
+      <div style={{ position: 'relative', maxHeight: crop, overflow: 'hidden', padding: 18 }}>
         <div style={{ pointerEvents: 'none' }}>
           <WCtx.Provider value={ctxW}>{children}</WCtx.Provider>
         </div>
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 60, background: `linear-gradient(transparent, ${CREAM})` }} />
       </div>
-    </BrowserFrame>
+    </div>
   )
 }
 
@@ -173,14 +161,16 @@ function PagePreview({ title, ctxW, mobile, children }: { title: string; ctxW: n
 // cards each so the pan stays fluid and every screen is seen before the section
 // scrolls past — longer tracks outrun the available scroll.
 function LiveCarousel({ mobile, w, items }: { mobile: boolean; w: number; items: { title: string; node: ReactNode }[] }) {
-  const cardW: CSSProperties['width'] = mobile ? '84vw' : 520
-  const ctxW = mobile ? Math.max(260, Math.round(w * 0.84) - 40) : 480
+  const cardW: CSSProperties['width'] = mobile ? '86vw' : 560
+  const ctxW = mobile ? Math.max(260, Math.round(w * 0.86) - 40) : 520
   return (
-    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 16 : 28, padding: mobile ? '8px 16px 26px' : '12px 6vw 34px', willChange: 'transform' }}>
+    // scroll-snap improves the native swipe on touch (no effect under the desktop
+    // GSAP pan, where overflow is clipped and the track is transform-driven).
+    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', scrollSnapType: mobile ? 'x mandatory' : undefined, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 14 : 28, padding: mobile ? '8px 16px 26px' : '12px 6vw 34px', willChange: 'transform' }}>
         {items.map(it => (
-          <div key={it.title} style={{ flexShrink: 0, width: cardW }}>
-            <PagePreview title={it.title} ctxW={ctxW} mobile={mobile}>{it.node}</PagePreview>
+          <div key={it.title} style={{ flexShrink: 0, width: cardW, scrollSnapAlign: mobile ? 'center' : undefined }}>
+            <PagePreview ctxW={ctxW} mobile={mobile}>{it.node}</PagePreview>
           </div>
         ))}
       </div>
@@ -213,29 +203,43 @@ export default function LandingPage() {
       // Hero — gentle staggered intro on load.
       gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
 
-      // Sections — fade/slide in from below, hold, then out to above (scrubbed).
+      // Sections — on desktop, fade/slide in from below, hold (most of the range),
+      // then gently back out; on mobile, a lighter one-time fade-in (no scrubbed
+      // fade-out, which feels fussy on a small screen).
       gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach(el => {
-        gsap.timeline({ scrollTrigger: { trigger: el, scroller, start: 'top 92%', end: 'bottom 8%', scrub: 1 } })
-          .fromTo(el, { autoAlpha: 0, y: 50 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 1 })
-          .to(el, { duration: 1.6 })
-          .to(el, { autoAlpha: 0, y: -50, ease: 'power2.in', duration: 1 })
+        if (mobile) {
+          gsap.fromTo(el, { autoAlpha: 0, y: 26 }, {
+            autoAlpha: 1, y: 0, duration: 0.7, ease: 'power2.out',
+            scrollTrigger: { trigger: el, scroller, start: 'top 88%', toggleActions: 'play none none reverse' },
+          })
+        } else {
+          gsap.timeline({ scrollTrigger: { trigger: el, scroller, start: 'top 90%', end: 'bottom 10%', scrub: 1 } })
+            .fromTo(el, { autoAlpha: 0, y: 34 }, { autoAlpha: 1, y: 0, ease: 'power2.out', duration: 1 })
+            .to(el, { duration: 3 }) // long hold — visible for most of its time on screen
+            .to(el, { autoAlpha: 0, y: -28, ease: 'power2.in', duration: 1 })
+        }
       })
 
-      // Each preview carousel pans with scroll, alternating direction: the top
-      // one moves right→left on scroll-down, the next left→right, and so on. A
-      // lead-in/out keeps the motion visible even when only a few cards overflow.
+      // Each preview gallery is pinned to the screen and its track is scrolled
+      // sideways through every screen as you scroll vertically, then released
+      // (the Better Off "Lookback" pattern). Direction alternates by index: the
+      // top gallery moves right→left on scroll-down, the next left→right.
       if (!mobile) {
         carousels.forEach((carousel, i) => {
           const track = carousel.querySelector('[data-carousel-track]') as HTMLElement | null
           if (!track) return
-          const lead = () => carousel.offsetWidth * 0.3
-          const span = () => Math.max(0, track.scrollWidth - carousel.offsetWidth) + lead()
+          const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
+          if (distance() <= 0) return
           const reverse = i % 2 === 1
           gsap.fromTo(track,
-            { x: () => (reverse ? -span() : lead()) },
+            { x: () => (reverse ? -distance() : 0) },
             {
-              x: () => (reverse ? lead() : -span()), ease: 'none',
-              scrollTrigger: { trigger: carousel, scroller, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true },
+              x: () => (reverse ? 0 : -distance()), ease: 'none',
+              scrollTrigger: {
+                trigger: carousel, scroller,
+                start: 'center center', end: () => '+=' + distance(),
+                pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
+              },
             },
           )
         })

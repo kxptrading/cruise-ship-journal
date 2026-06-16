@@ -37,21 +37,20 @@ export default function Footer() {
       style={{
         borderTop: `1px solid ${BORDER}`,
         padding: '14px 28px',
-        display: 'flex',
+        display: 'grid',
+        gridTemplateColumns: '1fr auto 1fr',
         alignItems: 'center',
-        justifyContent: 'space-between',
         gap: 16,
-        flexWrap: 'wrap',
         fontFamily: FONT_BODY,
       }}
     >
       {/* Copyright */}
-      <span style={{ fontSize: 11, color: MUTED, whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 11, color: MUTED, whiteSpace: 'nowrap', justifySelf: 'start' }}>
         © {YEAR} <span style={{ color: NAVY2, fontWeight: 600 }}>Deck Days</span> · KXP Technologies
       </span>
 
-      {/* Nav links */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+      {/* Nav links — centered */}
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap', justifySelf: 'center' }}>
         {LINKS.map((link, i) => (
           <span key={link.to} style={{ display: 'flex', alignItems: 'center' }}>
             {i > 0 && <span style={{ color: BORDER, margin: '0 6px', userSelect: 'none' }}>·</span>}
@@ -68,7 +67,7 @@ export default function Footer() {
       </nav>
 
       {/* Social icons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifySelf: 'end' }}>
         {SOCIAL.map(({ label, href, path }) => (
           <a
             key={label}

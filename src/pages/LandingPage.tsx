@@ -149,6 +149,33 @@ const PREVIEW_FEED = [
   },
 ] as unknown as FeedRow[]
 
+const PREVIEW_FEED_FRIENDS = [
+  {
+    id: 'f1', user_id: 'u3', voyage_id: 'v2',
+    author_display_name: 'Marcus Bennett', author_avatar_url: null,
+    ship_name: 'Northern Light', cruise_line: 'Celestia Cruises', audience: 'public',
+    title: '', body: 'First sea day done — read two books and did absolutely nothing else. Bliss.',
+    location: 'At sea', post_date: '2026-06-15',
+    created_at: new Date(Date.now() - 5 * 3600000).toISOString(), media_paths: [], metadata: {},
+  },
+  {
+    id: 'f2', user_id: 'u4', voyage_id: 'v3',
+    author_display_name: 'Aunt Carol', author_avatar_url: null,
+    ship_name: 'Azure Horizon', cruise_line: 'Celestia Cruises', audience: 'family',
+    title: '', body: 'The grandkids were on the water slides for three hours straight. Photos to follow when we dock!',
+    location: 'Mykonos, Greece', post_date: '2026-06-14',
+    created_at: new Date(Date.now() - 28 * 3600000).toISOString(), media_paths: [], metadata: {},
+  },
+  {
+    id: 'f3', user_id: 'u5', voyage_id: 'v4',
+    author_display_name: 'Dani & Tom', author_avatar_url: null,
+    ship_name: 'Azure Horizon', cruise_line: 'Celestia Cruises', audience: 'public',
+    title: '', body: 'Snorkelling off the coast was unreal — water like glass. Already planning next year. 🐠',
+    location: 'Santorini, Greece', post_date: '2026-06-13',
+    created_at: new Date(Date.now() - 2 * 86400000).toISOString(), media_paths: [], metadata: {},
+  },
+] as unknown as FeedRow[]
+
 const PREVIEW_DAILY = [
   {
     date: '2026-05-04', port: 'Barcelona', weather: ['Sunny'],
@@ -387,12 +414,13 @@ export default function LandingPage() {
               Private by default. Social only when you choose.
             </h2>
             <p style={{ margin: '18px 0 0', maxWidth: 460, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: 'rgba(255,255,255,0.86)' }}>
-              Your journal is yours alone — until you decide to share. Post a single moment to family,
-              or to all your contacts, and they can react and comment. Most cruise apps stop at planning;
+              Your journal is yours alone — until you decide to share. Post a single moment to family
+              or to all your contacts, then <strong style={{ color: WHITE, fontWeight: 600 }}>see what your family and friends are posting</strong> in
+              one feed, where everyone can react and comment. Most cruise apps stop at planning;
               Deck Days turns the voyage into something you share, on your terms.
             </p>
             <ul style={{ margin: '22px 0 0', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10 }}>
-              {['Per-post audience: private, family or public', 'Reactions and comments from your contacts', 'Nothing is shared unless you opt in'].map(t => (
+              {['Per-post audience: private, family or public', 'See what your family and friends are posting', 'React and comment — nothing shared unless you opt in'].map(t => (
                 <li key={t} style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: FONT_BODY, fontSize: mobile ? 14 : 15, color: 'rgba(255,255,255,0.92)' }}>
                   <Users size={16} strokeWidth={1.8} color={GOLD} style={{ flexShrink: 0 }} />
                   {t}
@@ -401,9 +429,9 @@ export default function LandingPage() {
             </ul>
           </div>
 
-          {/* Feed preview — real FeedItem cards, sample posts, static */}
+          {/* Feed preview — real FeedItem cards (family & friends), static */}
           <div style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 14, maxWidth: 480, width: '100%', marginInline: mobile ? 'auto' : 0 }}>
-            {PREVIEW_FEED.map(item => <FeedItem key={item.id} item={item} />)}
+            {[...PREVIEW_FEED, ...PREVIEW_FEED_FRIENDS].slice(0, 3).map(item => <FeedItem key={item.id} item={item} />)}
           </div>
         </div>
       </section>

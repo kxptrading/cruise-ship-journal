@@ -17,7 +17,7 @@ import { useWindowSize, WCtx } from '../context'
 import {
   NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
 } from '../constants'
-import { BookOpen, MapPin, Image as ImageIcon, Users, Wallet, Compass } from 'lucide-react'
+import { BookOpen, MapPin, Image as ImageIcon, Users, Wallet, Compass, Check } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import Footer from '../components/Footer'
 // Real journal-section components, rendered with sample data as live previews.
@@ -80,6 +80,26 @@ const FEATURES: Feature[] = [
   { Icon: Users,     title: 'A private feed',             body: 'Choose what to share — keep the journal to yourself, or post select moments to family and friends.' },
   { Icon: Wallet,    title: 'Budget tracking',            body: 'Log excursions, drinks and souvenirs, and see exactly where the voyage went.' },
   { Icon: Compass,   title: 'Your whole cruise, gathered', body: 'Dining, entertainment, packing and more — one calm home for the entire voyage.' },
+]
+
+// Pricing tiers. Prices are placeholders — swap for the real figures.
+interface Plan { name: string; price: string; period: string; blurb: string; features: string[]; cta: string; highlight: boolean }
+const PLANS: Plan[] = [
+  {
+    name: 'Free', price: '£0', period: 'forever', blurb: 'Everything you need to keep one voyage.',
+    features: ['1 voyage', 'Full journal & itinerary', 'Photo gallery', 'Budget & packing'],
+    cta: 'Start free', highlight: false,
+  },
+  {
+    name: 'Plus', price: '£4.99', period: 'per month', blurb: 'The full journal, plus the social feed.',
+    features: ['Unlimited voyages', 'Everything in Free', 'Social feed — share & follow', 'Reactions & comments', 'Export to PDF'],
+    cta: 'Get Plus', highlight: true,
+  },
+  {
+    name: 'Family', price: '£8.99', period: 'per month', blurb: 'Share the voyage with the whole crew.',
+    features: ['Everything in Plus', 'Share with up to 6 people', 'Shared family feed', 'Priority support'],
+    cta: 'Get Family', highlight: false,
+  },
 ]
 
 // ── In-app preview ───────────────────────────────────────────────────────────
@@ -224,8 +244,8 @@ function LiveCarousel({ mobile, w, items }: { mobile: boolean; w: number; items:
   return (
     // scroll-snap improves the native swipe on touch (no effect under the desktop
     // GSAP pan, where overflow is clipped and the track is transform-driven).
-    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', scrollSnapType: mobile ? 'x mandatory' : undefined, msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 14 : 28, padding: mobile ? '8px 16px 26px' : '12px 6vw 34px', willChange: 'transform' }}>
+    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', scrollSnapType: mobile ? 'x mandatory' : undefined, msOverflowStyle: 'none', scrollbarWidth: 'none', maxWidth: mobile ? undefined : 1080, margin: mobile ? undefined : '0 auto' }}>
+      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 14 : 28, padding: mobile ? '8px 16px 26px' : '12px 24px 34px', willChange: 'transform' }}>
         {items.map(it => (
           <div key={it.title} style={{ flexShrink: 0, width: cardW, scrollSnapAlign: mobile ? 'center' : undefined }}>
             <PagePreview ctxW={ctxW} mobile={mobile}>{it.node}</PagePreview>
@@ -276,34 +296,34 @@ export default function LandingPage() {
       // Hero — gentle staggered intro on load.
       gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
 
-      // Sections — fade/slide in from below as they enter and stay visible
-      // (no scrubbed fade-out, which made content disappear on the way down).
+      // Sections — fade/slide in from below as they enter, then stay put for
+      // good. `once` (no reverse) means nothing is ever hidden again, which the
+      // pinned sections above could otherwise trigger.
       gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach(el => {
         gsap.fromTo(el, { autoAlpha: 0, y: 32 }, {
           autoAlpha: 1, y: 0, duration: 0.8, ease: 'power2.out',
-          scrollTrigger: { trigger: el, scroller, start: 'top 85%', toggleActions: 'play none none reverse' },
+          scrollTrigger: { trigger: el, scroller, start: 'top 88%', once: true },
         })
       })
 
-      // Each preview gallery is pinned to the screen and its track is scrolled
-      // sideways through every screen as you scroll vertically, then released
-      // (the Better Off "Lookback" pattern). Direction alternates by index: the
-      // top gallery moves right→left on scroll-down, the next left→right.
+      // Each gallery pans horizontally as its section scrolls through the
+      // viewport (no pin — that's unreliable in a custom scroller). The gallery
+      // width is constrained so the track always overflows, guaranteeing a clear
+      // slide. Direction alternates: top right→left on scroll-down, next left→right.
       if (!mobile) {
         carousels.forEach((carousel, i) => {
           const track = carousel.querySelector('[data-carousel-track]') as HTMLElement | null
           if (!track) return
-          const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
-          if (distance() <= 0) return
+          const lead = () => carousel.offsetWidth * 0.1
+          const span = () => Math.max(0, track.scrollWidth - carousel.offsetWidth) + lead()
           const reverse = i % 2 === 1
           gsap.fromTo(track,
-            { x: () => (reverse ? -distance() : 0) },
+            { x: () => (reverse ? -span() : lead()) },
             {
-              x: () => (reverse ? 0 : -distance()), ease: 'none',
+              x: () => (reverse ? lead() : -span()), ease: 'none',
               scrollTrigger: {
                 trigger: carousel, scroller,
-                start: 'center center', end: () => '+=' + distance(),
-                pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
+                start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true,
               },
             },
           )
@@ -326,9 +346,13 @@ export default function LandingPage() {
         }
       }
 
+      // Refresh after first paint and again once async content (feed cards,
+      // embedded previews) and pin-spacers settle, so reveal/pin positions are
+      // computed against the final layout.
       requestAnimationFrame(() => ScrollTrigger.refresh())
-      const t = window.setTimeout(() => ScrollTrigger.refresh(), 600)
-      return () => window.clearTimeout(t)
+      const t1 = window.setTimeout(() => ScrollTrigger.refresh(), 600)
+      const t2 = window.setTimeout(() => ScrollTrigger.refresh(), 1500)
+      return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
     }, scroller)
 
     return () => {
@@ -497,7 +521,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── In-app preview, part 2 — write & remember ──────────── */}
-      <section style={{ background: CREAM, padding: mobile ? '8px 0 64px' : '16px 0 100px', overflow: 'hidden' }}>
+      <section style={{ background: CREAM, padding: mobile ? '8px 0 40px' : '16px 0 48px', overflow: 'hidden' }}>
         <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 8, textAlign: mobile ? 'left' : 'center' }}>Write & remember</div>
           <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 24 : 'clamp(26px, 3.2vw, 38px)', lineHeight: 1.2, textAlign: mobile ? 'left' : 'center' }}>
@@ -510,6 +534,65 @@ export default function LandingPage() {
         <p style={{ ...col, textAlign: 'center', margin: '18px auto 0', fontFamily: FONT_BODY, fontSize: 12, color: MUTED }}>
           Real app screens, shown with sample data — no private content.
         </p>
+      </section>
+
+      {/* ── Pricing ────────────────────────────────────────────── */}
+      <section style={{ background: CREAM, padding: mobile ? '48px 0 64px' : '64px 0 100px' }}>
+        <div style={col} data-reveal>
+          <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Pricing</div>
+          <h2 style={{ margin: '0 auto', maxWidth: 720, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 26 : 'clamp(28px, 3.6vw, 44px)', lineHeight: 1.15, textAlign: 'center' }}>
+            Simple pricing for every voyager.
+          </h2>
+          <p style={{ margin: '16px auto 0', maxWidth: 520, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: TEXT, textAlign: 'center' }}>
+            Start free, upgrade when you want more. Cancel anytime.
+          </p>
+        </div>
+
+        <div data-reveal style={{ ...col, marginTop: mobile ? 32 : 48, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24, alignItems: 'stretch' }}>
+          {PLANS.map(plan => {
+            const dark = plan.highlight
+            return (
+              <div key={plan.name} style={{
+                position: 'relative', display: 'flex', flexDirection: 'column',
+                background: dark ? SEA : WHITE, color: dark ? WHITE : NAVY2,
+                border: dark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E0DBD0',
+                borderRadius: 18, padding: mobile ? '26px 24px' : '32px 28px',
+              }}>
+                {plan.highlight && (
+                  <span style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: GOLD, color: NAVY2, borderRadius: 980, padding: '4px 14px', fontFamily: FONT_BODY, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                    Most popular
+                  </span>
+                )}
+                <div style={{ ...kicker, fontSize: 12, color: GOLD }}>{plan.name}</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 12 }}>
+                  <span style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 38 : 44, lineHeight: 1 }}>{plan.price}</span>
+                  <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: dark ? 'rgba(255,255,255,0.7)' : MUTED }}>/ {plan.period}</span>
+                </div>
+                <p style={{ margin: '12px 0 0', fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.55, color: dark ? 'rgba(255,255,255,0.82)' : TEXT }}>
+                  {plan.blurb}
+                </p>
+                <ul style={{ margin: '20px 0 24px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
+                  {plan.features.map(f => (
+                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.4, color: dark ? 'rgba(255,255,255,0.92)' : TEXT }}>
+                      <Check size={16} strokeWidth={2.4} color={GOLD} style={{ flexShrink: 0, marginTop: 1 }} />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  to="/signup"
+                  style={{
+                    textAlign: 'center', borderRadius: 980, padding: '12px 24px', fontSize: 15, fontWeight: 700,
+                    fontFamily: FONT_BODY, textDecoration: 'none',
+                    background: dark ? GOLD : NAVY2, color: dark ? NAVY2 : WHITE,
+                  }}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            )
+          })}
+        </div>
       </section>
 
       {/* ── Closing CTA ────────────────────────────────────────── */}

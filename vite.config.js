@@ -23,11 +23,15 @@ export default defineConfig({
           {
             // Supabase REST + Auth API: try network first so data is always fresh
             // when online. Falls back to cached response when offline (read-only).
+            // Timeout is deliberately short: cruise Wi-Fi is often "connected" but
+            // has no real backhaul (multi-second latency), so a long wait just
+            // leaves users staring at a spinner. If the network can't answer in 4s
+            // they're effectively offline — serve the cache and let sync catch up.
             urlPattern: /^https:\/\/[a-z0-9]+\.supabase\.co\/.*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'supabase-api',
-              networkTimeoutSeconds: 10,
+              networkTimeoutSeconds: 4,
               cacheableResponse: { statuses: [0, 200] },
               expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 },
             },

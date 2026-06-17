@@ -8,12 +8,12 @@ export type SyncState =
   | 'online'    // connected, nothing queued
   | 'offline'   // no connection
   | 'syncing'   // connected, actively flushing queue
-  | 'failed'    // some items exhausted retries
+  | 'failed'    // some items exhausted retries (dead-lettered)
 
 export interface SyncStatus {
   state:         SyncState
-  pending:       number   // items in queue (including failed)
-  failed:        number   // items with attempts > 0
+  pending:       number   // live items still queued to sync (excludes dead-lettered)
+  failed:        number   // dead-lettered items — gave up after MAX_SYNC_ATTEMPTS
   lastSyncedAt?: string
   refresh:       () => void
 }
@@ -27,9 +27,12 @@ export function useSyncStatus(): SyncStatus {
   const [lastSyncedAt, setLastSyncedAt] = useState<string | undefined>()
 
   const refresh = useCallback(async () => {
+    // pending = live items still in line; failed = dead-lettered items that gave
+    // up and need explicit attention. Transient failures (attempts > 0 but not
+    // yet dead) stay in `pending` because they'll retry automatically.
     const [p, f] = await Promise.all([
-      localDb.syncQueue.count(),
-      localDb.syncQueue.where('attempts').above(0).count(),
+      localDb.syncQueue.filter(i => !i.dead).count(),
+      localDb.syncQueue.filter(i => i.dead === true).count(),
     ])
     setPending(p)
     setFailed(f)

@@ -62,6 +62,13 @@ export interface SyncQueueItem {
   attempts:        number
   lastAttemptAt?:  string
   error?:          string
+  // Dead-letter flag: set once attempts exhaust MAX_SYNC_ATTEMPTS. Dead items are
+  // skipped by the sync loop and excluded from the pending count so a permanently
+  // rejecting payload (e.g. malformed data Supabase keeps refusing) can't block the
+  // queue forever. They remain stored — flagged, not lost — until the user retries
+  // them or the section is edited again (which revives the item via enqueue).
+  dead?:           boolean
+  deadLetteredAt?: string
 }
 
 // Per-photo cache entry for offline photo viewing and deferred upload.

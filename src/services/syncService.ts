@@ -16,7 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { supabase } from '../lib/supabase'
-import { getQueue, markSyncing, markSynced, markFailed, entityKey } from '../db/syncQueue'
+import { getActiveQueue, markSyncing, markSynced, markFailed, entityKey } from '../db/syncQueue'
 import { isOnline } from '../hooks/useOnlineStatus'
 import {
   toDbVoyage,
@@ -44,7 +44,9 @@ export async function processSyncQueue(): Promise<void> {
   running = true
 
   try {
-    const queue = await getQueue()
+    // Only live items — dead-lettered ones are excluded so a permanently
+    // failing payload can't be re-walked on every pass.
+    const queue = await getActiveQueue()
     if (queue.length === 0) return
 
     // Process items sequentially to avoid Supabase rate limits.
@@ -57,8 +59,8 @@ export async function processSyncQueue(): Promise<void> {
 }
 
 async function processItem(item: SyncQueueItem): Promise<void> {
-  // Skip items that have failed too many times (manual retry required).
-  if (item.attempts >= 5) return
+  // Belt-and-suspenders: getActiveQueue already filters these out.
+  if (item.dead) return
 
   await markSyncing(item.id)
 

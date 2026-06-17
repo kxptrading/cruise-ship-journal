@@ -6,7 +6,15 @@ A journal-first web app for documenting cruise voyages. Users keep private day-b
 organised by voyage. Individual posts can be opt-in shared to a social Feed visible to contacts.
 The journal is the primary surface; the Feed is secondary.
 
-Deployed at: **cruise-ship-journal.vercel.app**
+**Canonical production URL:** `https://cruise-ship-journal.vercel.app` (Vercel).
+
+> ⚠️ **Domain note:** `deck-days.com` is the intended custom domain but is **not yet
+> pointed at Vercel** — it does not resolve to production today. The UI/marketing copy
+> already uses the "Deck Days" / `deck-days.com` brand, but anything that must hit the
+> live app (CORS allow-lists, OAuth/Supabase redirect URLs, social-share/OG meta tags,
+> canonical links, sitemaps) MUST use the `.vercel.app` URL above until the custom
+> domain is live. When `deck-days.com` is connected, update this line and audit those
+> call sites together.
 
 ---
 

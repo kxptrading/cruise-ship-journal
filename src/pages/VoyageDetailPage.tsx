@@ -39,13 +39,15 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, GOLD, TEAL, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY, sty, BP } from '@/constants'
-import { useW } from '@/context'
+import { useW, useUserId } from '@/context'
 import { useVoyage } from '@/features/voyages/hooks'
+import { supabase } from '@/lib/supabase'
+import { exportJournalPdf } from '@/lib/voyageExport'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FADE_UP } from '@/lib/motion'
 import FE from '@/components/FE'
-import { ArrowLeft, Pencil, Plus } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, Download } from 'lucide-react'
 import type { VoyageData } from '@/types'
 
 import PostList       from '@/features/posts/PostList'
@@ -117,6 +119,26 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   const { voyageId }       = useParams<{ voyageId: string }>()
   const [searchParams]     = useSearchParams()
   const w                  = useW()
+  const userId             = useUserId()
+
+  // ── Per-voyage keepsake export ─────────────────────────────────────────────
+  // Reuses the shared journal renderer, scoped to this voyage. Display name is
+  // fetched on demand so the export carries the user's name on the cover.
+  const [exporting, setExporting] = useState(false)
+  const handleExport = async () => {
+    if (!userId || !voyageId || exporting) return
+    setExporting(true)
+    try {
+      const { data: profile } = await supabase
+        .from('profiles').select('display_name').eq('user_id', userId).maybeSingle()
+      await exportJournalPdf(userId, profile?.display_name || 'My', { voyageId })
+    } catch (e) {
+      console.error('Voyage export failed:', e)
+      showToast?.('Export failed. Please try again.')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   // ── Tab state — URL-driven ─────────────────────────────────────────────────
   // Initialise from ?tab= so sidebar journal links open the right section.
@@ -181,6 +203,14 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
               style={{ ...sty.btn, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, padding: '8px 16px', background: GOLD + 'EE', color: TEXT, boxShadow: 'none' }}
             >
               <Plus size={14} strokeWidth={2.5} /> New Post
+            </button>
+            <button
+              onClick={handleExport}
+              disabled={exporting}
+              title="Export this voyage as a printable keepsake"
+              style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: exporting ? 'default' : 'pointer', opacity: exporting ? 0.6 : 1, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
+            >
+              <Download size={14} /> {exporting ? 'Preparing…' : 'Export'}
             </button>
             <button
               onClick={() => navigate(`/voyages/${voyageId}/edit`)}

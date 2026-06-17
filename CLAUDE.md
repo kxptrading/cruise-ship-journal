@@ -280,7 +280,10 @@ IC.star      IC.anchor  IC.compass IC.trending IC.food  IC.ship
 - [x] PWA — manifest.json, theme-color, apple-touch-icon, mobile-web-app-capable
 
 ### Near-term
-- [ ] Export to PDF — recreate the physical journal format digitally
+- [x] Export to PDF — printable keepsake journal. Shared renderer in
+  `src/lib/voyageExport.ts` (`exportJournalPdf`): styled cover, per-voyage chapters,
+  photos, stats, opened in a print window. Settings exports all voyages; the
+  "Export" button on `VoyageDetailPage` scopes to a single voyage (`{ voyageId }`).
 - [ ] Social sharing — shareable public highlight pages (like a Facebook post)
 - [ ] Service worker — offline shell caching + background sync
 - [ ] Push notifications — react to friends' posts while offline

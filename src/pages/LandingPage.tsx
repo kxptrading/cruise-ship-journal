@@ -299,14 +299,14 @@ export default function LandingPage() {
 
     const ctx = gsap.context(() => {
       // Hero — gentle staggered intro on load.
-      gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1, ease: 'power3.out', stagger: 0.12, delay: 0.05 })
+      gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1.5, ease: 'power3.out', stagger: 0.18, delay: 0.1 })
 
       // Sections — fade/slide in from below as they enter, then stay put for
       // good. `once` (no reverse) means nothing is ever hidden again, which the
       // pinned sections above could otherwise trigger.
       gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach(el => {
         gsap.fromTo(el, { autoAlpha: 0, y: 32 }, {
-          autoAlpha: 1, y: 0, duration: 0.8, ease: 'power2.out',
+          autoAlpha: 1, y: 0, duration: 1.2, ease: 'power2.out',
           scrollTrigger: { trigger: el, scroller, start: 'top 88%', once: true },
         })
       })

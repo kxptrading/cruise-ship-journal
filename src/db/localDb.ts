@@ -69,6 +69,11 @@ export interface SyncQueueItem {
   // them or the section is edited again (which revives the item via enqueue).
   dead?:           boolean
   deadLetteredAt?: string
+  // Payload schema version stamped at enqueue time (see db/payloadMigrations.ts).
+  // On replay the payload is migrated from this version up to current before being
+  // written; anything unmigratable is dead-lettered. Absent on items queued before
+  // versioning shipped — treated as version 1.
+  schemaVersion?:  number
 }
 
 // Per-photo cache entry for offline photo viewing and deferred upload.

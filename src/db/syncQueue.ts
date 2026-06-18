@@ -7,6 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { localDb, type EntityType, type SyncOperation, type SyncQueueItem } from './localDb'
+import { CURRENT_PAYLOAD_VERSION } from './payloadMigrations'
 
 // How many times we replay a queue item before giving up and dead-lettering it.
 // Past this, automatic retries stop so a permanently-failing item (a payload the
@@ -51,6 +52,8 @@ export async function enqueue(
       // gave us fresh data, so it deserves a clean run of attempts again.
       dead:           false,
       deadLetteredAt: undefined,
+      // Fresh payload → current schema version.
+      schemaVersion:  CURRENT_PAYLOAD_VERSION,
     })
   } else {
     const item: SyncQueueItem = {
@@ -65,6 +68,7 @@ export async function enqueue(
       localId:    entityId,
       updatedAt:  now,
       attempts:   0,
+      schemaVersion: CURRENT_PAYLOAD_VERSION,
     }
     await localDb.syncQueue.add(item)
   }
@@ -98,6 +102,19 @@ export async function markSynced(queueId: string, entityId: string): Promise<voi
     syncStatus:    'synced',
     lastSyncedAt:  new Date().toISOString(),
   })
+}
+
+// Immediately dead-letter an item without burning retry attempts — used when a
+// payload can't be migrated to the current schema, so retrying is pointless.
+export async function markDeadLetter(queueId: string, entityId: string, error: string): Promise<void> {
+  const now = new Date().toISOString()
+  await localDb.syncQueue.update(queueId, {
+    error,
+    dead:           true,
+    deadLetteredAt: now,
+    lastAttemptAt:  now,
+  })
+  await localDb.entries.update(entityId, { syncStatus: 'failed' })
 }
 
 export async function markFailed(queueId: string, entityId: string, error: string): Promise<void> {

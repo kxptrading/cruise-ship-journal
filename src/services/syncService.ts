@@ -16,7 +16,8 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { supabase } from '../lib/supabase'
-import { getActiveQueue, markSyncing, markSynced, markFailed, entityKey } from '../db/syncQueue'
+import { getActiveQueue, markSyncing, markSynced, markFailed, markDeadLetter, entityKey } from '../db/syncQueue'
+import { migrateQueuePayload } from '../db/payloadMigrations'
 import { isOnline } from '../hooks/useOnlineStatus'
 import {
   toDbVoyage,
@@ -62,10 +63,20 @@ async function processItem(item: SyncQueueItem): Promise<void> {
   // Belt-and-suspenders: getActiveQueue already filters these out.
   if (item.dead) return
 
+  // Migrate the payload from the version it was queued at up to current before
+  // writing. If it can't be migrated (e.g. queued by a newer client, or a needed
+  // step is missing), dead-letter it immediately — replaying a stale shape through
+  // the current converters would risk a bad write.
+  const migrated = migrateQueuePayload(item.entityType, item.schemaVersion, item.payload)
+  if (!migrated.ok) {
+    await markDeadLetter(item.id, item.entityId, 'unmigratable payload: ' + migrated.reason)
+    return
+  }
+
   await markSyncing(item.id)
 
   try {
-    await writeToSupabase(item)
+    await writeToSupabase({ ...item, payload: migrated.payload })
     await markSynced(item.id, item.entityId)
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)

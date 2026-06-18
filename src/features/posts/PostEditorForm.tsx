@@ -8,6 +8,7 @@ import AudienceSelector from './AudienceSelector'
 import MediaUploader from '@/ui/MediaUploader'
 import FE from '@/components/FE'
 import { useUserId } from '@/context'
+import { POST_TEMPLATES, type PostTemplate } from './templates'
 import type { Audience } from '@/types/models'
 
 export interface PostFormValues {
@@ -32,19 +33,6 @@ interface Props {
   values:   PostFormValues
   onChange: (v: PostFormValues) => void
 }
-
-// One-tap starting points to beat the blank page. Each fills the body with a
-// light prompt skeleton (and a title if the user hasn't set one). Shown only
-// while the body is empty, so they never clobber writing or appear when editing.
-interface PostTemplate { id: string; label: string; emoji: string; title: string; body: string }
-const POST_TEMPLATES: PostTemplate[] = [
-  { id: 'sea',    label: 'Sea Day',      emoji: '☀️', title: 'Sea Day',
-    body: 'A day at sea.\n\nHow we spent it: \nBest meal: \nFavourite moment: ' },
-  { id: 'port',   label: 'Port Day',     emoji: '⚓', title: 'Port Day',
-    body: 'Ashore today.\n\nWhere we explored: \nWhat we ate: \nThe highlight: ' },
-  { id: 'formal', label: 'Formal Night', emoji: '🥂', title: 'Formal Night',
-    body: 'Formal night on board.\n\nWhat we wore: \nDinner: \nThe evening: ' },
-]
 
 const field = (label: string, child: React.ReactNode) => (
   <div>

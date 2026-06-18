@@ -11,6 +11,7 @@ import { addPhoto } from '../../lib/photoStorage'
 import CameraCapture from '../../components/CameraCapture'
 import type { DailyLog, ItineraryDay } from '../../types'
 import FE from '../../components/FE'
+import { POST_TEMPLATES, type PostTemplate } from './templates'
 
 const MOODS = ['😄', '😌', '😲', '😴', '😍'] as const
 type Mood = typeof MOODS[number]
@@ -62,6 +63,16 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
       if (todayIdx >= 0 && todayIdx < dailyLogs.length) setComposeDay(String(todayIdx))
     }
     window.setTimeout(() => textRef.current?.focus(), 80)
+  }
+
+  // One-tap template fills the box with a prompt skeleton, then drops the cursor
+  // at the end so the user can start filling it in.
+  const applyTemplate = (t: PostTemplate) => {
+    setComposeText(t.body)
+    window.setTimeout(() => {
+      const el = textRef.current
+      if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length) }
+    }, 0)
   }
 
   const handlePost = async () => {
@@ -178,6 +189,25 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                 style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, fontFamily: 'inherit', resize: 'none', lineHeight: 1.7, color: TEXT, background: 'transparent', boxSizing: 'border-box', width: '100%' }}
               />
             </div>
+
+            {/* Template chips — only while the box is empty, so they never
+                overwrite what's been typed. Mirrors the full post composer. */}
+            {!composeText.trim() && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8, paddingLeft: 52 }}>
+                {POST_TEMPLATES.map(t => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyTemplate(t)}
+                    style={{ display: 'flex', alignItems: 'center', gap: 5, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 999, padding: '4px 11px', cursor: 'pointer', fontSize: 12.5, fontFamily: FONT_BODY, color: NAVY, fontWeight: 600 }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = NAVY }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = BORDER }}
+                  >
+                    <FE emoji={t.emoji} size={13} /> {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
 
             {/* Drag-drop hint */}
             {isDragging && (

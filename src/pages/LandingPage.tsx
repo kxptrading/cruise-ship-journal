@@ -9,10 +9,9 @@
 // .wave-* rules in index.css), symbolising the sea.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useLayoutEffect, useRef } from 'react'
+import { useRef } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
-import { gsap, ScrollTrigger, prefersReducedMotion } from '../lib/gsap'
 import { useWindowSize, WCtx } from '../context'
 import {
   NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
@@ -261,144 +260,6 @@ export default function LandingPage() {
   const mobile = w < BP.mobile
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // ── Scroll choreography ─────────────────────────────────────────────────────
-  // This page scrolls inside its own container (scrollRef), not <main>, so every
-  // ScrollTrigger is bound to that scroller. Sections fade/slide in as they enter
-  // and back out as they leave (scrubbed), and the preview carousel is panned
-  // right→left on scroll-down (and back on scroll-up). All no-ops under reduced
-  // motion, where the carousel falls back to a native horizontal swipe strip.
-  useLayoutEffect(() => {
-    const scroller = scrollRef.current
-    if (!scroller || prefersReducedMotion()) return
-
-    // Desktop drives each carousel's pan via scroll; on touch they stay native
-    // horizontal swipe strips (scroll-jacking a wide track feels wrong on a phone,
-    // where the user is already scrolling vertically).
-    const carousels = Array.from(scroller.querySelectorAll<HTMLElement>('[data-carousel]'))
-    if (!mobile) carousels.forEach(c => { c.style.overflowX = 'hidden' })
-
-    // "What sets it apart" feed: on desktop the viewport becomes a fixed window so
-    // its post track can be scrolled (the section is pinned in the context below).
-    const feedSection  = scroller.querySelector('[data-feed-section]')  as HTMLElement | null
-    const feedViewport = scroller.querySelector('[data-feed-viewport]') as HTMLElement | null
-    const feedTrack    = feedViewport?.querySelector('[data-feed-track]') as HTMLElement | null
-    let feedPins = false
-    if (!mobile && feedSection && feedViewport && feedTrack) {
-      feedViewport.style.height = '460px'
-      feedViewport.style.overflow = 'hidden'
-      feedViewport.style.borderRadius = '20px'
-      // Only pin if the whole section fits the viewport (else it would clip).
-      feedPins = feedSection.offsetHeight <= scroller.clientHeight
-      if (!feedPins) { feedViewport.style.height = ''; feedViewport.style.overflow = ''; feedViewport.style.borderRadius = '' }
-    }
-
-    // Features cards: on desktop pin them in focus for a scroll span so they
-    // dwell long enough to read. Only pin if the section fits the viewport.
-    const featuresSection = scroller.querySelector('[data-features-section]') as HTMLElement | null
-    const featuresPin = !mobile && !!featuresSection && featuresSection.offsetHeight <= scroller.clientHeight
-
-    const ctx = gsap.context(() => {
-      // Hero — gentle staggered intro on load.
-      gsap.from('[data-hero] > *', { autoAlpha: 0, y: 30, duration: 1.5, ease: 'power3.out', stagger: 0.18, delay: 0.1 })
-
-      // Sections — fade/slide in from below as they enter, then stay put for
-      // good. `once` (no reverse) means nothing is ever hidden again, which the
-      // pinned sections above could otherwise trigger.
-      gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach(el => {
-        gsap.fromTo(el, { autoAlpha: 0, y: 32 }, {
-          autoAlpha: 1, y: 0, duration: 1.2, ease: 'power2.out',
-          scrollTrigger: { trigger: el, scroller, start: 'top 88%', once: true },
-        })
-      })
-
-      // Each gallery pins when centred and scrolls horizontally through every
-      // screenshot before releasing — pausing the section in focus until all
-      // screens are viewed. The width is constrained so the track always
-      // overflows (real distance to travel). Direction alternates: top
-      // right→left on scroll-down, next left→right. On screens too short to pin
-      // cleanly, fall back to a non-pinned pan.
-      if (!mobile) {
-        carousels.forEach(carousel => {
-          const track = carousel.querySelector('[data-carousel-track]') as HTMLElement | null
-          if (!track) return
-          const distance = () => Math.max(0, track.scrollWidth - carousel.offsetWidth)
-          if (distance() <= 0) return
-          // Both galleries behave identically: pin when centred and pan
-          // right→left through every screenshot, then release.
-          if (carousel.offsetHeight <= scroller.clientHeight - 20) {
-            gsap.fromTo(track,
-              { x: 0 },
-              {
-                x: () => -distance(), ease: 'none',
-                scrollTrigger: {
-                  trigger: carousel, scroller,
-                  start: 'center center', end: () => '+=' + distance(),
-                  pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
-                },
-              },
-            )
-          } else {
-            const lead = () => carousel.offsetWidth * 0.1
-            const span = () => distance() + lead()
-            gsap.fromTo(track,
-              { x: () => lead() },
-              {
-                x: () => -span(), ease: 'none',
-                scrollTrigger: { trigger: carousel, scroller, start: 'top bottom', end: 'bottom top', scrub: 1, invalidateOnRefresh: true },
-              },
-            )
-          }
-        })
-      }
-
-      // Pin "What sets it apart" when centred and scroll its feed through the
-      // posts — pausing the section in focus while the feed flows past.
-      if (feedPins && feedSection && feedViewport && feedTrack) {
-        const dist = () => Math.max(0, feedTrack.scrollHeight - feedViewport.clientHeight)
-        if (dist() > 0) {
-          gsap.fromTo(feedTrack, { y: 0 }, {
-            y: () => -dist(), ease: 'none',
-            scrollTrigger: {
-              trigger: feedSection, scroller,
-              start: 'center center', end: () => '+=' + dist(),
-              pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
-            },
-          })
-        }
-      }
-
-      // Pin the Features cards when centred and, while pinned, fade them in one
-      // by one (scrubbed to scroll), then hold them all in focus before
-      // releasing — so each card has a moment to be read. The span is ~1.4× a
-      // screen (vs the plain ~0.9× pin) to fit the staggered reveal plus dwell.
-      if (featuresPin && featuresSection) {
-        const cards = gsap.utils.toArray<HTMLElement>('[data-feature-card]')
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: featuresSection, scroller,
-            start: 'center center', end: () => '+=' + Math.round(scroller.clientHeight * 1.4),
-            pin: true, scrub: 1, anticipatePin: 1, invalidateOnRefresh: true,
-          },
-        })
-        tl.from(cards, { autoAlpha: 0, y: 28, ease: 'power2.out', duration: 1, stagger: 1 })
-          .to({}, { duration: 1.6 }) // hold all cards visible before unpinning
-      }
-
-      // Refresh after first paint and again once async content (feed cards,
-      // embedded previews) and pin-spacers settle, so reveal/pin positions are
-      // computed against the final layout.
-      requestAnimationFrame(() => ScrollTrigger.refresh())
-      const t1 = window.setTimeout(() => ScrollTrigger.refresh(), 600)
-      const t2 = window.setTimeout(() => ScrollTrigger.refresh(), 1500)
-      return () => { window.clearTimeout(t1); window.clearTimeout(t2) }
-    }, scroller)
-
-    return () => {
-      carousels.forEach(c => { c.style.overflowX = '' })
-      if (feedViewport) { feedViewport.style.height = ''; feedViewport.style.overflow = ''; feedViewport.style.borderRadius = '' }
-      ctx.revert()
-    }
-  }, [mobile])
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
   const kicker: CSSProperties = { fontFamily: FONT_BODY, fontSize: 12, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' }
@@ -435,7 +296,7 @@ export default function LandingPage() {
     <div style={{ background: CREAM, height: '100%', display: 'flex', flexDirection: 'column' }}>
 
       {/* Scrolling content area. position:relative anchors the absolute header so
-          it scrolls with the content; ref feeds the GSAP ScrollTriggers. */}
+          it scrolls with the content. */}
       <div ref={scrollRef} style={{ position: 'relative', flex: 1, overflowY: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
       {/* ── Header ─────────────────────────────────────────────── */}

@@ -48,7 +48,7 @@ export async function fetchAllData(userId: string, voyageId?: string): Promise<A
     supabase.from('food_logs').select('*').in('voyage_id', ids),
     supabase.from('dining_log').select('*').in('voyage_id', ids),
     supabase.from('entertainment_log').select('*').in('voyage_id', ids),
-    supabase.from('food_fav').select('*').in('voyage_id', ids),
+    supabase.from('food_favourites').select('*').in('voyage_id', ids),
     supabase.from('budget').select('*').in('voyage_id', ids),
     supabase.from('shopping_items').select('*').in('voyage_id', ids),
     supabase.from('highlights').select('*').in('voyage_id', ids),
@@ -457,65 +457,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
   <div class="bc-foot">Cruise Ship Journal &nbsp;&middot;&nbsp; ${new Date().getFullYear()}</div>
 </div>`
 
-  const filename = (single
-    ? `${(firstV?.ship_name as string) || 'voyage'}-voyage-journal`
-    : `${displayName || 'cruise'}-cruise-journal`
-  ).replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '.pdf'
-
-  // Default: render to a real downloadable PDF. Fall back to the print window if
-  // the client-side render fails (e.g. memory pressure on a huge export).
-  try {
-    await downloadKeepsakePdf(contentHtml, css, filename)
-  } catch (err) {
-    console.error('PDF download failed; falling back to print window:', err)
-    openPrintWindow(contentHtml, css, docTitle)
-  }
+  openPrintWindow(contentHtml, css, docTitle)
 }
 
-// ── Output sinks ──────────────────────────────────────────────────────────────
+// ── Output sink ───────────────────────────────────────────────────────────────
 
-// Render the keepsake HTML into an offscreen node and save it as a real PDF
-// download — no print dialog, no pop-up. html2pdf is dynamically imported so it
-// stays in a lazy chunk rather than the main bundle.
-async function downloadKeepsakePdf(contentHtml: string, css: string, filename: string): Promise<void> {
-  const { default: html2pdf } = await import('html2pdf.js')
-  const PAGE_W = 800
-  const PAGE_H = Math.round(PAGE_W * 297 / 210) // A4 portrait ratio at 800px wide
-
-  const holder = document.createElement('div')
-  // Render in the top-left of the page (NOT off-screen at -10000px — html2canvas
-  // only rasterises content inside the window box, so a far-offscreen element
-  // comes out blank). zIndex:-1 keeps it behind the opaque app shell so it isn't
-  // visible during the ~1-2s render.
-  holder.style.cssText = `position:fixed;left:0;top:0;width:${PAGE_W}px;z-index:-1;background:#F4F1EB;`
-  // @media print doesn't apply to an offscreen canvas render, so the cover's
-  // min-height:100vh would key off the live viewport — pin both covers to a full
-  // page height instead.
-  holder.innerHTML = `<style>${css}
-.cover,.back-cover{min-height:${PAGE_H}px;height:${PAGE_H}px}
-</style>${contentHtml}`
-  document.body.appendChild(holder)
-  // Let layout settle (two frames) before rasterising.
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null))))
-
-  try {
-    // `pagebreak` is valid at runtime but missing from html2pdf.js's bundled types.
-    const opt: Record<string, unknown> = {
-      margin:      0,
-      filename,
-      image:       { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#F4F1EB', scrollX: 0, scrollY: 0, windowWidth: PAGE_W },
-      jsPDF:       { unit: 'pt', format: 'a4', orientation: 'portrait' },
-      pagebreak:   { mode: ['css', 'legacy'] },
-    }
-    await html2pdf().set(opt).from(holder).save()
-  } finally {
-    document.body.removeChild(holder)
-  }
-}
-
-// Fallback: the original print-window flow (vector output via the browser's
-// "Save as PDF"), used only if the client-side render fails.
+// Open the keepsake in a new window and trigger the browser's print dialog, where
+// the user chooses "Save as PDF". This yields a crisp, vector, selectable-text PDF.
+// (A client-side one-click download via html2canvas was tried and reverted — it
+// rasterised blank; a reliable one-click export would need a server-side render.)
 function openPrintWindow(contentHtml: string, css: string, docTitle: string): void {
   const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${docTitle}</title><style>${css}</style></head><body>${contentHtml}<script>window.onload=()=>setTimeout(()=>window.print(),800)<\/script></body></html>`
   const win = window.open('', '_blank')

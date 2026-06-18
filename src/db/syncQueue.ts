@@ -8,6 +8,18 @@
 
 import { localDb, type EntityType, type SyncOperation, type SyncQueueItem } from './localDb'
 import { CURRENT_PAYLOAD_VERSION } from './payloadMigrations'
+import { mergeDeletedIds } from './rowDiff'
+
+// Extract row ids from a section payload, when it's a row array (or {items:[]}).
+// Used to drop pending deletes for rows that are present again in the latest save.
+function payloadIds(payload: unknown): string[] {
+  const arr = Array.isArray(payload)
+    ? payload
+    : (payload && typeof payload === 'object' && Array.isArray((payload as { items?: unknown }).items))
+      ? (payload as { items: unknown[] }).items
+      : []
+  return (arr as Array<{ id?: string }>).map(r => r?.id).filter((id): id is string => !!id)
+}
 
 // How many times we replay a queue item before giving up and dead-lettering it.
 // Past this, automatic retries stop so a permanently-failing item (a payload the
@@ -29,7 +41,7 @@ export async function enqueue(
   operation:  SyncOperation,
   cruiseId:   string,
   payload:    unknown,
-  opts?: { budgetId?: string; serverId?: string },
+  opts?: { budgetId?: string; serverId?: string; deletedIds?: string[] },
 ): Promise<void> {
   const entityId = entityKey(entityType, cruiseId)
   const now      = new Date().toISOString()
@@ -39,11 +51,15 @@ export async function enqueue(
     .first()
 
   if (existing) {
+    // Carry forward any deletes already pending on this slot, add the new ones, and
+    // drop ids that are present again in the fresh payload (re-added rows).
+    const deletedIds = mergeDeletedIds(existing.deletedIds, opts?.deletedIds, payloadIds(payload))
     await localDb.syncQueue.update(existing.id, {
       operation,
       payload,
       budgetId:  opts?.budgetId,
       serverId:  opts?.serverId,
+      deletedIds,
       updatedAt: now,
       attempts:  0,
       error:     undefined,
@@ -65,6 +81,7 @@ export async function enqueue(
       payload,
       budgetId:   opts?.budgetId,
       serverId:   opts?.serverId,
+      deletedIds: mergeDeletedIds([], opts?.deletedIds, payloadIds(payload)),
       localId:    entityId,
       updatedAt:  now,
       attempts:   0,

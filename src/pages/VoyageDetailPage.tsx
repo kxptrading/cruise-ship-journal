@@ -191,12 +191,9 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   // add posts/photos but not edit the owner's journal sections or the voyage row.
   const isOwner = !!userId && voyageRow.user_id === userId
 
-  // Tabs: owners get everything (Budget gated to adults); co-authors get only the
-  // surfaces they can contribute to (Posts + Gallery), so no edit attempts hit
-  // owner-only RLS.
-  const visibleTabs = isOwner
-    ? TABS.filter(t => t.id !== 'budget' || isAdult)
-    : TABS.filter(t => t.id === 'posts' || t.id === 'gallery')
+  // Tabs: everyone (owner + co-authors) gets the full journal; co-author writes are
+  // now permitted by RLS and merge per-row. Budget stays gated to adults.
+  const visibleTabs = TABS.filter(t => t.id !== 'budget' || isAdult)
 
   // Clamp the active tab to one the current user can actually see (e.g. a
   // co-author deep-linked to ?tab=daily falls back to Posts).
@@ -265,7 +262,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
         {!isOwner && (
           <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, marginBottom: 12 }}>
             <Users size={12} style={{ verticalAlign: '-2px', marginRight: 5 }} />
-            Shared voyage — you can add your own photos and posts.
+            Shared voyage — you're a co-author and can edit the journal.
           </div>
         )}
 

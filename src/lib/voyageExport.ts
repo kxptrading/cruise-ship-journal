@@ -493,14 +493,16 @@ async function downloadKeepsakePdf(contentHtml: string, css: string, filename: s
   document.body.appendChild(holder)
 
   try {
-    await html2pdf().set({
+    // `pagebreak` is valid at runtime but missing from html2pdf.js's bundled types.
+    const opt: Record<string, unknown> = {
       margin:      0,
       filename,
       image:       { type: 'jpeg', quality: 0.92 },
       html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#F4F1EB' },
       jsPDF:       { unit: 'pt', format: 'a4', orientation: 'portrait' },
       pagebreak:   { mode: ['css', 'legacy'] },
-    }).from(holder).save()
+    }
+    await html2pdf().set(opt).from(holder).save()
   } finally {
     document.body.removeChild(holder)
   }

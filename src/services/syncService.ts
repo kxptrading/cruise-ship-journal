@@ -89,23 +89,31 @@ async function processItem(item: SyncQueueItem): Promise<void> {
 
 async function writeToSupabase(item: SyncQueueItem): Promise<void> {
   const { entityType, cruiseId, payload } = item
+  const del = item.deletedIds  // rows the user removed offline → delete exactly these
 
   switch (entityType) {
     case 'voyage':       return writeVoyage(cruiseId, payload as VoyageData['voyage'])
     case 'itinerary':    return writeItinerary(cruiseId, payload as VoyageData['itinerary'])
     case 'dailyLogs':    return writeDailyLogs(cruiseId, payload as VoyageData['dailyLogs'])
-    case 'foodLogs':     return writeFoodLogs(cruiseId, payload as VoyageData['foodLogs'])
-    case 'diningLog':    return writeDiningLog(cruiseId, payload as VoyageData['diningLog'])
-    case 'entertainmentLog': return writeEntertainmentLog(cruiseId, payload as VoyageData['entertainmentLog'])
+    case 'foodLogs':     return writeFoodLogs(cruiseId, payload as VoyageData['foodLogs'], del)
+    case 'diningLog':    return writeDiningLog(cruiseId, payload as VoyageData['diningLog'], del)
+    case 'entertainmentLog': return writeEntertainmentLog(cruiseId, payload as VoyageData['entertainmentLog'], del)
     case 'foodFav':      return writeFoodFav(cruiseId, payload as VoyageData['foodFav'])
     case 'highlights':   return writeHighlights(cruiseId, payload as VoyageData['highlights'])
-    case 'budget':       return writeBudget(cruiseId, payload as VoyageData['budget'], item.budgetId)
-    case 'shopping':     return writeShopping(cruiseId, payload as VoyageData['shopping'])
+    case 'budget':       return writeBudget(cruiseId, payload as VoyageData['budget'], item.budgetId, del)
+    case 'shopping':     return writeShopping(cruiseId, payload as VoyageData['shopping'], del)
     case 'packing':      return writePacking(cruiseId, payload as VoyageData['packing'])
-    case 'notes':        return writeNotes(cruiseId, payload as VoyageData['notes'])
+    case 'notes':        return writeNotes(cruiseId, payload as VoyageData['notes'], del)
     default:
       throw new Error(`Unknown entity type: ${entityType}`)
   }
+}
+
+// Delete exactly the rows the user removed (by id), scoped to a column. Non-
+// destructive: rows a co-author added (never in our deletedIds) are untouched.
+async function deleteByIds(table: string, scopeCol: string, scopeVal: string, ids?: string[]) {
+  if (!ids?.length) return
+  check(await supabase.from(table).delete().eq(scopeCol, scopeVal).in('id', ids))
 }
 
 function check({ error }: { error: unknown }) {
@@ -134,34 +142,19 @@ async function writeDailyLogs(voyageId: string, val: VoyageData['dailyLogs']) {
   }
 }
 
-async function writeFoodLogs(voyageId: string, val: VoyageData['foodLogs']) {
-  if (val.length > 0) {
-    check(await supabase.from('food_logs').upsert(toDbFoodLogs(voyageId, val), { onConflict: 'id' }))
-    const ids = val.map(r => r.id)
-    check(await supabase.from('food_logs').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
-  } else {
-    check(await supabase.from('food_logs').delete().eq('voyage_id', voyageId))
-  }
+async function writeFoodLogs(voyageId: string, val: VoyageData['foodLogs'], deletedIds?: string[]) {
+  if (val.length > 0) check(await supabase.from('food_logs').upsert(toDbFoodLogs(voyageId, val), { onConflict: 'id' }))
+  await deleteByIds('food_logs', 'voyage_id', voyageId, deletedIds)
 }
 
-async function writeDiningLog(voyageId: string, val: VoyageData['diningLog']) {
-  if (val.length > 0) {
-    check(await supabase.from('dining_log').upsert(toDbDiningLog(voyageId, val), { onConflict: 'id' }))
-    const ids = val.map(r => r.id)
-    check(await supabase.from('dining_log').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
-  } else {
-    check(await supabase.from('dining_log').delete().eq('voyage_id', voyageId))
-  }
+async function writeDiningLog(voyageId: string, val: VoyageData['diningLog'], deletedIds?: string[]) {
+  if (val.length > 0) check(await supabase.from('dining_log').upsert(toDbDiningLog(voyageId, val), { onConflict: 'id' }))
+  await deleteByIds('dining_log', 'voyage_id', voyageId, deletedIds)
 }
 
-async function writeEntertainmentLog(voyageId: string, val: VoyageData['entertainmentLog']) {
-  if (val.length > 0) {
-    check(await supabase.from('entertainment_log').upsert(toDbEntertainmentLog(voyageId, val), { onConflict: 'id' }))
-    const ids = val.map(r => r.id)
-    check(await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
-  } else {
-    check(await supabase.from('entertainment_log').delete().eq('voyage_id', voyageId))
-  }
+async function writeEntertainmentLog(voyageId: string, val: VoyageData['entertainmentLog'], deletedIds?: string[]) {
+  if (val.length > 0) check(await supabase.from('entertainment_log').upsert(toDbEntertainmentLog(voyageId, val), { onConflict: 'id' }))
+  await deleteByIds('entertainment_log', 'voyage_id', voyageId, deletedIds)
 }
 
 async function writeFoodFav(voyageId: string, val: VoyageData['foodFav']) {
@@ -182,6 +175,7 @@ async function writeBudget(
   voyageId: string,
   val:      VoyageData['budget'],
   budgetId: string | undefined,
+  deletedIds?: string[],
 ) {
   if (!budgetId) {
     // budgetId missing means the budget row hasn't been created yet — skip
@@ -201,37 +195,29 @@ async function writeBudget(
       })),
       { onConflict: 'id' },
     ))
-    const ids = val.items.map(i => i.id)
-    check(await supabase.from('budget_items').delete().eq('budget_id', budgetId).not('id', 'in', `(${ids.join(',')})`))
-  } else {
-    check(await supabase.from('budget_items').delete().eq('budget_id', budgetId))
   }
+  await deleteByIds('budget_items', 'budget_id', budgetId, deletedIds)
 }
 
-async function writeShopping(voyageId: string, val: VoyageData['shopping']) {
-  if (val.items?.length > 0) {
-    check(await supabase.from('shopping_items').upsert(toDbShoppingItems(voyageId, val.items), { onConflict: 'id' }))
-    const ids = val.items.map(i => i.id)
-    check(await supabase.from('shopping_items').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
-  } else {
-    check(await supabase.from('shopping_items').delete().eq('voyage_id', voyageId))
-  }
+async function writeShopping(voyageId: string, val: VoyageData['shopping'], deletedIds?: string[]) {
+  if (val.items?.length > 0) check(await supabase.from('shopping_items').upsert(toDbShoppingItems(voyageId, val.items), { onConflict: 'id' }))
+  await deleteByIds('shopping_items', 'voyage_id', voyageId, deletedIds)
 }
 
+// Packing is additive on replay: upsert the checked items (keyed on
+// voyage_id,category,item). Offline un-checks are reconciled by the online path in
+// useVoyageData (which has the previous state to diff); they don't propagate via
+// the queue. This keeps replay non-destructive — a co-author's checks are never wiped.
 async function writePacking(voyageId: string, val: VoyageData['packing']) {
-  check(await supabase.from('packing_items').delete().eq('voyage_id', voyageId))
   const rows = toDbPackingItems(voyageId, val)
-  if (rows.length > 0) check(await supabase.from('packing_items').insert(rows))
+  if (rows.length > 0) check(await supabase.from('packing_items').upsert(rows, { onConflict: 'voyage_id,category,item' }))
 }
 
-async function writeNotes(voyageId: string, val: VoyageData['notes']) {
+async function writeNotes(voyageId: string, val: VoyageData['notes'], deletedIds?: string[]) {
   if (val.length > 0) {
     check(await supabase.from('notes').upsert(toDbNotes(voyageId, val), { onConflict: 'id' }))
-    const ids = val.map(n => n.id)
-    check(await supabase.from('notes').delete().eq('voyage_id', voyageId).not('id', 'in', `(${ids.join(',')})`))
-  } else {
-    check(await supabase.from('notes').delete().eq('voyage_id', voyageId))
   }
+  await deleteByIds('notes', 'voyage_id', voyageId, deletedIds)
 }
 
 // Re-export so App.tsx can call without importing syncQueue directly.

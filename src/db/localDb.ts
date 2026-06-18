@@ -74,6 +74,10 @@ export interface SyncQueueItem {
   // written; anything unmigratable is dead-lettered. Absent on items queued before
   // versioning shipped — treated as version 1.
   schemaVersion?:  number
+  // Row ids the user deleted from this section while offline. On replay we delete
+  // exactly these (instead of pruning everything not in the snapshot), so a
+  // co-author's concurrently-added rows are never wiped. See db/rowDiff.ts.
+  deletedIds?:     string[]
 }
 
 // Per-photo cache entry for offline photo viewing and deferred upload.

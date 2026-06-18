@@ -45,6 +45,7 @@ import { supabase } from '../lib/supabase'
 import { db } from '../storage'
 import { localDb } from '../db/localDb'
 import { enqueue } from '../db/syncQueue'
+import { fetchSharedVoyageIds } from '../features/voyages/coauthors'
 import type { EntityType } from '../db/localDb'
 import {
   fromDbVoyage,    toDbVoyage,
@@ -147,15 +148,21 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
     let cancelled = false
 
     async function initVoyage() {
-      const { data: rows } = await supabase
-        .from('voyages')
-        .select(VOYAGE_SELECT)
-        .eq('user_id', activeSession.user.id)
-        .order('created_at', { ascending: true })
+      // Owned voyages + voyages shared with me as an accepted co-author, so the
+      // voyage switcher can open a shared voyage. Reads are open at the RLS layer.
+      const sharedIds = await fetchSharedVoyageIds(activeSession.user.id)
+      const [ownedRes, sharedRes] = await Promise.all([
+        supabase.from('voyages').select(VOYAGE_SELECT).eq('user_id', activeSession.user.id),
+        sharedIds.length
+          ? supabase.from('voyages').select(VOYAGE_SELECT).in('id', sharedIds)
+          : Promise.resolve({ data: [], error: null }),
+      ])
 
       if (cancelled) return
 
-      if (rows && rows.length > 0) {
+      const rows = [...(ownedRes.data ?? []), ...(sharedRes.data ?? [])]
+
+      if (rows.length > 0) {
         setAllVoyages(rows as VoyageListRow[])
         // Restore the last active voyage, or fall back to the oldest voyage.
         const savedId = localStorage.getItem('csj-activeVoyageId')

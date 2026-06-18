@@ -30,6 +30,7 @@ import { NAVY2, MUTED, WHITE, BORDER, FONT_DISPLAY, FONT_BODY, sty, BP } from '@
 import { useW } from '@/context'
 import { useVoyages, useVoyagePostCounts } from '@/features/voyages/hooks'
 import VoyageCard from '@/features/voyages/VoyageCard'
+import VoyageInvitesBanner from '@/features/voyages/VoyageInvitesBanner'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { STAGGER, FADE_UP } from '@/lib/motion'
@@ -59,6 +60,9 @@ export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => v
 
   return (
     <div>
+      {/* Pending co-author invites — renders nothing when there are none */}
+      <VoyageInvitesBanner />
+
       {/* Page header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>

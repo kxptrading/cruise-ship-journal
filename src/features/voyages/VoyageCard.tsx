@@ -10,7 +10,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, MUTED, WHITE, GOLD, BORDER, FONT_DISPLAY, FONT_BODY, TEAL, ROSE } from '@/constants'
 import FE from '@/components/FE'
-import { Trash2, AlertTriangle } from 'lucide-react'
+import { Trash2, AlertTriangle, Users } from 'lucide-react'
 import { useDeleteVoyage } from './hooks'
 import type { VoyageRow } from './hooks'
 
@@ -111,6 +111,18 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
         }}>
           {STATUS_LABEL[status]}
         </div>
+        {/* Shared badge — shown when this voyage was shared with you as a co-author */}
+        {voyage.is_shared && (
+          <div style={{
+            position: 'absolute', top: 10, left: 10,
+            background: 'rgba(20,41,63,0.78)', color: WHITE,
+            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
+            borderRadius: 20, padding: '3px 10px', backdropFilter: 'blur(6px)', fontFamily: FONT_BODY,
+            display: 'flex', alignItems: 'center', gap: 4,
+          }}>
+            <Users size={11} /> Shared
+          </div>
+        )}
         {/* Night count badge */}
         {voyage.total_nights && (
           <div style={{
@@ -142,7 +154,13 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
             </span>
           </div>
 
-          {/* Delete — two-step confirm to prevent accidents */}
+          {/* Delete — owner only; two-step confirm. Co-authors leave from the
+              voyage page instead (they can't delete a shared voyage). */}
+          {voyage.is_shared ? (
+            <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY, display: 'flex', alignItems: 'center', gap: 4 }}>
+              <Users size={12} /> Co-authoring
+            </span>
+          ) : (
           <AnimatePresence mode="wait">
             {confirmDelete ? (
               <motion.div
@@ -187,6 +205,7 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
               </motion.button>
             )}
           </AnimatePresence>
+          )}
         </div>
       </div>
     </motion.button>

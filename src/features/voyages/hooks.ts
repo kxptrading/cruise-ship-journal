@@ -30,6 +30,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { queryClient as qc } from '@/lib/queryClient'
 import { useUserId } from '@/context'
+import { fetchSharedVoyageIds } from './coauthors'
 
 // ── Row shape returned from Supabase ─────────────────────────────────────────
 // Full DB schema shape. VoyagesPage and VoyageCard use a subset;
@@ -58,6 +59,9 @@ export interface VoyageRow {
   cover_photo_url:      string | null
   cruise_description:   string | null
   created_at:           string
+  // Client-only marker: true when the current user is a co-author (not the owner)
+  // of this voyage. Set by useVoyages() for the "Shared" badge. Not a DB column.
+  is_shared?:           boolean
 }
 
 // ── Voyage list (all voyages for the current user) ────────────────────────────
@@ -71,14 +75,28 @@ export function useVoyages() {
     queryKey: ['voyages', userId],
     queryFn: async () => {
       if (!userId) return [] as VoyageRow[]
-      const { data, error } = await supabase
-        .from('voyages')
-        // Select only columns needed for the list view to keep payload small.
-        .select('id, user_id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url, created_at')
-        .eq('user_id', userId)
-        .order('departure_date', { ascending: false, nullsFirst: false })
-      if (error) throw error
-      return (data ?? []) as VoyageRow[]
+      const cols = 'id, user_id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url, created_at'
+
+      // Owned voyages + voyages shared with me as an accepted co-author.
+      // Reads are open at the RLS layer, so a plain id filter returns shared rows.
+      const sharedIds = await fetchSharedVoyageIds(userId)
+      const [ownedRes, sharedRes] = await Promise.all([
+        supabase.from('voyages').select(cols).eq('user_id', userId),
+        sharedIds.length
+          ? supabase.from('voyages').select(cols).in('id', sharedIds)
+          : Promise.resolve({ data: [], error: null }),
+      ])
+      if (ownedRes.error)  throw ownedRes.error
+      if (sharedRes.error) throw sharedRes.error
+
+      const merged = [
+        ...(ownedRes.data ?? []).map(v => ({ ...v, is_shared: false })),
+        ...(sharedRes.data ?? []).map(v => ({ ...v, is_shared: true })),
+      ] as VoyageRow[]
+
+      // Most recent first; undated drafts sink to the bottom.
+      return merged.sort((a, b) =>
+        (b.departure_date ?? '').localeCompare(a.departure_date ?? ''))
     },
     enabled: !!userId,
   })

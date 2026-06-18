@@ -292,7 +292,13 @@ IC.star      IC.anchor  IC.compass IC.trending IC.food  IC.ship
 - [ ] AI assistant — port suggestions, excursion tips based on logged preferences
 - [ ] Weather integration — auto-fill weather from departure date + port
 - [ ] Packing list customisation — add/remove items, create custom categories
-- [ ] Multi-user voyages — share a journal with travel companions
+- [~] Multi-user voyages — **co-author mode (additive) shipped.** Owner invites
+  others via `voyage_members` (table + RLS + `is_voyage_member()` helper);
+  co-authors can add photos/posts to a shared voyage but not edit the owner's
+  journal sections (sidesteps the last-write-wins section sync). Hooks in
+  `features/voyages/coauthors.ts`; UI in `CoAuthorsPanel`, `VoyageInvitesBanner`,
+  and the `isOwner` gating in `VoyageDetailPage`. **Follow-up:** full co-editing of
+  structured sections needs a real sync-conflict strategy first.
 - [ ] Photo multi-upload carousel in feed posts (data model: photos[] per day)
 - [ ] Per-row upserts for all 6 remaining dynamic-array sections (currently delete-all + reinsert)
 - [ ] TypeScript strict mode — currently `strict: false`; converter layer is the highest-value first target

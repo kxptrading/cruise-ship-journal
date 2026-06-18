@@ -47,7 +47,9 @@ import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FADE_UP } from '@/lib/motion'
 import FE from '@/components/FE'
-import { ArrowLeft, Pencil, Plus, Download } from 'lucide-react'
+import { ArrowLeft, Pencil, Plus, Download, Users } from 'lucide-react'
+import CoAuthorsPanel from '@/features/voyages/CoAuthorsPanel'
+import { useLeaveVoyage } from '@/features/voyages/coauthors'
 import type { VoyageData } from '@/types'
 
 import PostList       from '@/features/posts/PostList'
@@ -125,6 +127,8 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   // Reuses the shared journal renderer, scoped to this voyage. Display name is
   // fetched on demand so the export carries the user's name on the cover.
   const [exporting, setExporting] = useState(false)
+  const [showCoAuthors, setShowCoAuthors] = useState(false)
+  const leaveVoyage = useLeaveVoyage()
   const handleExport = async () => {
     if (!userId || !voyageId || exporting) return
     setExporting(true)
@@ -182,8 +186,21 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
 
   const title      = voyageRow.ship_name || 'Unnamed Voyage'
   const dateRange  = [formatDate(voyageRow.departure_date), formatDate(voyageRow.return_date)].filter(Boolean).join(' – ')
-  // Remove the Budget tab for underage users — spend data is adult content only.
-  const visibleTabs = TABS.filter(t => t.id !== 'budget' || isAdult)
+
+  // Ownership: a co-author (shared voyage) is an additive contributor — they can
+  // add posts/photos but not edit the owner's journal sections or the voyage row.
+  const isOwner = !!userId && voyageRow.user_id === userId
+
+  // Tabs: owners get everything (Budget gated to adults); co-authors get only the
+  // surfaces they can contribute to (Posts + Gallery), so no edit attempts hit
+  // owner-only RLS.
+  const visibleTabs = isOwner
+    ? TABS.filter(t => t.id !== 'budget' || isAdult)
+    : TABS.filter(t => t.id === 'posts' || t.id === 'gallery')
+
+  // Clamp the active tab to one the current user can actually see (e.g. a
+  // co-author deep-linked to ?tab=daily falls back to Posts).
+  const safeTab: Tab = visibleTabs.some(t => t.id === activeTab) ? activeTab : 'posts'
 
   return (
     <div>
@@ -212,14 +229,45 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
             >
               <Download size={14} /> {exporting ? 'Preparing…' : 'Export'}
             </button>
-            <button
-              onClick={() => navigate(`/voyages/${voyageId}/edit`)}
-              style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
-            >
-              <Pencil size={14} /> Edit
-            </button>
+            {isOwner ? (
+              <>
+                <button
+                  onClick={() => setShowCoAuthors(true)}
+                  title="Manage co-authors"
+                  style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
+                >
+                  <Users size={14} /> Co-authors
+                </button>
+                <button
+                  onClick={() => navigate(`/voyages/${voyageId}/edit`)}
+                  style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
+                >
+                  <Pencil size={14} /> Edit
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={async () => {
+                  if (!voyageId) return
+                  await leaveVoyage.mutateAsync(voyageId)
+                  navigate('/voyages')
+                }}
+                title="Leave this shared voyage"
+                style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
+              >
+                Leave
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Co-author hint for shared voyages */}
+        {!isOwner && (
+          <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, marginBottom: 12 }}>
+            <Users size={12} style={{ verticalAlign: '-2px', marginRight: 5 }} />
+            Shared voyage — you can add your own photos and posts.
+          </div>
+        )}
 
         {/* Hero card — gradient background falls back to brand navy when no cover photo */}
         <div style={{
@@ -272,13 +320,13 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
               border:      'none',
               // marginBottom: -1 lets the active tab's bottom border overlap the container
               // border, creating the classic "selected tab" visual.
-              borderBottom: `2px solid ${activeTab === tab.id ? 'var(--t-primary)' : 'transparent'}`,
+              borderBottom: `2px solid ${safeTab ===tab.id ? 'var(--t-primary)' : 'transparent'}`,
               padding:     w < BP.mobile ? '10px 10px' : '10px 16px',
               cursor:      'pointer',
               fontFamily:  FONT_BODY,
               fontSize:    w < BP.mobile ? 11 : 13,
-              fontWeight:  activeTab === tab.id ? 700 : 400,
-              color:       activeTab === tab.id ? 'var(--t-primary)' : MUTED,
+              fontWeight:  safeTab ===tab.id ? 700 : 400,
+              color:       safeTab ===tab.id ? 'var(--t-primary)' : MUTED,
               display:     'flex',
               flexDirection: 'column',
               alignItems:  'center',
@@ -300,7 +348,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
           before the entering tab fades in, preventing visual overlap. */}
       <AnimatePresence mode="wait">
         <motion.div
-          key={activeTab}
+          key={safeTab}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
@@ -308,33 +356,37 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
         >
           <Suspense fallback={<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}><SkeletonCard /><SkeletonCard /></div>}>
             {/* 'voyage' tab — Voyage Details form (default landing tab) */}
-            {activeTab === 'voyage' && (
+            {safeTab ==='voyage' && (
               <VoyageForm data={data.voyage} onChange={v => update('voyage', v)} />
             )}
             {/* 'posts' tab — fully React Query, self-fetching via PostList */}
-            {activeTab === 'posts' && voyageId && (
+            {safeTab ==='posts' && voyageId && (
               <PostList voyageId={voyageId} />
             )}
             {/* 'gallery' tab — memory gallery grouped by day / location */}
-            {activeTab === 'gallery' && voyageId && (
+            {safeTab ==='gallery' && voyageId && (
               <MemoryGallery voyageId={voyageId} />
             )}
             {/* Legacy tabs — receive data + update from useVoyageData (via App.tsx props) */}
-            {activeTab === 'daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={0} />}
-            {activeTab === 'itinerary'     && <ItinerarySection data={data.itinerary} onChange={v => update('itinerary', v)} />}
+            {safeTab ==='daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={0} />}
+            {safeTab ==='itinerary'     && <ItinerarySection data={data.itinerary} onChange={v => update('itinerary', v)} />}
             {/* Budget tab is hidden unless isAdult is true (controlled by profile.age) */}
-            {activeTab === 'budget'        && isAdult && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}
-            {activeTab === 'food'          && <FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />}
-            {activeTab === 'dining'        && <DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />}
-            {activeTab === 'entertainment' && <EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />}
-            {activeTab === 'foodfav'       && <FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />}
-            {activeTab === 'shopping'      && <ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />}
-            {activeTab === 'highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
-            {activeTab === 'packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
-            {activeTab === 'notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
+            {safeTab ==='budget'        && isAdult && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}
+            {safeTab ==='food'          && <FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />}
+            {safeTab ==='dining'        && <DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />}
+            {safeTab ==='entertainment' && <EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />}
+            {safeTab ==='foodfav'       && <FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />}
+            {safeTab ==='shopping'      && <ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />}
+            {safeTab ==='highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
+            {safeTab ==='packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
+            {safeTab ==='notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
           </Suspense>
         </motion.div>
       </AnimatePresence>
+
+      {showCoAuthors && voyageId && (
+        <CoAuthorsPanel voyageId={voyageId} onClose={() => setShowCoAuthors(false)} />
+      )}
     </div>
   )
 }

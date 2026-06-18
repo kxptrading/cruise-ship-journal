@@ -119,7 +119,9 @@ export async function exportJournalPdf(userId: string, displayName: string, opts
     return
   }
 
-  // ── Fetch signed URLs for day photos ──────────────────────────────────────
+  // ── Embed day photos as data URLs ─────────────────────────────────────────
+  // Inlined (not remote URLs) so html2canvas can rasterise them without tainting
+  // the canvas — cross-origin <img> would otherwise abort the PDF render.
   type PhotoEntry = { url: string; caption: string }
   type PhotoMap   = Record<string, Record<number, PhotoEntry[]>>
   const photoMap: PhotoMap = {}
@@ -129,11 +131,13 @@ export async function exportJournalPdf(userId: string, displayName: string, opts
       if (!path) return
       const { data: sd } = await supabase.storage.from('daily-photos').createSignedUrl(path, 3600)
       if (!sd?.signedUrl) return
+      const dataUrl = await fetchImageAsDataUrl(sd.signedUrl)
+      if (!dataUrl) return
       const vid = p.voyage_id as string
       const dn  = (p.day_number as number) || 0
       if (!photoMap[vid])     photoMap[vid]     = {}
       if (!photoMap[vid][dn]) photoMap[vid][dn] = []
-      photoMap[vid][dn].push({ url: sd.signedUrl, caption: (p.caption as string) || '' })
+      photoMap[vid][dn].push({ url: dataUrl, caption: (p.caption as string) || '' })
     })
   )
 
@@ -317,12 +321,7 @@ export async function exportJournalPdf(userId: string, displayName: string, opts
   const exportDate = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   const docTitle   = single ? `${coverShip} — Voyage Journal` : `${esc(displayName)}'s Cruise Journal`
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>${docTitle}</title>
-<style>
+  const css = `
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1C2B3A;background:#F4F1EB}
 .cover{position:relative;min-height:100vh;background:#14293F;display:flex;flex-direction:column;justify-content:flex-end;page-break-after:always;overflow:hidden}
@@ -429,10 +428,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
 .bc-sub{font-size:13px;color:rgba(255,255,255,.45);font-style:italic;margin-bottom:48px}
 .bc-foot{font-size:10px;color:rgba(255,255,255,.25);letter-spacing:.22em;text-transform:uppercase}
 @media print{@page{margin:0;size:A4}body{background:#fff}.cover,.back-cover{height:100vh}.chapter-hdr,.stats-row{margin:0 -48px}}
-</style>
-</head>
-<body>
+`
 
+  const contentHtml = `
 <div class="cover">
   ${coverImg ? `<img class="cover-bg" src="${coverImg}" alt="Cover">` : ''}
   <div class="cover-grad"></div>
@@ -457,12 +455,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,san
   <div class="bc-ship">${coverShip}</div>
   <div class="bc-sub">${esc(displayName)}&rsquo;s Cruise Journal &nbsp;&middot;&nbsp; ${data.voyages.length} voyage${data.voyages.length !== 1 ? 's' : ''} &nbsp;&middot;&nbsp; ${totalNights} nights at sea</div>
   <div class="bc-foot">Cruise Ship Journal &nbsp;&middot;&nbsp; ${new Date().getFullYear()}</div>
-</div>
+</div>`
 
-<script>window.onload=()=>setTimeout(()=>window.print(),800)<\/script>
-</body>
-</html>`
+  const filename = (single
+    ? `${(firstV?.ship_name as string) || 'voyage'}-voyage-journal`
+    : `${displayName || 'cruise'}-cruise-journal`
+  ).replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() + '.pdf'
 
+  // Default: render to a real downloadable PDF. Fall back to the print window if
+  // the client-side render fails (e.g. memory pressure on a huge export).
+  try {
+    await downloadKeepsakePdf(contentHtml, css, filename)
+  } catch (err) {
+    console.error('PDF download failed; falling back to print window:', err)
+    openPrintWindow(contentHtml, css, docTitle)
+  }
+}
+
+// ── Output sinks ──────────────────────────────────────────────────────────────
+
+// Render the keepsake HTML into an offscreen node and save it as a real PDF
+// download — no print dialog, no pop-up. html2pdf is dynamically imported so it
+// stays in a lazy chunk rather than the main bundle.
+async function downloadKeepsakePdf(contentHtml: string, css: string, filename: string): Promise<void> {
+  const { default: html2pdf } = await import('html2pdf.js')
+  const PAGE_W = 800
+  const PAGE_H = Math.round(PAGE_W * 297 / 210) // A4 portrait ratio at 800px wide
+
+  const holder = document.createElement('div')
+  holder.style.cssText = `position:fixed;left:-10000px;top:0;width:${PAGE_W}px;background:#F4F1EB;`
+  // @media print doesn't apply to an offscreen canvas render, so the cover's
+  // min-height:100vh would key off the live viewport — pin both covers to a full
+  // page height instead.
+  holder.innerHTML = `<style>${css}
+.cover,.back-cover{min-height:${PAGE_H}px;height:${PAGE_H}px}
+</style>${contentHtml}`
+  document.body.appendChild(holder)
+
+  try {
+    await html2pdf().set({
+      margin:      0,
+      filename,
+      image:       { type: 'jpeg', quality: 0.92 },
+      html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#F4F1EB' },
+      jsPDF:       { unit: 'pt', format: 'a4', orientation: 'portrait' },
+      pagebreak:   { mode: ['css', 'legacy'] },
+    }).from(holder).save()
+  } finally {
+    document.body.removeChild(holder)
+  }
+}
+
+// Fallback: the original print-window flow (vector output via the browser's
+// "Save as PDF"), used only if the client-side render fails.
+function openPrintWindow(contentHtml: string, css: string, docTitle: string): void {
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>${docTitle}</title><style>${css}</style></head><body>${contentHtml}<script>window.onload=()=>setTimeout(()=>window.print(),800)<\/script></body></html>`
   const win = window.open('', '_blank')
   if (!win) { alert('Please allow pop-ups for this site to export as PDF.'); return }
   win.document.write(html)

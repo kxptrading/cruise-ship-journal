@@ -483,7 +483,11 @@ async function downloadKeepsakePdf(contentHtml: string, css: string, filename: s
   const PAGE_H = Math.round(PAGE_W * 297 / 210) // A4 portrait ratio at 800px wide
 
   const holder = document.createElement('div')
-  holder.style.cssText = `position:fixed;left:-10000px;top:0;width:${PAGE_W}px;background:#F4F1EB;`
+  // Render in the top-left of the page (NOT off-screen at -10000px — html2canvas
+  // only rasterises content inside the window box, so a far-offscreen element
+  // comes out blank). zIndex:-1 keeps it behind the opaque app shell so it isn't
+  // visible during the ~1-2s render.
+  holder.style.cssText = `position:fixed;left:0;top:0;width:${PAGE_W}px;z-index:-1;background:#F4F1EB;`
   // @media print doesn't apply to an offscreen canvas render, so the cover's
   // min-height:100vh would key off the live viewport — pin both covers to a full
   // page height instead.
@@ -491,6 +495,8 @@ async function downloadKeepsakePdf(contentHtml: string, css: string, filename: s
 .cover,.back-cover{min-height:${PAGE_H}px;height:${PAGE_H}px}
 </style>${contentHtml}`
   document.body.appendChild(holder)
+  // Let layout settle (two frames) before rasterising.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(() => r(null))))
 
   try {
     // `pagebreak` is valid at runtime but missing from html2pdf.js's bundled types.
@@ -498,7 +504,7 @@ async function downloadKeepsakePdf(contentHtml: string, css: string, filename: s
       margin:      0,
       filename,
       image:       { type: 'jpeg', quality: 0.92 },
-      html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#F4F1EB' },
+      html2canvas: { scale: 1.5, useCORS: true, backgroundColor: '#F4F1EB', scrollX: 0, scrollY: 0, windowWidth: PAGE_W },
       jsPDF:       { unit: 'pt', format: 'a4', orientation: 'portrait' },
       pagebreak:   { mode: ['css', 'legacy'] },
     }

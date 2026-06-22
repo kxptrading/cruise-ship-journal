@@ -241,12 +241,12 @@ function LiveCarousel({ mobile, w, items }: { mobile: boolean; w: number; items:
   const cardW: CSSProperties['width'] = mobile ? '86vw' : 560
   const ctxW = mobile ? Math.max(260, Math.round(w * 0.86) - 40) : 520
   return (
-    // scroll-snap improves the native swipe on touch (no effect under the desktop
-    // GSAP pan, where overflow is clipped and the track is transform-driven).
-    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', scrollSnapType: mobile ? 'x mandatory' : undefined, msOverflowStyle: 'none', scrollbarWidth: 'none', maxWidth: mobile ? undefined : 1080, margin: mobile ? undefined : '0 auto' }}>
-      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 14 : 28, padding: mobile ? '8px 16px 26px' : '12px 24px 34px', willChange: 'transform' }}>
+    // Plain horizontal scroll strip. A thin scrollbar + scroll-snap make it clear
+    // the screens scroll sideways and there are more to see.
+    <div data-carousel className="story-gallery" style={{ overflowX: 'auto', overflowY: 'hidden', scrollSnapType: 'x mandatory', scrollbarWidth: 'thin', maxWidth: mobile ? undefined : 1080, margin: mobile ? undefined : '0 auto' }}>
+      <div data-carousel-track style={{ display: 'flex', gap: mobile ? 14 : 28, padding: mobile ? '8px 16px 26px' : '12px 24px 34px' }}>
         {items.map(it => (
-          <div key={it.title} style={{ flexShrink: 0, width: cardW, scrollSnapAlign: mobile ? 'center' : undefined }}>
+          <div key={it.title} style={{ flexShrink: 0, width: cardW, scrollSnapAlign: 'center' }}>
             <PagePreview ctxW={ctxW} mobile={mobile}>{it.node}</PagePreview>
           </div>
         ))}
@@ -392,12 +392,17 @@ export default function LandingPage() {
             </ul>
           </div>
 
-          {/* Feed preview — real FeedItem cards (family & friends), static.
-              On desktop the viewport is fixed-height and the track is scrubbed
-              vertically while the section is pinned (set up in the effect). */}
-          <div data-feed-viewport style={{ position: 'relative', maxWidth: 480, width: '100%', marginInline: mobile ? 'auto' : 0 }}>
-            <div data-feed-track style={{ pointerEvents: 'none', display: 'flex', flexDirection: 'column', gap: 14, willChange: 'transform' }}>
-              {[...PREVIEW_FEED, ...PREVIEW_FEED_FRIENDS].slice(0, mobile ? 3 : 6).map(item => <FeedItem key={item.id} item={item} />)}
+          {/* Feed preview — real FeedItem cards (family & friends) in a fixed-height
+              scroll window, so visitors can scroll through the posts. */}
+          <div
+            data-feed-viewport
+            style={{
+              position: 'relative', maxWidth: 480, width: '100%', marginInline: mobile ? 'auto' : 0,
+              height: mobile ? 380 : 460, overflowY: 'auto', borderRadius: 20, scrollbarWidth: 'thin',
+            }}
+          >
+            <div data-feed-track style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {[...PREVIEW_FEED, ...PREVIEW_FEED_FRIENDS].map(item => <FeedItem key={item.id} item={item} />)}
             </div>
           </div>
         </div>

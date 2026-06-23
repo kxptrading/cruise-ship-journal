@@ -7,6 +7,7 @@ import type {
   FoodFavourites, Highlights, Budget, BudgetItem, Shopping, ShoppingItem,
   Packing, Note,
 } from '../types'
+import type { CanvasItem } from '../sections/dailylog/canvasTypes'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Inline DB row types — one per domain. These reflect the actual Postgres
@@ -66,6 +67,7 @@ interface DailyLogRow {
   best_moment?:   string | null
   rating?:        number | null
   is_public?:     boolean | null
+  canvas?:        CanvasItem[] | null
 }
 
 interface FoodLogRow {
@@ -156,6 +158,9 @@ interface NoteRow {
   id?:      string | null
   title?:   string | null
   content?: string | null
+  x_pct?:   number | null
+  y?:       number | null
+  color?:   string | null
 }
 
 
@@ -265,6 +270,7 @@ export function fromDbDailyLogs(rows: DailyLogRow[]): DailyLog[] {
       bestMoment:    row.best_moment   ?? '',
       rating:        row.rating        ?? 0,
       isPublic:      row.is_public     ?? false,
+      canvas:        row.canvas        ?? [],
     }))
 }
 
@@ -288,6 +294,7 @@ export function toDbDailyLogs(voyageId: string, arr: DailyLog[]) {
     best_moment:   day.bestMoment    || null,
     rating:        day.rating        || null,
     is_public:     day.isPublic      ?? false,
+    canvas:        day.canvas        ?? null,
   }))
 }
 
@@ -518,6 +525,9 @@ export function fromDbNotes(rows: NoteRow[]): Note[] {
     id:      r.id      ?? crypto.randomUUID(),
     title:   r.title   ?? '',
     content: r.content ?? '',
+    xPct:    r.x_pct   ?? undefined,
+    y:       r.y       ?? undefined,
+    color:   r.color   ?? undefined,
   }))
 }
 
@@ -527,5 +537,8 @@ export function toDbNotes(voyageId: string, arr: Note[]) {
     voyage_id: voyageId,
     title:     n.title   || null,
     content:   n.content || null,
+    x_pct:     n.xPct ?? null,
+    y:         n.y    ?? null,
+    color:     n.color || null,
   }))
 }

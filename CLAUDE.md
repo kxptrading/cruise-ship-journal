@@ -220,7 +220,7 @@ photos         id, voyage_id, day_number, storage_path, caption, created_at
 | dashboard | Dashboard | — | Built — hero, 6 metrics, timeline, budget breakdown |
 | voyage | Voyage Details | `02_voyage_details.pdf` | Built |
 | itinerary | Itinerary | `04_itinerary_overview.pdf` | Built |
-| daily | Daily Log | `05_daily_log_page_a.pdf` + `06_daily_log_page_b.pdf` | Built |
+| daily | Daily Log | `05_daily_log_page_a.pdf` + `06_daily_log_page_b.pdf` | **Narrative journal page** — `sections/dailylog/JournalEntry.tsx`: warm serif prose blocks + inline photos in an ordered top-to-bottom flow (no drag), gentle prompt chips that append a seeded paragraph, weather/rating in a slim header. Body stored in `daily_logs.canvas` (jsonb, `CanvasItem[]` in array order); `deriveStructured.ts` write-through keeps the structured columns (→ dashboard/metrics/export) in sync. Rides the existing `dailyLogs` offline path. Old form kept at `sections/DailyLog.tsx` (landing preview). |
 | food | Food Log | `07_food_log.pdf` + `07_food_log_b.pdf` | Built |
 | dining | Restaurant Log | `10_dining_log.pdf` | Built |
 | entertainment | Entertainment Log | — | Built |
@@ -229,7 +229,7 @@ photos         id, voyage_id, day_number, storage_path, caption, created_at
 | shopping | Shopping Log | `11_souvenirs_shopping.pdf` | Built |
 | highlights | Highlights | `12_cruise_highlights.pdf` | Built |
 | packing | Packing List | `03_packing_checklist.pdf` | Built |
-| notes | Notes | `13_notes.pdf` | Built |
+| notes | Notes | `13_notes.pdf` | **Draggable sticky board** — `sections/notes/NotesBoard.tsx` + `DraggableSticky.tsx`: each sticky is a `notes` row carrying board position (`x_pct`/`y`) + `color`, so drag = a row update and it rides the co-author-safe per-row notes sync. Text-only v1. Old grid kept at `sections/Notes.tsx` for the landing preview. |
 
 ---
 

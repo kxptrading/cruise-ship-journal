@@ -57,7 +57,7 @@ import PostList       from '@/features/posts/PostList'
 // Journal section components — lazy-loaded per-tab
 // Each chunk is only downloaded when the user clicks the corresponding tab.
 const VoyageForm     = lazy(() => import('@/features/voyages/VoyageForm'))
-const DailyLog       = lazy(() => import('@/sections/DailyLog'))
+const DailyLog       = lazy(() => import('@/sections/dailylog/JournalEntry'))
 const ItinerarySection = lazy(() => import('@/features/voyages/ItineraryEditor'))
 const BudgetTracker  = lazy(() => import('@/sections/BudgetTracker'))
 const FoodLog        = lazy(() => import('@/sections/FoodLog'))
@@ -67,7 +67,7 @@ const FoodFavourites = lazy(() => import('@/sections/FoodFavourites'))
 const ShoppingLog    = lazy(() => import('@/sections/ShoppingLog'))
 const Highlights     = lazy(() => import('@/sections/Highlights'))
 const PackingList    = lazy(() => import('@/sections/PackingList'))
-const Notes          = lazy(() => import('@/sections/Notes'))
+const Notes          = lazy(() => import('@/sections/notes/NotesBoard'))
 const MemoryGallery  = lazy(() => import('@/features/voyages/MemoryGallery'))
 
 // ── Tab definitions ───────────────────────────────────────────────────────────

@@ -65,6 +65,7 @@ export interface DailyLog {
   bestMoment:    string
   rating:        number    // 0–5
   isPublic:      boolean
+  canvas?:       import('./sections/dailylog/canvasTypes').CanvasItem[]  // scrapbook layer
 }
 
 // ── Food Log ──────────────────────────────────────────────────────────────────
@@ -175,6 +176,9 @@ export interface Note {
   id:      string
   title:   string
   content: string
+  xPct?:   number   // board position: 0–1 fraction of board width
+  y?:      number   // board position: px from top
+  color?:  string   // sticky-paper colour
 }
 
 // ── Aggregated voyage data (shape returned by useVoyageData) ──────────────────

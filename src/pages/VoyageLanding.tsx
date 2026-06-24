@@ -10,7 +10,7 @@ import { lazy, Suspense } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen, MessageCircle } from 'lucide-react'
-import { NAVY2, WHITE, GOLD, MUTED, FONT_BODY, BP } from '../constants'
+import { NAVY2, WHITE, GOLD, FONT_BODY, BP } from '../constants'
 import { useW } from '../context'
 import { SkeletonCard } from '../components/ui/skeleton'
 import type { VoyageData } from '../types'
@@ -49,11 +49,12 @@ export default function VoyageLanding({ data, onNav }: Props) {
   )
 
   return (
-    <div>
-      {/* Back to hub */}
+    <div style={{ position: 'relative' }}>
+      {/* Back to hub — floats over the cover so the banner sits flush under the
+          top bar (no cream gap). Pill styling keeps it legible on any cover photo. */}
       <button
         onClick={() => navigate('/voyages')}
-        style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY, marginBottom: 14, padding: 0 }}
+        style={{ position: 'absolute', top: 14, left: 14, zIndex: 10, background: 'rgba(0,0,0,0.32)', border: 'none', borderRadius: 999, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: WHITE, fontFamily: FONT_BODY, padding: '7px 14px', backdropFilter: 'blur(6px)' }}
       >
         <ArrowLeft size={15} /> My Voyages
       </button>

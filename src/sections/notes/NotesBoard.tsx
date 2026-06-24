@@ -28,6 +28,9 @@ interface Props {
 // Sticky-paper colours (cream/gold-leaning palette).
 const COLORS = ['#FFF7D6', '#FDE9E4', '#E4F0FD', '#E8F5E9', '#F3E9FD', '#FFF1E6']
 
+// Cap notes per board to keep the canvas usable and bound storage.
+const MAX_NOTES = 15
+
 // Stable gentle tilt derived from the note id (no DB column needed).
 const rotationFor = (id: string) => ((id.charCodeAt(0) + id.charCodeAt(id.length - 1)) % 7) - 3
 
@@ -75,7 +78,10 @@ export default function NotesBoard({ data, onChange }: Props) {
 
   const cascade = (n: number) => ({ xPct: (mobile ? 0.06 : 0.10) + (n % 3) * 0.05, y: 20 + (n % 6) * 28 })
 
+  const atLimit = data.length >= MAX_NOTES
+
   const addNote = () => {
+    if (atLimit) return
     const { xPct, y } = cascade(data.length)
     const note: Note = { id: crypto.randomUUID(), title: '', content: '', xPct, y, color: COLORS[data.length % COLORS.length] }
     onChange([...data, note])
@@ -105,10 +111,14 @@ export default function NotesBoard({ data, onChange }: Props) {
     <div style={{ fontFamily: FONT_BODY }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <PgHdr icon="📌" title="Notes" sub="Pin notes & photos — tips, reminders, things to journal later. Drag to arrange." />
-        <button onClick={addNote}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, background: NAVY2, color: WHITE, border: 'none', borderRadius: 10, padding: '8px 14px', cursor: 'pointer', fontSize: 13, fontWeight: 700, fontFamily: FONT_BODY }}>
-          <Plus size={15} /> Add note
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>{data.length}/{MAX_NOTES}</span>
+          <button onClick={addNote} disabled={atLimit}
+            title={atLimit ? `Limit of ${MAX_NOTES} notes reached` : 'Add a note'}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, background: NAVY2, color: WHITE, border: 'none', borderRadius: 10, padding: '8px 14px', cursor: atLimit ? 'not-allowed' : 'pointer', opacity: atLimit ? 0.45 : 1, fontSize: 13, fontWeight: 700, fontFamily: FONT_BODY }}>
+            <Plus size={15} /> Add note
+          </button>
+        </div>
         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
           onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = '' }} />
       </div>

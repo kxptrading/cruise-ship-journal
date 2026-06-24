@@ -82,3 +82,29 @@ export async function deletePhoto(id: string, storagePath: string): Promise<void
 export async function updateCaption(id: string, caption: string): Promise<void> {
   supabase.from('photos').update({ caption }).eq('id', id).then(() => {})
 }
+
+// ── Voyage-level (Notes board) images ───────────────────────────────────────────
+// Storage-only: upload to the bucket under a `notes/` folder and return the path +
+// signed URL. Deliberately does NOT insert a `photos` table row — board photos must
+// not appear in the Daily-Log gallery or PDF export (those key off day_number).
+export async function uploadVoyageImage(
+  file: File,
+  { voyageId, userId }: PhotoContext,
+): Promise<{ path: string; url: string }> {
+  const ext  = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+  const id   = `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  const path = `${userId}/${voyageId}/notes/${id}.${ext}`
+  const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type })
+  if (error) throw error
+  return { path, url: await signedUrl(path) }
+}
+
+// Resolve a single board-image path to a signed URL.
+export async function boardPhotoUrl(path: string): Promise<string> {
+  return signedUrl(path)
+}
+
+// Best-effort removal of a board image's storage object (no photos-table row exists).
+export async function removeImage(path: string): Promise<void> {
+  await supabase.storage.from(BUCKET).remove([path]).then(() => {}, () => {})
+}

@@ -176,9 +176,10 @@ export interface Note {
   id:      string
   title:   string
   content: string
-  xPct?:   number   // board position: 0–1 fraction of board width
-  y?:      number   // board position: px from top
-  color?:  string   // sticky-paper colour
+  xPct?:     number   // board position: 0–1 fraction of board width
+  y?:        number   // board position: px from top
+  color?:    string   // sticky-paper colour
+  photoPath?: string  // storage path when this sticky is a photo (not in the photos table)
 }
 
 // ── Aggregated voyage data (shape returned by useVoyageData) ──────────────────

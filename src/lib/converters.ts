@@ -158,9 +158,10 @@ interface NoteRow {
   id?:      string | null
   title?:   string | null
   content?: string | null
-  x_pct?:   number | null
-  y?:       number | null
-  color?:   string | null
+  x_pct?:      number | null
+  y?:          number | null
+  color?:      string | null
+  photo_path?: string | null
 }
 
 
@@ -528,6 +529,7 @@ export function fromDbNotes(rows: NoteRow[]): Note[] {
     xPct:    r.x_pct   ?? undefined,
     y:       r.y       ?? undefined,
     color:   r.color   ?? undefined,
+    photoPath: r.photo_path ?? undefined,
   }))
 }
 
@@ -540,5 +542,6 @@ export function toDbNotes(voyageId: string, arr: Note[]) {
     x_pct:     n.xPct ?? null,
     y:         n.y    ?? null,
     color:     n.color || null,
+    photo_path: n.photoPath || null,
   }))
 }

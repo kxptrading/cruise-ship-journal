@@ -10,7 +10,7 @@ import { lazy, Suspense } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen, MessageCircle } from 'lucide-react'
-import { NAVY2, WHITE, GOLD, FONT_BODY, BP } from '../constants'
+import { WHITE, FONT_BODY, BP } from '../constants'
 import { useW } from '../context'
 import { SkeletonCard } from '../components/ui/skeleton'
 import type { VoyageData } from '../types'
@@ -37,7 +37,6 @@ export default function VoyageLanding({ data, onNav }: Props) {
         label="Open Journal"
         sub="Your day-by-day journal"
         onClick={() => navigate(`/voyages/${voyageId}/journal`)}
-        primary
       />
       <BigButton
         icon={<MessageCircle size={22} strokeWidth={2} />}
@@ -72,20 +71,20 @@ export default function VoyageLanding({ data, onNav }: Props) {
   )
 }
 
-function BigButton({ icon, label, sub, onClick, primary }: { icon: React.ReactNode; label: string; sub: string; onClick: () => void; primary?: boolean }) {
+function BigButton({ icon, label, sub, onClick }: { icon: React.ReactNode; label: string; sub: string; onClick: () => void }) {
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -3, background: 'rgba(255,255,255,0.2)' }}
       whileTap={{ scale: 0.98 }}
       style={{
         display: 'flex', alignItems: 'center', gap: 14, textAlign: 'left', cursor: 'pointer',
-        border: primary ? 'none' : '1.5px solid rgba(255,255,255,0.6)',
-        background: primary ? GOLD : 'rgba(255,255,255,0.12)',
-        color: primary ? NAVY2 : WHITE,
+        border: '1.5px solid rgba(255,255,255,0.6)',
+        background: 'rgba(255,255,255,0.12)',
+        color: WHITE,
         borderRadius: 16, padding: '16px 20px', fontFamily: FONT_BODY,
-        backdropFilter: primary ? undefined : 'blur(6px)',
-        boxShadow: primary ? '0 6px 20px rgba(0,0,0,0.25)' : 'none',
+        backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)',
+        boxShadow: 'none',
       }}
     >
       <span style={{ flexShrink: 0, display: 'flex' }}>{icon}</span>

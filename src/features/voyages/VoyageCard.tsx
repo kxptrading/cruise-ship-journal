@@ -7,10 +7,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, MUTED, WHITE, GOLD, BORDER, FONT_DISPLAY, FONT_BODY, TEAL, ROSE } from '@/constants'
 import FE from '@/components/FE'
-import { Trash2, AlertTriangle, Users } from 'lucide-react'
+import { Trash2, AlertTriangle, Users, Pencil } from 'lucide-react'
 import { useDeleteVoyage } from './hooks'
 import type { VoyageRow } from './hooks'
 
@@ -42,8 +43,16 @@ const STATUS_LABEL: Record<string, string> = { upcoming: 'Upcoming', active: 'Ac
 const STATUS_COLOR: Record<string, string> = { upcoming: NAVY2, active: GOLD, completed: TEAL }
 
 export default function VoyageCard({ voyage, postCount, onClick }: Props) {
+  const navigate                = useNavigate()
   const deleteVoyage            = useDeleteVoyage()
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // Edit the voyage's details (ship, dates, cabin, companions…) post-creation.
+  // Owner only; opens the voyage editor without triggering the card's navigation.
+  const handleEdit = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigate(`/voyages/${voyage.id}/edit`)
+  }
 
   const status    = voyageStatus(voyage.departure_date, voyage.return_date)
   const statusCol = STATUS_COLOR[status]
@@ -161,6 +170,18 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
               <Users size={12} /> Co-authoring
             </span>
           ) : (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {!confirmDelete && (
+            <button
+              onClick={handleEdit}
+              title="Edit voyage details"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8, fontSize: 12, fontFamily: FONT_BODY }}
+              onMouseEnter={e => { e.currentTarget.style.color = NAVY2; e.currentTarget.style.background = '#F4F3EF' }}
+              onMouseLeave={e => { e.currentTarget.style.color = MUTED; e.currentTarget.style.background = 'none' }}
+            >
+              <Pencil size={13} /> Edit
+            </button>
+          )}
           <AnimatePresence mode="wait">
             {confirmDelete ? (
               <motion.div
@@ -205,6 +226,7 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
               </motion.button>
             )}
           </AnimatePresence>
+          </div>
           )}
         </div>
       </div>

@@ -15,7 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useLayoutEffect, useRef, useState, useEffect, useMemo } from 'react'
-import type { CSSProperties } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { gsap, ScrollTrigger, SCROLLER, prefersReducedMotion } from '../lib/gsap'
 import {
@@ -38,6 +38,7 @@ interface Props {
   diningLog:  DiningEntry[]
   onNav:      (section: string) => void
   onViewDay?: (dayIndex: number) => void
+  heroActions?: ReactNode   // rendered on the cover (e.g. Open Journal / Open Feed)
 }
 
 // Full-bleed helper: escape the centered 900px column + page padding in App.tsx.
@@ -54,7 +55,7 @@ function formatDate(iso: string): string {
   } catch { return iso }
 }
 
-export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, foodLogs, diningLog, onNav, onViewDay }: Props) {
+export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, foodLogs, diningLog, onNav, onViewDay, heroActions }: Props) {
   const w        = useW()
   const voyageId = useVoyageId()
   const mobile   = w < BP.mobile
@@ -121,6 +122,17 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
       .filter(r => { const k = r.venue.toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true })
       .slice(0, 4)
   }, [foodLogs, diningLog])
+
+  // Food photos across the food log — the centrepiece of "The Table" chapter.
+  const foodPhotos = useMemo(() => {
+    const out: { url: string; venue: string; what: string; rating: number }[] = []
+    for (const f of foodLogs) {
+      for (const path of f.photos ?? []) {
+        if (path) out.push({ url: publicUrl(path), venue: f.venue || '', what: f.what || f.standout || '', rating: f.rating || 0 })
+      }
+    }
+    return out
+  }, [foodLogs])
 
   const hasVoyage = !!(voyage.shipName || voyage.departureDate)
   const tod       = getTimeOfDay()
@@ -261,6 +273,11 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
               <div style={{ marginTop: 10, ...eyebrow, fontSize: 11, color: 'rgba(255,255,255,0.85)' }}>
                 {voyagePct >= 100 ? 'Voyage complete' : currentDay ? `Day ${currentDay} of ${nights}` : `${nights} nights at sea`}
               </div>
+            </div>
+          )}
+          {heroActions && (
+            <div style={{ marginTop: mobile ? 30 : 38, maxWidth: 520, marginInline: 'auto' }}>
+              {heroActions}
             </div>
           )}
         </div>
@@ -424,6 +441,53 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
                 <figcaption style={{ position: 'absolute', left: 16, bottom: 14, display: 'flex', gap: 8, alignItems: 'baseline', ...caption, fontStyle: 'normal', textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>
                   <span style={{ color: GOLD, fontWeight: 700 }}>{String(i + 1).padStart(2, '0')}</span>
                   <span style={{ color: 'rgba(255,255,255,0.75)' }}>/ {String(Math.min(photoUrls.length, 8)).padStart(2, '0')}</span>
+                </figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ─────────────── CHAPTER — the table (food photos) ─────────────── */}
+      {foodPhotos.length > 0 && (
+        <section data-scene style={{ ...fullBleed, background: '#1A1410', color: WHITE, padding: mobile ? '80px 0' : '140px 0', overflow: 'hidden' }}>
+          <div data-parallax="16" aria-hidden style={{ position: 'absolute', top: '-4%', left: mobile ? -30 : 24, fontFamily: FONT_DISPLAY, fontSize: mobile ? 180 : 320, color: 'rgba(255,255,255,0.035)', lineHeight: 1, pointerEvents: 'none', userSelect: 'none' }}>
+            {foodPhotos.length}
+          </div>
+          <div style={{ ...col, position: 'relative' }}>
+            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter — The Table</div>
+            <h2 style={{ ...headline, color: WHITE }}>Every dish worth remembering</h2>
+            <p style={{ ...standfirst, color: 'rgba(255,255,255,0.85)' }}>
+              The flavours of the voyage — from the buffet at dawn to the late, candlelit plates.
+            </p>
+          </div>
+          <div
+            data-reveal
+            style={{
+              marginTop: mobile ? 36 : 56, display: 'grid', gap: mobile ? 12 : 16,
+              gridTemplateColumns: mobile ? '1fr 1fr' : 'repeat(3, 1fr)',
+              padding: mobile ? '0 22px' : '0 6vw',
+            }}
+          >
+            {foodPhotos.slice(0, 9).map((p, i) => (
+              <figure
+                key={p.url + i}
+                style={{
+                  position: 'relative', margin: 0, borderRadius: 14, overflow: 'hidden',
+                  aspectRatio: '1 / 1', boxShadow: '0 12px 30px rgba(0,0,0,0.45)',
+                  backgroundImage: `url(${p.url})`, backgroundSize: 'cover', backgroundPosition: 'center',
+                }}
+              >
+                {/* gradient + caption */}
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, transparent 45%, rgba(0,0,0,0.72) 100%)' }} />
+                <figcaption style={{ position: 'absolute', left: 12, right: 12, bottom: 11 }}>
+                  {p.venue && <div style={{ fontFamily: FONT_DISPLAY, fontSize: mobile ? 15 : 18, color: WHITE, lineHeight: 1.2, textShadow: '0 1px 6px rgba(0,0,0,0.6)' }}>{p.venue}</div>}
+                  {p.what && <div style={{ ...caption, fontStyle: 'normal', color: 'rgba(255,255,255,0.8)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.what}</div>}
+                  {p.rating > 0 && (
+                    <div style={{ display: 'inline-flex', gap: 2, marginTop: 5 }}>
+                      {[1, 2, 3, 4, 5].map(n => <Star key={n} size={11} fill={n <= p.rating ? GOLD : 'none'} color={GOLD} strokeWidth={1.5} />)}
+                    </div>
+                  )}
                 </figcaption>
               </figure>
             ))}

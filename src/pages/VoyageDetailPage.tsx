@@ -47,7 +47,7 @@ import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { FADE_UP } from '@/lib/motion'
 import FE from '@/components/FE'
-import { ArrowLeft, Pencil, Plus, Download, Users } from 'lucide-react'
+import { ArrowLeft, Plus, Download, Users } from 'lucide-react'
 import CoAuthorsPanel from '@/features/voyages/CoAuthorsPanel'
 import { useLeaveVoyage } from '@/features/voyages/coauthors'
 import type { VoyageData } from '@/types'
@@ -56,7 +56,6 @@ import PostList       from '@/features/posts/PostList'
 
 // Journal section components — lazy-loaded per-tab
 // Each chunk is only downloaded when the user clicks the corresponding tab.
-const VoyageForm     = lazy(() => import('@/features/voyages/VoyageForm'))
 const DailyLog       = lazy(() => import('@/sections/dailylog/JournalEntry'))
 const ItinerarySection = lazy(() => import('@/features/voyages/ItineraryEditor'))
 const BudgetTracker  = lazy(() => import('@/sections/BudgetTracker'))
@@ -71,16 +70,15 @@ const Notes          = lazy(() => import('@/sections/notes/NotesBoard'))
 const MemoryGallery  = lazy(() => import('@/features/voyages/MemoryGallery'))
 
 // ── Tab definitions ───────────────────────────────────────────────────────────
-// 'posts' is the default tab (index view). Journal sections and voyage details follow.
+// 'daily' (Daily Log) is the default/first tab — it's where "Open Journal" lands.
 
 type Tab = 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
            'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes'
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
-  { id: 'voyage',        label: 'Details',       emoji: '🚢' },
+  { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
   { id: 'posts',         label: 'Posts',         emoji: '📝' },
   { id: 'gallery',       label: 'Gallery',       emoji: '📸' },
-  { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
   { id: 'itinerary',     label: 'Itinerary',     emoji: '🗺️' },
   { id: 'budget',        label: 'Budget',        emoji: '💳' },
   { id: 'food',          label: 'Food Log',      emoji: '🍽️' },
@@ -150,7 +148,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   const tabParam   = searchParams.get('tab') as Tab | null
   const validTabs  = new Set(TABS.map(t => t.id))
   const [activeTab, setActiveTab] = useState<Tab>(
-    tabParam && validTabs.has(tabParam) ? tabParam : 'posts'
+    tabParam && validTabs.has(tabParam) ? tabParam : 'daily'
   )
 
   // Sync activeTab when ?tab= changes (e.g. user clicks a different Sidebar link
@@ -197,7 +195,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
 
   // Clamp the active tab to one the current user can actually see (e.g. a
   // co-author deep-linked to ?tab=daily falls back to Posts).
-  const safeTab: Tab = visibleTabs.some(t => t.id === activeTab) ? activeTab : 'posts'
+  const safeTab: Tab = visibleTabs.some(t => t.id === activeTab) ? activeTab : 'daily'
 
   return (
     <div>
@@ -227,21 +225,13 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
               <Download size={14} /> {exporting ? 'Preparing…' : 'Export'}
             </button>
             {isOwner ? (
-              <>
-                <button
-                  onClick={() => setShowCoAuthors(true)}
-                  title="Manage co-authors"
-                  style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
-                >
-                  <Users size={14} /> Co-authors
-                </button>
-                <button
-                  onClick={() => navigate(`/voyages/${voyageId}/edit`)}
-                  style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
-                >
-                  <Pencil size={14} /> Edit
-                </button>
-              </>
+              <button
+                onClick={() => setShowCoAuthors(true)}
+                title="Manage co-authors"
+                style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: MUTED, fontFamily: FONT_BODY }}
+              >
+                <Users size={14} /> Co-authors
+              </button>
             ) : (
               <button
                 onClick={async () => {
@@ -352,10 +342,6 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
           transition={{ duration: 0.18 }}
         >
           <Suspense fallback={<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}><SkeletonCard /><SkeletonCard /></div>}>
-            {/* 'voyage' tab — Voyage Details form (default landing tab) */}
-            {safeTab ==='voyage' && (
-              <VoyageForm data={data.voyage} onChange={v => update('voyage', v)} />
-            )}
             {/* 'posts' tab — fully React Query, self-fetching via PostList */}
             {safeTab ==='posts' && voyageId && (
               <PostList voyageId={voyageId} />

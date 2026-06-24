@@ -46,9 +46,7 @@ import { useUnreadCounts }  from './hooks/useUnreadCounts'
 import { processSyncQueue } from './services/syncService'
 import { retryFailed }      from './db/syncQueue'
 // Section components — all lazy-loaded so the initial bundle is just the shell
-const VoyageStoryPage  = lazy(() => import('./pages/VoyageStoryPage'))
 const Feed             = lazy(() => import('./pages/FeedPage'))
-const DayDetail        = lazy(() => import('./sections/DayDetail'))
 const VoyageProfile    = lazy(() => import('./features/voyages/VoyageProfile'))
 // VoyageDetails / Itinerary / DailyLog etc. are no longer top-level routes —
 // they are tabs inside VoyageDetailPage. Lazy imports kept for VoyageDetailPage.
@@ -70,6 +68,8 @@ const GalleryPage      = lazy(() => import('./pages/GalleryPage'))
 const SearchPage       = lazy(() => import('./pages/SearchPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
+const VoyageLanding    = lazy(() => import('./pages/VoyageLanding'))
+const VoyageFeedPage   = lazy(() => import('./pages/VoyageFeedPage'))
 const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
 const PostEditorPage   = lazy(() => import('./pages/PostEditorPage'))
 const PostDetailPage   = lazy(() => import('./pages/PostDetailPage'))
@@ -197,8 +197,6 @@ export default function App() {
   // Derive section from URL path: /daily → 'daily', / → 'dashboard'
   const section      = location.pathname.slice(1) || 'dashboard'
 
-  const [selectedDay,  setSelectedDay]  = useState<number | null>(null)
-  const [dailyJumpDay, setDailyJumpDay] = useState<number | null>(null)
   const [feedFriend,   setFeedFriend]   = useState<FeedFriend | null>(null)
 
   // ── Toast ───────────────────────────────────────────────────────────────────
@@ -301,17 +299,13 @@ export default function App() {
     const isNew    = urlId === 'new'
     if (urlId && !isNew && voyageId && urlId !== voyageId) {
       switchVoyageData(urlId)
-      setSelectedDay(null)
-      setDailyJumpDay(null)
     }
   }, [location.pathname, voyageId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Wrap switchVoyage (used by VoyageProfile voyage-switcher) to also navigate home
+  // Switching the active voyage opens that cruise's journal.
   const switchVoyage = (newId: string) => {
     switchVoyageData(newId)
-    navigate('/')
-    setSelectedDay(null)
-    setDailyJumpDay(null)
+    navigate(`/voyages/${newId}`)
   }
 
   // Wrap createVoyage to inject session.user.id
@@ -356,18 +350,18 @@ export default function App() {
 
   const navClick = (id: string) => {
     if (id === 'dashboard') {
-      navigate('/')
+      // "Home" / the Deck Days logo → the My Voyages hub (your shelf of cruises),
+      // not a single voyage. Each cruise is opened from there.
+      navigate('/voyages')
     } else if (JOURNAL_TABS.has(id) && voyageId) {
       // Map 'voyage' (old Voyage Details route) to the itinerary tab
       const tab = id === 'voyage' ? 'itinerary' : id
-      navigate(`/voyages/${voyageId}?tab=${tab}`)
+      navigate(`/voyages/${voyageId}/journal?tab=${tab}`)
     } else if (JOURNAL_TABS.has(id)) {
       navigate('/voyages')
     } else {
       navigate('/' + id)
     }
-    setSelectedDay(null)
-    if (id !== 'daily') setDailyJumpDay(null)
   }
 
   // ── Layout values ───────────────────────────────────────────────────────────
@@ -532,10 +526,16 @@ export default function App() {
                 <Route path="/voyages/:voyageId/posts/new"         element={<PostComposerPage />} />
                 <Route path="/voyages/:voyageId/posts/:postId/edit" element={<PostEditorPage />} />
                 <Route path="/voyages/:voyageId/posts/:postId"     element={<PostDetailPage />} />
-                {/* VoyageDetailPage receives data+update so it can pass them to
-                    legacy journal-section tabs without those tabs needing to
-                    re-fetch data they already have from useVoyageData. */}
-                <Route path="/voyages/:voyageId"   element={
+                {/* Voyage sub-landing: two big entries (Open Journal / Open Feed)
+                    over the scroll-driven story. */}
+                <Route path="/voyages/:voyageId" element={
+                  <VoyageLanding data={data} onNav={navClick} />
+                } />
+                {/* This voyage's social feed. */}
+                <Route path="/voyages/:voyageId/feed" element={<VoyageFeedPage />} />
+                {/* The tabbed journal. Receives data+update so it can pass them to
+                    legacy journal-section tabs without re-fetching. */}
+                <Route path="/voyages/:voyageId/journal" element={
                   <VoyageDetailPage
                     data={data}
                     update={update}
@@ -545,17 +545,9 @@ export default function App() {
                   />
                 } />
 
-                {/* ── Legacy section routes (preserved during migration) ── */}
-                <Route path="/" element={
-                  selectedDay === null
-                    ? <VoyageStoryPage
-                        voyage={data.voyage} itinerary={data.itinerary}
-                        dailyLogs={data.dailyLogs} budget={data.budget}
-                        foodLogs={data.foodLogs} diningLog={data.diningLog}
-                        onNav={navClick} onViewDay={setSelectedDay}
-                      />
-                    : <DayDetail dayIndex={selectedDay} log={data.dailyLogs[selectedDay] || {}} itinerary={data.itinerary} onBack={() => setSelectedDay(null)} onEdit={() => { setDailyJumpDay(selectedDay); setSelectedDay(null); navClick('daily') }} />
-                } />
+                {/* Home = the My Voyages hub (your shelf of cruises). A specific
+                    cruise opens at /voyages/:id. */}
+                <Route path="/" element={<Navigate to="/voyages" replace />} />
                 <Route path="/feed"    element={<Feed />} />
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/search"  element={<SearchPage />} />

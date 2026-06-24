@@ -238,6 +238,9 @@ export default function App() {
       // Clear cached voyage ID on sign-in so a different user on the same
       // device never accidentally loads another user's voyage.
       if (event === 'SIGNED_IN') localStorage.removeItem('csj-activeVoyageId')
+      // On sign-out, return to the public landing page (otherwise a deep path like
+      // /voyages/:id would fall through to the logged-out catch-all = LoginPage).
+      if (event === 'SIGNED_OUT') navigate('/')
       // PASSWORD_RECOVERY fires when the user clicks the reset link in their email.
       // Navigate them to the set-new-password form before updating session state.
       if (event === 'PASSWORD_RECOVERY') navigate('/update-password')

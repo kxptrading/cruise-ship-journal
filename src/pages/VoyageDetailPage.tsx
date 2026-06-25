@@ -59,10 +59,8 @@ import PostList       from '@/features/posts/PostList'
 const DailyLog       = lazy(() => import('@/sections/dailylog/JournalEntry'))
 const ItinerarySection = lazy(() => import('@/features/voyages/ItineraryEditor'))
 const BudgetTracker  = lazy(() => import('@/sections/BudgetTracker'))
-const FoodLog        = lazy(() => import('@/sections/FoodLog'))
-const DiningLog      = lazy(() => import('@/sections/DiningLog'))
+const FoodHub        = lazy(() => import('@/sections/food/FoodHub'))
 const EntertainmentLog = lazy(() => import('@/sections/EntertainmentLog'))
-const FoodFavourites = lazy(() => import('@/sections/FoodFavourites'))
 const ShoppingLog    = lazy(() => import('@/sections/ShoppingLog'))
 const Highlights     = lazy(() => import('@/sections/Highlights'))
 const PackingList    = lazy(() => import('@/sections/PackingList'))
@@ -81,10 +79,8 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'gallery',       label: 'Gallery',       emoji: '📸' },
   { id: 'itinerary',     label: 'Itinerary',     emoji: '🗺️' },
   { id: 'budget',        label: 'Budget',        emoji: '💳' },
-  { id: 'food',          label: 'Food Log',      emoji: '🍽️' },
-  { id: 'dining',        label: 'Dining',        emoji: '🍴' },
+  { id: 'food',          label: 'Food & Dining', emoji: '🍽️' },
   { id: 'entertainment', label: 'Entertainment', emoji: '🎭' },
-  { id: 'foodfav',       label: 'Favourites',    emoji: '💛' },
   { id: 'shopping',      label: 'Shopping',      emoji: '🛍️' },
   { id: 'highlights',    label: 'Highlights',    emoji: '🏆' },
   { id: 'packing',       label: 'Packing',       emoji: '🧳' },
@@ -355,10 +351,8 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
             {safeTab ==='itinerary'     && <ItinerarySection data={data.itinerary} onChange={v => update('itinerary', v)} />}
             {/* Budget tab is hidden unless isAdult is true (controlled by profile.age) */}
             {safeTab ==='budget'        && isAdult && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}
-            {safeTab ==='food'          && <FoodLog data={data.foodLogs} onChange={v => update('foodLogs', v)} />}
-            {safeTab ==='dining'        && <DiningLog data={data.diningLog} onChange={v => update('diningLog', v)} />}
+            {safeTab ==='food'          && <FoodHub data={data} update={update} />}
             {safeTab ==='entertainment' && <EntertainmentLog data={data.entertainmentLog} onChange={v => update('entertainmentLog', v)} />}
-            {safeTab ==='foodfav'       && <FoodFavourites data={data.foodFav} onChange={v => update('foodFav', v)} />}
             {safeTab ==='shopping'      && <ShoppingLog data={data.shopping} onChange={v => update('shopping', v)} />}
             {safeTab ==='highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
             {safeTab ==='packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}

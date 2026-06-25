@@ -357,8 +357,11 @@ export default function App() {
       // not a single voyage. Each cruise is opened from there.
       navigate('/voyages')
     } else if (JOURNAL_TABS.has(id) && voyageId) {
-      // Map 'voyage' (old Voyage Details route) to the itinerary tab
-      const tab = id === 'voyage' ? 'itinerary' : id
+      // Map legacy ids to their current tab: 'voyage' → itinerary; the former
+      // dining/favourites sections now live under the merged 'food' tab.
+      const tab = id === 'voyage' ? 'itinerary'
+        : (id === 'dining' || id === 'foodfav') ? 'food'
+        : id
       navigate(`/voyages/${voyageId}/journal?tab=${tab}`)
     } else if (JOURNAL_TABS.has(id)) {
       navigate('/voyages')

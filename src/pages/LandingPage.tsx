@@ -319,6 +319,13 @@ export default function LandingPage() {
 
       {/* ── Hero ───────────────────────────────────────────────── */}
       <section style={{ position: 'relative', background: SEA, color: WHITE, overflow: 'hidden', minHeight: mobile ? 600 : 700, display: 'flex', alignItems: 'center', paddingTop: mobile ? 92 : 110, paddingBottom: 200 }}>
+        {/* Banner background image */}
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/background_banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }} />
+        {/* Theme-colour tint — follows the selected theme via the --t-primary-dk var */}
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--t-primary-dk)', opacity: 0.5, zIndex: 1 }} />
+        {/* Legibility gradient — darker on the left so the headline stays readable
+            whatever the theme's lightness */}
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(7,14,24,0.7) 0%, rgba(7,14,24,0.3) 60%, rgba(7,14,24,0.05) 100%)', zIndex: 1 }} />
         <div data-hero style={{ ...col, position: 'relative', zIndex: 2 }}>
           <div style={{ ...kicker, color: GOLD, marginBottom: 18 }}>The voyage journal</div>
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 'clamp(34px, 10vw, 44px)' : 'clamp(46px, 6vw, 76px)', lineHeight: 1.06, letterSpacing: '-0.01em', maxWidth: 780 }}>

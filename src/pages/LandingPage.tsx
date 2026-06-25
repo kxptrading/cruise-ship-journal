@@ -322,7 +322,7 @@ export default function LandingPage() {
         {/* Banner background image */}
         <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/background_banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }} />
         {/* Theme-colour tint — follows the selected theme via the --t-primary-dk var */}
-        <div style={{ position: 'absolute', inset: 0, background: 'var(--t-primary-dk)', opacity: 0.5, zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--t-primary-dk)', opacity: 0.65, zIndex: 1 }} />
         {/* Legibility gradient — darker on the left so the headline stays readable
             whatever the theme's lightness */}
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(7,14,24,0.7) 0%, rgba(7,14,24,0.3) 60%, rgba(7,14,24,0.05) 100%)', zIndex: 1 }} />

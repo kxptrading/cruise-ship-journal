@@ -85,7 +85,7 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'shopping',      label: 'Shopping',      emoji: '🛍️' },
   { id: 'highlights',    label: 'Highlights',    emoji: '🏆' },
   { id: 'packing',       label: 'Packing',       emoji: '🧳' },
-  { id: 'notes',         label: 'Notes',         emoji: '📓' },
+  { id: 'notes',         label: 'Notes',         emoji: '🗒️' },
 ]
 
 // ── Props ─────────────────────────────────────────────────────────────────────

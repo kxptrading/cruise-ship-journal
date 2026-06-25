@@ -48,6 +48,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { FADE_UP } from '@/lib/motion'
 import FE from '@/components/FE'
 import { ArrowLeft, Plus, Download, Users } from 'lucide-react'
+import JournalDock from '@/components/JournalDock'
 import CoAuthorsPanel from '@/features/voyages/CoAuthorsPanel'
 import { useLeaveVoyage } from '@/features/voyages/coauthors'
 import type { VoyageData } from '@/types'
@@ -290,41 +291,8 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
         </div>
       </motion.div>
 
-      {/* ── Tab bar ────────────────────────────────────────────────────────── */}
-      {/* scrollbarWidth: 'none' hides the tab bar scrollbar on mobile while
-          keeping the overflow-x: auto functional for swipe scrolling. */}
-      <div style={{ display: 'flex', gap: 0, overflowX: 'auto', borderBottom: `1px solid ${BORDER}`, marginBottom: 20, scrollbarWidth: 'none', msOverflowStyle: 'none', position: 'relative' }}>
-        {visibleTabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            style={{
-              background:  'none',
-              border:      'none',
-              // marginBottom: -1 lets the active tab's bottom border overlap the container
-              // border, creating the classic "selected tab" visual.
-              borderBottom: `2px solid ${safeTab ===tab.id ? 'var(--t-primary)' : 'transparent'}`,
-              padding:     w < BP.mobile ? '10px 10px' : '10px 16px',
-              cursor:      'pointer',
-              fontFamily:  FONT_BODY,
-              fontSize:    w < BP.mobile ? 11 : 13,
-              fontWeight:  safeTab ===tab.id ? 700 : 400,
-              color:       safeTab ===tab.id ? 'var(--t-primary)' : MUTED,
-              display:     'flex',
-              flexDirection: 'column',
-              alignItems:  'center',
-              gap:         3,
-              flexShrink:  0,
-              whiteSpace:  'nowrap',
-              transition:  'color 0.15s, border-color 0.15s',
-              marginBottom: -1,
-            }}
-          >
-            <span style={{ fontSize: 16 }}>{tab.emoji}</span>
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      {/* ── Dock (macOS-style, hover-magnifying) ───────────────────────────── */}
+      <JournalDock tabs={visibleTabs} active={safeTab} onSelect={setActiveTab} mobile={w < BP.mobile} />
 
       {/* ── Tab content ────────────────────────────────────────────────────── */}
       {/* AnimatePresence mode="wait" ensures the exiting tab content fades out

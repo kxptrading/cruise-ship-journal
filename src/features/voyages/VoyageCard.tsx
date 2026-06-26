@@ -8,8 +8,8 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
-import { NAVY2, MUTED, WHITE, GOLD, BORDER, FONT_DISPLAY, FONT_BODY, TEAL, ROSE } from '@/constants'
+import { motion } from 'framer-motion'
+import { NAVY2, WHITE, GOLD, FONT_DISPLAY, FONT_BODY, TEAL } from '@/constants'
 import FE from '@/components/FE'
 import { Trash2, AlertTriangle, Users, Pencil } from 'lucide-react'
 import { useDeleteVoyage } from './hooks'
@@ -57,7 +57,6 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
   const status    = voyageStatus(voyage.departure_date, voyage.return_date)
   const statusCol = STATUS_COLOR[status]
   const title     = voyage.ship_name || 'Unnamed Voyage'
-  const subtitle  = [voyage.cruise_line, voyage.departure_date?.slice(0, 4)].filter(Boolean).join(' · ')
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     // Stop the card's onClick (navigation) from firing
@@ -75,159 +74,110 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
     setConfirmDelete(false)
   }
 
+  const cover    = voyage.cover_photo_url
+  const dateLine = [formatDateRange(voyage.departure_date, voyage.return_date), voyage.total_nights ? `${voyage.total_nights} nights` : '']
+    .filter(s => s && s !== 'Dates not set').join(' · ') || 'Dates not set'
+
+  const iconBtn: React.CSSProperties = {
+    background: 'rgba(255,255,255,0.14)', border: 'none', cursor: 'pointer', color: WHITE,
+    display: 'flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26,
+    borderRadius: 7, padding: 0, backdropFilter: 'blur(4px)',
+  }
+
   return (
     <motion.button
       onClick={onClick}
-      whileHover={{ y: -3, boxShadow: '0 8px 28px rgba(0,0,0,0.12)' }}
+      whileHover={{ y: -6, rotate: -0.5, boxShadow: '0 20px 40px rgba(0,0,0,0.30), 0 5px 12px rgba(0,0,0,0.18)' }}
       whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.18 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 22 }}
       style={{
-        background:    WHITE,
-        border:        `1px solid ${confirmDelete ? '#FECACA' : BORDER}`,
-        borderRadius:  18,
-        overflow:      'hidden',
-        textAlign:     'left',
-        cursor:        'pointer',
-        fontFamily:    FONT_BODY,
-        display:       'flex',
-        flexDirection: 'column',
-        boxShadow:     '0 2px 8px rgba(0,0,0,0.05)',
-        width:         '100%',
-        height:        '100%',
-        transition:    'border-color 0.2s',
+        position: 'relative', width: '100%', aspectRatio: '2 / 3',
+        border: 'none', padding: 0, cursor: 'pointer', textAlign: 'left',
+        fontFamily: FONT_BODY, color: WHITE,
+        borderRadius: '3px 11px 11px 3px', overflow: 'hidden',
+        boxShadow: '0 10px 26px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12)',
+        background: cover ? NAVY2 : 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)',
       }}
     >
-      {/* Cover image / gradient */}
-      <div style={{ height: 130, position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-        {voyage.cover_photo_url ? (
-          <img src={voyage.cover_photo_url} alt={title}
-            style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-        ) : (
-          <div style={{
-            width: '100%', height: '100%',
-            background: 'linear-gradient(135deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <FE emoji="🚢" size={48} />
-          </div>
-        )}
-        {/* Status pill */}
-        <div style={{
-          position: 'absolute', top: 10, right: 10,
-          background: statusCol + 'EE', color: status === 'active' ? '#1C2B3A' : WHITE,
-          fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
-          borderRadius: 20, padding: '3px 10px', backdropFilter: 'blur(6px)', fontFamily: FONT_BODY,
-        }}>
-          {STATUS_LABEL[status]}
-        </div>
-        {/* Shared badge — shown when this voyage was shared with you as a co-author */}
-        {voyage.is_shared && (
-          <div style={{
-            position: 'absolute', top: 10, left: 10,
-            background: 'rgba(20,41,63,0.78)', color: WHITE,
-            fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em',
-            borderRadius: 20, padding: '3px 10px', backdropFilter: 'blur(6px)', fontFamily: FONT_BODY,
-            display: 'flex', alignItems: 'center', gap: 4,
-          }}>
-            <Users size={11} /> Shared
-          </div>
-        )}
-        {/* Night count badge */}
-        {voyage.total_nights && (
-          <div style={{
-            position: 'absolute', bottom: 10, left: 12,
-            background: 'rgba(0,0,0,0.5)', color: WHITE, fontSize: 11, fontWeight: 700,
-            borderRadius: 12, padding: '3px 9px', backdropFilter: 'blur(4px)', fontFamily: FONT_BODY,
-          }}>
-            {voyage.total_nights} nights
-          </div>
-        )}
-      </div>
+      {/* Cover artwork */}
+      {cover
+        ? <img src={cover} alt={title} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        : <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.5 }}><FE emoji="🚢" size={56} /></div>}
 
-      {/* Card body */}
-      <div style={{ padding: '14px 16px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <h3 style={{ margin: 0, fontSize: 17, fontWeight: 400, color: NAVY2, fontFamily: FONT_DISPLAY, lineHeight: 1.2 }}>
-          {title}
-        </h3>
-        {subtitle && <div style={{ fontSize: 12, color: MUTED }}>{subtitle}</div>}
-        <div style={{ fontSize: 12, color: MUTED, marginTop: 2 }}>
-          {formatDateRange(voyage.departure_date, voyage.return_date)}
+      {/* Jacket scrim — legibility at top (kicker/status) and bottom (title) */}
+      <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,16,28,0.55) 0%, rgba(8,16,28,0.06) 28%, rgba(8,16,28,0.14) 52%, rgba(8,16,28,0.84) 100%)' }} />
+
+      {/* Page edges (right) */}
+      <div style={{ position: 'absolute', right: 0, top: 5, bottom: 5, width: 5, borderRadius: '0 2px 2px 0',
+        background: 'repeating-linear-gradient(to right, rgba(255,255,255,0.85) 0px, rgba(255,255,255,0.85) 1px, rgba(150,140,120,0.55) 1px, rgba(150,140,120,0.55) 2px)' }} />
+
+      {/* Spine (left binding) */}
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 16,
+        background: 'linear-gradient(to right, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.16) 45%, rgba(255,255,255,0.10) 58%, rgba(0,0,0,0.05) 100%)',
+        boxShadow: 'inset -1px 0 2px rgba(0,0,0,0.25)' }} />
+
+      {/* Content */}
+      <div style={{ position: 'absolute', inset: 0, padding: '15px 15px 15px 26px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+        {/* Top: cruise line + shared / status */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+          <div style={{ minWidth: 0 }}>
+            {voyage.cruise_line && (
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 4px rgba(0,0,0,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                {voyage.cruise_line}
+              </div>
+            )}
+            {voyage.is_shared && (
+              <span style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: WHITE, background: 'rgba(0,0,0,0.42)', borderRadius: 20, padding: '2px 8px' }}>
+                <Users size={10} /> Shared
+              </span>
+            )}
+          </div>
+          <span style={{ flexShrink: 0, background: statusCol + 'EE', color: status === 'active' ? '#1C2B3A' : WHITE, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', borderRadius: 20, padding: '3px 9px', backdropFilter: 'blur(6px)' }}>
+            {STATUS_LABEL[status]}
+          </span>
         </div>
 
-        {/* Footer: post count + delete action */}
-        <div style={{ marginTop: 'auto', paddingTop: 10, borderTop: `1px solid ${BORDER}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <FE emoji="📝" size={13} />
-            <span style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>
+        {/* Bottom: title block */}
+        <div>
+          <h3 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(20px, 2.1vw, 26px)', lineHeight: 1.12, color: WHITE, textShadow: '0 2px 10px rgba(0,0,0,0.6)' }}>
+            {title}
+          </h3>
+          <div style={{ marginTop: 9, height: 2, width: 34, background: GOLD, borderRadius: 2 }} />
+          <div style={{ marginTop: 8, fontSize: 11.5, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+            {dateLine}
+          </div>
+
+          {/* Action row */}
+          <div style={{ marginTop: 12, paddingTop: 10, borderTop: '1px solid rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.82)', fontWeight: 600 }}>
               {postCount > 0 ? `${postCount} post${postCount !== 1 ? 's' : ''}` : 'No posts yet'}
             </span>
-          </div>
 
-          {/* Delete — owner only; two-step confirm. Co-authors leave from the
-              voyage page instead (they can't delete a shared voyage). */}
-          {voyage.is_shared ? (
-            <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY, display: 'flex', alignItems: 'center', gap: 4 }}>
-              <Users size={12} /> Co-authoring
-            </span>
-          ) : (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {!confirmDelete && (
-            <button
-              onClick={handleEdit}
-              title="Edit voyage details"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8, fontSize: 12, fontFamily: FONT_BODY }}
-              onMouseEnter={e => { e.currentTarget.style.color = NAVY2; e.currentTarget.style.background = '#F4F3EF' }}
-              onMouseLeave={e => { e.currentTarget.style.color = MUTED; e.currentTarget.style.background = 'none' }}
-            >
-              <Pencil size={13} /> Edit
-            </button>
-          )}
-          <AnimatePresence mode="wait">
-            {confirmDelete ? (
-              <motion.div
-                key="confirm"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.15 }}
-                style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-              >
-                <span style={{ fontSize: 11, color: '#DC2626', fontWeight: 600, fontFamily: FONT_BODY, display: 'flex', alignItems: 'center', gap: 4 }}>
-                  <AlertTriangle size={12} /> Delete?
+            {voyage.is_shared ? (
+              <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.72)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Users size={11} /> Co-authoring
+              </span>
+            ) : confirmDelete ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 10.5, color: '#FCA5A5', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 3 }}>
+                  <AlertTriangle size={11} /> Delete?
                 </span>
-                <button
-                  onClick={handleConfirmDelete}
-                  disabled={deleteVoyage.isPending}
-                  style={{ background: '#DC2626', color: WHITE, border: 'none', borderRadius: 8, padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: FONT_BODY, opacity: deleteVoyage.isPending ? 0.6 : 1 }}
-                >
+                <button onClick={handleConfirmDelete} disabled={deleteVoyage.isPending}
+                  style={{ background: '#DC2626', color: WHITE, border: 'none', borderRadius: 7, padding: '3px 9px', cursor: 'pointer', fontSize: 10.5, fontWeight: 700, opacity: deleteVoyage.isPending ? 0.6 : 1 }}>
                   {deleteVoyage.isPending ? '…' : 'Yes'}
                 </button>
-                <button
-                  onClick={handleCancelDelete}
-                  style={{ background: 'none', color: MUTED, border: `1px solid ${BORDER}`, borderRadius: 8, padding: '3px 10px', cursor: 'pointer', fontSize: 11, fontFamily: FONT_BODY }}
-                >
+                <button onClick={handleCancelDelete}
+                  style={{ background: 'rgba(255,255,255,0.16)', color: WHITE, border: 'none', borderRadius: 7, padding: '3px 9px', cursor: 'pointer', fontSize: 10.5 }}>
                   No
                 </button>
-              </motion.div>
+              </div>
             ) : (
-              <motion.button
-                key="delete-btn"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={handleDeleteClick}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: MUTED, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 6px', borderRadius: 8, fontSize: 12, fontFamily: FONT_BODY }}
-                onMouseEnter={e => { e.currentTarget.style.color = '#DC2626'; e.currentTarget.style.background = '#FEF2F2' }}
-                onMouseLeave={e => { e.currentTarget.style.color = MUTED; e.currentTarget.style.background = 'none' }}
-                title="Delete voyage"
-              >
-                <Trash2 size={13} />
-                Delete
-              </motion.button>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button onClick={handleEdit} title="Edit voyage details" style={iconBtn}><Pencil size={13} /></button>
+                <button onClick={handleDeleteClick} title="Delete voyage" style={iconBtn}><Trash2 size={13} /></button>
+              </div>
             )}
-          </AnimatePresence>
           </div>
-          )}
         </div>
       </div>
     </motion.button>

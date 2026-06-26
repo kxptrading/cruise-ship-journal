@@ -112,10 +112,10 @@ export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => v
           variants={STAGGER}
           initial="hidden"
           animate="visible"
-          style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gridAutoRows: 'minmax(280px, auto)', gap: 16 }}
+          style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: w < BP.mobile ? 16 : 24, alignItems: 'start' }}
         >
           {voyages.map(voyage => (
-            <motion.div key={voyage.id} variants={FADE_UP} style={{ display: 'flex' }}>
+            <motion.div key={voyage.id} variants={FADE_UP}>
               <VoyageCard
                 voyage={voyage}
                 // postCounts may still be loading — default 0 shows the badge

@@ -111,10 +111,19 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
       <div style={{ position: 'absolute', right: 0, top: 5, bottom: 5, width: 5, borderRadius: '0 2px 2px 0',
         background: 'repeating-linear-gradient(to right, rgba(255,255,255,0.85) 0px, rgba(255,255,255,0.85) 1px, rgba(150,140,120,0.55) 1px, rgba(150,140,120,0.55) 2px)' }} />
 
-      {/* Spine (left binding) */}
-      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 16,
-        background: 'linear-gradient(to right, rgba(0,0,0,0.48) 0%, rgba(0,0,0,0.16) 45%, rgba(255,255,255,0.10) 58%, rgba(0,0,0,0.05) 100%)',
-        boxShadow: 'inset -1px 0 2px rgba(0,0,0,0.25)' }} />
+      {/* ── Spine / binding (left) ─────────────────────────────────────────── */}
+      {/* Curved spine: outer edge in shadow → a lit crown → curving back. */}
+      <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 17,
+        background: 'linear-gradient(to right, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.12) 20%, rgba(255,255,255,0.18) 40%, rgba(255,255,255,0.04) 55%, rgba(0,0,0,0.18) 78%, rgba(0,0,0,0.46) 100%)' }} />
+      {/* Hinge groove where the spine folds into the front cover, with a thin
+          highlight on the cover edge — this fold is what reads as a real book. */}
+      <div style={{ position: 'absolute', left: 17, top: 0, bottom: 0, width: 7,
+        background: 'linear-gradient(to right, rgba(0,0,0,0.50) 0%, rgba(0,0,0,0.14) 42%, rgba(0,0,0,0) 70%, rgba(255,255,255,0.12) 100%)' }} />
+      {/* Head & tail bands (binding ridges top and bottom of the spine) */}
+      <div style={{ position: 'absolute', left: 0, top: 0, width: 17, height: 6, background: 'linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0))' }} />
+      <div style={{ position: 'absolute', left: 0, bottom: 0, width: 17, height: 6, background: 'linear-gradient(rgba(0,0,0,0), rgba(0,0,0,0.5))' }} />
+      {/* Soft shadow the spine casts onto the cover */}
+      <div style={{ position: 'absolute', left: 24, top: 0, bottom: 0, width: 14, background: 'linear-gradient(to right, rgba(0,0,0,0.22), rgba(0,0,0,0))', pointerEvents: 'none' }} />
 
       {/* Content */}
       <div style={{ position: 'absolute', inset: 0, padding: '15px 15px 15px 26px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>

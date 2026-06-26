@@ -37,6 +37,9 @@ export default function VoyageDetails({ data, onChange }: Props) {
       <div style={cs}>
 
         <Box title="SHIP INFORMATION">
+          <Fld label="Destination">
+            <Inp value={data.destination || ''} onChange={(v: string) => set('destination', v)} placeholder="Where are you sailing? e.g. Norwegian Fjords, Caribbean" />
+          </Fld>
           <Row2>
             <Fld label="Ship Name" half><Inp value={data.shipName} onChange={(v: string) => set('shipName', v)} placeholder="e.g. Wonder of the Seas" /></Fld>
             <Fld label="Cruise Line" half><Inp value={data.cruiseLine} onChange={(v: string) => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" /></Fld>

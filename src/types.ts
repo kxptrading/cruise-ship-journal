@@ -34,6 +34,7 @@ export interface Voyage {
   roomLocation:     string   // nautical: Fore | Midship | Aft
   safeboxPin:       string
   coverPhotoUrl:       string
+  destination:         string   // where the ship is going, e.g. "Norwegian Fjords"
   cruiseDescription:   string   // free-text description of the cruise
 }
 
@@ -265,7 +266,7 @@ export const EMPTY_VOYAGE: Voyage = {
   companion1: '', companion2: '', companion3: '', companion4: '',
   emergencyContact: '', phone: '', guestServices: '', musterStation: '',
   diningTime: '', breakfastTime: '', lunchTime: '', roomLocation: '', safeboxPin: '',
-  coverPhotoUrl: '', cruiseDescription: '',
+  coverPhotoUrl: '', destination: '', cruiseDescription: '',
 }
 
 export interface UseVoyageDataReturn {

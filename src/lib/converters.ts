@@ -38,6 +38,7 @@ interface VoyageRow {
   room_location?:     string | null
   safebox_pin?:       string | null
   cover_photo_url?:      string | null
+  destination?:          string | null
   cruise_description?:   string | null
 }
 
@@ -191,6 +192,7 @@ export function fromDbVoyage(row: VoyageRow): Voyage {
     roomLocation:     row.room_location  ?? '',
     safeboxPin:       row.safebox_pin    ?? '',
     coverPhotoUrl:       row.cover_photo_url      ?? '',
+    destination:         row.destination          ?? '',
     cruiseDescription:   row.cruise_description   ?? '',
   }
 }
@@ -219,6 +221,7 @@ export function toDbVoyage(v: Voyage) {
     room_location:     v.roomLocation  || null,
     safebox_pin:       v.safeboxPin    || null,
     cover_photo_url:      v.coverPhotoUrl       || null,
+    destination:          v.destination         || null,
     cruise_description:   v.cruiseDescription   || null,
   }
 }

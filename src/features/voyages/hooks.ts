@@ -40,6 +40,7 @@ export interface VoyageRow {
   id:               string
   user_id:          string
   ship_name:        string | null
+  destination:      string | null
   cruise_line:      string | null
   cabin:            string | null
   deck:             string | null
@@ -75,7 +76,7 @@ export function useVoyages() {
     queryKey: ['voyages', userId],
     queryFn: async () => {
       if (!userId) return [] as VoyageRow[]
-      const cols = 'id, user_id, ship_name, cruise_line, departure_date, return_date, total_nights, cover_photo_url, created_at'
+      const cols = 'id, user_id, ship_name, destination, cruise_line, departure_date, return_date, total_nights, cover_photo_url, created_at'
 
       // Owned voyages + voyages shared with me as an accepted co-author.
       // Reads are open at the RLS layer, so a plain id filter returns shared rows.

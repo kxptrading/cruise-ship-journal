@@ -56,7 +56,9 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
 
   const status    = voyageStatus(voyage.departure_date, voyage.return_date)
   const statusCol = STATUS_COLOR[status]
-  const title     = voyage.ship_name || 'Unnamed Voyage'
+  // Book title = the destination (where the ship's going), falling back to the ship.
+  const title    = voyage.destination || voyage.ship_name || 'Unnamed Voyage'
+  const showShip = !!voyage.destination && !!voyage.ship_name
 
   const handleDeleteClick = (e: React.MouseEvent) => {
     // Stop the card's onClick (navigation) from firing
@@ -127,32 +129,41 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
 
       {/* Content */}
       <div style={{ position: 'absolute', inset: 0, padding: '15px 15px 15px 26px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-        {/* Top: cruise line + shared / status */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
-          <div style={{ minWidth: 0 }}>
+        {/* Top group: corner badges, then the centred cruise title */}
+        <div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
+            {voyage.is_shared ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: WHITE, background: 'rgba(0,0,0,0.42)', borderRadius: 20, padding: '2px 8px' }}>
+                <Users size={10} /> Shared
+              </span>
+            ) : <span />}
+            <span style={{ flexShrink: 0, background: statusCol + 'EE', color: status === 'active' ? '#1C2B3A' : WHITE, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', borderRadius: 20, padding: '3px 9px', backdropFilter: 'blur(6px)' }}>
+              {STATUS_LABEL[status]}
+            </span>
+          </div>
+
+          {/* Cruise title — top & centred, the book's headline */}
+          <div style={{ textAlign: 'center', marginTop: 16, paddingInline: 6 }}>
             {voyage.cruise_line && (
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 4px rgba(0,0,0,0.6)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <div style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.82)', textShadow: '0 1px 4px rgba(0,0,0,0.6)', marginBottom: 8 }}>
                 {voyage.cruise_line}
               </div>
             )}
-            {voyage.is_shared && (
-              <span style={{ marginTop: 6, display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: WHITE, background: 'rgba(0,0,0,0.42)', borderRadius: 20, padding: '2px 8px' }}>
-                <Users size={10} /> Shared
-              </span>
-            )}
+            <h3 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(20px, 2.2vw, 27px)', lineHeight: 1.14, color: WHITE, textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
+              {title}
+            </h3>
+            <div style={{ margin: '10px auto 0', height: 2, width: 36, background: GOLD, borderRadius: 2 }} />
           </div>
-          <span style={{ flexShrink: 0, background: statusCol + 'EE', color: status === 'active' ? '#1C2B3A' : WHITE, fontSize: 9.5, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', borderRadius: 20, padding: '3px 9px', backdropFilter: 'blur(6px)' }}>
-            {STATUS_LABEL[status]}
-          </span>
         </div>
 
-        {/* Bottom: title block */}
+        {/* Bottom group: ship, dates, actions */}
         <div>
-          <h3 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 'clamp(20px, 2.1vw, 26px)', lineHeight: 1.12, color: WHITE, textShadow: '0 2px 10px rgba(0,0,0,0.6)' }}>
-            {title}
-          </h3>
-          <div style={{ marginTop: 9, height: 2, width: 34, background: GOLD, borderRadius: 2 }} />
-          <div style={{ marginTop: 8, fontSize: 11.5, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+          {showShip && (
+            <div style={{ fontSize: 11.5, fontStyle: 'italic', color: 'rgba(255,255,255,0.82)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+              {voyage.ship_name}
+            </div>
+          )}
+          <div style={{ marginTop: showShip ? 3 : 0, fontSize: 11.5, color: 'rgba(255,255,255,0.85)', textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
             {dateLine}
           </div>
 

@@ -147,10 +147,14 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   const [activeTab, setActiveTab] = useState<Tab>(
     tabParam && validTabs.has(tabParam) ? tabParam : 'daily'
   )
-  // Swipe-to-turn-page: direction of the last tab change (for the slide), and the
-  // touch start point used to detect a horizontal swipe on the content area.
+  // Swipe-to-turn-page: direction of the last tab change (for the slide). We detect
+  // a swipe two ways so it works everywhere: pointer (touch/pen on tablets/phones)
+  // and horizontal wheel (two-finger trackpad on laptops).
   const [swipeDir, setSwipeDir] = useState(0)
-  const touchRef = useRef<{ x: number; y: number; t: number; ignore: boolean } | null>(null)
+  const pointerRef = useRef<{ x: number; y: number; t: number; ignore: boolean } | null>(null)
+  const wheelAccum = useRef(0)
+  const wheelReset = useRef<number | undefined>(undefined)
+  const lastNav    = useRef(0)
 
   // Sync activeTab when ?tab= changes (e.g. user clicks a different Sidebar link
   // while already on this page — the component doesn't remount, only the URL updates).
@@ -207,26 +211,40 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
     setActiveTab(visibleTabs[next].id)
   }
 
-  // Horizontal swipe on the content → previous/next section. Guards: must be a
-  // clearly horizontal flick, and must not start inside a [data-swipe-ignore]
-  // region (e.g. the Notes board's draggable stickies or a horizontal scroll strip).
-  const onTouchStart = (e: React.TouchEvent) => {
-    const t = e.touches[0]
-    if (!t) return
-    const ignore = !!(e.target as HTMLElement).closest?.('[data-swipe-ignore]')
-    touchRef.current = { x: t.clientX, y: t.clientY, t: Date.now(), ignore }
+  const inIgnore = (el: EventTarget | null) => !!(el as HTMLElement)?.closest?.('[data-swipe-ignore]')
+
+  // ── Touch / pen swipe (tablets, phones) ──────────────────────────────────────
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.pointerType === 'mouse') { pointerRef.current = null; return }  // mouse uses the dock
+    pointerRef.current = { x: e.clientX, y: e.clientY, t: Date.now(), ignore: inIgnore(e.target) }
   }
-  const onTouchEnd = (e: React.TouchEvent) => {
-    const s = touchRef.current
-    touchRef.current = null
-    const t = e.changedTouches[0]
-    if (!s || s.ignore || !t) return
-    const dx = t.clientX - s.x
-    const dy = t.clientY - s.y
-    // A swipe = a mostly-horizontal travel past a distance threshold. No hard speed
-    // cap (tablet swipes are slower); a generous time bound just rules out long holds.
+  const onPointerUp = (e: React.PointerEvent) => {
+    const s = pointerRef.current
+    pointerRef.current = null
+    if (!s || s.ignore) return
+    const dx = e.clientX - s.x
+    const dy = e.clientY - s.y
+    // A swipe = mostly-horizontal travel past a distance threshold.
     if (Date.now() - s.t < 1200 && Math.abs(dx) > 55 && Math.abs(dx) > 1.3 * Math.abs(dy)) {
       goToTab(dx < 0 ? 1 : -1)
+    }
+  }
+
+  // ── Trackpad horizontal swipe (laptops) ──────────────────────────────────────
+  // Two-finger horizontal swipes arrive as wheel deltaX. Accumulate within a gesture
+  // and turn the page once it passes a threshold, then cool down so one swipe = one turn.
+  const onWheel = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return  // vertical scroll — ignore
+    if (inIgnore(e.target)) return
+    const now = Date.now()
+    if (now - lastNav.current < 600) return
+    wheelAccum.current += e.deltaX
+    window.clearTimeout(wheelReset.current)
+    wheelReset.current = window.setTimeout(() => { wheelAccum.current = 0 }, 160)
+    if (Math.abs(wheelAccum.current) > 90) {
+      goToTab(wheelAccum.current > 0 ? 1 : -1)
+      wheelAccum.current = 0
+      lastNav.current = now
     }
   }
 
@@ -333,7 +351,13 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
       {/* ── Tab content ────────────────────────────────────────────────────── */}
       {/* Swipe left/right turns to the adjacent section (page-turn feel). The new
           section slides in from the swipe direction. */}
-      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ touchAction: 'pan-y' }}>
+      <div
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => { pointerRef.current = null }}
+        onWheel={onWheel}
+        style={{ touchAction: 'pan-y' }}
+      >
       <AnimatePresence mode="wait" custom={swipeDir}>
         <motion.div
           key={safeTab}

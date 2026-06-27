@@ -18,7 +18,7 @@ import type { VoyageRow } from './hooks'
 interface Props {
   voyage:    VoyageRow
   postCount: number
-  onClick:   () => void
+  onClick:   (rect: DOMRect) => void
 }
 
 function formatDateRange(start: string | null, end: string | null): string {
@@ -88,7 +88,7 @@ export default function VoyageCard({ voyage, postCount, onClick }: Props) {
 
   return (
     <motion.button
-      onClick={onClick}
+      onClick={e => onClick((e.currentTarget as HTMLElement).getBoundingClientRect())}
       whileHover={{ y: -6, rotate: -0.5, boxShadow: '0 20px 40px rgba(0,0,0,0.30), 0 5px 12px rgba(0,0,0,0.18)' }}
       whileTap={{ scale: 0.98 }}
       transition={{ type: 'spring', stiffness: 300, damping: 22 }}

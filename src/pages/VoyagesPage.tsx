@@ -24,22 +24,27 @@
 //   changes that affect available content width.
 // ─────────────────────────────────────────────────────────────────────────────
 
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { NAVY2, MUTED, WHITE, BORDER, FONT_DISPLAY, FONT_BODY, sty, BP } from '@/constants'
 import { useW } from '@/context'
-import { useVoyages, useVoyagePostCounts } from '@/features/voyages/hooks'
+import { useVoyages, useVoyagePostCounts, type VoyageRow } from '@/features/voyages/hooks'
 import VoyageCard from '@/features/voyages/VoyageCard'
 import VoyageInvitesBanner from '@/features/voyages/VoyageInvitesBanner'
+import BookOpenTransition from '@/features/voyages/BookOpenTransition'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import { EmptyState } from '@/components/ui/empty-state'
 import { STAGGER, FADE_UP } from '@/lib/motion'
+import { prefersReducedMotion } from '@/lib/gsap'
 import FE from '@/components/FE'
 import { Plus } from 'lucide-react'
 
 export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => void }) {
   const navigate  = useNavigate()
   const w         = useW()
+  const [opening, setOpening] = useState<{ voyage: VoyageRow; rect: DOMRect } | null>(null)
+  const open = (voyage: VoyageRow) => onSwitch ? onSwitch(voyage.id) : navigate(`/voyages/${voyage.id}`)
   const { data: voyages = [], isLoading, error } = useVoyages()
   // Extract ids from the loaded voyages to pass to the post counts query.
   // When voyages is still loading, ids is [] and useVoyagePostCounts is disabled.
@@ -121,12 +126,27 @@ export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => v
                 // postCounts may still be loading — default 0 shows the badge
                 // as empty rather than flashing a spinner inside the card.
                 postCount={postCounts[voyage.id] ?? 0}
-                onClick={() => onSwitch ? onSwitch(voyage.id) : navigate(`/voyages/${voyage.id}`)}
+                onClick={(rect) => {
+                  if (prefersReducedMotion()) { open(voyage); return }
+                  setOpening({ voyage, rect })
+                }}
               />
             </motion.div>
           ))}
         </motion.div>
       )}
+
+      {/* Book-opening transition when a cover is tapped */}
+      <AnimatePresence>
+        {opening && (
+          <BookOpenTransition
+            key={opening.voyage.id}
+            voyage={opening.voyage}
+            rect={opening.rect}
+            onDone={() => open(opening.voyage)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   )
 }

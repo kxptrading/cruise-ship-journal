@@ -157,7 +157,7 @@ export default function JournalEntry({ data, onChange, itinerary, voyage: _voyag
         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }}
           onChange={e => { const f = e.target.files?.[0]; if (f) handlePhotoFile(f); e.target.value = '' }} />
       </div>
-      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'thin', padding: '12px 2px 4px' }}>
+      <div data-swipe-ignore style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollSnapType: 'x mandatory', scrollbarWidth: 'thin', padding: '12px 2px 4px' }}>
         {PROMPTS.map(p => (
           <button key={p.label} onClick={() => addText(p.seed, p.field)}
             style={{ flexShrink: 0, scrollSnapAlign: 'start', display: 'flex', alignItems: 'center', gap: 6, background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 999, padding: '7px 14px', cursor: 'pointer', fontSize: 13, fontFamily: FONT_BODY, color: NAVY2, fontWeight: 600, whiteSpace: 'nowrap' }}>

@@ -125,6 +125,7 @@ export default function NotesBoard({ data, onChange }: Props) {
 
       <div
         ref={boardRef}
+        data-swipe-ignore
         style={{
           position: 'relative', height: boardH, marginTop: 12, borderRadius: 16,
           border: `1px dashed ${BORDER}`, background: 'var(--t-bg, #F9F7F3)',

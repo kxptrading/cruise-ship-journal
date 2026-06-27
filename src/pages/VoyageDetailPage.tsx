@@ -35,7 +35,7 @@
 //   user's profile.age field in Supabase. See App.tsx for how it is derived.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, GOLD, TEAL, WHITE, BORDER, MUTED, TEXT, FONT_DISPLAY, FONT_BODY, sty, BP } from '@/constants'
@@ -147,6 +147,10 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   const [activeTab, setActiveTab] = useState<Tab>(
     tabParam && validTabs.has(tabParam) ? tabParam : 'daily'
   )
+  // Swipe-to-turn-page: direction of the last tab change (for the slide), and the
+  // touch start point used to detect a horizontal swipe on the content area.
+  const [swipeDir, setSwipeDir] = useState(0)
+  const touchRef = useRef<{ x: number; y: number; t: number; ignore: boolean } | null>(null)
 
   // Sync activeTab when ?tab= changes (e.g. user clicks a different Sidebar link
   // while already on this page — the component doesn't remount, only the URL updates).
@@ -193,6 +197,35 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   // Clamp the active tab to one the current user can actually see (e.g. a
   // co-author deep-linked to ?tab=daily falls back to Posts).
   const safeTab: Tab = visibleTabs.some(t => t.id === activeTab) ? activeTab : 'daily'
+
+  // Turn to the adjacent section (like turning a page). delta +1 = next, -1 = prev.
+  const goToTab = (delta: 1 | -1) => {
+    const idx  = visibleTabs.findIndex(t => t.id === safeTab)
+    const next = idx + delta
+    if (idx < 0 || next < 0 || next >= visibleTabs.length) return
+    setSwipeDir(delta)
+    setActiveTab(visibleTabs[next].id)
+  }
+
+  // Horizontal swipe on the content → previous/next section. Guards: must be a
+  // clearly horizontal flick, and must not start inside a [data-swipe-ignore]
+  // region (e.g. the Notes board's draggable stickies or a horizontal scroll strip).
+  const onTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0]
+    const ignore = !!(e.target as HTMLElement).closest?.('[data-swipe-ignore]')
+    touchRef.current = { x: t.clientX, y: t.clientY, t: Date.now(), ignore }
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const s = touchRef.current
+    touchRef.current = null
+    if (!s || s.ignore) return
+    const t  = e.changedTouches[0]
+    const dx = t.clientX - s.x
+    const dy = t.clientY - s.y
+    if (Date.now() - s.t < 600 && Math.abs(dx) > 70 && Math.abs(dx) > 1.6 * Math.abs(dy)) {
+      goToTab(dx < 0 ? 1 : -1)
+    }
+  }
 
   return (
     <div>
@@ -295,15 +328,22 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
       <JournalDock tabs={visibleTabs} active={safeTab} onSelect={setActiveTab} mobile={w < BP.mobile} />
 
       {/* ── Tab content ────────────────────────────────────────────────────── */}
-      {/* AnimatePresence mode="wait" ensures the exiting tab content fades out
-          before the entering tab fades in, preventing visual overlap. */}
-      <AnimatePresence mode="wait">
+      {/* Swipe left/right turns to the adjacent section (page-turn feel). The new
+          section slides in from the swipe direction. */}
+      <div onTouchStart={onTouchStart} onTouchEnd={onTouchEnd} style={{ touchAction: 'pan-y' }}>
+      <AnimatePresence mode="wait" custom={swipeDir}>
         <motion.div
           key={safeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.18 }}
+          custom={swipeDir}
+          variants={{
+            enter:  (d: number) => ({ opacity: 0, x: d >= 0 ? 36 : -36 }),
+            center: { opacity: 1, x: 0 },
+            exit:   (d: number) => ({ opacity: 0, x: d >= 0 ? -36 : 36 }),
+          }}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.22, ease: 'easeOut' }}
         >
           <Suspense fallback={<div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}><SkeletonCard /><SkeletonCard /></div>}>
             {/* 'posts' tab — fully React Query, self-fetching via PostList */}
@@ -328,6 +368,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
           </Suspense>
         </motion.div>
       </AnimatePresence>
+      </div>
 
       {showCoAuthors && voyageId && (
         <CoAuthorsPanel voyageId={voyageId} onClose={() => setShowCoAuthors(false)} />

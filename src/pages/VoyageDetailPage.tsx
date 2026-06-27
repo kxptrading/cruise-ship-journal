@@ -212,17 +212,20 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   // region (e.g. the Notes board's draggable stickies or a horizontal scroll strip).
   const onTouchStart = (e: React.TouchEvent) => {
     const t = e.touches[0]
+    if (!t) return
     const ignore = !!(e.target as HTMLElement).closest?.('[data-swipe-ignore]')
     touchRef.current = { x: t.clientX, y: t.clientY, t: Date.now(), ignore }
   }
   const onTouchEnd = (e: React.TouchEvent) => {
     const s = touchRef.current
     touchRef.current = null
-    if (!s || s.ignore) return
-    const t  = e.changedTouches[0]
+    const t = e.changedTouches[0]
+    if (!s || s.ignore || !t) return
     const dx = t.clientX - s.x
     const dy = t.clientY - s.y
-    if (Date.now() - s.t < 600 && Math.abs(dx) > 70 && Math.abs(dx) > 1.6 * Math.abs(dy)) {
+    // A swipe = a mostly-horizontal travel past a distance threshold. No hard speed
+    // cap (tablet swipes are slower); a generous time bound just rules out long holds.
+    if (Date.now() - s.t < 1200 && Math.abs(dx) > 55 && Math.abs(dx) > 1.3 * Math.abs(dy)) {
       goToTab(dx < 0 ? 1 : -1)
     }
   }

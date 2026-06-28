@@ -75,7 +75,7 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
         initial={{ x: rect.left - cx, y: rect.top - cy, scale: rect.width / W }}
         animate={{ x: 0, y: 0, scale: 1 }}
         transition={{ duration: 0.36, ease: [0.4, 0, 0.2, 1] }}
-        style={{ position: 'absolute', left: cx, top: cy, width: W, height: H, transformOrigin: 'top left', perspective: 1600 }}
+        style={{ position: 'absolute', left: cx, top: cy, width: W, height: H, transformOrigin: 'top left' }}
       >
         {/* First page = the voyage landing (hero with the two entries). Revealed
             as the cover opens, then zooms/fades into the real, interactive page. */}
@@ -101,13 +101,18 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
         {/* Front cover — swings open around the spine (left edge), then the page
             behind zooms/fades into the next view. */}
         <motion.div
-          initial={{ rotateY: 0 }}
-          animate={{ rotateY: -164 }}
-          transition={{ delay: 0.38, duration: 0.54, ease: [0.45, 0, 0.25, 1] }}
+          initial={{ rotateY: 0, opacity: 1 }}
+          animate={{ rotateY: -115, opacity: 0 }}
+          transition={{
+            // Per-element perspective + fade-as-it-opens — no preserve-3d /
+            // backface-visibility, which mobile Safari renders unreliably.
+            rotateY: { delay: 0.38, duration: 0.54, ease: [0.45, 0, 0.25, 1] },
+            opacity: { delay: 0.74, duration: 0.18 },
+          }}
           onAnimationComplete={() => setZooming(true)}
           style={{
-            position: 'absolute', inset: 0, transformOrigin: 'left center', transformStyle: 'preserve-3d',
-            backfaceVisibility: 'hidden', borderRadius: '3px 9px 9px 3px', overflow: 'hidden',
+            position: 'absolute', inset: 0, transformOrigin: 'left center', transformPerspective: 1200,
+            borderRadius: '3px 9px 9px 3px', overflow: 'hidden',
             background: coverBg, boxShadow: '0 24px 70px rgba(0,0,0,0.55)',
           }}
         >

@@ -26,6 +26,7 @@ import { useW, useVoyageId } from '../context'
 import { getTimeOfDay, getTimeGradient } from '../lib/atmosphere'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
+import { takeHeroHandoff } from '@/features/voyages/heroHandoff'
 import BudgetBreakdown from '@/features/voyages/dashboard/BudgetBreakdown'
 import type { Voyage, ItineraryDay, DailyLog, Budget, FoodLog, DiningEntry } from '../types'
 
@@ -76,13 +77,18 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
   }, [voyagePosts])
 
   // ── Cover background photo (picked once) ──────────────────────────────────
+  // If we arrived via the book-open animation, reuse the exact photo it chose so
+  // the hero matches what the book opened to; otherwise pick a random one.
   const heroPickedRef = useRef(false)
   const [heroPhotoUrl, setHeroPhotoUrl] = useState<string | undefined>()
   useEffect(() => {
-    if (heroPickedRef.current || photoUrls.length === 0) return
+    if (heroPickedRef.current) return
+    const handed = takeHeroHandoff(voyageId)
+    if (handed) { heroPickedRef.current = true; setHeroPhotoUrl(handed); return }
+    if (photoUrls.length === 0) return
     heroPickedRef.current = true
     setHeroPhotoUrl(photoUrls[Math.floor(Math.random() * photoUrls.length)])
-  }, [photoUrls])
+  }, [photoUrls, voyageId])
 
   // ── Derived voyage facts ──────────────────────────────────────────────────
   const nights      = parseInt(voyage.totalNights) || itinerary.length || 0

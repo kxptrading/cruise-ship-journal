@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { lazy, Suspense } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowLeft, BookOpen, MessageCircle } from 'lucide-react'
 import { WHITE, FONT_BODY, BP } from '../constants'
@@ -25,6 +25,9 @@ interface Props {
 export default function VoyageLanding({ data, onNav }: Props) {
   const navigate = useNavigate()
   const { voyageId } = useParams<{ voyageId: string }>()
+  const location = useLocation()
+  // Photo handed from the book-open transition, so the hero matches what opened.
+  const heroOverride = (location.state as { hero?: string } | null)?.hero
   const w      = useW()
   const mobile = w < BP.mobile
 
@@ -65,6 +68,7 @@ export default function VoyageLanding({ data, onNav }: Props) {
           onNav={onNav}
           onViewDay={() => navigate(`/voyages/${voyageId}/journal?tab=daily`)}
           heroActions={heroActions}
+          heroOverride={heroOverride}
         />
       </Suspense>
     </div>

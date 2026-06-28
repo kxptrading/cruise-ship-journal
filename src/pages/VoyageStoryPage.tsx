@@ -26,7 +26,6 @@ import { useW, useVoyageId } from '../context'
 import { getTimeOfDay, getTimeGradient } from '../lib/atmosphere'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
-import { takeHeroHandoff } from '@/features/voyages/heroHandoff'
 import BudgetBreakdown from '@/features/voyages/dashboard/BudgetBreakdown'
 import type { Voyage, ItineraryDay, DailyLog, Budget, FoodLog, DiningEntry } from '../types'
 
@@ -40,6 +39,7 @@ interface Props {
   onNav:      (section: string) => void
   onViewDay?: (dayIndex: number) => void
   heroActions?: ReactNode   // rendered on the cover (e.g. Open Journal / Open Feed)
+  heroOverride?: string     // exact hero photo to use (e.g. handed from the book-open transition)
 }
 
 // Full-bleed helper: escape the centered 900px column + page padding in App.tsx.
@@ -56,7 +56,7 @@ function formatDate(iso: string): string {
   } catch { return iso }
 }
 
-export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, foodLogs, diningLog, onNav, onViewDay, heroActions }: Props) {
+export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, foodLogs, diningLog, onNav, onViewDay, heroActions, heroOverride }: Props) {
   const w        = useW()
   const voyageId = useVoyageId()
   const mobile   = w < BP.mobile
@@ -76,19 +76,17 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
     return urls
   }, [voyagePosts])
 
-  // ── Cover background photo (picked once) ──────────────────────────────────
-  // If we arrived via the book-open animation, reuse the exact photo it chose so
-  // the hero matches what the book opened to; otherwise pick a random one.
+  // ── Cover background photo ─────────────────────────────────────────────────
+  // Prefer an explicit override (the exact photo the book-open transition showed,
+  // passed via router state) so the hero matches it; otherwise pick one at random.
   const heroPickedRef = useRef(false)
   const [heroPhotoUrl, setHeroPhotoUrl] = useState<string | undefined>()
   useEffect(() => {
-    if (heroPickedRef.current) return
-    const handed = takeHeroHandoff(voyageId)
-    if (handed) { heroPickedRef.current = true; setHeroPhotoUrl(handed); return }
-    if (photoUrls.length === 0) return
+    if (heroOverride || heroPickedRef.current || photoUrls.length === 0) return
     heroPickedRef.current = true
     setHeroPhotoUrl(photoUrls[Math.floor(Math.random() * photoUrls.length)])
-  }, [photoUrls, voyageId])
+  }, [photoUrls, heroOverride])
+  const heroUrl = heroOverride || heroPhotoUrl
 
   // ── Derived voyage facts ──────────────────────────────────────────────────
   const nights      = parseInt(voyage.totalNights) || itinerary.length || 0
@@ -249,9 +247,9 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
       {/* ─────────────── COVER — the ship ─────────────── */}
       <section data-scene style={{ ...fullBleed, minHeight: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', background: coverGrad }}>
         {/* Background photo layer (slow drift) */}
-        {heroPhotoUrl && (
+        {heroUrl && (
           <div data-parallax="14" style={{
-            position: 'absolute', inset: '-22% 0', backgroundImage: `url(${heroPhotoUrl})`,
+            position: 'absolute', inset: '-22% 0', backgroundImage: `url(${heroUrl})`,
             backgroundSize: 'cover', backgroundPosition: 'center', opacity: 0.5,
           }} />
         )}

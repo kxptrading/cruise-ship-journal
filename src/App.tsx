@@ -526,7 +526,7 @@ export default function App() {
             <Suspense fallback={<SectionLoader />}>
               <Routes>
                 {/* ── New page-based routes (Phase 2+) ───────────────────── */}
-                <Route path="/voyages"             element={<VoyagesPage onSwitch={switchVoyage} />} />
+                <Route path="/voyages"             element={<VoyagesPage />} />
                 <Route path="/voyages/new"         element={<VoyageEditorPage />} />
                 <Route path="/voyages/:voyageId/edit"              element={<VoyageEditorPage />} />
                 <Route path="/voyages/:voyageId/posts/new"         element={<PostComposerPage />} />

@@ -40,11 +40,15 @@ import { prefersReducedMotion } from '@/lib/gsap'
 import FE from '@/components/FE'
 import { Plus } from 'lucide-react'
 
-export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => void }) {
+export default function VoyagesPage() {
   const navigate  = useNavigate()
   const w         = useW()
   const [opening, setOpening] = useState<{ voyage: VoyageRow; rect: DOMRect } | null>(null)
-  const open = (voyage: VoyageRow) => onSwitch ? onSwitch(voyage.id) : navigate(`/voyages/${voyage.id}`)
+  // Navigate to the voyage landing, handing the chosen hero photo via router state so
+  // the landing's hero matches the one the book-open animation revealed. The active
+  // voyage switch is handled by App's URL-change effect.
+  const open = (voyage: VoyageRow, heroUrl?: string) =>
+    navigate(`/voyages/${voyage.id}`, heroUrl ? { state: { hero: heroUrl } } : undefined)
   const { data: voyages = [], isLoading, error } = useVoyages()
   // Extract ids from the loaded voyages to pass to the post counts query.
   // When voyages is still loading, ids is [] and useVoyagePostCounts is disabled.
@@ -143,7 +147,7 @@ export default function VoyagesPage({ onSwitch }: { onSwitch?: (id: string) => v
             key={opening.voyage.id}
             voyage={opening.voyage}
             rect={opening.rect}
-            onDone={() => open(opening.voyage)}
+            onDone={(heroUrl) => open(opening.voyage, heroUrl)}
           />
         )}
       </AnimatePresence>

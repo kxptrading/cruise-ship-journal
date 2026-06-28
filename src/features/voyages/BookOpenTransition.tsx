@@ -12,18 +12,18 @@ import { motion } from 'framer-motion'
 import { NAVY2, WHITE, GOLD, FONT_DISPLAY, FONT_BODY } from '@/constants'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
-import { setHeroHandoff } from './heroHandoff'
 import type { VoyageRow } from './hooks'
 
 interface Props {
   voyage: VoyageRow
   rect:   DOMRect
-  onDone: () => void
+  onDone: (heroUrl?: string) => void
 }
 
 export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
   const done = useRef(false)
-  const finish = () => { if (!done.current) { done.current = true; onDone() } }
+  const heroUrlRef = useRef<string | undefined>(undefined)  // the chosen photo, for handoff
+  const finish = () => { if (!done.current) { done.current = true; onDone(heroUrlRef.current) } }
   // Once the cover has opened, zoom into the title page and fade into the next page.
   const [zooming, setZooming] = useState(false)
 
@@ -45,7 +45,7 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
     pickedRef.current = true
     const url = photoUrls[Math.floor(Math.random() * photoUrls.length)]
     setHeroUrl(url)
-    setHeroHandoff(voyage.id, url)
+    heroUrlRef.current = url
   }, [photoUrls, voyage.id])
 
   // Safety net: navigate even if an animation-complete event is missed.

@@ -26,7 +26,7 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
 
   // Safety net: navigate even if an animation-complete event is missed.
   useEffect(() => {
-    const t = setTimeout(finish, 1800)
+    const t = setTimeout(finish, 1300)
     return () => clearTimeout(t)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -43,21 +43,21 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
       style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
     >
       {/* Backdrop */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ duration: 0.45 }}
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 0.7 }} transition={{ duration: 0.3 }}
         style={{ position: 'absolute', inset: 0, background: '#0A121E' }} />
 
       {/* Book — lifts from the card rect to centre, then the cover opens */}
       <motion.div
         initial={{ x: rect.left - cx, y: rect.top - cy, scale: rect.width / W }}
         animate={{ x: 0, y: 0, scale: 1 }}
-        transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: 0.28, ease: [0.4, 0, 0.2, 1] }}
         style={{ position: 'absolute', left: cx, top: cy, width: W, height: H, transformOrigin: 'top left', perspective: 1600 }}
       >
         {/* Title page (revealed as the cover opens) — then zooms in and fades into
             the next page once the cover has finished opening. */}
         <motion.div
           animate={zooming ? { scale: 1.7, opacity: 0 } : { scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, ease: [0.4, 0, 0.2, 1] }}
+          transition={{ duration: 0.34, ease: [0.4, 0, 0.2, 1] }}
           onAnimationComplete={() => { if (zooming) finish() }}
           style={{ position: 'absolute', inset: 0, transformOrigin: 'center', borderRadius: '3px 9px 9px 3px', background: CREAM, boxShadow: '0 24px 70px rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
         >
@@ -77,7 +77,7 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
         <motion.div
           initial={{ rotateY: 0 }}
           animate={{ rotateY: -164 }}
-          transition={{ delay: 0.44, duration: 0.6, ease: [0.45, 0, 0.25, 1] }}
+          transition={{ delay: 0.3, duration: 0.42, ease: [0.45, 0, 0.25, 1] }}
           onAnimationComplete={() => setZooming(true)}
           style={{
             position: 'absolute', inset: 0, transformOrigin: 'left center', transformStyle: 'preserve-3d',

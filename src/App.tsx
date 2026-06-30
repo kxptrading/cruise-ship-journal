@@ -59,6 +59,8 @@ const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
 const NotFound         = lazy(() => import('./sections/NotFound'))
 const LoginPage        = lazy(() => import('./pages/LoginPage'))
 const LandingPage      = lazy(() => import('./pages/LandingPage'))
+const FounderSuccessPage   = lazy(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderSuccessPage })))
+const FounderCancelledPage = lazy(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderCancelledPage })))
 const SignupPage       = lazy(() => import('./pages/SignupPage'))
 const ComingSoonPage   = lazy(() => import('./pages/ComingSoonPage'))
 const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
@@ -421,13 +423,16 @@ export default function App() {
         <Route path="/accessibility"   element={<LegalShell><AccessibilityPage /></LegalShell>} />
         <Route path="/family-safety"   element={<LegalShell><FamilyPage /></LegalShell>} />
         <Route path="/contact"         element={<LegalShell><ContactPage /></LegalShell>} />
+        {/* Founder's Offer Stripe redirects (anonymous checkout — usually logged out) */}
+        <Route path="/founder/success"   element={<FounderSuccessPage />} />
+        <Route path="/founder/cancelled" element={<FounderCancelledPage />} />
         <Route path="*"                element={<LoginPage />} />
       </Routes>
     </Suspense>
   )
 
   // Legal/help routes bypass the voyage-loading gate — they need no voyage data
-  const STATIC_PATHS = new Set(['/help','/safety','/delete-account','/accessibility','/family-safety','/contact'])
+  const STATIC_PATHS = new Set(['/help','/safety','/delete-account','/accessibility','/family-safety','/contact','/founder/success','/founder/cancelled'])
   const isStaticRoute = location.pathname.startsWith('/legal') || STATIC_PATHS.has(location.pathname)
 
   if (!loaded || !voyageId) {
@@ -446,6 +451,8 @@ export default function App() {
           <Route path="/accessibility"  element={<AccessibilityPage />} />
           <Route path="/family-safety"  element={<FamilyPage />} />
           <Route path="/contact"        element={<ContactPage />} />
+          <Route path="/founder/success"   element={<FounderSuccessPage />} />
+          <Route path="/founder/cancelled" element={<FounderCancelledPage />} />
         </Routes>
       </Suspense>
     )
@@ -588,6 +595,8 @@ export default function App() {
                 <Route path="/accessibility"  element={<AccessibilityPage />} />
                 <Route path="/family-safety"  element={<FamilyPage />} />
                 <Route path="/contact"        element={<ContactPage />} />
+                <Route path="/founder/success"   element={<FounderSuccessPage />} />
+                <Route path="/founder/cancelled" element={<FounderCancelledPage />} />
                 <Route path="/design-system"   element={<DesignSystem />} />
                 <Route path="/update-password" element={<UpdatePasswordPage />} />
                 <Route path="*"                element={<NotFound onNav={navClick} />} />

@@ -9,10 +9,12 @@
 // .wave-* rules in index.css), symbolising the sea.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useWindowSize, WCtx } from '../context'
+import { useFounderStatus } from '../features/founder/FoundersOffer'
+import { startCheckout } from '../features/founder/checkout'
 import {
   NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
 } from '../constants'
@@ -100,20 +102,20 @@ const SUB_FEATURES = [
   'PDF keepsake export of every voyage',
   'Cancel anytime',
 ]
-interface Plan { name: string; price: string; period: string; spots: string; blurb: string; features: string[]; cta: string; highlight: boolean }
+interface Plan { key: string; name: string; price: string; period: string; spots: string; blurb: string; features: string[]; cta: string; highlight: boolean }
 const PLANS: Plan[] = [
   {
-    name: 'Early Bird', price: '$15', period: 'one-time · lifetime', spots: 'First 200 members',
+    key: 'early_bird', name: 'Early Bird', price: '$15', period: 'one-time · lifetime', spots: 'First 200 members',
     blurb: 'The founding price — lifetime access, locked in forever.',
     features: LIFETIME_FEATURES, cta: 'Claim Early Bird', highlight: true,
   },
   {
-    name: 'Maiden Voyage Crew', price: '$25', period: 'one-time · lifetime', spots: 'Next 500 members',
+    key: 'maiden_voyage', name: 'Maiden Voyage Crew', price: '$25', period: 'one-time · lifetime', spots: 'Next 500 members',
     blurb: 'Founder pricing — still a one-time pass for life.',
     features: LIFETIME_FEATURES, cta: 'Join the crew', highlight: false,
   },
   {
-    name: 'Standard Access', price: '$8', period: 'per month', spots: 'Once founder spots are gone',
+    key: 'standard', name: 'Standard Access', price: '$8', period: 'per month', spots: 'Once founder spots are gone',
     blurb: 'Full access on a simple monthly plan — no lifetime pass needed.',
     features: SUB_FEATURES, cta: 'Subscribe', highlight: false,
   },
@@ -277,6 +279,17 @@ export default function LandingPage() {
   const w = useWindowSize()
   const mobile = w < BP.mobile
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Live Founder's Offer scarcity (server-authoritative counter). Drives which
+  // tier is active, "N left"/"Sold out" chips, and the checkout CTAs below.
+  const { data: founder } = useFounderStatus()
+  const [busyTier, setBusyTier] = useState<string | null>(null)
+  const onClaim = async (tierKey: string) => {
+    if (busyTier) return
+    setBusyTier(tierKey)
+    try { await startCheckout(tierKey) }
+    catch { setBusyTier(null) }  // on success we've already navigated to Stripe
+  }
 
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
@@ -457,7 +470,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Pricing ────────────────────────────────────────────── */}
-      <section style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0' }}>
+      <section id="pricing" style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0' }}>
         <div style={col} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Founder's Offer</div>
           <h2 style={{ margin: '0 auto', maxWidth: 720, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 26 : 'clamp(28px, 3.6vw, 44px)', lineHeight: 1.15, textAlign: 'center' }}>
@@ -471,17 +484,32 @@ export default function LandingPage() {
 
         <div data-reveal style={{ ...col, marginTop: mobile ? 32 : 48, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24, alignItems: 'stretch' }}>
           {PLANS.map(plan => {
-            const dark = plan.highlight
+            // Live tier state (lifetime tiers only; Standard has no capacity/counter).
+            const live      = founder?.tiers.find(t => t.key === plan.key)
+            const isActive  = founder?.current.key === plan.key
+            const soldOut   = !!live?.soldOut
+            const remaining = live && live.capacity != null ? Math.max(0, live.capacity - live.sold) : null
+            // Highlight the active lifetime tier (server-driven); fall back to the
+            // static "Live now" card before the counter has loaded.
+            const dark = founder ? isActive : plan.highlight
+            const busy = busyTier === plan.key
+            // Scarcity chip text: live count when known, else the static blurb.
+            const chip = soldOut
+              ? 'Sold out'
+              : remaining != null
+                ? `${remaining.toLocaleString()} left`
+                : plan.spots
             return (
               <div key={plan.name} style={{
+                opacity: soldOut ? 0.6 : 1,
                 position: 'relative', display: 'flex', flexDirection: 'column',
                 background: dark ? SEA : WHITE, color: dark ? WHITE : NAVY2,
                 border: dark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E0DBD0',
                 borderRadius: 18, padding: mobile ? '26px 24px' : '32px 28px',
               }}>
-                {plan.highlight && (
+                {dark && !soldOut && (
                   <span style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: GOLD, color: NAVY2, borderRadius: 980, padding: '4px 14px', fontFamily: FONT_BODY, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                    Live now
+                    {plan.key === 'standard' ? 'Live now' : 'Selling now'}
                   </span>
                 )}
                 <div style={{ ...kicker, fontSize: 12, color: GOLD }}>{plan.name}</div>
@@ -493,13 +521,19 @@ export default function LandingPage() {
                   <span style={{
                     display: 'inline-block', fontFamily: FONT_BODY, fontSize: 11, fontWeight: 700,
                     letterSpacing: '0.04em', textTransform: 'uppercase',
-                    color: dark ? GOLD : NAVY2,
-                    background: dark ? 'rgba(201,162,39,0.16)' : '#F4F1EB',
-                    border: `1px solid ${dark ? 'rgba(201,162,39,0.4)' : '#E0DBD0'}`,
+                    color: soldOut ? MUTED : dark ? GOLD : NAVY2,
+                    background: soldOut ? '#F4F1EB' : dark ? 'rgba(201,162,39,0.16)' : '#F4F1EB',
+                    border: `1px solid ${soldOut ? '#E0DBD0' : dark ? 'rgba(201,162,39,0.4)' : '#E0DBD0'}`,
                     borderRadius: 980, padding: '4px 11px',
                   }}>
-                    {plan.spots}
+                    {chip}
                   </span>
+                  {/* Static positioning blurb kept as a sub-line when we show a live count. */}
+                  {remaining != null && !soldOut && (
+                    <span style={{ marginLeft: 8, fontFamily: FONT_BODY, fontSize: 11, color: dark ? 'rgba(255,255,255,0.6)' : MUTED }}>
+                      {plan.spots}
+                    </span>
+                  )}
                 </div>
                 <p style={{ margin: '12px 0 0', fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.55, color: dark ? 'rgba(255,255,255,0.82)' : TEXT }}>
                   {plan.blurb}
@@ -512,16 +546,20 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  to="/signup"
+                <button
+                  type="button"
+                  onClick={() => onClaim(plan.key)}
+                  disabled={soldOut || busy}
                   style={{
                     textAlign: 'center', borderRadius: 980, padding: '12px 24px', fontSize: 15, fontWeight: 700,
-                    fontFamily: FONT_BODY, textDecoration: 'none',
-                    background: dark ? GOLD : NAVY2, color: dark ? NAVY2 : WHITE,
+                    fontFamily: FONT_BODY, border: 'none',
+                    cursor: soldOut || busy ? 'default' : 'pointer',
+                    background: soldOut ? '#E0DBD0' : dark ? GOLD : NAVY2,
+                    color: soldOut ? MUTED : dark ? NAVY2 : WHITE,
                   }}
                 >
-                  {plan.cta}
-                </Link>
+                  {soldOut ? 'Sold out' : busy ? 'Starting checkout…' : plan.cta}
+                </button>
               </div>
             )
           })}

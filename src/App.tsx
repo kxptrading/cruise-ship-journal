@@ -405,9 +405,9 @@ export default function App() {
         {/* Public marketing landing page for logged-out visitors */}
         <Route path="/"                element={<LandingPage />} />
         <Route path="/login"           element={<LoginPage />} />
-        {/* Sign-ups disabled pre-launch — dummy placeholder. To re-enable,
-            swap this back to <SignupPage />. */}
-        <Route path="/signup"          element={<ComingSoonPage />} />
+        {/* Sign-ups enabled. To gate again pre-launch, swap back to
+            <ComingSoonPage /> (still imported). */}
+        <Route path="/signup"          element={<SignupPage />} />
         <Route path="/reset"           element={<ResetPasswordPage />} />
         <Route path="/update-password" element={<UpdatePasswordPage />} />
         {/* Legal / help pages — accessible without authentication */}

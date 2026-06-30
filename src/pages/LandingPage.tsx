@@ -81,23 +81,41 @@ const FEATURES: Feature[] = [
   { Icon: Compass,   title: 'Your whole cruise, gathered', body: 'Dining, entertainment, packing and more — one calm home for the entire voyage.' },
 ]
 
-// Pricing tiers. Prices are placeholders — swap for the real figures.
-interface Plan { name: string; price: string; period: string; blurb: string; features: string[]; cta: string; highlight: boolean }
+// Founder's Offer — one product (the full app), one-time lifetime pass, priced by
+// how early you join. Each price rises as its tier fills; see the get_founder_status
+// RPC / FoundersOffer component for the live counter that drives the active tier.
+const LIFETIME_FEATURES = [
+  'Lifetime access — pay once, no subscription',
+  'Unlimited voyages & the full journal',
+  'Works fully offline — no cruise Wi-Fi needed',
+  'Private social feed — share & react with family',
+  'PDF keepsake export of every voyage',
+  'Every future update included',
+]
+const SUB_FEATURES = [
+  'Everything in Deck Days',
+  'Unlimited voyages & the full journal',
+  'Works fully offline — no cruise Wi-Fi needed',
+  'Private social feed — share & react with family',
+  'PDF keepsake export of every voyage',
+  'Cancel anytime',
+]
+interface Plan { name: string; price: string; period: string; spots: string; blurb: string; features: string[]; cta: string; highlight: boolean }
 const PLANS: Plan[] = [
   {
-    name: 'Free', price: '£0', period: 'forever', blurb: 'Everything you need to keep one voyage.',
-    features: ['1 voyage', 'Full journal & itinerary', 'Photo gallery', 'Budget & packing'],
-    cta: 'Start free', highlight: false,
+    name: 'Early Bird', price: '$15', period: 'one-time · lifetime', spots: 'First 200 members',
+    blurb: 'The founding price — lifetime access, locked in forever.',
+    features: LIFETIME_FEATURES, cta: 'Claim Early Bird', highlight: true,
   },
   {
-    name: 'Plus', price: '£4.99', period: 'per month', blurb: 'The full journal, plus the social feed.',
-    features: ['Unlimited voyages', 'Everything in Free', 'Social feed — share & follow', 'Reactions & comments', 'Export to PDF'],
-    cta: 'Get Plus', highlight: true,
+    name: 'Maiden Voyage Crew', price: '$25', period: 'one-time · lifetime', spots: 'Next 500 members',
+    blurb: 'Founder pricing — still a one-time pass for life.',
+    features: LIFETIME_FEATURES, cta: 'Join the crew', highlight: false,
   },
   {
-    name: 'Family', price: '£8.99', period: 'per month', blurb: 'Share the voyage with the whole crew.',
-    features: ['Everything in Plus', 'Share with up to 6 people', 'Shared family feed', 'Priority support'],
-    cta: 'Get Family', highlight: false,
+    name: 'Standard Access', price: '$8', period: 'per month', spots: 'Once founder spots are gone',
+    blurb: 'Full access on a simple monthly plan — no lifetime pass needed.',
+    features: SUB_FEATURES, cta: 'Subscribe', highlight: false,
   },
 ]
 
@@ -441,12 +459,13 @@ export default function LandingPage() {
       {/* ── Pricing ────────────────────────────────────────────── */}
       <section style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0' }}>
         <div style={col} data-reveal>
-          <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Pricing</div>
+          <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Founder's Offer</div>
           <h2 style={{ margin: '0 auto', maxWidth: 720, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 26 : 'clamp(28px, 3.6vw, 44px)', lineHeight: 1.15, textAlign: 'center' }}>
-            Simple pricing for every voyager.
+            Lifetime access — lock in the founder price.
           </h2>
-          <p style={{ margin: '16px auto 0', maxWidth: 520, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: TEXT, textAlign: 'center' }}>
-            Start free, upgrade when you want more. Cancel anytime.
+          <p style={{ margin: '16px auto 0', maxWidth: 540, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: TEXT, textAlign: 'center' }}>
+            Founding members pay once for lifetime access — the earlier you join, the less
+            you pay. After the founder spots are gone, it's a simple $8/month plan.
           </p>
         </div>
 
@@ -462,13 +481,25 @@ export default function LandingPage() {
               }}>
                 {plan.highlight && (
                   <span style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: GOLD, color: NAVY2, borderRadius: 980, padding: '4px 14px', fontFamily: FONT_BODY, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                    Most popular
+                    Live now
                   </span>
                 )}
                 <div style={{ ...kicker, fontSize: 12, color: GOLD }}>{plan.name}</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, marginTop: 12 }}>
                   <span style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 38 : 44, lineHeight: 1 }}>{plan.price}</span>
-                  <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: dark ? 'rgba(255,255,255,0.7)' : MUTED }}>/ {plan.period}</span>
+                  <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: dark ? 'rgba(255,255,255,0.7)' : MUTED }}>{plan.period}</span>
+                </div>
+                <div style={{ marginTop: 12 }}>
+                  <span style={{
+                    display: 'inline-block', fontFamily: FONT_BODY, fontSize: 11, fontWeight: 700,
+                    letterSpacing: '0.04em', textTransform: 'uppercase',
+                    color: dark ? GOLD : NAVY2,
+                    background: dark ? 'rgba(201,162,39,0.16)' : '#F4F1EB',
+                    border: `1px solid ${dark ? 'rgba(201,162,39,0.4)' : '#E0DBD0'}`,
+                    borderRadius: 980, padding: '4px 11px',
+                  }}>
+                    {plan.spots}
+                  </span>
                 </div>
                 <p style={{ margin: '12px 0 0', fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.55, color: dark ? 'rgba(255,255,255,0.82)' : TEXT }}>
                   {plan.blurb}

@@ -9,6 +9,7 @@ import MediaUploader from '@/ui/MediaUploader'
 import FE from '@/components/FE'
 import { useUserId } from '@/context'
 import { POST_TEMPLATES, type PostTemplate } from './templates'
+import MentionInput from '../social/MentionInput'
 import type { Audience } from '@/types/models'
 
 export interface PostFormValues {
@@ -100,13 +101,13 @@ export default function PostEditorForm({ values, onChange }: Props) {
             ))}
           </div>
         )}
-        <textarea
+        <MentionInput
           ref={bodyRef}
           value={values.body}
-          onChange={e => set('body', e.target.value)}
-          placeholder="Write about your day — highlights, experiences, discoveries…"
+          onChange={v => set('body', v)}
+          placeholder="Write about your day — highlights, experiences, discoveries…  Use @ to mention a contact, # for tags"
           rows={7}
-          style={{ ...sty.inp, resize: 'vertical', lineHeight: 1.7 }}
+          style={{ ...sty.inp, resize: 'vertical', lineHeight: 1.7, width: '100%' }}
         />
       </div>
 

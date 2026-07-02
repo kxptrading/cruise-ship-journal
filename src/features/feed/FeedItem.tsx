@@ -12,6 +12,8 @@ import MediaThumbnails from '@/ui/MediaThumbnails'
 import { useUserId } from '@/context'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import UserSafetyMenu from '@/features/safety/UserSafetyMenu'
+import RichText from '@/features/social/richText'
+import { useMentionPeople } from '@/features/social/useMentionPeople'
 
 const BODY_PREVIEW = 240
 
@@ -62,6 +64,7 @@ interface Props {
 export default function FeedItem({ item }: Props) {
   const navigate  = useNavigate()
   const userId    = useUserId()
+  const mentionPeople = useMentionPeople()
   const isOwnPost = item.user_id === userId
 
   const truncated   = item.body.length > BODY_PREVIEW
@@ -213,7 +216,7 @@ export default function FeedItem({ item }: Props) {
           onClick={goToPost}
           style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.75, cursor: 'pointer' }}
         >
-          {bodyPreview}
+          <RichText text={bodyPreview} people={mentionPeople} />
           {truncated && (
             <span style={{ color: 'var(--t-primary)', fontWeight: 600 }}> Read more</span>
           )}

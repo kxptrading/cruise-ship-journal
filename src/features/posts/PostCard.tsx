@@ -11,6 +11,9 @@ import type { FeedItem, FeedAuthor, ReactionState, Comment } from '../../types'
 import FE from '../../components/FE'
 import { Card } from '../../components/ui/card'
 import { STAGGER, FADE_UP, SCALE_POP, SCALE_POP_TRANSITION, REACTION_FLOAT } from '../../lib/motion'
+import RichText from '../social/richText'
+import MentionInput from '../social/MentionInput'
+import { useMentionPeople } from '../social/useMentionPeople'
 
 const TRUNCATE_LIMIT = 220
 
@@ -83,6 +86,7 @@ interface Props {
 
 export default function PostCard({ item, onViewDay, avatarUrl, initials, displayName, author, onViewProfile, reactions, onReact, comments, onAddComment, onEditComment, userId }: Props) {
   const w = useW()
+  const mentionPeople = useMentionPeople()
   const [showComments,   setShowComments]   = useState<boolean>(false)
   const [commentText,    setCommentText]    = useState<string>('')
   const [submitting,     setSubmitting]     = useState<boolean>(false)
@@ -252,7 +256,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
               {highlights && (
                 <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.7 }}>{displayText}</p>
+                  <p style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.7 }}><RichText text={displayText} people={mentionPeople} /></p>
                   {shouldTruncate && (
                     <button
                       onClick={() => setTextExpanded(v => !v)}
@@ -486,7 +490,7 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                             ) : (
                               <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: '4px 14px 14px 14px', padding: '8px 12px', maxWidth: '100%', wordBreak: 'break-word' }}>
                                 <div style={{ fontSize: 12, fontWeight: 700, color: NAVY2, marginBottom: 3 }}>{c.authorName}</div>
-                                <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.55, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{c.body}</div>
+                                <div style={{ fontSize: 13, color: TEXT, lineHeight: 1.55 }}><RichText text={c.body} people={mentionPeople} /></div>
                               </div>
                             )}
                             <div style={{ fontSize: 10, color: MUTED, marginTop: 4, paddingLeft: 4, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -521,16 +525,14 @@ export default function PostCard({ item, onViewDay, avatarUrl, initials, display
                       : <span style={{ fontSize: 10, fontWeight: 700, color: WHITE }}>{author ? author.initials : initials}</span>
                     }
                   </div>
-                  <textarea
+                  <MentionInput
                     ref={commentInputRef}
                     value={commentText}
-                    onChange={e => setCommentText(e.target.value)}
+                    onChange={setCommentText}
                     onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSubmitComment() } }}
-                    placeholder="Write a comment…"
+                    placeholder="Write a comment… @ to mention"
                     rows={1}
-                    style={{ flex: 1, border: `1px solid ${BORDER}`, borderRadius: 18, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT, background: WHITE, transition: 'border-color 0.15s', boxSizing: 'border-box', minWidth: 0 }}
-                    onFocus={e => { e.target.style.borderColor = NAVY }}
-                    onBlur={e => { e.target.style.borderColor = BORDER }}
+                    style={{ flex: 1, border: `1px solid ${BORDER}`, borderRadius: 18, padding: '7px 14px', fontSize: 13, fontFamily: 'inherit', resize: 'none', outline: 'none', lineHeight: 1.5, color: TEXT, background: WHITE, boxSizing: 'border-box', minWidth: 0, width: '100%' }}
                   />
                   <motion.button
                     onClick={handleSubmitComment}

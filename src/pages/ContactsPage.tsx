@@ -2,7 +2,8 @@
 // pages/ContactsPage.tsx — Contacts with Family tag (spec §4: /contacts)
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { WHITE, BORDER, NAVY2, MUTED, TEAL, GOLD, FONT_DISPLAY, FONT_BODY, BP, sty } from '@/constants'
 import { useW, useUserId } from '@/context'
@@ -38,6 +39,17 @@ export default function ContactsPage() {
 
   const { data: contacts, isLoading } = useContacts()
   const { data: searchResults = [] }  = useSearchUsers(debouncedQ)
+
+  // Opening a contact's profile from an @mention link (navigate('/contacts',
+  // { state:{ viewUserId } })). Consume once so "Back" doesn't reopen it.
+  const location = useLocation()
+  const viewUserId = (location.state as { viewUserId?: string } | null)?.viewUserId
+  const consumedView = useRef(false)
+  useEffect(() => {
+    if (consumedView.current || !viewUserId || !contacts) return
+    const match = contacts.accepted.find(c => c.userId === viewUserId)
+    if (match) { setSelectedFriend(match); consumedView.current = true }
+  }, [viewUserId, contacts])
   const sendRequest  = useSendFriendRequest()
   const acceptReq    = useAcceptRequest()
   const declineReq   = useDeclineRequest()

@@ -12,6 +12,7 @@ import CameraCapture from '../../components/CameraCapture'
 import type { DailyLog, ItineraryDay } from '../../types'
 import FE from '../../components/FE'
 import { POST_TEMPLATES, type PostTemplate } from './templates'
+import MentionInput from '../social/MentionInput'
 
 const MOODS = ['😄', '😌', '😲', '😴', '😍'] as const
 type Mood = typeof MOODS[number]
@@ -180,10 +181,10 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
                   : <span style={{ fontSize: 14, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY }}>{initials || '⚓'}</span>
                 }
               </div>
-              <textarea
+              <MentionInput
                 ref={textRef}
                 value={composeText}
-                onChange={e => setComposeText(e.target.value)}
+                onChange={setComposeText}
                 placeholder={composeMood ? `${composeMood} What happened today?` : 'Share what happened today — highlights, discoveries, experiences...'}
                 rows={4}
                 style={{ flex: 1, border: 'none', outline: 'none', fontSize: 15, fontFamily: 'inherit', resize: 'none', lineHeight: 1.7, color: TEXT, background: 'transparent', boxSizing: 'border-box', width: '100%' }}

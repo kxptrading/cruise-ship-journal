@@ -5,6 +5,8 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { NAVY2, MUTED, TEXT, GOLD, TEAL, WHITE, BORDER, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import RichText from '@/features/social/richText'
+import { useMentionPeople } from '@/features/social/useMentionPeople'
 import { usePost, useDeletePost } from '@/features/posts/hooks'
 import AudiencePill from '@/features/posts/AudiencePill'
 import { SkeletonCard } from '@/components/ui/skeleton'
@@ -24,6 +26,7 @@ export default function PostDetailPage() {
   const navigate             = useNavigate()
   const { voyageId, postId } = useParams<{ voyageId: string; postId: string }>()
   const { data: post, isLoading } = usePost(postId)
+  const mentionPeople        = useMentionPeople()
   const deletePost           = useDeletePost()
   const [confirmDel, setConfirmDel] = useState(false)
 
@@ -94,8 +97,8 @@ export default function PostDetailPage() {
           )}
 
           {/* Body */}
-          <p style={{ margin: '0 0 20px', fontSize: 15, color: TEXT, lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-            {post.body}
+          <p style={{ margin: '0 0 20px', fontSize: 15, color: TEXT, lineHeight: 1.8 }}>
+            <RichText text={post.body} people={mentionPeople} />
           </p>
 
           {/* Photos */}

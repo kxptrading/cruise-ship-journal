@@ -16,6 +16,8 @@ import type { PostRow } from './hooks'
 import { useDeletePost, useUpdatePost } from './hooks'
 import type { Audience } from '@/types/models'
 import PhotoHero from '@/ui/PhotoHero'
+import RichText from '../social/richText'
+import { useMentionPeople } from '../social/useMentionPeople'
 
 // ── Quick audience popover ────────────────────────────────────────────────────
 
@@ -75,6 +77,7 @@ export default function JournalPostCard({ post, voyageId }: Props) {
   const navigate       = useNavigate()
   const deletePost     = useDeletePost()
   const updatePost     = useUpdatePost()
+  const mentionPeople  = useMentionPeople()
   const [confirmDel,   setConfirmDel]   = useState(false)
   const [audiencePop,  setAudiencePop]  = useState(false)
 
@@ -234,7 +237,7 @@ export default function JournalPostCard({ post, voyageId }: Props) {
               onClick={() => navigate(`/voyages/${voyageId}/posts/${post.id}`)}
               style={{ margin: '0 0 10px', fontSize: 14, color: TEXT, lineHeight: 1.7, cursor: 'pointer' }}
             >
-              {bodyPreview}
+              <RichText text={bodyPreview} people={mentionPeople} />
               {truncated && (
                 <span style={{ color: 'var(--t-primary)', fontWeight: 600 }}> Read more</span>
               )}

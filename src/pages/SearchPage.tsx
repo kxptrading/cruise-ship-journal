@@ -1,7 +1,7 @@
 // pages/SearchPage.tsx — Global search across voyages and posts
 
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, Ship, FileText, MapPin, Calendar } from 'lucide-react'
@@ -148,8 +148,13 @@ function PostResultCard({ post, onClick }: { post: PostResult; onClick: () => vo
 export default function SearchPage() {
   const navigate = useNavigate()
   const userId   = useUserId()
-  const [query, setQuery] = useState('')
+  const [searchParams] = useSearchParams()
+  const [query, setQuery] = useState(() => searchParams.get('q') ?? '')
   const q = useDebounce(query.trim(), 300)
+
+  // Follow ?q= changes (e.g. tapping a #hashtag link while already on Search).
+  const urlQ = searchParams.get('q') ?? ''
+  useEffect(() => { if (urlQ) setQuery(urlQ) }, [urlQ])
 
   const enabled = q.length >= 2
 

@@ -34,11 +34,11 @@ export default function BottomNav({ section, onNav, badges = {} }: Props) {
     <nav
       aria-label="Bottom navigation"
       style={{
-        position:      'fixed',
-        bottom:        0,
-        left:          0,
-        right:         0,
-        zIndex:        500,
+        // In-flow (not fixed): sits at the end of the page content and scrolls
+        // with it rather than being pinned to the viewport bottom.
+        width:         '100%',
+        marginTop:     'auto',   // hug the bottom on short pages (main is a flex column)
+        flexShrink:    0,
         background:    'var(--t-primary-dk)',
         borderTop:     '1px solid rgba(255,255,255,0.08)',
         display:       'flex',

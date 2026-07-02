@@ -376,8 +376,9 @@ export default function App() {
   // ── Layout values ───────────────────────────────────────────────────────────
   const baseFontSize = isMobile ? 15 : bp === 'tablet' ? 15.5 : 16
   const mainPad      = isMobile ? '20px 12px' : bp === 'tablet' ? '32px 28px' : '44px 52px'
-  // Extra bottom clearance on mobile so content isn't hidden behind the BottomNav.
-  const mainPadBottom = isMobile ? '80px' : '48px'
+  // The mobile tab bar is now in normal flow (not a fixed overlay), so no extra
+  // clearance is needed — it sits directly after the content.
+  const mainPadBottom = isMobile ? '20px' : '48px'
 
   // ── Scroll tracking — fed into VoyageHero for parallax/fade ────────────────
   // useScroll with a container ref tracks the overflow-y scroll on <main>, not
@@ -613,6 +614,12 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
+            {/* Mobile tab bar lives INSIDE the scrolling <main> and in normal flow
+                (not fixed): it hugs the bottom on short pages and scrolls in at the
+                end of long ones. */}
+            {isMobile && (
+              <BottomNav section={section} onNav={navClick} badges={navBadges} />
+            )}
           </main>
           {/* Footer is locked to the bottom of the viewport: it sits outside the
               scrolling <main> (a sibling in this flex column), so it stays static
@@ -628,13 +635,6 @@ export default function App() {
         onSync={() => processSyncQueue().then(() => syncStatus.refresh())}
         onRetry={() => retryFailed().then(() => processSyncQueue()).then(() => syncStatus.refresh())}
       />
-      {isMobile && (
-        <BottomNav
-          section={section}
-          onNav={navClick}
-          badges={navBadges}
-        />
-      )}
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

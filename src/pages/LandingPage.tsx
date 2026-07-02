@@ -16,7 +16,7 @@ import { useWindowSize, WCtx } from '../context'
 import { useFounderStatus } from '../features/founder/FoundersOffer'
 import { startCheckout } from '../features/founder/checkout'
 import {
-  NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, BP,
+  NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, FONT_LABEL, FONT_ACCENT, LABEL_TRACK, BP,
 } from '../constants'
 import { BookOpen, MapPin, Image as ImageIcon, Users, Wallet, Compass, Check } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -293,7 +293,7 @@ export default function LandingPage() {
 
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
-  const kicker: CSSProperties = { fontFamily: FONT_BODY, fontSize: 12, fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' }
+  const kicker: CSSProperties = { fontFamily: FONT_LABEL, fontSize: 12, fontWeight: 600, letterSpacing: LABEL_TRACK, textTransform: 'uppercase' }
 
   const primaryBtn: CSSProperties = {
     background: GOLD, color: NAVY2, border: 'none', borderRadius: 980,
@@ -335,7 +335,7 @@ export default function LandingPage() {
         <div style={{ ...col, display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: mobile ? 64 : 80 }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: mobile ? 8 : 10 }}>
             <img src="/logo.svg" alt="" style={{ height: mobile ? 28 : 34, width: 'auto', display: 'block', flexShrink: 0 }} />
-            <span style={{ fontFamily: FONT_LOGO, fontWeight: 700, fontSize: mobile ? 22 : 26, color: WHITE, letterSpacing: '-0.02em' }}>
+            <span style={{ fontFamily: FONT_LOGO, fontWeight: 800, fontSize: mobile ? 22 : 26, color: WHITE, letterSpacing: '-0.01em' }}>
               Deck Days
             </span>
           </span>
@@ -359,9 +359,12 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(7,14,24,0.7) 0%, rgba(7,14,24,0.3) 60%, rgba(7,14,24,0.05) 100%)', zIndex: 1 }} />
         <div data-hero style={{ ...col, position: 'relative', zIndex: 2 }}>
           <div style={{ ...kicker, color: GOLD, marginBottom: 18 }}>The voyage journal</div>
-          <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 'clamp(34px, 10vw, 44px)' : 'clamp(46px, 6vw, 76px)', lineHeight: 1.06, letterSpacing: '-0.01em', maxWidth: 780 }}>
+          <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: mobile ? 'clamp(34px, 10vw, 44px)' : 'clamp(46px, 6vw, 76px)', lineHeight: 1.06, letterSpacing: '-0.01em', maxWidth: 780 }}>
             Every day at sea, beautifully remembered.
           </h1>
+          <div style={{ fontFamily: FONT_ACCENT, fontWeight: 700, fontSize: mobile ? 26 : 34, color: GOLD, marginTop: mobile ? 10 : 14, lineHeight: 1 }}>
+            Capture every day at sea
+          </div>
           <p style={{ margin: mobile ? '18px 0 0' : '22px 0 0', maxWidth: 540, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: 'rgba(255,255,255,0.86)' }}>
             Deck Days is a private, journal-first home for your cruises — ports, photos, meals,
             budgets and memories, gathered into one living record of the voyage. Share only what you choose.

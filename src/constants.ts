@@ -37,9 +37,18 @@ export const SECTION_COLORS: Record<string, string> = {
 }
 
 // ── Typography ────────────────────────────────────────────────────────────────
-export const FONT_DISPLAY = 'Georgia, "Times New Roman", serif'
+// FONT_DISPLAY — Playfair Display (use weight 800) for logo, page titles, hero.
+// FONT_LABEL   — Montserrat (weight 600, letterSpacing .22em) for eyebrows /
+//                labels / nav. See LABEL_TRACK for the tracking value.
+// FONT_ACCENT  — Caveat (weight 700) for decorative taglines / accents ONLY.
+// FONT_BODY    — system sans for all running copy / UI.
+export const FONT_DISPLAY = "'Playfair Display', Georgia, 'Times New Roman', serif"
 export const FONT_BODY    = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif'
-export const FONT_LOGO    = "'Space Grotesk', sans-serif"
+export const FONT_LABEL   = "'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+export const FONT_ACCENT  = "'Caveat', 'Segoe Script', cursive"
+export const FONT_LOGO    = "'Playfair Display', Georgia, serif"
+// Standard tracking for Montserrat eyebrows/labels (per the type spec).
+export const LABEL_TRACK  = '0.22em'
 
 // ── Responsive breakpoints (px) ───────────────────────────────────────────────
 export const BP: { mobile: number; tablet: number } = { mobile: 640, tablet: 1024 }
@@ -119,5 +128,5 @@ export const sty: Record<string, CSSProperties> = {
   card: { background: WHITE, borderRadius: 22, border: 'none', padding: '24px 26px', marginBottom: 20, boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 6px 24px rgba(0,0,0,0.07)' },
   inp:  { width: '100%', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 14px', fontSize: 16, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none', background: WHITE, color: TEXT },
   btn:  { background: 'linear-gradient(135deg, var(--t-primary), var(--t-primary-dk))', color: WHITE, border: 'none', borderRadius: 12, padding: '10px 20px', fontSize: 14, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 700, boxShadow: '0 4px 12px var(--t-btn-shadow)' },
-  lbl:  { display: 'block', fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 },
+  lbl:  { display: 'block', fontFamily: FONT_LABEL, fontSize: 11, fontWeight: 600, color: MUTED, textTransform: 'uppercase', letterSpacing: LABEL_TRACK, marginBottom: 6 },
 }

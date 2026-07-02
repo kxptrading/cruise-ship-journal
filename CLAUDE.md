@@ -138,9 +138,17 @@ PLUM   #4A3B8C  — packing / completion metrics
 ```
 
 ### Typography
-- **Display / headings:** `Georgia, "Times New Roman", serif` — used for page titles, metric values, ship name in hero
-- **Body / UI:** `-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif`
-- **Label style:** 11px, 700 weight, uppercase, `letterSpacing: 0.08em`, colour MUTED
+
+Google Fonts, loaded in `index.html`. Faces exposed as constants in `src/constants.ts`.
+
+- **Display / logo / page titles:** `FONT_DISPLAY` = **Playfair Display** (weight **800**),
+  Georgia serif fallback — logo/wordmark, page titles, hero. (`FONT_LOGO` also → Playfair.)
+- **Eyebrows / labels / nav:** `FONT_LABEL` = **Montserrat** (weight **600**),
+  uppercase, `letterSpacing: LABEL_TRACK` (`0.22em`). Applied via `sty.lbl`, the
+  landing `kicker`, TopNav/BottomNav nav labels.
+- **Decorative tagline / accents ONLY:** `FONT_ACCENT` = **Caveat** (weight **700**) —
+  e.g. the hero tagline "Capture every day at sea". Do not use for UI copy.
+- **Body / UI:** `FONT_BODY` = `-apple-system, BlinkMacSystemFont, "Segoe UI", …, sans-serif`
 
 ### Component Patterns
 

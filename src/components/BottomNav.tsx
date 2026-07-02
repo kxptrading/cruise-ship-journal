@@ -4,7 +4,7 @@
 
 import { Ship, CalendarDays, Users, MessageCircle, Rss } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { GOLD, FONT_BODY } from '../constants'
+import { GOLD, FONT_LABEL } from '../constants'
 import { useLocation } from 'react-router-dom'
 import { useIconPack } from '../context'
 import FE from './FE'
@@ -68,7 +68,7 @@ export default function BottomNav({ section, onNav, badges = {} }: Props) {
               borderTop:      `2px solid ${active ? GOLD : 'transparent'}`,
               cursor:         'pointer',
               padding:        '10px 4px 8px',
-              fontFamily:     FONT_BODY,
+              fontFamily:     FONT_LABEL,
               transition:     'border-color 0.15s, color 0.15s',
               WebkitTapHighlightColor: 'transparent',
               color: active ? GOLD : 'rgba(255,255,255,0.45)',
@@ -85,8 +85,8 @@ export default function BottomNav({ section, onNav, badges = {} }: Props) {
             </span>
             <span style={{
               fontSize:    10,
-              fontWeight:  active ? 700 : 400,
-              letterSpacing: '0.03em',
+              fontWeight:  active ? 700 : 600,
+              letterSpacing: '0.08em',
               textTransform: 'uppercase',
             }}>
               {label}

@@ -22,7 +22,7 @@ import { Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search, S
 import NotificationsBell from '@/features/notifications/NotificationsBell'
 import type { LucideIcon } from 'lucide-react'
 import { gsap, prefersReducedMotion } from '../lib/gsap'
-import { WHITE, GOLD, BORDER, MUTED, TEXT, FONT_BODY } from '../constants'
+import { WHITE, GOLD, BORDER, MUTED, TEXT, FONT_BODY, FONT_DISPLAY, FONT_LABEL } from '../constants'
 import TickerText from '../ui/TickerText'
 import { useW, useIconPack } from '../context'
 import FE from './FE'
@@ -105,7 +105,7 @@ function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize }
     width: '100%', textAlign: 'left',
     padding: '10px 14px', minHeight: 40,
     background: 'transparent', border: 'none', cursor: 'pointer',
-    fontSize: 13, fontWeight: 500, color: TEXT, fontFamily: FONT_BODY,
+    fontSize: 13, fontWeight: 600, color: TEXT, fontFamily: FONT_LABEL,
     WebkitTapHighlightColor: 'transparent',
   }
   const hover = (e: React.MouseEvent<HTMLButtonElement>, on: boolean) => {
@@ -217,7 +217,7 @@ export default function TopNav({ section, onNav, isMobile, voyageLabel, badges =
             }}
           >
             <img src="/logo.svg" alt="" style={{ height: 28, width: 28, display: 'block', flexShrink: 0, objectFit: 'contain' }} />
-            <span style={{ fontSize: 16, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY, letterSpacing: '-0.01em', opacity: 0.95, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: 18, fontWeight: 800, color: WHITE, fontFamily: FONT_DISPLAY, letterSpacing: '-0.01em', opacity: 0.97, whiteSpace: 'nowrap' }}>
               Deck Days
             </span>
           </button>
@@ -322,9 +322,9 @@ export default function TopNav({ section, onNav, isMobile, voyageLabel, badges =
           >
             <img src="/logo.svg" alt="Deck Days" style={{ height: logoH, width: 'auto', display: 'block', transition: 'height 0.2s' }} />
             <span style={{
-              fontSize: wordmarkSize, fontWeight: 700, color: WHITE,
-              fontFamily: FONT_BODY, letterSpacing: '-0.01em',
-              whiteSpace: 'nowrap', opacity: 0.95,
+              fontSize: wordmarkSize, fontWeight: 800, color: WHITE,
+              fontFamily: FONT_DISPLAY, letterSpacing: '-0.01em',
+              whiteSpace: 'nowrap', opacity: 0.97,
               transition: 'font-size 0.2s',
             }}>
               Deck Days

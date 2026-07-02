@@ -359,7 +359,9 @@ export default function LandingPage() {
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(90deg, rgba(7,14,24,0.7) 0%, rgba(7,14,24,0.3) 60%, rgba(7,14,24,0.05) 100%)', zIndex: 1 }} />
         <div data-hero style={{ ...col, position: 'relative', zIndex: 2 }}>
           <div style={{ ...kicker, color: GOLD, marginBottom: 18 }}>The voyage journal</div>
-          <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: mobile ? 'clamp(34px, 10vw, 44px)' : 'clamp(46px, 6vw, 76px)', lineHeight: 1.06, letterSpacing: '-0.01em', maxWidth: 780 }}>
+          {/* Hero headline intentionally keeps the original Georgia serif (not the
+              new Playfair display face) — reverted per request. */}
+          <h1 style={{ margin: 0, fontFamily: 'Georgia, "Times New Roman", serif', fontWeight: 400, fontSize: mobile ? 'clamp(34px, 10vw, 44px)' : 'clamp(46px, 6vw, 76px)', lineHeight: 1.06, letterSpacing: '-0.01em', maxWidth: 780 }}>
             Every day at sea, beautifully remembered.
           </h1>
           <div style={{ fontFamily: FONT_ACCENT, fontWeight: 700, fontSize: mobile ? 26 : 34, color: GOLD, marginTop: mobile ? 10 : 14, lineHeight: 1 }}>

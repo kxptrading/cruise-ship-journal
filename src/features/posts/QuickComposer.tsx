@@ -13,6 +13,9 @@ import type { DailyLog, ItineraryDay } from '../../types'
 import FE from '../../components/FE'
 import { POST_TEMPLATES, type PostTemplate } from './templates'
 import MentionInput from '../social/MentionInput'
+import { useMentionPeople } from '../social/useMentionPeople'
+import { extractMentions } from '../social/richText'
+import { notifyMentions } from '../notifications/hooks'
 
 const MOODS = ['😄', '😌', '😲', '😴', '😍'] as const
 type Mood = typeof MOODS[number]
@@ -31,6 +34,7 @@ interface Props {
 
 export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, currentDay, onChange, showToast, avatarUrl, initials }: Props) {
   const w = useW()
+  const mentionPeople = useMentionPeople()
 
   const [composing,           setComposing]           = useState<boolean>(false)
   const [composeDay,          setComposeDay]          = useState<string>('')
@@ -86,6 +90,14 @@ export default function QuickComposer({ dailyLogs, itinerary, voyageId, userId, 
     onChange(updated)
     if (composeImage && voyageId && userId) {
       try { await addPhoto(idx + 1, composeImage, { voyageId, userId }) } catch (_) { /* non-fatal */ }
+    }
+    // Notify any contacts @mentioned in the highlight (these posts are public).
+    if (voyageId) {
+      const recipientIds = extractMentions(text, mentionPeople)
+      if (recipientIds.length) {
+        try { await notifyMentions({ recipientIds, voyageId, dayNumber: idx + 1, preview: text.slice(0, 140) }) }
+        catch { /* non-fatal — the highlight is already saved */ }
+      }
     }
     if (wasFirst && showToast) showToast(`Day ${idx + 1} logged! ⚓`)
     resetComposer()

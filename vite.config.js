@@ -16,10 +16,33 @@ export default defineConfig({
       // Keep the existing public/manifest.json — don't let the plugin override it.
       manifest: false,
       workbox: {
-        // Precache all compiled JS/CSS/HTML and public assets.
-        globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
+        // Precache compiled JS/CSS + public assets — all content-hashed and
+        // immutable, so caching them forever is safe. index.html is deliberately
+        // EXCLUDED (no 'html'): it's the one file that changes every deploy and
+        // points at the new hashed chunks, so it must be fetched fresh (below).
+        globPatterns: ['**/*.{js,css,png,svg,ico,woff,woff2}'],
+        // Disable the default precache navigation fallback — index.html is no
+        // longer precached, so binding navigations to it would throw. Our
+        // NetworkFirst 'navigate' route below is the sole navigation handler.
+        navigateFallback: null,
         // Runtime caching strategies per URL pattern.
         runtimeCaching: [
+          {
+            // App shell (HTML document / SPA navigations): NetworkFirst so a new
+            // deploy shows up on a normal refresh instead of being pinned to the
+            // service worker's cached copy. All navigations share ONE cache key
+            // (/index.html) so any offline deep-link (/voyages/123, etc.) falls
+            // back to the cached shell and React Router takes over. 4s timeout so
+            // flaky cruise Wi-Fi drops to the cached shell fast.
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'app-shell',
+              networkTimeoutSeconds: 4,
+              cacheableResponse: { statuses: [0, 200] },
+              plugins: [{ cacheKeyWillBeUsed: async () => '/index.html' }],
+            },
+          },
           {
             // Supabase REST + Auth API: try network first so data is always fresh
             // when online. Falls back to cached response when offline (read-only).

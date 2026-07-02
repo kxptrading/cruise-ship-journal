@@ -34,14 +34,11 @@ export default function BottomNav({ section, onNav, badges = {} }: Props) {
     <nav
       aria-label="Bottom navigation"
       style={{
-        // Sticky: scrolls with the content but pins to the bottom of the viewport
-        // while the page is in view — so it stays reachable like a fixed bar
-        // without being a separate overlay that covers content. On short pages the
-        // flex column (content is flex:1) already seats it at the bottom.
-        position:      'sticky',
-        bottom:        0,
-        zIndex:        10,
+        // In-flow (not fixed, not sticky): the bar is NOT kept on screen. It sits
+        // at the end of the page and only appears when you scroll to the bottom.
+        // On short pages the flex column (content is flex:1) seats it at the bottom.
         width:         '100%',
+        marginTop:     'auto',
         flexShrink:    0,
         background:    'var(--t-primary-dk)',
         borderTop:     '1px solid rgba(255,255,255,0.08)',

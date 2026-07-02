@@ -9,11 +9,15 @@ import { NAVY2, MUTED, BORDER, FONT_DISPLAY, FONT_BODY, sty } from '@/constants'
 import { useCreatePost } from '@/features/posts/hooks'
 import PostEditorForm, { EMPTY_POST_FORM, type PostFormValues } from '@/features/posts/PostEditorForm'
 import { ArrowLeft } from 'lucide-react'
+import { useMentionPeople } from '@/features/social/useMentionPeople'
+import { extractMentions } from '@/features/social/richText'
+import { notifyMentions } from '@/features/notifications/hooks'
 
 export default function PostComposerPage() {
   const navigate          = useNavigate()
   const { voyageId }      = useParams<{ voyageId: string }>()
   const createPost        = useCreatePost()
+  const mentionPeople     = useMentionPeople()
   const [values, setValues] = useState<PostFormValues>(EMPTY_POST_FORM)
   const [saving, setSaving] = useState(false)
 
@@ -32,6 +36,16 @@ export default function PostComposerPage() {
         audience:     values.audience,
         media_paths: values.mediaPaths,
       })
+      // Notify mentioned contacts — but only for posts they can actually open
+      // (private posts are author-only, so a mention there would dead-end).
+      if (values.audience !== 'private') {
+        const recipientIds = extractMentions(values.body, mentionPeople)
+        if (recipientIds.length) {
+          try {
+            await notifyMentions({ recipientIds, postId: post.id, voyageId, preview: values.body.trim().slice(0, 140) })
+          } catch { /* non-fatal — the post is already saved */ }
+        }
+      }
       navigate(`/voyages/${voyageId}/posts/${post.id}`)
     } finally {
       setSaving(false)

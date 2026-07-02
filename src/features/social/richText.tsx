@@ -75,6 +75,16 @@ export function parseRichText(text: string, people: Person[] = []): Segment[] {
   return segments
 }
 
+// Resolve the @mentions in `text` to contact user-ids (deduped). Used at write
+// time to fire notifications (parseRichText only links what matches `people`).
+export function extractMentions(text: string, people: Person[] = []): string[] {
+  const ids = new Set<string>()
+  for (const seg of parseRichText(text, people)) {
+    if (seg.type === 'mention') ids.add(seg.person.id)
+  }
+  return [...ids]
+}
+
 const linkStyle: React.CSSProperties = { color: GOLD, fontWeight: 600, cursor: 'pointer' }
 
 interface Props {

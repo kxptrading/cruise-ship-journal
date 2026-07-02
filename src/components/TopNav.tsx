@@ -19,6 +19,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search, Settings, ShieldCheck, LogOut } from 'lucide-react'
+import NotificationsBell from '@/features/notifications/NotificationsBell'
 import type { LucideIcon } from 'lucide-react'
 import { gsap, prefersReducedMotion } from '../lib/gsap'
 import { WHITE, GOLD, BORDER, MUTED, TEXT, FONT_BODY } from '../constants'
@@ -243,6 +244,8 @@ export default function TopNav({ section, onNav, isMobile, voyageLabel, badges =
             }
           </button>
 
+          <NotificationsBell size={22} />
+
           <ProfileMenu
             section={section}
             onNav={onNav}
@@ -400,6 +403,8 @@ export default function TopNav({ section, onNav, isMobile, voyageLabel, badges =
                 : <Search size={16} strokeWidth={section === 'search' ? 2.5 : 1.75} />
               }
             </button>
+
+            <NotificationsBell size={18} />
 
             <ProfileMenu
               section={section}

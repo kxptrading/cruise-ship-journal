@@ -9,6 +9,9 @@ import { useState, useEffect, useMemo, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { getPhotos, getSignedUrls } from '../lib/photoStorage'
 import type { Voyage, ItineraryDay, DailyLog, FeedItem, FeedAuthor, ReactionsMap, CommentsMap, Comment } from '../types'
+import { useMentionPeople } from '../features/social/useMentionPeople'
+import { extractMentions } from '../features/social/richText'
+import { notifyMentions } from '../features/notifications/hooks'
 
 // ── Shared initials helper ─────────────────────────────────────────────────────
 
@@ -49,6 +52,9 @@ export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: 
   // ── Reload trigger — incrementing this re-runs all fetch effects ─────────────
   const [loadKey, setLoadKey] = useState(0)
   const reload = useCallback(() => setLoadKey(k => k + 1), [])
+
+  // Accepted contacts, for resolving @mentions in comments to notification targets.
+  const mentionPeople = useMentionPeople()
 
   // ── Own profile ─────────────────────────────────────────────────────────────
   const [avatarUrl,       setAvatarUrl]       = useState<string>('')
@@ -293,6 +299,13 @@ export function useFeedData({ userId, voyageId, dailyLogs, itinerary, voyage }: 
         ...prev,
         [key]: (prev[key] || []).map(c => c.id === tempId ? { ...c, id: (data as { id: string }).id } : c),
       }))
+      // Notify any contacts @mentioned in the comment. (The "commented on your
+      // post" notification for the voyage owner is fired by a DB trigger.)
+      const recipientIds = extractMentions(body, mentionPeople)
+      if (recipientIds.length) {
+        try { await notifyMentions({ recipientIds, voyageId: postVoyageId, dayNumber, preview: body.trim().slice(0, 140) }) }
+        catch { /* non-fatal */ }
+      }
     }
   }
 

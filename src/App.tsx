@@ -61,6 +61,7 @@ const LoginPage        = lazy(() => import('./pages/LoginPage'))
 const LandingPage      = lazy(() => import('./pages/LandingPage'))
 const FounderSuccessPage   = lazy(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderSuccessPage })))
 const FounderCancelledPage = lazy(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderCancelledPage })))
+const WelcomePage          = lazy(() => import('./pages/WelcomePage'))
 const SignupPage       = lazy(() => import('./pages/SignupPage'))
 const ComingSoonPage   = lazy(() => import('./pages/ComingSoonPage'))
 const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
@@ -429,6 +430,12 @@ export default function App() {
         <Route path="*"                element={<LoginPage />} />
       </Routes>
     </Suspense>
+  )
+
+  // First-run onboarding renders standalone (full-screen, no app shell) and must
+  // work before any voyage exists — so short-circuit it ahead of the voyage gate.
+  if (location.pathname === '/welcome') return (
+    <Suspense fallback={null}><WelcomePage /></Suspense>
   )
 
   // Legal/help routes bypass the voyage-loading gate — they need no voyage data

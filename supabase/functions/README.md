@@ -7,10 +7,25 @@ Both are **inert until the Stripe secrets below are set**.
 |---|---|---|
 | `create-checkout-session` | Resolves the active tier + price **server-side** (via `get_founder_status()`, never trusting the client) and creates a Stripe Checkout Session — one-time `payment` for the lifetime tiers, `subscription` for Standard. Returns `{ url }`. | `false` |
 | `stripe-webhook` | Verifies the Stripe signature and, on `checkout.session.completed`, records **one** `founder_purchases` row via `record_founder_purchase()`. Idempotent (`ON CONFLICT (stripe_checkout_session) DO NOTHING`) so Stripe's at-least-once retries are safe. **This is the only path that increments the live counter.** | `false` |
+| `redeem-founder-purchase` | Turns a paid checkout into an account — the **only** way to create one (public `/signup` stays closed → "paying members only"). Retrieves the session from Stripe and confirms it's **paid** (a forged `session_id` is rejected), creates the account with `admin.createUser({ email_confirm:true })` using the Stripe-provided email, then **atomically claims** the purchase (`claim_founder_purchase`, one account per purchase) and upserts the profile. | `false` |
 
-`verify_jwt: false` on both: the checkout function is called by anonymous
-(logged-out) landing-page visitors, and Stripe calls the webhook with no Supabase
-auth header (it authenticates via the signature instead).
+`verify_jwt: false` on all three: they're called by anonymous (logged-out)
+visitors — before/after checkout — and Stripe calls the webhook with no Supabase
+auth header (it authenticates via the signature instead). `redeem-founder-purchase`
+does its own authorization by verifying the paid Stripe session.
+
+## Purchase → account flow (pay-first, members-only)
+
+```
+Landing → create-checkout-session → Stripe Checkout (pays)
+  → /founder/success?session_id=…  (collect name + password)
+  → redeem-founder-purchase  (verify paid · create account · claim purchase)
+  → auto sign-in → /welcome (first-run onboarding) → app
+```
+
+Public `/signup` stays on `ComingSoonPage`; `/login` stays open for returning
+members. Existing accounts are unaffected — this only governs *new* signups.
+Not yet handled: Standard-subscription lifecycle (cancel/expiry revoking access).
 
 ## Database
 
@@ -52,6 +67,11 @@ The counter is server-authoritative — see the `founder_offer` migration:
    - Exactly one `founder_purchases` row appears.
    - The landing counter ticks up (refetches every 20s, or reload).
    - Re-send the event from Stripe → **no duplicate row** (idempotency holds).
+5. **Account creation** (entitlement): on `/founder/success`, set a name + password →
+   account is created and signed in → land on `/welcome`. Then verify the guards:
+   - Revisit the used `session_id` → "already linked, sign in".
+   - A forged/bogus `session_id` → rejected (no account created).
+   - An email that already has an account → "sign in instead".
 
 ## Redirects
 
@@ -61,9 +81,9 @@ The counter is server-authoritative — see the `founder_offer` migration:
 Both routes are public (the buyer is usually logged out after anonymous checkout) —
 see `src/pages/FounderResultPage.tsx`.
 
-## Not yet built — entitlement
+## Follow-ups (not yet built)
 
-These functions **record** purchases and drive the counter. They do **not** yet link
-a payment to an app account or unlock anything — a buyer and a signed-up user are
-currently unrelated. Granting access to payers (by email) is the deferred follow-up
-phase.
+- **Subscription lifecycle** — Standard is a monthly subscription; handle
+  `customer.subscription.deleted` / failed payments to revoke access on cancel/expiry.
+- **Access enforcement for existing accounts** — new accounts are members-only by
+  construction (redeem-only). Pre-existing accounts aren't gated.

@@ -50,7 +50,7 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
 
   // Safety net: navigate even if an animation-complete event is missed.
   useEffect(() => {
-    const t = setTimeout(finish, 1600)
+    const t = setTimeout(finish, 2000)
     return () => clearTimeout(t)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -58,6 +58,9 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
   const H  = W * 1.5
   const cx = (window.innerWidth  - W) / 2
   const cy = Math.max(24, (window.innerHeight - H) / 2)
+  // Scale that makes the centred page grow to cover the whole viewport, so the
+  // final frame is a full-bleed hero photo that flows straight into the landing.
+  const fillScale = Math.max(window.innerWidth / W, window.innerHeight / H) * 1.08
   const title = voyage.destination || voyage.ship_name || 'Voyage'
   const coverBg = voyage.cover_photo_url ? NAVY2 : 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)'
 
@@ -80,22 +83,29 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
         {/* First page = the voyage landing (hero with the two entries). Revealed
             as the cover opens, then zooms/fades into the real, interactive page. */}
         <motion.div
-          animate={zooming ? { scale: 1.7, opacity: 0 } : { scale: 1, opacity: 1 }}
-          transition={{ duration: 0.44, ease: [0.4, 0, 0.2, 1] }}
+          animate={zooming
+            ? { scale: fillScale, opacity: 1, borderRadius: 0 }
+            : { scale: 1, opacity: 1, borderRadius: 6 }}
+          transition={{ duration: 0.62, ease: [0.32, 0, 0.2, 1] }}
           onAnimationComplete={() => { if (zooming) finish() }}
-          style={{ position: 'absolute', inset: 0, transformOrigin: 'center', borderRadius: '3px 9px 9px 3px', overflow: 'hidden', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)', boxShadow: '0 24px 70px rgba(0,0,0,0.55)' }}
+          style={{ position: 'absolute', inset: 0, transformOrigin: 'center', overflow: 'hidden', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)', boxShadow: '0 24px 70px rgba(0,0,0,0.55)' }}
         >
           {heroUrl && (
             <img src={heroUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
           )}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,16,28,0.45) 0%, rgba(8,16,28,0.18) 42%, rgba(8,16,28,0.78) 100%)' }} />
-          <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 18px', color: WHITE }}>
+          {/* Title fades out as the page zooms — the landing supplies its own hero text. */}
+          <motion.div
+            animate={{ opacity: zooming ? 0 : 1 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+            style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 18px', color: WHITE }}
+          >
             {voyage.cruise_line && (
               <div style={{ fontFamily: FONT_BODY, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.85)', marginBottom: 8, textShadow: '0 1px 4px rgba(0,0,0,0.6)' }}>{voyage.cruise_line}</div>
             )}
             <div style={{ fontFamily: FONT_DISPLAY, fontSize: 24, lineHeight: 1.14, textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>{title}</div>
             <div style={{ margin: '10px auto 0', height: 2, width: 36, background: GOLD, borderRadius: 2 }} />
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Front cover — swings open around the spine (left edge), then the page

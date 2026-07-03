@@ -47,8 +47,11 @@ export default function VoyagesPage() {
   // Navigate to the voyage landing, handing the chosen hero photo via router state so
   // the landing's hero matches the one the book-open animation revealed. The active
   // voyage switch is handled by App's URL-change effect.
-  const open = (voyage: VoyageRow, heroUrl?: string) =>
-    navigate(`/voyages/${voyage.id}`, heroUrl ? { state: { hero: heroUrl } } : undefined)
+  const open = (voyage: VoyageRow, heroUrl?: string, fromBook = false) =>
+    navigate(`/voyages/${voyage.id}`, { state: { hero: heroUrl, fromBook } })
+  // Warm the destination chunks while the book-open animation plays (~1.2s) so the
+  // landing renders instantly on arrival — no lazy-load skeleton mid-transition.
+  const preloadLanding = () => { import('./VoyageLanding'); import('./VoyageStoryPage') }
   const { data: voyages = [], isLoading, error } = useVoyages()
   // Extract ids from the loaded voyages to pass to the post counts query.
   // When voyages is still loading, ids is [] and useVoyagePostCounts is disabled.
@@ -131,6 +134,7 @@ export default function VoyagesPage() {
                 // as empty rather than flashing a spinner inside the card.
                 postCount={postCounts[voyage.id] ?? 0}
                 onClick={(rect) => {
+                  preloadLanding()
                   if (prefersReducedMotion()) { open(voyage); return }
                   setOpening({ voyage, rect })
                 }}
@@ -147,7 +151,7 @@ export default function VoyagesPage() {
             key={opening.voyage.id}
             voyage={opening.voyage}
             rect={opening.rect}
-            onDone={(heroUrl) => open(opening.voyage, heroUrl)}
+            onDone={(heroUrl) => open(opening.voyage, heroUrl, true)}
           />
         )}
       </AnimatePresence>

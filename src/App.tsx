@@ -529,7 +529,9 @@ export default function App() {
             <motion.div
               key={location.pathname}
               variants={PAGE_TRANSITION}
-              initial="initial"
+              // Arriving from the book-open animation: skip the entrance fade so the
+              // landing appears instantly under the zoom (one continuous motion).
+              initial={(location.state as { fromBook?: boolean } | null)?.fromBook ? false : 'initial'}
               animate="animate"
               exit="exit"
               style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: 1 }}

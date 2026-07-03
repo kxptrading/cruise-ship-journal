@@ -34,11 +34,11 @@ export default function BottomNav({ section, onNav, badges = {} }: Props) {
     <nav
       aria-label="Bottom navigation"
       style={{
-        // In-flow (not fixed, not sticky): the bar is NOT kept on screen. It sits
-        // at the end of the page and only appears when you scroll to the bottom.
-        // On short pages the flex column (content is flex:1) seats it at the bottom.
+        // In-flow, seated directly AFTER the page content (no marginTop:auto, and
+        // the content is not stretched on mobile) — so on short pages it sits just
+        // below the content rather than being pushed to the screen bottom, and on
+        // long pages you reach it by scrolling to the very end.
         width:         '100%',
-        marginTop:     'auto',
         flexShrink:    0,
         background:    'var(--t-primary-dk)',
         borderTop:     '1px solid rgba(255,255,255,0.08)',

@@ -534,7 +534,10 @@ export default function App() {
               initial={(location.state as { fromBook?: boolean } | null)?.fromBook ? false : 'initial'}
               animate="animate"
               exit="exit"
-              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: 1 }}
+              // On mobile don't stretch the content to fill the height — that would
+              // push the in-flow bottom nav to the screen bottom. Let it size to its
+              // content so the nav sits right after it. Desktop keeps flex:1.
+              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: isMobile ? '0 0 auto' : 1 }}
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             {/* ErrorBoundary is keyed by pathname so a crash in one section

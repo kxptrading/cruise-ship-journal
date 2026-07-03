@@ -23,7 +23,6 @@ import {
 } from '../constants'
 import { ChevronDown, MapPin, Anchor, Star, UtensilsCrossed, Wallet } from 'lucide-react'
 import { useW, useVoyageId } from '../context'
-import { getTimeOfDay, getTimeGradient } from '../lib/atmosphere'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import BudgetBreakdown from '@/features/voyages/dashboard/BudgetBreakdown'
@@ -139,10 +138,10 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
   }, [foodLogs])
 
   const hasVoyage = !!(voyage.shipName || voyage.departureDate)
-  const tod       = getTimeOfDay()
-  // Theme gradient — follows the selected theme via the --t-* CSS vars.
+  // Theme gradient — follows the selected theme via the --t-* CSS vars. Used for
+  // the hero tint (under the photo) and section backgrounds, so the page stays on
+  // palette rather than shifting with time-of-day.
   const themeGrad = 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)'
-  const coverGrad = getTimeGradient(tod) || themeGrad
 
   // ── GSAP scroll choreography ──────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -212,7 +211,7 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (!hasVoyage) {
     return (
-      <div style={{ ...fullBleed, minHeight: '80vh', background: coverGrad, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
+      <div style={{ ...fullBleed, minHeight: '80vh', background: themeGrad, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
         <div style={{ maxWidth: 460 }}>
           <Anchor size={40} strokeWidth={1.4} color={WHITE} style={{ opacity: 0.9, marginBottom: 20 }} />
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: WHITE, fontSize: mobile ? 34 : 52, lineHeight: 1.1 }}>
@@ -246,7 +245,7 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
     <div ref={rootRef} style={{ marginTop: mobile ? -20 : w < BP.tablet ? -32 : -44 }}>
 
       {/* ─────────────── COVER — the ship ─────────────── */}
-      <section data-scene style={{ ...fullBleed, minHeight: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', background: coverGrad }}>
+      <section data-scene style={{ ...fullBleed, minHeight: '100vh', overflow: 'hidden', display: 'flex', alignItems: 'center', background: themeGrad }}>
         {/* Background photo layer (slow drift) */}
         {heroUrl && (
           <div data-parallax="14" style={{

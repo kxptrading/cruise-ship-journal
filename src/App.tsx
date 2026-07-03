@@ -615,11 +615,11 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
-            {/* Footer at the end of the scrolling <main> (desktop/tablet) — it
-                scrolls with the content and sits at the bottom of the page rather
-                than being pinned to the viewport. Mobile uses the fixed BottomNav. */}
-            {!isMobile && <Footer />}
           </main>
+          {/* Footer fixed to the bottom of the viewport (desktop/tablet): it sits
+              outside the scrolling <main>, so content scrolls above it while the
+              footer stays put. Mobile uses the fixed BottomNav instead. */}
+          {!isMobile && <Footer />}
           </div>
         </div>
       </div>

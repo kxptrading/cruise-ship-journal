@@ -49,26 +49,28 @@ export default function Footer() {
       }}
     >
       {/* Copyright */}
-      <span style={{ fontSize: mobile ? 10 : 11, color: MUTED, whiteSpace: 'nowrap', justifySelf: 'start', order: mobile ? 2 : undefined }}>
+      <span style={{ fontSize: mobile ? 10 : 11, color: MUTED, whiteSpace: 'nowrap', justifySelf: 'start' }}>
         © {YEAR} <span style={{ color: NAVY2, fontWeight: 600 }}>Deck Days</span> · KXP Technologies
       </span>
 
-      {/* Nav links — centered */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap', justifySelf: 'center', order: mobile ? 1 : undefined }}>
-        {LINKS.map((link, i) => (
-          <span key={link.to} style={{ display: 'flex', alignItems: 'center' }}>
-            {i > 0 && <span style={{ color: BORDER, margin: mobile ? '0 5px' : '0 6px', userSelect: 'none' }}>·</span>}
-            <Link
-              to={link.to}
-              style={{ fontSize: mobile ? 10.5 : 11, color: MUTED, textDecoration: 'none', transition: 'color 0.13s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = NAVY2 }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = MUTED }}
-            >
-              {link.label}
-            </Link>
-          </span>
-        ))}
-      </nav>
+      {/* Nav links — centered. Hidden on mobile to keep the bar to a single line. */}
+      {!mobile && (
+        <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap', justifySelf: 'center' }}>
+          {LINKS.map((link, i) => (
+            <span key={link.to} style={{ display: 'flex', alignItems: 'center' }}>
+              {i > 0 && <span style={{ color: BORDER, margin: '0 6px', userSelect: 'none' }}>·</span>}
+              <Link
+                to={link.to}
+                style={{ fontSize: 11, color: MUTED, textDecoration: 'none', transition: 'color 0.13s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = NAVY2 }}
+                onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = MUTED }}
+              >
+                {link.label}
+              </Link>
+            </span>
+          ))}
+        </nav>
+      )}
 
       {/* Social icons — hidden on mobile to keep the bar slim */}
       {!mobile && (

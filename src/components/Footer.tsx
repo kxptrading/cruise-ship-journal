@@ -1,6 +1,7 @@
-// components/Footer.tsx — Slim single-bar footer
+// components/Footer.tsx — Slim single-bar footer (compact on mobile)
 import { Link } from 'react-router-dom'
-import { BORDER, MUTED, NAVY2, FONT_BODY } from '../constants'
+import { BORDER, MUTED, NAVY2, FONT_BODY, BP } from '../constants'
+import { useW } from '../context'
 
 const YEAR = new Date().getFullYear()
 
@@ -31,32 +32,35 @@ const SOCIAL = [
 ]
 
 export default function Footer() {
+  const mobile = useW() < BP.mobile
   return (
     <footer
       role="contentinfo"
       style={{
         borderTop: `1px solid ${BORDER}`,
-        padding: '14px 28px',
-        display: 'grid',
-        gridTemplateColumns: '1fr auto 1fr',
+        // Slimmer on mobile: tighter padding, a single centred line, no social row.
+        padding: mobile ? '8px 14px' : '14px 28px',
+        display: mobile ? 'flex' : 'grid',
+        flexDirection: mobile ? 'column' : undefined,
+        gridTemplateColumns: mobile ? undefined : '1fr auto 1fr',
         alignItems: 'center',
-        gap: 16,
+        gap: mobile ? 4 : 16,
         fontFamily: FONT_BODY,
       }}
     >
       {/* Copyright */}
-      <span style={{ fontSize: 11, color: MUTED, whiteSpace: 'nowrap', justifySelf: 'start' }}>
+      <span style={{ fontSize: mobile ? 10 : 11, color: MUTED, whiteSpace: 'nowrap', justifySelf: 'start', order: mobile ? 2 : undefined }}>
         © {YEAR} <span style={{ color: NAVY2, fontWeight: 600 }}>Deck Days</span> · KXP Technologies
       </span>
 
       {/* Nav links — centered */}
-      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap', justifySelf: 'center' }}>
+      <nav style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, flexWrap: 'wrap', justifySelf: 'center', order: mobile ? 1 : undefined }}>
         {LINKS.map((link, i) => (
           <span key={link.to} style={{ display: 'flex', alignItems: 'center' }}>
-            {i > 0 && <span style={{ color: BORDER, margin: '0 6px', userSelect: 'none' }}>·</span>}
+            {i > 0 && <span style={{ color: BORDER, margin: mobile ? '0 5px' : '0 6px', userSelect: 'none' }}>·</span>}
             <Link
               to={link.to}
-              style={{ fontSize: 11, color: MUTED, textDecoration: 'none', transition: 'color 0.13s' }}
+              style={{ fontSize: mobile ? 10.5 : 11, color: MUTED, textDecoration: 'none', transition: 'color 0.13s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.color = NAVY2 }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.color = MUTED }}
             >
@@ -66,25 +70,27 @@ export default function Footer() {
         ))}
       </nav>
 
-      {/* Social icons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifySelf: 'end' }}>
-        {SOCIAL.map(({ label, href, path }) => (
-          <a
-            key={label}
-            href={href}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={label}
-            style={{ color: MUTED, display: 'flex', alignItems: 'center', transition: 'color 0.13s' }}
-            onMouseEnter={e => { e.currentTarget.style.color = NAVY2 }}
-            onMouseLeave={e => { e.currentTarget.style.color = MUTED }}
-          >
-            <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <path d={path} />
-            </svg>
-          </a>
-        ))}
-      </div>
+      {/* Social icons — hidden on mobile to keep the bar slim */}
+      {!mobile && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, justifySelf: 'end' }}>
+          {SOCIAL.map(({ label, href, path }) => (
+            <a
+              key={label}
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={label}
+              style={{ color: MUTED, display: 'flex', alignItems: 'center', transition: 'color 0.13s' }}
+              onMouseEnter={e => { e.currentTarget.style.color = NAVY2 }}
+              onMouseLeave={e => { e.currentTarget.style.color = MUTED }}
+            >
+              <svg width={14} height={14} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d={path} />
+              </svg>
+            </a>
+          ))}
+        </div>
+      )}
     </footer>
   )
 }

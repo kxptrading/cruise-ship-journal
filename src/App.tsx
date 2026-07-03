@@ -37,7 +37,6 @@ import BottomNav      from './components/BottomNav'
 import AuthScreen     from './components/AuthScreen'
 import ErrorBoundary  from './components/ErrorBoundary'
 import { Toast }      from './components/ui'
-import Footer         from './components/Footer'
 import SyncStatusPill from './components/SyncStatusPill'
 import OfflineBanner  from './components/OfflineBanner'
 import { useOnlineStatus }  from './hooks/useOnlineStatus'
@@ -533,10 +532,7 @@ export default function App() {
               initial={(location.state as { fromBook?: boolean } | null)?.fromBook ? false : 'initial'}
               animate="animate"
               exit="exit"
-              // Tablet shows the in-flow Footer inside <main>; don't stretch the
-              // content there, so the Footer sits right after it (rather than being
-              // pushed to the screen bottom). Mobile (fixed nav) + desktop keep flex:1.
-              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: bp === 'tablet' ? '0 0 auto' : 1 }}
+              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: 1 }}
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             {/* ErrorBoundary is keyed by pathname so a crash in one section
@@ -618,12 +614,9 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
-            {/* Footer lives INSIDE the scrolling <main> as the last child, in normal
-                flow — so it sits at the end of the page content and scrolls with it
-                (reach it by scrolling to the bottom) instead of being pinned to the
-                viewport. Desktop/tablet only (mobile uses the fixed BottomNav). */}
-            {!isMobile && <Footer />}
           </main>
+          {/* In-app footer removed per request. The links/copyright bar still
+              appears on the public landing + legal pages (LegalShell/LandingPage). */}
           </div>
         </div>
       </div>

@@ -376,9 +376,8 @@ export default function App() {
   // ── Layout values ───────────────────────────────────────────────────────────
   const baseFontSize = isMobile ? 15 : bp === 'tablet' ? 15.5 : 16
   const mainPad      = isMobile ? '20px 12px' : bp === 'tablet' ? '32px 28px' : '44px 52px'
-  // The mobile tab bar is now in normal flow (not a fixed overlay), so no extra
-  // clearance is needed — it sits directly after the content.
-  const mainPadBottom = isMobile ? '20px' : '48px'
+  // Extra bottom clearance on mobile so content isn't hidden behind the fixed BottomNav.
+  const mainPadBottom = isMobile ? '80px' : '48px'
 
   // ── Scroll tracking — fed into VoyageHero for parallax/fade ────────────────
   // useScroll with a container ref tracks the overflow-y scroll on <main>, not
@@ -534,10 +533,10 @@ export default function App() {
               initial={(location.state as { fromBook?: boolean } | null)?.fromBook ? false : 'initial'}
               animate="animate"
               exit="exit"
-              // On mobile don't stretch the content to fill the height — that would
-              // push the in-flow bottom nav to the screen bottom. Let it size to its
-              // content so the nav sits right after it. Desktop keeps flex:1.
-              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: isMobile ? '0 0 auto' : 1 }}
+              // Tablet shows the in-flow Footer inside <main>; don't stretch the
+              // content there, so the Footer sits right after it (rather than being
+              // pushed to the screen bottom). Mobile (fixed nav) + desktop keep flex:1.
+              style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: bp === 'tablet' ? '0 0 auto' : 1 }}
             >
             <div style={{ maxWidth: 900, margin: '0 auto' }}>
             {/* ErrorBoundary is keyed by pathname so a crash in one section
@@ -619,17 +618,12 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
-            {/* Mobile tab bar lives INSIDE the scrolling <main> and in normal flow
-                (not fixed): it hugs the bottom on short pages and scrolls in at the
-                end of long ones. */}
-            {isMobile && (
-              <BottomNav section={section} onNav={navClick} badges={navBadges} />
-            )}
+            {/* Footer lives INSIDE the scrolling <main> as the last child, in normal
+                flow — so it sits at the end of the page content and scrolls with it
+                (reach it by scrolling to the bottom) instead of being pinned to the
+                viewport. Desktop/tablet only (mobile uses the fixed BottomNav). */}
+            {!isMobile && <Footer />}
           </main>
-          {/* Footer is locked to the bottom of the viewport: it sits outside the
-              scrolling <main> (a sibling in this flex column), so it stays static
-              while content scrolls above it. Desktop only (mobile uses BottomNav). */}
-          {!isMobile && <Footer />}
           </div>
         </div>
       </div>
@@ -640,6 +634,10 @@ export default function App() {
         onSync={() => processSyncQueue().then(() => syncStatus.refresh())}
         onRetry={() => retryFailed().then(() => processSyncQueue()).then(() => syncStatus.refresh())}
       />
+      {/* Mobile tab bar — fixed to the viewport bottom (original behaviour). */}
+      {isMobile && (
+        <BottomNav section={section} onNav={navClick} badges={navBadges} />
+      )}
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

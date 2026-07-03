@@ -8,7 +8,7 @@
 // shows a macOS-style dot and its label as a caption under the dock.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, useMotionValue, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { WHITE, NAVY2, FONT_BODY } from '../constants'
 
@@ -67,6 +67,13 @@ function DockIcon({ mouseX, emoji, label, active, mobile, onSelect }: {
 }) {
   const ref = useRef<HTMLButtonElement>(null)
   const [hovered, setHovered] = useState(false)
+
+  // Keep the selected icon in view: when this icon becomes active, scroll it to
+  // the centre of the dock's scroll row. `block:'nearest'` avoids nudging the page
+  // vertically; on desktop (non-scrolling dock) it's effectively a no-op.
+  useEffect(() => {
+    if (active) ref.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [active])
 
   const base    = mobile ? 38 : 46
   const maxScale = mobile ? 1 : 1.6   // no magnification on mobile (no hover)

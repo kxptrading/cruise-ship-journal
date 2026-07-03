@@ -589,11 +589,13 @@ export default function LandingPage() {
         <Ocean frontFill={CREAM} />
       </section>
 
-      {/* Footer scrolls with the page — it's the last item in the scroll area, so
-          you reach it by scrolling to the bottom (not pinned to the viewport). */}
-      <Footer />
+      {/* Mobile: footer scrolls with the page (last item in the scroll area). */}
+      {mobile && <Footer />}
 
       </div>{/* end scrolling content area */}
+
+      {/* Desktop/tablet: footer fixed to the viewport bottom (outside the scroll). */}
+      {!mobile && <Footer />}
     </div>
   )
 }

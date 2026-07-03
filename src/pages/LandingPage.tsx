@@ -278,6 +278,10 @@ function LiveCarousel({ mobile, w, items }: { mobile: boolean; w: number; items:
 export default function LandingPage() {
   const w = useWindowSize()
   const mobile = w < BP.mobile
+  // Phone breakpoint (<768) for the footer placement — phones get the scrollable
+  // footer, tablet/desktop get the fixed one. (Wider than BP.mobile so 640–767px
+  // phones aren't treated as tablets.)
+  const isPhone = w < 768
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // Live Founder's Offer scarcity (server-authoritative counter). Drives which
@@ -589,13 +593,13 @@ export default function LandingPage() {
         <Ocean frontFill={CREAM} />
       </section>
 
-      {/* Mobile: footer scrolls with the page (last item in the scroll area). */}
-      {mobile && <Footer />}
+      {/* Phone: footer scrolls with the page (last item in the scroll area). */}
+      {isPhone && <Footer />}
 
       </div>{/* end scrolling content area */}
 
-      {/* Desktop/tablet: footer fixed to the viewport bottom (outside the scroll). */}
-      {!mobile && <Footer />}
+      {/* Tablet/desktop: footer fixed to the viewport bottom (outside the scroll). */}
+      {!isPhone && <Footer />}
     </div>
   )
 }

@@ -1,7 +1,7 @@
 // components/Footer.tsx — Slim single-bar footer (compact on mobile)
 import { Link } from 'react-router-dom'
-import { BORDER, MUTED, NAVY2, FONT_BODY, BP } from '../constants'
-import { useW } from '../context'
+import { BORDER, MUTED, NAVY2, FONT_BODY } from '../constants'
+import { useBreakpoint } from '../hooks/useBreakpoint'
 
 const YEAR = new Date().getFullYear()
 
@@ -32,7 +32,9 @@ const SOCIAL = [
 ]
 
 export default function Footer() {
-  const mobile = useW() < BP.mobile
+  // Phone breakpoint (<768) — matches the app's isMobile, so phones ≥640 also get
+  // the slim footer rather than the full desktop bar.
+  const mobile = useBreakpoint() === 'mobile'
   return (
     <footer
       role="contentinfo"

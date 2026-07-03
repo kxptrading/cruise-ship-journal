@@ -91,7 +91,14 @@ export default function BookOpenTransition({ voyage, rect, onDone }: Props) {
           style={{ position: 'absolute', inset: 0, transformOrigin: 'center', overflow: 'hidden', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)', boxShadow: '0 24px 70px rgba(0,0,0,0.55)' }}
         >
           {heroUrl && (
-            <img src={heroUrl} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+            // Dim toward ~0.5 as it zooms so the final frame matches the landing
+            // hero (which shows its photo at 50% over the theme gradient).
+            <motion.img
+              src={heroUrl} alt=""
+              animate={{ opacity: zooming ? 0.5 : 1 }}
+              transition={{ duration: 0.5, ease: [0.32, 0, 0.2, 1] }}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            />
           )}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,16,28,0.45) 0%, rgba(8,16,28,0.18) 42%, rgba(8,16,28,0.78) 100%)' }} />
           {/* Title fades out as the page zooms — the landing supplies its own hero text. */}

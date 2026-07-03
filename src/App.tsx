@@ -529,10 +529,11 @@ export default function App() {
             <motion.div
               key={location.pathname}
               variants={PAGE_TRANSITION}
-              // Arriving from the book-open animation: skip the entrance fade so the
-              // landing appears instantly under the zoom (one continuous motion).
-              initial={(location.state as { fromBook?: boolean } | null)?.fromBook ? false : 'initial'}
-              animate="animate"
+              // Arriving from the book-open animation: a soft opacity-only fade-in
+              // (no y-slide) so the landing eases in under the zoom rather than
+              // snapping into place.
+              initial={(location.state as { fromBook?: boolean } | null)?.fromBook ? { opacity: 0 } : 'initial'}
+              animate={(location.state as { fromBook?: boolean } | null)?.fromBook ? { opacity: 1, transition: { duration: 0.5, ease: 'easeOut' } } : 'animate'}
               exit="exit"
               style={{ padding: mainPad, paddingBottom: mainPadBottom, flex: 1 }}
             >

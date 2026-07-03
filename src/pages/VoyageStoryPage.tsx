@@ -140,8 +140,9 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
 
   const hasVoyage = !!(voyage.shipName || voyage.departureDate)
   const tod       = getTimeOfDay()
-  const coverGrad = getTimeGradient(tod)
-    || 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)'
+  // Theme gradient — follows the selected theme via the --t-* CSS vars.
+  const themeGrad = 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)'
+  const coverGrad = getTimeGradient(tod) || themeGrad
 
   // ── GSAP scroll choreography ──────────────────────────────────────────────
   useLayoutEffect(() => {
@@ -547,7 +548,8 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
       )}
 
       {/* ─────────────── CLOSING ─────────────── */}
-      <section data-scene style={{ ...fullBleed, minHeight: '70vh', background: coverGrad, color: WHITE, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+      {/* Theme gradient (not the time-of-day atmosphere) so it matches the palette. */}
+      <section data-scene style={{ ...fullBleed, minHeight: '70vh', background: themeGrad, color: WHITE, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
         <div data-parallax="-12" style={{ ...col, textAlign: 'center' }}>
           <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Fin</div>
           <h2 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 32 : 'clamp(38px, 5vw, 60px)', lineHeight: 1.1 }}>

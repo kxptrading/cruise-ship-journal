@@ -39,6 +39,7 @@ import ErrorBoundary  from './components/ErrorBoundary'
 import { Toast }      from './components/ui'
 import SyncStatusPill from './components/SyncStatusPill'
 import OfflineBanner  from './components/OfflineBanner'
+import Footer         from './components/Footer'
 import { useOnlineStatus }  from './hooks/useOnlineStatus'
 import { useSyncStatus }    from './hooks/useSyncStatus'
 import { useUnreadCounts }  from './hooks/useUnreadCounts'
@@ -614,9 +615,11 @@ export default function App() {
             </div>
             </motion.div>
             </AnimatePresence>
+            {/* Footer at the end of the scrolling <main> (desktop/tablet) — it
+                scrolls with the content and sits at the bottom of the page rather
+                than being pinned to the viewport. Mobile uses the fixed BottomNav. */}
+            {!isMobile && <Footer />}
           </main>
-          {/* In-app footer removed per request. The links/copyright bar still
-              appears on the public landing + legal pages (LegalShell/LandingPage). */}
           </div>
         </div>
       </div>

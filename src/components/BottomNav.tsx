@@ -62,17 +62,22 @@ export default function BottomNav({ section, onNav, badges = {} }: Props) {
               alignItems:     'center',
               justifyContent: 'center',
               gap:            4,
+              position:       'relative',
               background:     'transparent',
               border:         'none',
-              borderTop:      `2px solid ${active ? GOLD : 'transparent'}`,
               cursor:         'pointer',
-              padding:        '10px 4px 8px',
+              padding:        '12px 4px 8px',
               fontFamily:     FONT_LABEL,
-              transition:     'border-color 0.15s, color 0.15s',
+              transition:     'color 0.15s',
               WebkitTapHighlightColor: 'transparent',
               color: active ? GOLD : 'rgba(255,255,255,0.45)',
             }}
           >
+            {/* Active indicator — a discrete element (not a border-color transition,
+                which iOS Safari can fail to repaint) so it shows for every tab. */}
+            {active && (
+              <span aria-hidden style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: GOLD, borderRadius: '0 0 3px 3px' }} />
+            )}
             <span style={{ position: 'relative', display: 'inline-flex' }}>
               {iconPack !== 'lucide'
                 ? <FE emoji={emoji} size={21} />

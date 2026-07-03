@@ -374,7 +374,7 @@ export default function App() {
   }
 
   // ── Layout values ───────────────────────────────────────────────────────────
-  const baseFontSize = isMobile ? 15 : bp === 'tablet' ? 15.5 : 16
+  const baseFontSize = isMobile ? 13 : bp === 'tablet' ? 15.5 : 16
   const mainPad      = isMobile ? '20px 12px' : bp === 'tablet' ? '32px 28px' : '44px 52px'
   // Extra bottom clearance on mobile so content isn't hidden behind the fixed BottomNav.
   const mainPadBottom = isMobile ? '80px' : '48px'

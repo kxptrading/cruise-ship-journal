@@ -9,6 +9,8 @@ import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell, AtSign, Heart, MessageCircle } from 'lucide-react'
 import { WHITE, BORDER, NAVY2, MUTED, TEXT, GOLD, FONT_BODY } from '@/constants'
+import { useIconPack } from '@/context'
+import FE from '@/components/FE'
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationsRead, type AppNotification } from './hooks'
 
 function relativeTime(iso: string): string {
@@ -44,6 +46,7 @@ interface Props { size?: number; color?: string }
 
 export default function NotificationsBell({ size = 22, color = 'rgba(255,255,255,0.85)' }: Props) {
   const navigate = useNavigate()
+  const iconPack = useIconPack()
   const [open, setOpen] = useState(false)
   const wrapRef = useRef<HTMLDivElement>(null)
 
@@ -74,7 +77,9 @@ export default function NotificationsBell({ size = 22, color = 'rgba(255,255,255
           WebkitTapHighlightColor: 'transparent',
         }}
       >
-        <Bell size={size} strokeWidth={1.9} />
+        {iconPack !== 'lucide'
+          ? <FE emoji="🔔" size={size} />
+          : <Bell size={size} strokeWidth={1.9} />}
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: 4, right: 4, minWidth: 16, height: 16, padding: '0 4px',

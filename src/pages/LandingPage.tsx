@@ -589,10 +589,11 @@ export default function LandingPage() {
         <Ocean frontFill={CREAM} />
       </section>
 
-      </div>{/* end scrolling content area */}
-
-      {/* ── Footer — locked to the bottom of the viewport ──────────── */}
+      {/* Footer scrolls with the page — it's the last item in the scroll area, so
+          you reach it by scrolling to the bottom (not pinned to the viewport). */}
       <Footer />
+
+      </div>{/* end scrolling content area */}
     </div>
   )
 }

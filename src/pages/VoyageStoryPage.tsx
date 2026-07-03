@@ -262,7 +262,7 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
             {voyage.cruiseLine || 'A Deck Days Voyage'}
           </div>
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 'clamp(40px, 13vw, 56px)' : 'clamp(56px, 7.5vw, 104px)', lineHeight: 1.04, letterSpacing: '-0.01em' }}>
-            {voyage.shipName || 'The Voyage'}
+            {voyage.destination || voyage.shipName || 'The Voyage'}
           </h1>
           {(voyage.departureDate || voyage.returnDate) && (
             <div style={{ marginTop: 22, fontFamily: FONT_BODY, fontSize: mobile ? 14 : 17, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.02em' }}>

@@ -19,7 +19,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { gsap, ScrollTrigger, SCROLLER, prefersReducedMotion } from '../lib/gsap'
 import {
-  NAVY2, GOLD, CREAM, WHITE, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY, BP,
+  NAVY2, GOLD, CREAM, WHITE, MUTED, TEXT, TEAL, FONT_DISPLAY, FONT_BODY, FONT_ACCENT, BP,
 } from '../constants'
 import { ChevronDown, MapPin, Anchor, Star, UtensilsCrossed, Wallet } from 'lucide-react'
 import { useW, useVoyageId } from '../context'
@@ -53,6 +53,14 @@ function formatDate(iso: string): string {
   try {
     return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   } catch { return iso }
+}
+
+// Diary-style date: "Thursday 3 July" (handles both YYYY-MM-DD and ISO timestamps).
+function formatDiaryDate(iso: string): string {
+  if (!iso) return ''
+  const d = iso.length <= 10 ? new Date(iso + 'T00:00:00') : new Date(iso)
+  if (isNaN(d.getTime())) return ''
+  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 }
 
 export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, foodLogs, diningLog, onNav, onViewDay, heroActions, heroOverride }: Props) {
@@ -136,6 +144,23 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
     }
     return out
   }, [foodLogs])
+
+  // ── Diary entries: the actual posts, each with its OWN photos ──────────────
+  // The heart of the "authentic diary" look — text and its pictures together,
+  // in chronological order.
+  const diaryEntries = useMemo(() => {
+    return [...voyagePosts]
+      .filter(p => (p.body && p.body.trim()) || (p.media_paths && p.media_paths.length))
+      .sort((a, b) => (a.post_date || a.created_at || '').localeCompare(b.post_date || b.created_at || ''))
+      .map(p => ({
+        id:       p.id,
+        date:     p.post_date || p.created_at || '',
+        title:    (p.title || '').trim(),
+        body:     (p.body || '').trim(),
+        location: (p.location || '').trim(),
+        photos:   (p.media_paths ?? []).map(publicUrl),
+      }))
+  }, [voyagePosts])
 
   const hasVoyage = !!(voyage.shipName || voyage.departureDate)
   // Theme gradient — follows the selected theme via the --t-* CSS vars. Used for
@@ -359,11 +384,11 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
       )}
 
       {/* ─────────────── CHAPTER 03 — the memories (intro) ─────────────── */}
-      {(photoUrls.length > 0 || quotes.length > 0) && (
+      {(diaryEntries.length > 0 || photoUrls.length > 0 || quotes.length > 0) && (
         <section data-scene style={{ ...fullBleed, background: CREAM, padding: mobile ? '90px 0' : '140px 0', overflow: 'hidden' }}>
           <div style={col}>
-            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 03 — The Memories</div>
-            <h2 style={headline}>Moments worth keeping</h2>
+            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 03 — The Diary</div>
+            <h2 style={headline}>Pages from the voyage</h2>
             <p style={standfirst}>The days that earned a place in the journal — and the photographs that go with them.</p>
             {avgRating > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
@@ -379,8 +404,38 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
             )}
           </div>
 
-          {/* Pulled quotes */}
-          {quotes.length > 0 && (
+          {/* Diary entries — each post with its OWN photos, in date order. Falls
+              back to pulled quotes (from the daily log) when there are no posts. */}
+          {diaryEntries.length > 0 ? (
+            <div style={{ ...col, marginTop: mobile ? 44 : 68 }} data-reveal>
+              {diaryEntries.map((e, i) => (
+                <article key={e.id} style={{ padding: mobile ? '26px 0' : '40px 0', borderTop: i === 0 ? 'none' : '1px solid #E0DBD0' }}>
+                  {/* Handwritten-style date */}
+                  <div style={{ fontFamily: FONT_ACCENT, fontWeight: 700, fontSize: mobile ? 27 : 34, color: GOLD, lineHeight: 1 }}>
+                    {formatDiaryDate(e.date)}
+                  </div>
+                  {e.location && (
+                    <div style={{ ...kicker, fontSize: 11, color: MUTED, marginTop: 8 }}>{e.location}</div>
+                  )}
+                  {e.title && (
+                    <h3 style={{ margin: '12px 0 0', fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 22 : 27, lineHeight: 1.2 }}>{e.title}</h3>
+                  )}
+                  {e.body && (
+                    <p style={{ margin: '12px 0 0', fontFamily: FONT_DISPLAY, color: TEXT, fontSize: mobile ? 16 : 18, lineHeight: 1.75, whiteSpace: 'pre-wrap' }}>{e.body}</p>
+                  )}
+                  {e.photos.length > 0 && (
+                    <div style={{ marginTop: 18, display: 'grid', gridTemplateColumns: e.photos.length === 1 ? '1fr' : mobile ? '1fr 1fr' : `repeat(${Math.min(e.photos.length, 3)}, 1fr)`, gap: 12 }}>
+                      {e.photos.slice(0, 6).map((url, pi) => (
+                        <div key={pi} style={{ borderRadius: 12, overflow: 'hidden', border: `1px solid ${WHITE}`, background: WHITE, aspectRatio: e.photos.length === 1 ? '16 / 9' : '4 / 3', boxShadow: '0 8px 22px rgba(20,41,63,0.10)' }}>
+                          <img src={url} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              ))}
+            </div>
+          ) : quotes.length > 0 ? (
             <div style={{ ...col, marginTop: mobile ? 48 : 76 }} data-reveal>
               {quotes.map((q, i) => (
                 <blockquote
@@ -403,7 +458,7 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
                 </blockquote>
               ))}
             </div>
-          )}
+          ) : null}
         </section>
       )}
 

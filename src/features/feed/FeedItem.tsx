@@ -2,13 +2,12 @@
 // features/feed/FeedItem.tsx — Single item in the spec Feed (spec §4 FeedPage)
 // ─────────────────────────────────────────────────────────────────────────────
 
+import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { WHITE, BORDER, NAVY2, MUTED, TEAL, TEXT, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import { WHITE, BORDER, FONT_DISPLAY, FONT_BODY } from '@/constants'
 import AudiencePill from '@/features/posts/AudiencePill'
-import FE from '@/components/FE'
 import type { FeedRow } from './hooks'
-import MediaThumbnails from '@/ui/MediaThumbnails'
 import { useUserId } from '@/context'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import UserSafetyMenu from '@/features/safety/UserSafetyMenu'
@@ -31,10 +30,6 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-function formatPostDate(iso: string | null): string {
-  if (!iso) return ''
-  return new Date(iso + 'T00:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
-}
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 
@@ -74,11 +69,19 @@ export default function FeedItem({ item }: Props) {
 
   const mediaPaths = item.media_paths ?? []
   const heroPath   = mediaPaths[0] ?? null
-  const restPaths  = mediaPaths.slice(1)
 
   const rating = typeof item.metadata?.rating === 'number' ? (item.metadata.rating as number) : 0
 
   const goToPost = () => navigate(`/voyages/${item.voyage_id}/posts/${item.id}`)
+
+  // Small translucent chip used on the photo/text overlays.
+  const overlayChip: CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    background: 'rgba(255,255,255,0.20)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)',
+    color: '#fff', fontSize: 11.5, fontWeight: 700, fontFamily: FONT_BODY,
+    borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap',
+  }
+  const openVoyage = (e: { stopPropagation(): void }) => { e.stopPropagation(); navigate(`/voyages/${item.voyage_id}`) }
 
   return (
     <motion.div
@@ -94,160 +97,90 @@ export default function FeedItem({ item }: Props) {
         boxShadow:    '0 2px 12px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.04)',
       }}
     >
-      {/* Accent strip */}
-      <div style={{ height: 4, background: 'linear-gradient(90deg, var(--t-primary-dk) 0%, var(--t-primary) 55%, var(--t-accent) 100%)' }} />
-
-      {/* Author row */}
-      <div style={{ padding: '14px 16px 12px', display: 'flex', alignItems: 'flex-start', gap: 10 }}>
-        <Avatar url={item.author_avatar_url} name={item.author_display_name} />
-
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}>
-              {item.author_display_name ?? 'Cruiser'}
-            </span>
-            {/* Voyage badge */}
-            <button
-              onClick={() => navigate(`/voyages/${item.voyage_id}`)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                background: 'var(--t-primary-dk)', color: '#fff',
-                border: 'none', borderRadius: 20, padding: '2px 9px',
-                cursor: 'pointer', fontSize: 11, fontWeight: 700, fontFamily: FONT_BODY,
-                flexShrink: 0, letterSpacing: '0.01em',
-              }}
-            >
-              🚢 {voyageLabel}
-            </button>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>{relativeTime(item.created_at)}</span>
-            {isOwnPost && <AudiencePill audience={item.audience} />}
-          </div>
-        </div>
-
-        {/* Safety menu — only for other users' posts */}
-        {!isOwnPost && (
-          <UserSafetyMenu targetUserId={item.user_id} postId={item.id} reportType="post" />
-        )}
-
-        {/* Rating badge — top-right */}
-        {rating > 0 && (
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 3, flexShrink: 0,
-            background: '#FEF3C7', border: '1px solid rgba(245,158,11,0.3)',
-            borderRadius: 20, padding: '4px 10px',
-          }}>
-            <span style={{ color: '#F59E0B', fontSize: 13 }}>★</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#92400E', fontFamily: FONT_BODY }}>{rating}.0</span>
-          </div>
-        )}
-      </div>
-
-      {/* Date + location pills */}
-      {(item.post_date || item.location) && (
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', padding: '0 16px 12px' }}>
-          {item.post_date && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontSize: 12, color: MUTED, fontFamily: FONT_BODY,
-              background: '#F3F4F6', borderRadius: 20, padding: '3px 10px',
-            }}>
-              <FE emoji="📅" size={12} /> {formatPostDate(item.post_date)}
-            </span>
-          )}
-          {item.location && (
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4,
-              fontSize: 12, color: TEAL, fontWeight: 700, fontFamily: FONT_BODY,
-              background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)',
-              borderRadius: 20, padding: '3px 10px',
-            }}>
-              <FE emoji="📍" size={12} /> {item.location}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* Hero image — first photo full-width, click navigates to post */}
-      {heroPath && (
-        <div
-          onClick={goToPost}
-          style={{ cursor: 'pointer', overflow: 'hidden', position: 'relative' }}
-        >
+      {heroPath ? (
+        /* ── Photo post — bold image with text overlaid (Instagram-style) ── */
+        <div onClick={goToPost} style={{ position: 'relative', cursor: 'pointer' }}>
           <motion.img
             src={publicUrl(heroPath)}
             alt={item.title ?? voyageLabel}
-            whileHover={{ scale: 1.03 }}
-            transition={{ duration: 0.35 }}
-            style={{ width: '100%', height: 260, objectFit: 'cover', display: 'block' }}
+            whileHover={{ scale: 1.04 }}
+            transition={{ duration: 0.45 }}
+            style={{ width: '100%', aspectRatio: '4 / 5', maxHeight: 560, objectFit: 'cover', display: 'block' }}
           />
-          {/* Photo count badge when multiple images */}
+
+          {/* Top scrim — author + safety */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '12px 12px 30px', display: 'flex', alignItems: 'center', gap: 10, background: 'linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 100%)' }}>
+            <Avatar url={item.author_avatar_url} name={item.author_display_name} size={38} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY, textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}>
+                {item.author_display_name ?? 'Cruiser'}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
+                <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.85)', fontFamily: FONT_BODY, textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}>{relativeTime(item.created_at)}</span>
+                {isOwnPost && <AudiencePill audience={item.audience} />}
+              </div>
+            </div>
+            {!isOwnPost && (
+              <div onClick={e => e.stopPropagation()} style={{ color: WHITE }}>
+                <UserSafetyMenu targetUserId={item.user_id} postId={item.id} reportType="post" />
+              </div>
+            )}
+          </div>
+
           {mediaPaths.length > 1 && (
-            <div style={{
-              position: 'absolute', bottom: 10, right: 12,
-              background: 'rgba(0,0,0,0.52)', backdropFilter: 'blur(4px)',
-              borderRadius: 20, padding: '3px 10px',
-              fontSize: 11, color: '#fff', fontFamily: FONT_BODY, fontWeight: 600,
-            }}>
+            <div style={{ position: 'absolute', top: 14, right: 14, background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(4px)', borderRadius: 20, padding: '3px 10px', fontSize: 11, color: '#fff', fontFamily: FONT_BODY, fontWeight: 600, pointerEvents: 'none' }}>
               1 / {mediaPaths.length}
             </div>
           )}
+
+          {/* Bottom scrim — caption overlaid */}
+          <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '52px 16px 16px', background: 'linear-gradient(0deg, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.35) 55%, transparent 100%)' }}>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 9 }}>
+              <button onClick={openVoyage} style={{ ...overlayChip, border: 'none', cursor: 'pointer' }}>🚢 {voyageLabel}</button>
+              {item.location && <span style={overlayChip}>📍 {item.location}</span>}
+              {rating > 0 && <span style={{ ...overlayChip, color: '#FFD84D' }}>★ {rating}.0</span>}
+            </div>
+            {item.title && (
+              <h3 style={{ margin: '0 0 5px', fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 21, color: WHITE, lineHeight: 1.25, textShadow: '0 2px 8px rgba(0,0,0,0.55)' }}>{item.title}</h3>
+            )}
+            <p style={{ margin: 0, fontSize: 14.5, color: 'rgba(255,255,255,0.95)', lineHeight: 1.55, fontFamily: FONT_BODY, textShadow: '0 1px 5px rgba(0,0,0,0.6)' }}>
+              <RichText text={bodyPreview} people={mentionPeople} />
+              {truncated && <span style={{ fontWeight: 700 }}> more</span>}
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* ── Text-only post — bold themed card ── */
+        <div onClick={goToPost} style={{ cursor: 'pointer', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)', color: WHITE, padding: '16px 18px 20px', minHeight: 220, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Avatar url={item.author_avatar_url} name={item.author_display_name} size={38} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY }}>{item.author_display_name ?? 'Cruiser'}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
+                <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.8)', fontFamily: FONT_BODY }}>{relativeTime(item.created_at)}</span>
+                {isOwnPost && <AudiencePill audience={item.audience} />}
+              </div>
+            </div>
+            {!isOwnPost && (
+              <div onClick={e => e.stopPropagation()} style={{ color: WHITE }}>
+                <UserSafetyMenu targetUserId={item.user_id} postId={item.id} reportType="post" />
+              </div>
+            )}
+          </div>
+          <div style={{ marginTop: 'auto', paddingTop: 22 }}>
+            {item.title && <h3 style={{ margin: '0 0 6px', fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 22, color: WHITE, lineHeight: 1.25 }}>{item.title}</h3>}
+            <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,255,255,0.95)', lineHeight: 1.6, fontFamily: FONT_BODY }}>
+              <RichText text={bodyPreview} people={mentionPeople} />
+              {truncated && <span style={{ fontWeight: 700 }}> more</span>}
+            </p>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
+              <button onClick={openVoyage} style={{ ...overlayChip, border: 'none', cursor: 'pointer' }}>🚢 {voyageLabel}</button>
+              {item.location && <span style={overlayChip}>📍 {item.location}</span>}
+              {rating > 0 && <span style={{ ...overlayChip, color: '#FFD84D' }}>★ {rating}.0</span>}
+            </div>
+          </div>
         </div>
       )}
-
-      {/* Body */}
-      <div style={{ padding: '14px 16px 16px' }}>
-        {/* Post title */}
-        {item.title && (
-          <h3
-            onClick={goToPost}
-            style={{
-              margin: '0 0 8px', fontSize: 18, fontWeight: 400,
-              color: NAVY2, fontFamily: FONT_DISPLAY, cursor: 'pointer', lineHeight: 1.3,
-            }}
-          >
-            {item.title}
-          </h3>
-        )}
-
-        {/* Post body preview */}
-        <p
-          onClick={goToPost}
-          style={{ margin: 0, fontSize: 14, color: TEXT, lineHeight: 1.75, cursor: 'pointer' }}
-        >
-          <RichText text={bodyPreview} people={mentionPeople} />
-          {truncated && (
-            <span style={{ color: 'var(--t-primary)', fontWeight: 600 }}> Read more</span>
-          )}
-        </p>
-
-        {/* Additional photos as thumbnails */}
-        {restPaths.length > 0 && (
-          <MediaThumbnails paths={restPaths} maxShow={3} size="sm" />
-        )}
-      </div>
-
-      {/* Footer: read full post */}
-      <div
-        onClick={goToPost}
-        style={{
-          borderTop: `1px solid ${BORDER}`,
-          padding: '10px 16px',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-          background: '#FAFAFA',
-          cursor: 'pointer',
-        }}
-        onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = '#F3F4F6' }}
-        onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = '#FAFAFA' }}
-      >
-        <span style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>
-          {item.location ? `📍 ${item.location}` : voyageLabel}
-        </span>
-        <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--t-primary)', fontFamily: FONT_BODY }}>
-          Read full post →
-        </span>
-      </div>
     </motion.div>
   )
 }

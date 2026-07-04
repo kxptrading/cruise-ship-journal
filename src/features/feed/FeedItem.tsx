@@ -5,7 +5,7 @@
 import type { CSSProperties } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { WHITE, BORDER, FONT_DISPLAY, FONT_BODY } from '@/constants'
+import { WHITE, BORDER, NAVY2, MUTED, TEXT, FONT_DISPLAY, FONT_BODY } from '@/constants'
 import AudiencePill from '@/features/posts/AudiencePill'
 import type { FeedRow } from './hooks'
 import { useUserId } from '@/context'
@@ -83,6 +83,13 @@ export default function FeedItem({ item }: Props) {
   }
   const openVoyage = (e: { stopPropagation(): void }) => { e.stopPropagation(); navigate(`/voyages/${item.voyage_id}`) }
 
+  // Chip for the light (no-photo) card.
+  const lightChip: CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: 4,
+    background: '#F3F4F6', color: MUTED, fontSize: 11.5, fontWeight: 700, fontFamily: FONT_BODY,
+    borderRadius: 20, padding: '3px 10px', whiteSpace: 'nowrap',
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -150,33 +157,37 @@ export default function FeedItem({ item }: Props) {
           </div>
         </div>
       ) : (
-        /* ── Text-only post — bold themed card ── */
-        <div onClick={goToPost} style={{ cursor: 'pointer', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)', color: WHITE, padding: '16px 18px 20px', minHeight: 220, display: 'flex', flexDirection: 'column' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Avatar url={item.author_avatar_url} name={item.author_display_name} size={38} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: WHITE, fontFamily: FONT_BODY }}>{item.author_display_name ?? 'Cruiser'}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
-                <span style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.8)', fontFamily: FONT_BODY }}>{relativeTime(item.created_at)}</span>
-                {isOwnPost && <AudiencePill audience={item.audience} />}
+        /* ── Text-only post — plain white card with a hint of theme (accent strip) ── */
+        <div onClick={goToPost} style={{ cursor: 'pointer', background: WHITE }}>
+          {/* Accent strip — the hint of theme colour */}
+          <div style={{ height: 4, background: 'linear-gradient(90deg, var(--t-primary-dk) 0%, var(--t-primary) 55%, var(--t-accent) 100%)' }} />
+          <div style={{ padding: '16px 18px 18px', minHeight: 176, display: 'flex', flexDirection: 'column' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Avatar url={item.author_avatar_url} name={item.author_display_name} size={38} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}>{item.author_display_name ?? 'Cruiser'}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 1 }}>
+                  <span style={{ fontSize: 11.5, color: MUTED, fontFamily: FONT_BODY }}>{relativeTime(item.created_at)}</span>
+                  {isOwnPost && <AudiencePill audience={item.audience} />}
+                </div>
               </div>
+              {!isOwnPost && (
+                <div onClick={e => e.stopPropagation()}>
+                  <UserSafetyMenu targetUserId={item.user_id} postId={item.id} reportType="post" />
+                </div>
+              )}
             </div>
-            {!isOwnPost && (
-              <div onClick={e => e.stopPropagation()} style={{ color: WHITE }}>
-                <UserSafetyMenu targetUserId={item.user_id} postId={item.id} reportType="post" />
+            <div style={{ marginTop: 'auto', paddingTop: 18 }}>
+              {item.title && <h3 style={{ margin: '0 0 6px', fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 21, color: NAVY2, lineHeight: 1.25 }}>{item.title}</h3>}
+              <p style={{ margin: 0, fontSize: 15, color: TEXT, lineHeight: 1.65, fontFamily: FONT_BODY }}>
+                <RichText text={bodyPreview} people={mentionPeople} />
+                {truncated && <span style={{ color: 'var(--t-primary)', fontWeight: 700 }}> more</span>}
+              </p>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
+                <button onClick={openVoyage} style={{ ...lightChip, background: 'var(--t-primary-dk)', color: '#fff', border: 'none', cursor: 'pointer' }}>🚢 {voyageLabel}</button>
+                {item.location && <span style={lightChip}>📍 {item.location}</span>}
+                {rating > 0 && <span style={{ ...lightChip, background: '#FEF3C7', color: '#92400E' }}>★ {rating}.0</span>}
               </div>
-            )}
-          </div>
-          <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-            {item.title && <h3 style={{ margin: '0 0 6px', fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: 22, color: WHITE, lineHeight: 1.25 }}>{item.title}</h3>}
-            <p style={{ margin: 0, fontSize: 15, color: 'rgba(255,255,255,0.95)', lineHeight: 1.6, fontFamily: FONT_BODY }}>
-              <RichText text={bodyPreview} people={mentionPeople} />
-              {truncated && <span style={{ fontWeight: 700 }}> more</span>}
-            </p>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 14 }}>
-              <button onClick={openVoyage} style={{ ...overlayChip, border: 'none', cursor: 'pointer' }}>🚢 {voyageLabel}</button>
-              {item.location && <span style={overlayChip}>📍 {item.location}</span>}
-              {rating > 0 && <span style={{ ...overlayChip, color: '#FFD84D' }}>★ {rating}.0</span>}
             </div>
           </div>
         </div>

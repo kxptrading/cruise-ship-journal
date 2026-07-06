@@ -13,6 +13,7 @@ import { publicUrl } from '@/features/posts/mediaStorage'
 import UserSafetyMenu from '@/features/safety/UserSafetyMenu'
 import RichText from '@/features/social/richText'
 import { useMentionPeople } from '@/features/social/useMentionPeople'
+import PostEngagement from '@/features/posts/PostEngagement'
 
 const BODY_PREVIEW = 240
 
@@ -192,6 +193,9 @@ export default function FeedItem({ item }: Props) {
           </div>
         </div>
       )}
+
+      {/* Reactions + comments */}
+      <PostEngagement postId={item.id} voyageId={item.voyage_id} compact />
     </motion.div>
   )
 }

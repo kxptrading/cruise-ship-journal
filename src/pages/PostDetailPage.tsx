@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { NAVY2, MUTED, TEXT, GOLD, TEAL, WHITE, BORDER, FONT_DISPLAY, FONT_BODY } from '@/constants'
 import RichText from '@/features/social/richText'
 import { useMentionPeople } from '@/features/social/useMentionPeople'
+import PostEngagement from '@/features/posts/PostEngagement'
 import { usePost, useDeletePost } from '@/features/posts/hooks'
 import AudiencePill from '@/features/posts/AudiencePill'
 import { SkeletonCard } from '@/components/ui/skeleton'
@@ -140,6 +141,13 @@ export default function PostDetailPage() {
           )}
         </div>
       </motion.div>
+
+      {/* Reactions + comments */}
+      {postId && (
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 16, overflow: 'hidden', marginTop: 16 }}>
+          <PostEngagement postId={postId} voyageId={voyageId} />
+        </div>
+      )}
 
       {/* Delete confirm */}
       <AnimatePresence>

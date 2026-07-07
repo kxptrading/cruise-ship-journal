@@ -65,6 +65,9 @@ export interface DailyLog {
   entertainment: string
   bestMoment:    string
   rating:        number    // 0–5
+  mood?:         number    // 1–5 sea-state (1 calm … 5 stormy)
+  energy?:       number    // 1–5 energy level
+  feelings?:     string[]  // emotion tags for the day
   isPublic:      boolean
   canvas?:       import('./sections/dailylog/canvasTypes').CanvasItem[]  // scrapbook layer
 }

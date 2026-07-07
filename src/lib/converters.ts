@@ -67,6 +67,9 @@ interface DailyLogRow {
   entertainment?: string | null
   best_moment?:   string | null
   rating?:        number | null
+  mood?:          number | null
+  energy?:        number | null
+  feelings?:      string[] | null
   is_public?:     boolean | null
   canvas?:        CanvasItem[] | null
 }
@@ -273,6 +276,9 @@ export function fromDbDailyLogs(rows: DailyLogRow[]): DailyLog[] {
       entertainment: row.entertainment ?? '',
       bestMoment:    row.best_moment   ?? '',
       rating:        row.rating        ?? 0,
+      mood:          row.mood          ?? 0,
+      energy:        row.energy        ?? 0,
+      feelings:      row.feelings      ?? [],
       isPublic:      row.is_public     ?? false,
       canvas:        row.canvas        ?? [],
     }))
@@ -297,6 +303,9 @@ export function toDbDailyLogs(voyageId: string, arr: DailyLog[]) {
     entertainment: day.entertainment || null,
     best_moment:   day.bestMoment    || null,
     rating:        day.rating        || null,
+    mood:          day.mood          || null,
+    energy:        day.energy        || null,
+    feelings:      day.feelings      || [],
     is_public:     day.isPublic      ?? false,
     canvas:        day.canvas        ?? null,
   }))

@@ -12,11 +12,8 @@ import type { Session } from '@supabase/supabase-js'
 import type { VoyageListRow, Voyage } from '../types'
 
 import Hero         from '@/sections/profile/Hero'
-import PassportMap  from '@/sections/profile/PassportMap'
 import Personality  from '@/sections/profile/Personality'
-import Badges       from '@/sections/profile/Badges'
 import Companions   from '@/sections/profile/Companions'
-import VoyagesStrip from '@/sections/profile/VoyagesStrip'
 
 const BANNER_ASPECT = 840 / 220
 
@@ -194,16 +191,12 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
         onNameChange={handleNameChange}
       />
 
-      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 18, marginBottom: 20 }}>
-        <PassportMap allVoyages={allVoyages} />
-        <Personality onSave={saveProfileField} />
-      </div>
-
-      <Badges currentVoyage={currentVoyage} />
+      {/* A profile is about the user — personality + connections. Voyage-specific
+          things (badges, ports map) live on the voyage; the voyages list lives
+          under My Voyages. */}
+      <Personality onSave={saveProfileField} />
 
       <Companions onNav={onNav} />
-
-      <VoyagesStrip allVoyages={allVoyages} onViewAll={() => onNav?.('voyage')} />
 
       <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />
       <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerFileSelect} />

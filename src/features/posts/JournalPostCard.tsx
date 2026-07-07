@@ -18,6 +18,7 @@ import type { Audience } from '@/types/models'
 import PhotoHero from '@/ui/PhotoHero'
 import RichText from '../social/richText'
 import { useMentionPeople } from '../social/useMentionPeople'
+import PostEngagement from './PostEngagement'
 
 // ── Quick audience popover ────────────────────────────────────────────────────
 
@@ -260,6 +261,9 @@ export default function JournalPostCard({ post, voyageId }: Props) {
             </div>
           )}
         </div>
+
+        {/* Reactions + comments */}
+        <PostEngagement postId={post.id} voyageId={voyageId} compact />
       </motion.div>
 
       {/* Delete confirm */}

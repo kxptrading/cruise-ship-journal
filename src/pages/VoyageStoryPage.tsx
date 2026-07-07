@@ -255,7 +255,7 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
   }
 
   // Shared inner column for readable text within full-bleed scenes
-  const col: CSSProperties = { maxWidth: 1040, margin: '0 auto', padding: mobile ? '0 22px' : '0 48px', width: '100%' }
+  const col: CSSProperties = { maxWidth: 1280, margin: '0 auto', padding: mobile ? '0 22px' : '0 48px', width: '100%' }
 
   // ── Magazine type scale ────────────────────────────────────────────────────
   // A clear hierarchy rather than stacked headlines: kicker → headline →

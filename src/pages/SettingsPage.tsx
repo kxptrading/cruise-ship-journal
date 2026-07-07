@@ -59,7 +59,7 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
   const pageRef = useGsapReveal<HTMLDivElement>([])
 
   // Editorial style helpers — mirror the landing / voyage / profile pages.
-  const col: CSSProperties = { maxWidth: 1040, margin: '0 auto', padding: isMobile ? '0 22px' : '0 48px', width: '100%' }
+  const col: CSSProperties = { maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 22px' : '0 48px', width: '100%' }
   const fullBleed: CSSProperties = { position: 'relative', width: '100vw', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }
   const kicker: CSSProperties = { fontFamily: FONT_LABEL, fontSize: 12, fontWeight: 600, letterSpacing: LABEL_TRACK, textTransform: 'uppercase' }
   const headline: CSSProperties = { margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: isMobile ? 26 : 'clamp(28px, 3.2vw, 38px)', lineHeight: 1.15, letterSpacing: '-0.01em' }

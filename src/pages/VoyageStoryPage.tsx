@@ -26,7 +26,6 @@ import { useW, useVoyageId } from '../context'
 import { usePostsByVoyage } from '@/features/posts/hooks'
 import { publicUrl } from '@/features/posts/mediaStorage'
 import BudgetBreakdown from '@/features/voyages/dashboard/BudgetBreakdown'
-import Badges from '../sections/profile/Badges'
 import type { Voyage, ItineraryDay, DailyLog, Budget, FoodLog, DiningEntry } from '../types'
 
 interface Props {
@@ -598,17 +597,6 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
                 </div>
               </>
             )}
-          </div>
-        </section>
-      )}
-
-      {/* ─────────────── ACHIEVEMENTS — voyage-specific badges ─────────────── */}
-      {voyageId && (
-        <section data-scene style={{ ...fullBleed, background: CREAM, padding: mobile ? '60px 0' : '110px 0', overflow: 'hidden' }}>
-          <div style={col} data-reveal>
-            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 05 — Achievements</div>
-            <h2 style={{ ...headline, marginBottom: 24 }}>What this voyage earned</h2>
-            <Badges currentVoyage={{ id: voyageId, ship_name: voyage.shipName, total_nights: voyage.totalNights }} />
           </div>
         </section>
       )}

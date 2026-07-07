@@ -91,7 +91,7 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
           {/* CSS-driven side-by-side: wraps to stacked only when genuinely too
               narrow (~<640px of room), independent of the JS width flag. */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-            <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex' }}>
+            <div style={{ flex: '1 1 240px', minWidth: 0, display: 'flex' }}>
               <AppearanceBlock
                 theme={theme}
                 onThemeChange={onThemeChange}
@@ -99,7 +99,7 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
                 onIconPackChange={onIconPackChange}
               />
             </div>
-            <div style={{ flex: '1 1 300px', minWidth: 0, display: 'flex' }}>
+            <div style={{ flex: '1 1 240px', minWidth: 0, display: 'flex' }}>
               <Preferences onSave={saveProfileField} />
             </div>
           </div>

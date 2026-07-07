@@ -77,6 +77,7 @@ type Tab = 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | '
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
+  { id: 'badges',        label: 'Badges',        emoji: '🏅' },
   { id: 'posts',         label: 'Posts',         emoji: '📝' },
   { id: 'gallery',       label: 'Gallery',       emoji: '📸' },
   { id: 'itinerary',     label: 'Itinerary',     emoji: '🗺️' },
@@ -87,7 +88,6 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'highlights',    label: 'Highlights',    emoji: '🏆' },
   { id: 'packing',       label: 'Packing',       emoji: '🧳' },
   { id: 'notes',         label: 'Notes',         emoji: '🗒️' },
-  { id: 'badges',        label: 'Badges',        emoji: '🏅' },
 ]
 
 // ── Props ─────────────────────────────────────────────────────────────────────

@@ -49,6 +49,7 @@ import { FADE_UP } from '@/lib/motion'
 import FE from '@/components/FE'
 import { ArrowLeft, Plus, Download, Users } from 'lucide-react'
 import JournalDock from '@/components/JournalDock'
+import Badges from '@/sections/profile/Badges'
 import CoAuthorsPanel from '@/features/voyages/CoAuthorsPanel'
 import { useLeaveVoyage } from '@/features/voyages/coauthors'
 import type { VoyageData } from '@/types'
@@ -72,7 +73,7 @@ const MemoryGallery  = lazy(() => import('@/features/voyages/MemoryGallery'))
 // 'daily' (Daily Log) is the default/first tab — it's where "Open Journal" lands.
 
 type Tab = 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
-           'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes'
+           'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes' | 'badges'
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
@@ -86,6 +87,7 @@ const TABS: { id: Tab; label: string; emoji: string }[] = [
   { id: 'highlights',    label: 'Highlights',    emoji: '🏆' },
   { id: 'packing',       label: 'Packing',       emoji: '🧳' },
   { id: 'notes',         label: 'Notes',         emoji: '🗒️' },
+  { id: 'badges',        label: 'Badges',        emoji: '🏅' },
 ]
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -392,6 +394,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
             {safeTab ==='highlights'    && <Highlights data={data.highlights} onChange={v => update('highlights', v)} />}
             {safeTab ==='packing'       && <PackingList data={data.packing} onChange={v => update('packing', v)} />}
             {safeTab ==='notes'         && <Notes data={data.notes} onChange={v => update('notes', v)} />}
+            {safeTab ==='badges'        && voyageId && <Badges currentVoyage={{ id: voyageId, ship_name: data.voyage.shipName, total_nights: data.voyage.totalNights }} />}
           </Suspense>
         </motion.div>
       </AnimatePresence>

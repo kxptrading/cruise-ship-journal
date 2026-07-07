@@ -10,6 +10,7 @@ import FE from '../../components/FE'
 
 interface BadgeDef {
   key:   string
+  level: number   // 1–4; badges are grouped into levels of increasing difficulty
   emoji: string
   name:  string
   color: string
@@ -88,14 +89,26 @@ function BadgeTooltip({ badge }: TooltipProps) {
 }
 
 const BADGE_DEFS: BadgeDef[] = [
-  { key: 'firstLog',     emoji: '📖', name: 'First Log',     color: '#0EA5E9', desc: 'Logged at least one day',                     howTo: 'Write your first journal entry in the Daily Log — even a single word in Highlights counts.' },
-  { key: 'portExplorer', emoji: '📍', name: 'Port Explorer', color: '#0D9488', desc: 'Visited 3 or more ports',                    howTo: 'Add 3 or more port stops (not "At Sea") in your Itinerary section.' },
-  { key: 'foodie',       emoji: '🍽️', name: 'Foodie',       color: '#F43F5E', desc: 'Logged 5 or more meals',                    howTo: 'Log 5 or more entries in the Food Log section — each meal, snack, or drink counts.' },
-  { key: 'topRated',     emoji: '⭐', name: 'Top Rated',     color: '#F59E0B', desc: 'Average day rating of 4 stars or above',     howTo: 'Rate your days in the Daily Log. An average of 4 ★ or higher across all rated days earns this badge.' },
-  { key: 'entertained',  emoji: '🎭', name: 'Entertained',   color: '#7C3AED', desc: 'Logged 3 or more entertainment entries',     howTo: 'Add at least 3 shows, events, or activities in the Entertainment Log.' },
-  { key: 'onBudget',     emoji: '💰', name: 'On Budget',     color: NAVY2, desc: 'Total spend within your budget',             howTo: 'Set a budget in the Budget Tracker and keep your total expenses at or below it.' },
-  { key: 'photographer', emoji: '📸', name: 'Photographer',  color: '#0D9488', desc: 'Added at least one photo',                  howTo: 'Upload at least one photo in the Daily Log or via the Feed composer.' },
-  { key: 'fullHouse',    emoji: '🏆', name: 'Full House',    color: '#F59E0B', desc: 'Logged every day of the voyage',             howTo: 'Write a journal entry for every single night of your voyage. Set the total nights in Voyage Details first.' },
+  // ── Level 1 — first steps ──────────────────────────────────────────────────
+  { key: 'firstLog',      level: 1, emoji: '📖', name: 'First Log',      color: '#0EA5E9', desc: 'Logged your first day',        howTo: 'Write your first journal entry in the Daily Log — even a single word in Highlights counts.' },
+  { key: 'firstSnap',     level: 1, emoji: '📸', name: 'First Snap',     color: '#0D9488', desc: 'Added your first photo',       howTo: 'Upload at least one photo in the Daily Log or via the Feed composer.' },
+  { key: 'setSail',       level: 1, emoji: '⚓', name: 'Set Sail',       color: '#0284C7', desc: 'Added your first port',        howTo: 'Add at least one port stop (not "At Sea") in your Itinerary.' },
+  { key: 'firstBite',     level: 1, emoji: '🍴', name: 'First Bite',     color: '#F43F5E', desc: 'Logged your first meal',       howTo: 'Log your first entry in the Food Log — any meal, snack or drink counts.' },
+  // ── Level 2 — getting into it ──────────────────────────────────────────────
+  { key: 'portExplorer',  level: 2, emoji: '📍', name: 'Port Explorer',  color: '#0D9488', desc: 'Visited 3+ ports',            howTo: 'Add 3 or more port stops (not "At Sea") in your Itinerary.' },
+  { key: 'foodie',        level: 2, emoji: '🍽️', name: 'Foodie',        color: '#F43F5E', desc: 'Logged 5+ meals',             howTo: 'Log 5 or more entries in the Food Log.' },
+  { key: 'entertained',   level: 2, emoji: '🎭', name: 'Entertained',    color: '#7C3AED', desc: 'Logged 3+ shows',             howTo: 'Add at least 3 shows, events or activities in the Entertainment Log.' },
+  { key: 'shopaholic',    level: 2, emoji: '🛍️', name: 'Shopaholic',     color: '#DB2777', desc: 'Logged 3+ souvenirs',         howTo: 'Add 3 or more items in the Shopping Log.' },
+  // ── Level 3 — dedicated ────────────────────────────────────────────────────
+  { key: 'storyteller',   level: 3, emoji: '✍️', name: 'Storyteller',    color: '#2563EB', desc: 'Logged 5+ days',              howTo: 'Write journal entries for 5 or more days of your voyage.' },
+  { key: 'gourmet',       level: 3, emoji: '🍷', name: 'Gourmet',        color: '#E11D48', desc: 'Logged 10+ meals',            howTo: 'Log 10 or more entries in the Food Log.' },
+  { key: 'topRated',      level: 3, emoji: '⭐', name: 'Top Rated',      color: '#F59E0B', desc: 'Average day rating 4★+',      howTo: 'Rate your days in the Daily Log. An average of 4★ or higher across all rated days earns this.' },
+  { key: 'onBudget',      level: 3, emoji: '💰', name: 'On Budget',      color: NAVY2,     desc: 'Stayed within budget',        howTo: 'Set a budget in the Budget Tracker and keep total expenses at or below it.' },
+  // ── Level 4 — completionist ────────────────────────────────────────────────
+  { key: 'globetrotter',  level: 4, emoji: '🧭', name: 'Globetrotter',   color: '#0891B2', desc: 'Visited 6+ ports',            howTo: 'Add 6 or more port stops (not "At Sea") in your Itinerary.' },
+  { key: 'shutterbug',    level: 4, emoji: '📷', name: 'Shutterbug',     color: '#059669', desc: 'Added 10+ photos',            howTo: 'Upload 10 or more photos across your Daily Logs and posts.' },
+  { key: 'souvenirHunter',level: 4, emoji: '🎁', name: 'Souvenir Hunter',color: '#C026D3', desc: 'Logged 8+ souvenirs',         howTo: 'Add 8 or more items in the Shopping Log.' },
+  { key: 'fullHouse',     level: 4, emoji: '🏆', name: 'Full House',     color: '#F59E0B', desc: 'Logged every day',            howTo: 'Write a journal entry for every night of your voyage. Set the total nights in Voyage Details first.' },
 ]
 
 interface DailyRow    { rating: number }
@@ -112,29 +125,44 @@ function computeBadges(
   budgetRow: BudgetRow | null,
   budgetItemsData: BudgetItem[],
   photoCount: number,
+  shoppingCount: number,
   totalNights: number,
 ): Badge[] {
   const earned: Record<string, boolean> = {}
 
-  earned.firstLog     = (dailyData?.length ?? 0) >= 1
-  const realPorts = (itinData ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim()))
-  earned.portExplorer = realPorts.length >= 3
-  earned.foodie       = (foodCount ?? 0) >= 5
-
-  const ratings = (dailyData ?? []).map(r => r.rating).filter(v => v > 0)
-  const avg = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0
-  earned.topRated   = avg >= 4
-  earned.entertained = (entertainCount ?? 0) >= 3
-
+  const days      = dailyData?.length ?? 0
+  const realPorts = (itinData ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim())).length
+  const meals     = foodCount ?? 0
+  const photos    = photoCount ?? 0
+  const shopping  = shoppingCount ?? 0
+  const ratings   = (dailyData ?? []).map(r => r.rating).filter(v => v > 0)
+  const avg       = ratings.length > 0 ? ratings.reduce((s, r) => s + r, 0) / ratings.length : 0
+  let withinBudget = false
   if (budgetRow?.total_budget && (budgetItemsData?.length ?? 0) > 0) {
     const spent = (budgetItemsData ?? []).reduce((s, i) => s + (parseFloat(String(i.amount)) || 0), 0)
-    earned.onBudget = spent <= parseFloat(String(budgetRow.total_budget))
-  } else {
-    earned.onBudget = false
+    withinBudget = spent <= parseFloat(String(budgetRow.total_budget))
   }
 
-  earned.photographer = (photoCount ?? 0) >= 1
-  earned.fullHouse    = totalNights > 0 && (dailyData?.length ?? 0) >= totalNights
+  // Level 1
+  earned.firstLog      = days >= 1
+  earned.firstSnap     = photos >= 1
+  earned.setSail       = realPorts >= 1
+  earned.firstBite     = meals >= 1
+  // Level 2
+  earned.portExplorer  = realPorts >= 3
+  earned.foodie        = meals >= 5
+  earned.entertained   = (entertainCount ?? 0) >= 3
+  earned.shopaholic    = shopping >= 3
+  // Level 3
+  earned.storyteller   = days >= 5
+  earned.gourmet       = meals >= 10
+  earned.topRated      = avg >= 4
+  earned.onBudget      = withinBudget
+  // Level 4
+  earned.globetrotter  = realPorts >= 6
+  earned.shutterbug    = photos >= 10
+  earned.souvenirHunter = shopping >= 8
+  earned.fullHouse     = totalNights > 0 && days >= totalNights
 
   return BADGE_DEFS.map(def => ({ ...def, earned: earned[def.key] ?? false }))
 }
@@ -158,13 +186,14 @@ export default function Badges({ currentVoyage }: Props) {
     const run = async () => {
       setLoading(true)
       try {
-        const [dailyRes, itinRes, foodRes, entertainRes, budgetRes, photoRes] = await Promise.all([
+        const [dailyRes, itinRes, foodRes, entertainRes, budgetRes, photoRes, shopRes] = await Promise.all([
           supabase.from('daily_logs').select('rating').eq('voyage_id', voyageId),
           supabase.from('itinerary').select('port').eq('voyage_id', voyageId),
           supabase.from('food_logs').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
           supabase.from('entertainment_log').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
           supabase.from('budget').select('id, total_budget').eq('voyage_id', voyageId).maybeSingle(),
           supabase.from('photos').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
+          supabase.from('shopping_items').select('id', { count: 'exact', head: true }).eq('voyage_id', voyageId),
         ])
 
         let budgetItemsData: BudgetItem[] = []
@@ -184,6 +213,7 @@ export default function Badges({ currentVoyage }: Props) {
           budgetRes.data as BudgetRow | null,
           budgetItemsData,
           photoRes.count      ?? 0,
+          shopRes.count       ?? 0,
           totalNights,
         ))
       } finally {
@@ -228,49 +258,71 @@ export default function Badges({ currentVoyage }: Props) {
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 13 }}>
-        {badges.map(badge => (
-          <div
-            key={badge.key}
-            tabIndex={0}
-            style={{
-              borderRadius: 14,
-              border: badge.earned ? `1px solid ${badge.color}44` : `1px solid ${BORDER}`,
-              background: badge.earned ? `linear-gradient(135deg, ${badge.color}0F, ${badge.color}22)` : CREAM,
-              padding: '14px 10px',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-              opacity: 1,
-              position: 'relative',
-              cursor: 'default',
-              outline: 'none',
-              transition: 'box-shadow 0.15s',
-              overflow: 'visible',
-            }}
-            onMouseEnter={() => setHoveredKey(badge.key)}
-            onMouseLeave={() => setHoveredKey(null)}
-            onFocus={() => setHoveredKey(badge.key)}
-            onBlur={() => setHoveredKey(null)}
-            aria-label={`${badge.name}${badge.earned ? ' — earned' : ' — locked'}`}
-          >
-            {hoveredKey === badge.key && <BadgeTooltip badge={badge} />}
-            {badge.earned && (
-              <div style={{
-                position: 'absolute', top: 7, right: 7,
-                width: 14, height: 14, borderRadius: '50%',
-                background: badge.color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 8, color: WHITE_STR, fontWeight: 700,
-              }}>✓</div>
-            )}
-            <span style={{ filter: badge.earned ? 'none' : 'grayscale(1)' }}>
-              <FE emoji={badge.emoji} size={28} />
-            </span>
-            <span style={{ fontFamily: FONT_BODY, fontSize: 11, fontWeight: 700, color: badge.earned ? NAVY2 : MUTED, textAlign: 'center', lineHeight: 1.3 }}>
-              {badge.name}
-            </span>
+      {/* Badges grouped into levels of increasing difficulty. */}
+      {[1, 2, 3, 4].map(lvl => {
+        const lvlBadges = badges.filter(b => b.level === lvl)
+        if (lvlBadges.length === 0) return null
+        const lvlEarned = lvlBadges.filter(b => b.earned).length
+        const complete  = lvlEarned === lvlBadges.length
+        return (
+          <div key={lvl} style={{ marginTop: lvl > 1 ? 22 : 0 }}>
+            {/* Level header */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 11 }}>
+              <span style={{ fontFamily: FONT_BODY, fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: complete ? GOLD : NAVY2 }}>
+                Level {lvl}
+              </span>
+              <span style={{ fontSize: 11, color: complete ? GOLD : MUTED, fontWeight: complete ? 700 : 400 }}>
+                {lvlEarned}/{lvlBadges.length}{complete ? ' ✓' : ''}
+              </span>
+              <div style={{ flex: 1, height: 1, background: BORDER }} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, 1fr)`, gap: 13 }}>
+              {lvlBadges.map(badge => (
+                <div
+                  key={badge.key}
+                  tabIndex={0}
+                  style={{
+                    borderRadius: 14,
+                    border: badge.earned ? `1px solid ${badge.color}44` : `1px solid ${BORDER}`,
+                    background: badge.earned ? `linear-gradient(135deg, ${badge.color}0F, ${badge.color}22)` : CREAM,
+                    padding: '14px 10px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+                    opacity: 1,
+                    position: 'relative',
+                    cursor: 'default',
+                    outline: 'none',
+                    transition: 'box-shadow 0.15s',
+                    overflow: 'visible',
+                  }}
+                  onMouseEnter={() => setHoveredKey(badge.key)}
+                  onMouseLeave={() => setHoveredKey(null)}
+                  onFocus={() => setHoveredKey(badge.key)}
+                  onBlur={() => setHoveredKey(null)}
+                  aria-label={`${badge.name}${badge.earned ? ' — earned' : ' — locked'}`}
+                >
+                  {hoveredKey === badge.key && <BadgeTooltip badge={badge} />}
+                  {badge.earned && (
+                    <div style={{
+                      position: 'absolute', top: 7, right: 7,
+                      width: 14, height: 14, borderRadius: '50%',
+                      background: badge.color,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 8, color: WHITE_STR, fontWeight: 700,
+                    }}>✓</div>
+                  )}
+                  <span style={{ filter: badge.earned ? 'none' : 'grayscale(1)' }}>
+                    <FE emoji={badge.emoji} size={28} />
+                  </span>
+                  <span style={{ fontFamily: FONT_BODY, fontSize: 11, fontWeight: 700, color: badge.earned ? NAVY2 : MUTED, textAlign: 'center', lineHeight: 1.3 }}>
+                    {badge.name}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        )
+      })}
     </div>
   )
 }

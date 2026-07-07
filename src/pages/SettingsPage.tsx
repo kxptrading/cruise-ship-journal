@@ -61,6 +61,9 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
   // Editorial style helpers — mirror the landing / voyage / profile pages.
   const col: CSSProperties = { maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 22px' : '0 48px', width: '100%' }
   const fullBleed: CSSProperties = { position: 'relative', width: '100vw', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }
+  // Cancel the app's main-content top padding so the hero sits flush under the
+  // ticker (matches App.tsx mainPad: <768→20, <1024→32, else 44).
+  const heroPullUp = w < 768 ? 20 : w < 1024 ? 32 : 44
   const kicker: CSSProperties = { fontFamily: FONT_LABEL, fontSize: 12, fontWeight: 600, letterSpacing: LABEL_TRACK, textTransform: 'uppercase' }
   const headline: CSSProperties = { margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: isMobile ? 26 : 'clamp(28px, 3.2vw, 38px)', lineHeight: 1.15, letterSpacing: '-0.01em' }
   const standfirst: CSSProperties = { margin: '10px 0 28px', fontFamily: FONT_DISPLAY, fontStyle: 'italic', color: MUTED, fontSize: isMobile ? 18 : 21, lineHeight: 1.5, maxWidth: 620 }
@@ -69,7 +72,7 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
     <div ref={pageRef} style={{ fontFamily: FONT_BODY }}>
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section style={{ ...fullBleed, minHeight: isMobile ? 300 : 380, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }}>
+      <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? 300 : 380, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.22) 0%, rgba(7,14,24,0.12) 45%, rgba(7,14,24,0.42) 100%)', zIndex: 1 }} />
         <div style={{ ...col, position: 'relative', zIndex: 2 }} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 14 }}>Deck Days</div>

@@ -131,7 +131,9 @@ function computeBadges(
   const earned: Record<string, boolean> = {}
 
   const days      = dailyData?.length ?? 0
-  const realPorts = (itinData ?? []).filter(r => r.port && !/^at sea$/i.test(r.port.trim())).length
+  // Exclude sea days — match the app-wide convention (VoyageStoryPage): any port
+  // whose name contains "sea" ("Sea", "At Sea", "Sea Day"…) is not a port of call.
+  const realPorts = (itinData ?? []).filter(r => r.port && r.port.trim() && !r.port.toLowerCase().includes('sea')).length
   const meals     = foodCount ?? 0
   const photos    = photoCount ?? 0
   const shopping  = shoppingCount ?? 0

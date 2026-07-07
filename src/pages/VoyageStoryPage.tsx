@@ -237,7 +237,7 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (!hasVoyage) {
     return (
-      <div style={{ ...fullBleed, minHeight: '80vh', background: themeGrad, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
+      <div style={{ ...fullBleed, marginTop: mobile ? -20 : w < BP.tablet ? -32 : -44, minHeight: '80vh', background: themeGrad, display: 'flex', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: 24 }}>
         <div style={{ maxWidth: 460 }}>
           <Anchor size={40} strokeWidth={1.4} color={WHITE} style={{ opacity: 0.9, marginBottom: 20 }} />
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: WHITE, fontSize: mobile ? 34 : 52, lineHeight: 1.1 }}>

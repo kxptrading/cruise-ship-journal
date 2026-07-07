@@ -145,13 +145,13 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
     return out
   }, [foodLogs])
 
-  // ── Diary entries: the actual posts, each with its OWN photos ──────────────
-  // The heart of the "authentic diary" look — text and its pictures together,
-  // in chronological order.
+  // ── Latest diary entry: just the most recent post (a teaser, not the whole
+  // feed) — text + its own photos. Sorted newest-first so [0] is the latest.
   const diaryEntries = useMemo(() => {
     return [...voyagePosts]
       .filter(p => (p.body && p.body.trim()) || (p.media_paths && p.media_paths.length))
-      .sort((a, b) => (a.post_date || a.created_at || '').localeCompare(b.post_date || b.created_at || ''))
+      .sort((a, b) => (b.post_date || b.created_at || '').localeCompare(a.post_date || a.created_at || ''))
+      .slice(0, 1)
       .map(p => ({
         id:       p.id,
         date:     p.post_date || p.created_at || '',
@@ -387,9 +387,9 @@ export default function VoyageStoryPage({ voyage, itinerary, dailyLogs, budget, 
       {(diaryEntries.length > 0 || photoUrls.length > 0 || quotes.length > 0) && (
         <section data-scene style={{ ...fullBleed, background: CREAM, padding: mobile ? '90px 0' : '140px 0', overflow: 'hidden' }}>
           <div style={col}>
-            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 03 — The Diary</div>
-            <h2 style={headline}>Pages from the voyage</h2>
-            <p style={standfirst}>The days that earned a place in the journal — and the photographs that go with them.</p>
+            <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 03 — Fresh off the deck</div>
+            <h2 style={headline}>The latest from aboard</h2>
+            <p style={standfirst}>Your newest entry from this voyage — see the rest in the Feed.</p>
             {avgRating > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
                 <span style={{ display: 'inline-flex', gap: 2 }}>

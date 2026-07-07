@@ -147,6 +147,9 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
   // Editorial style helpers — mirror the landing / voyage-story pages.
   const col: CSSProperties = { maxWidth: 1280, margin: '0 auto', padding: isMobile ? '0 22px' : '0 48px', width: '100%' }
   const fullBleed: CSSProperties = { position: 'relative', width: '100vw', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }
+  // Cancel the app's main-content top padding so the hero sits flush under the
+  // ticker (matches App.tsx mainPad: <768→20, <1024→32, else 44).
+  const heroPullUp = w < 768 ? 20 : w < 1024 ? 32 : 44
   const kicker: CSSProperties = { fontFamily: FONT_LABEL, fontSize: 12, fontWeight: 600, letterSpacing: LABEL_TRACK, textTransform: 'uppercase' }
   const headline: CSSProperties = { margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: isMobile ? 26 : 'clamp(28px, 3.2vw, 38px)', lineHeight: 1.15, letterSpacing: '-0.01em' }
   const standfirst: CSSProperties = { margin: '16px auto 0', fontFamily: FONT_DISPLAY, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? 17 : 20, lineHeight: 1.5, maxWidth: 560 }
@@ -188,7 +191,7 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
       )}
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section style={{ ...fullBleed, minHeight: isMobile ? 500 : 620, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center' }}>
+      <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? 500 : 620, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center' }}>
         {/* Banner background (or theme gradient) + theme tint + legibility */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, ...(profile.bannerUrl
           ? { backgroundImage: `url(${profile.bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }

@@ -88,20 +88,15 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
           <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 01 — Make it yours</div>
           <h2 style={{ ...headline }}>Appearance &amp; preferences</h2>
           <p style={standfirst}>Pick a palette and icon style, and set your travel defaults.</p>
-          {/* CSS-driven side-by-side: wraps to stacked only when genuinely too
-              narrow (~<640px of room), independent of the JS width flag. */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 18 }}>
-            <div style={{ flex: '1 1 240px', minWidth: 0, display: 'flex' }}>
-              <AppearanceBlock
-                theme={theme}
-                onThemeChange={onThemeChange}
-                iconPack={iconPack}
-                onIconPackChange={onIconPackChange}
-              />
-            </div>
-            <div style={{ flex: '1 1 240px', minWidth: 0, display: 'flex' }}>
-              <Preferences onSave={saveProfileField} />
-            </div>
+          {/* Stacked vertically — each card full-width, one above the other. */}
+          <div style={{ display: 'grid', gap: 18 }}>
+            <AppearanceBlock
+              theme={theme}
+              onThemeChange={onThemeChange}
+              iconPack={iconPack}
+              onIconPackChange={onIconPackChange}
+            />
+            <Preferences onSave={saveProfileField} />
           </div>
         </div>
       </section>

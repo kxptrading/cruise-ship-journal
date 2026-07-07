@@ -5,13 +5,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import { useGsapReveal } from '../hooks/useGsapReveal'
+import type { CSSProperties } from 'react'
 import { useUserId, useW } from '../context'
-import { BP, FONT_BODY } from '../constants'
+import { BP, FONT_BODY, FONT_DISPLAY, FONT_LABEL, LABEL_TRACK, GOLD, CREAM, WHITE, NAVY2, TEXT, MUTED } from '../constants'
 import ImageCropper from '../components/ImageCropper'
 import type { Session } from '@supabase/supabase-js'
 import type { VoyageListRow, Voyage } from '../types'
 
-import Hero         from '@/sections/profile/Hero'
 import Personality  from '@/sections/profile/Personality'
 import Companions   from '@/sections/profile/Companions'
 
@@ -96,19 +96,6 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
     if (error) console.error('Profile save error:', error)
   }, [userId])
 
-  const today = new Date()
-  const currentVoyage = (() => {
-    const active = allVoyages.find(v => {
-      const dep = v.departure_date ? new Date(v.departure_date + 'T00:00:00') : null
-      const ret = v.return_date    ? new Date(v.return_date    + 'T00:00:00') : null
-      return dep && ret && today >= dep && today <= ret
-    })
-    if (active) return active
-    return [...allVoyages]
-      .filter(v => v.departure_date)
-      .sort((a, b) => new Date(b.departure_date!).getTime() - new Date(a.departure_date!).getTime())[0] || null
-  })()
-
   const uploadPhotoBlob = async (blob: Blob, type: 'avatar' | 'banner'): Promise<string | null> => {
     if (!blob || !userId) return null
     setUploadError('')
@@ -154,6 +141,27 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
   // Re-runs once `loading` flips and the real sections mount.
   const revealRef = useGsapReveal<HTMLDivElement>([loading])
 
+  const [editingName, setEditingName] = useState(false)
+  const saveName = async () => { setEditingName(false); await saveProfileField({ display_name: profile.displayName.trim() }) }
+
+  // Editorial style helpers — mirror the landing / voyage-story pages.
+  const col: CSSProperties = { maxWidth: 1040, margin: '0 auto', padding: isMobile ? '0 22px' : '0 48px', width: '100%' }
+  const fullBleed: CSSProperties = { position: 'relative', width: '100vw', left: '50%', right: '50%', marginLeft: '-50vw', marginRight: '-50vw' }
+  const kicker: CSSProperties = { fontFamily: FONT_LABEL, fontSize: 12, fontWeight: 600, letterSpacing: LABEL_TRACK, textTransform: 'uppercase' }
+  const headline: CSSProperties = { margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: isMobile ? 26 : 'clamp(28px, 3.2vw, 38px)', lineHeight: 1.15, letterSpacing: '-0.01em' }
+  const standfirst: CSSProperties = { margin: '16px auto 0', fontFamily: FONT_DISPLAY, fontStyle: 'italic', color: 'rgba(255,255,255,0.9)', fontSize: isMobile ? 17 : 20, lineHeight: 1.5, maxWidth: 560 }
+
+  const voyageCount = allVoyages.length
+  const nightsAtSea = allVoyages.reduce((s, v) => {
+    if (v.departure_date && v.return_date) {
+      const d = (new Date(v.return_date + 'T00:00:00').getTime() - new Date(v.departure_date + 'T00:00:00').getTime()) / 86400000
+      return s + Math.max(0, Math.round(d))
+    }
+    return s
+  }, 0)
+  const initials = (profile.displayName || session?.user?.email || '?').trim().slice(0, 2).toUpperCase()
+  const subLine = [profile.homePort && `Home port · ${profile.homePort}`, profile.favouriteCruiseLine].filter(Boolean).join('   ·   ')
+
   if (loading) return (
     <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6B7280', fontSize: 14, fontFamily: FONT_BODY }}>
       Loading profile…
@@ -179,24 +187,94 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
         </div>
       )}
 
-      <Hero
-        profile={profile}
-        session={session}
-        allVoyages={allVoyages}
-        currentVoyage={currentVoyage}
-        onUploadAvatar={() => avatarRef.current?.click()}
-        onUploadBanner={() => bannerRef.current?.click()}
-        uploadingAvatar={uploadingAvatar}
-        uploadingBanner={uploadingBanner}
-        onNameChange={handleNameChange}
-      />
+      {/* ── HERO ─────────────────────────────────────────────────── */}
+      <section style={{ ...fullBleed, minHeight: isMobile ? 500 : 620, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center' }}>
+        {/* Banner background (or theme gradient) + theme tint + legibility */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, ...(profile.bannerUrl
+          ? { backgroundImage: `url(${profile.bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }) }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--t-primary-dk)', opacity: 0.6, zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.5) 0%, rgba(7,14,24,0.22) 45%, rgba(7,14,24,0.68) 100%)', zIndex: 1 }} />
 
-      {/* A profile is about the user — personality + connections. Voyage-specific
-          things (badges, ports map) live on the voyage; the voyages list lives
-          under My Voyages. */}
-      <Personality onSave={saveProfileField} />
+        <button onClick={() => bannerRef.current?.click()} disabled={uploadingBanner}
+          style={{ position: 'absolute', top: 14, right: 14, zIndex: 3, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(6px)', color: WHITE, border: '1px solid rgba(255,255,255,0.3)', borderRadius: 999, padding: '7px 14px', fontSize: 12.5, fontWeight: 600, fontFamily: FONT_BODY, cursor: 'pointer' }}>
+          {uploadingBanner ? 'Uploading…' : '📷 Change banner'}
+        </button>
 
-      <Companions onNav={onNav} />
+        <div style={{ ...col, position: 'relative', zIndex: 2 }} data-reveal>
+          {/* Avatar */}
+          <div style={{ position: 'relative', width: isMobile ? 108 : 130, height: isMobile ? 108 : 130, margin: '0 auto 20px' }}>
+            <div style={{ width: '100%', height: '100%', borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(255,255,255,0.92)', background: 'var(--t-primary-dk)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 14px 44px rgba(0,0,0,0.45)' }}>
+              {profile.avatarUrl
+                ? <img src={profile.avatarUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : <span style={{ fontSize: isMobile ? 34 : 40, fontWeight: 700, color: WHITE, fontFamily: FONT_DISPLAY }}>{initials}</span>}
+            </div>
+            <button onClick={() => avatarRef.current?.click()} disabled={uploadingAvatar} title="Change photo"
+              style={{ position: 'absolute', bottom: 2, right: 2, width: 34, height: 34, borderRadius: '50%', background: GOLD, color: NAVY2, border: '2px solid #fff', cursor: 'pointer', fontSize: 14, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {uploadingAvatar ? '…' : '📷'}
+            </button>
+          </div>
+
+          <div style={{ ...kicker, color: GOLD, marginBottom: 14 }}>A Deck Days traveller</div>
+
+          {/* Name (click to edit) */}
+          {editingName ? (
+            <input
+              autoFocus
+              value={profile.displayName}
+              onChange={e => handleNameChange(e.target.value)}
+              onBlur={saveName}
+              onKeyDown={e => { if (e.key === 'Enter') saveName() }}
+              placeholder="Your name"
+              style={{ display: 'block', margin: '0 auto', textAlign: 'center', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.4)', borderRadius: 12, color: WHITE, fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: isMobile ? 'clamp(32px,10vw,44px)' : 'clamp(46px,6vw,72px)', padding: '4px 16px', outline: 'none', maxWidth: '100%' }}
+            />
+          ) : (
+            <h1 onClick={() => setEditingName(true)} title="Edit name"
+              style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: isMobile ? 'clamp(32px,10vw,44px)' : 'clamp(46px,6vw,72px)', lineHeight: 1.05, letterSpacing: '-0.01em', cursor: 'pointer', textShadow: '0 2px 14px rgba(0,0,0,0.4)' }}>
+              {profile.displayName || 'Your name'} <span style={{ fontSize: '0.35em', opacity: 0.7, fontFamily: FONT_BODY, verticalAlign: 'middle' }}>✎</span>
+            </h1>
+          )}
+
+          {profile.bio
+            ? <p style={standfirst}>{profile.bio}</p>
+            : subLine && <p style={{ ...standfirst, fontStyle: 'normal', fontFamily: FONT_BODY, fontSize: isMobile ? 14 : 16 }}>{subLine}</p>}
+
+          {/* Stats */}
+          <div style={{ display: 'flex', justifyContent: 'center', gap: isMobile ? 26 : 48, marginTop: isMobile ? 26 : 34 }}>
+            {[
+              { value: voyageCount, label: voyageCount === 1 ? 'Voyage' : 'Voyages' },
+              { value: nightsAtSea, label: 'Nights at sea' },
+            ].map(s => (
+              <div key={s.label} style={{ textAlign: 'center' }}>
+                <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: isMobile ? 32 : 44, lineHeight: 1 }}>{s.value}</div>
+                <div style={{ ...kicker, fontSize: 10.5, color: 'rgba(255,255,255,0.75)', marginTop: 8 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── CHAPTER 01 — Personality ─────────────────────────────── */}
+      <section style={{ ...fullBleed, background: CREAM, padding: isMobile ? '64px 0' : '110px 0' }}>
+        <div style={col} data-reveal>
+          <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 01 — The traveller</div>
+          <h2 style={{ ...headline, marginBottom: 8 }}>What kind of cruiser are you?</h2>
+          <p style={{ ...standfirst, color: MUTED, margin: '10px 0 28px' }}>Your travel personality — the little things that make your voyages yours.</p>
+          <Personality onSave={saveProfileField} />
+        </div>
+      </section>
+
+      {/* ── CHAPTER 02 — Companions ──────────────────────────────── */}
+      <section style={{ ...fullBleed, background: CREAM, padding: isMobile ? '64px 0' : '110px 0', borderTop: '1px solid #E0DBD0' }}>
+        <div style={col} data-reveal>
+          <div style={{ ...kicker, color: GOLD, marginBottom: 16 }}>Chapter 02 — Fellow travellers</div>
+          <h2 style={{ ...headline, marginBottom: 8, color: NAVY2 }}>The people you sail with</h2>
+          <p style={{ ...standfirst, color: MUTED, margin: '10px 0 28px' }}>Your connections on Deck Days.</p>
+          <div style={{ color: TEXT }}>
+            <Companions onNav={onNav} />
+          </div>
+        </div>
+      </section>
 
       <input ref={avatarRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAvatarFileSelect} />
       <input ref={bannerRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleBannerFileSelect} />

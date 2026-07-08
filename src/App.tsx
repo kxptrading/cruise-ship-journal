@@ -569,7 +569,7 @@ export default function App() {
 
                 {/* Home = the My Voyages hub (your shelf of cruises). A specific
                     cruise opens at /voyages/:id. */}
-                <Route path="/" element={<Navigate to="/voyages" replace />} />
+                <Route path="/" element={<Navigate to="/feed" replace />} />
                 <Route path="/feed"    element={<Feed />} />
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/search"  element={<SearchPage />} />

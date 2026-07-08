@@ -192,10 +192,9 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? 500 : 620, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center' }}>
-        {/* Banner background (or theme gradient) + theme tint + legibility */}
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0, ...(profile.bannerUrl
-          ? { backgroundImage: `url(${profile.bannerUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
-          : { background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }) }} />
+        {/* Banner background — user's banner, else the landing cruise-ship photo — + theme tint + legibility */}
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0, backgroundSize: 'cover', backgroundPosition: 'center',
+          backgroundImage: `url(${profile.bannerUrl || '/background_banner.jpg'})` }} />
         <div style={{ position: 'absolute', inset: 0, background: 'var(--t-primary-dk)', opacity: 0.6, zIndex: 1 }} />
         <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.5) 0%, rgba(7,14,24,0.22) 45%, rgba(7,14,24,0.68) 100%)', zIndex: 1 }} />
 

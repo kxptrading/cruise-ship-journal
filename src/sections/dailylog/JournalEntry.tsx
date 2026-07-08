@@ -64,11 +64,23 @@ const PROMPTS: { label: string; emoji: string; seed: string; field?: WriteThroug
   { label: 'Grateful for',     emoji: '🙏', seed: "Today I'm grateful for ",        field: 'highlights' },
 ]
 
-export default function JournalEntry({ data, onChange, itinerary, voyage: _voyage, initialDay }: Props) {
+const blankDay = (): DailyLog => ({
+  date: '', port: '', weather: [], highlights: '', breakfast: '', lunch: '', dinner: '',
+  drink: '', activity: '', duration: '', excCost: '', excNotes: '', entertainment: '',
+  bestMoment: '', rating: 0, isPublic: false,
+})
+
+export default function JournalEntry({ data, onChange, itinerary, voyage, initialDay }: Props) {
   const w        = useW()
   const mobile   = w < BP.mobile
   const voyageId = useVoyageId()
   const userId   = useUserId()
+
+  // How many days the voyage spans — drives the selector + chart, so every day is
+  // reachable even before it has a saved entry. Nights from the voyage, but never
+  // fewer than the rows/itinerary we already have.
+  const nights   = parseInt(voyage?.totalNights ?? '', 10)
+  const dayCount = Math.max(data.length, itinerary.length, Number.isFinite(nights) ? nights : 0, 1)
 
   const [day, setDay] = useState<number>(initialDay ?? 0)
   const [blocks, setBlocks] = useState<CanvasItem[]>(() => data[day]?.canvas ?? [])
@@ -96,10 +108,18 @@ export default function JournalEntry({ data, onChange, itinerary, voyage: _voyag
   // Write blocks + derived structured fields (+ header patch) back via onChange.
   const commit = (next: CanvasItem[], headerPatch?: Partial<DailyLog>) => {
     setBlocks(next)
-    const base    = data[day] ?? ({} as DailyLog)
+    // Grow the array so the edited day (which may be past the saved rows) exists,
+    // seeding new days with their itinerary port/date.
+    const padded = data.length > day
+      ? data.slice()
+      : [...data, ...Array.from({ length: day + 1 - data.length }, (_, k) => {
+          const idx = data.length + k
+          return { ...blankDay(), port: itinerary[idx]?.port ?? '', date: itinerary[idx]?.date ?? '' }
+        })]
+    const base    = padded[day] ?? blankDay()
     const derived = deriveStructured(next)
     const merged: DailyLog = { ...base, ...derived, ...headerPatch, canvas: next }
-    onChange(data.map((d, i) => (i === day ? merged : d)))
+    onChange(padded.map((d, i) => (i === day ? merged : d)))
   }
   const setHeader = (patch: Partial<DailyLog>) => commit(blocks, patch)
 
@@ -136,8 +156,8 @@ export default function JournalEntry({ data, onChange, itinerary, voyage: _voyag
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 14 }}>
         <select value={day} onChange={e => setDay(Number(e.target.value))}
           style={{ border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 12px', fontSize: 14, fontFamily: FONT_BODY, color: NAVY2, background: WHITE, fontWeight: 600 }}>
-          {data.map((d, i) => {
-            const p = d.port || itinerary[i]?.port || ''
+          {Array.from({ length: dayCount }, (_, i) => {
+            const p = data[i]?.port || itinerary[i]?.port || ''
             return <option key={i} value={i}>Day {i + 1}{p ? ` · ${p.split(',')[0]}` : ''}</option>
           })}
         </select>
@@ -301,14 +321,14 @@ export default function JournalEntry({ data, onChange, itinerary, voyage: _voyag
       </div>
 
       {/* ── Your voyage in feelings ── */}
-      <MoodChart data={data} current={day} mobile={mobile} onPick={setDay} />
+      <MoodChart data={data} dayCount={dayCount} current={day} mobile={mobile} onPick={setDay} />
     </div>
   )
 }
 
 // ── Voyage mood chart ─────────────────────────────────────────────────────────
-function MoodChart({ data, current, mobile, onPick }:
-  { data: DailyLog[]; current: number; mobile: boolean; onPick: (i: number) => void }) {
+function MoodChart({ data, dayCount, current, mobile, onPick }:
+  { data: DailyLog[]; dayCount: number; current: number; mobile: boolean; onPick: (i: number) => void }) {
   const logged = data.filter(d => (d.mood ?? 0) > 0)
   const avg = logged.length ? logged.reduce((s, d) => s + (d.mood ?? 0), 0) / logged.length : 0
   const avgSs = avg ? seaState(Math.round(avg)) : null
@@ -342,8 +362,8 @@ function MoodChart({ data, current, mobile, onPick }:
         </div>
       ) : (
         <div style={{ display: 'flex', gap: mobile ? 4 : 7, alignItems: 'flex-end', marginTop: 22, overflowX: 'auto', paddingBottom: 6 }} data-swipe-ignore>
-          {data.map((d, i) => {
-            const m  = d.mood ?? 0
+          {Array.from({ length: dayCount }, (_, i) => {
+            const m  = data[i]?.mood ?? 0
             const s  = seaState(m)
             const h  = m ? Math.max(10, (m / 5) * maxH) : 6
             const on = i === current

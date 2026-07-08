@@ -26,9 +26,17 @@ interface Props {
 }
 
 export default function BottomNav({ section, onNav, badges = {} }: Props) {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const iconPack = useIconPack()
-  const activeTab = pathname.startsWith('/voyages') ? 'voyages' : (pathname.slice(1) || section)
+  // The Daily Log lives inside the journal (/voyages/:id/journal?tab=daily, or
+  // /journal with no tab, which defaults to daily) — so highlight "Daily" there,
+  // "Voyages" for the list or any other journal tab.
+  const tab = new URLSearchParams(search).get('tab')
+  const activeTab = pathname.includes('/journal')
+    ? (tab == null || tab === 'daily' ? 'daily' : 'voyages')
+    : pathname.startsWith('/voyages')
+      ? 'voyages'
+      : (pathname.slice(1) || section)
 
   return (
     <nav

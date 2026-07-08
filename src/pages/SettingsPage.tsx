@@ -73,7 +73,8 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
       <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? 300 : 380, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }}>
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.22) 0%, rgba(7,14,24,0.12) 45%, rgba(7,14,24,0.42) 100%)', zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/background_banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.38) 0%, rgba(7,14,24,0.28) 45%, rgba(7,14,24,0.55) 100%)', zIndex: 1 }} />
         <div style={{ ...col, position: 'relative', zIndex: 2 }} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 14 }}>Deck Days</div>
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: isMobile ? 'clamp(34px,11vw,48px)' : 'clamp(48px,6vw,74px)', lineHeight: 1.05, letterSpacing: '-0.01em', textShadow: '0 2px 14px rgba(0,0,0,0.32)' }}>

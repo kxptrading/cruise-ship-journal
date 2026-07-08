@@ -34,6 +34,7 @@ import { useBreakpoint } from './hooks/useBreakpoint'
 import { PAGE_TRANSITION } from './lib/motion'
 import TopNav         from './components/TopNav'
 import BottomNav      from './components/BottomNav'
+import TodayQuickAdd  from './features/voyages/TodayQuickAdd'
 import AuthScreen     from './components/AuthScreen'
 import ErrorBoundary  from './components/ErrorBoundary'
 import { Toast }      from './components/ui'
@@ -640,6 +641,8 @@ export default function App() {
       {isMobile && (
         <BottomNav section={section} onNav={navClick} badges={navBadges} />
       )}
+      {/* Persistent quick-add: one tap to today's check-in on the current voyage. */}
+      <TodayQuickAdd isMobile={isMobile} />
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

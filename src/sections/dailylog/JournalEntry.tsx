@@ -83,6 +83,9 @@ export default function JournalEntry({ data, onChange, itinerary, voyage, initia
   const dayCount = Math.max(data.length, itinerary.length, Number.isFinite(nights) ? nights : 0, 1)
 
   const [day, setDay] = useState<number>(initialDay ?? 0)
+  // Jump to the requested day if it changes while the journal is already open
+  // (e.g. the "＋ Today" FAB tapped from within another day).
+  useEffect(() => { if (initialDay != null) setDay(initialDay) }, [initialDay])
   const [blocks, setBlocks] = useState<CanvasItem[]>(() => data[day]?.canvas ?? [])
   const [urlMap, setUrlMap] = useState<Record<string, string>>({})
   const fileRef = useRef<HTMLInputElement>(null)

@@ -145,6 +145,9 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
   // Initialise from ?tab= so sidebar journal links open the right section.
   // If the ?tab= param is missing or invalid, default to the posts view.
   const tabParam   = searchParams.get('tab') as Tab | null
+  // ?day=N opens the Daily Log straight on that day (used by the "＋ Today" FAB).
+  const dayParam   = searchParams.get('day')
+  const initialDay = dayParam != null && /^\d+$/.test(dayParam) ? parseInt(dayParam, 10) : undefined
   const validTabs  = new Set(TABS.map(t => t.id))
   const [activeTab, setActiveTab] = useState<Tab>(
     tabParam && validTabs.has(tabParam) ? tabParam : 'daily'
@@ -384,7 +387,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
               <MemoryGallery voyageId={voyageId} />
             )}
             {/* Legacy tabs — receive data + update from useVoyageData (via App.tsx props) */}
-            {safeTab ==='daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={0} />}
+            {safeTab ==='daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={initialDay} />}
             {safeTab ==='itinerary'     && <ItinerarySection data={data.itinerary} onChange={v => update('itinerary', v)} />}
             {/* Budget tab is hidden unless isAdult is true (controlled by profile.age) */}
             {safeTab ==='budget'        && isAdult && <BudgetTracker data={data.budget} onChange={v => update('budget', v)} />}

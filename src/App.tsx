@@ -23,7 +23,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
-import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom'
+import { useNavigate, useLocation, useParams, Routes, Route, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
 import { WCtx, VoyageCtx, UserCtx, IconPackCtx, useWindowSize, type IconPack } from './context'
@@ -71,8 +71,15 @@ const GalleryPage      = lazy(() => import('./pages/GalleryPage'))
 const SearchPage       = lazy(() => import('./pages/SearchPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
-const VoyageLanding    = lazy(() => import('./pages/VoyageLanding'))
 const VoyageFeedPage   = lazy(() => import('./pages/VoyageFeedPage'))
+
+// The voyage landing was removed from the flow: opening a voyage goes straight to
+// its journal. Any hit on /voyages/:id redirects there, preserving the ?tab query.
+function VoyageRootRedirect() {
+  const { voyageId } = useParams<{ voyageId: string }>()
+  const { search } = useLocation()
+  return <Navigate to={`/voyages/${voyageId}/journal${search}`} replace />
+}
 const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
 const PostEditorPage   = lazy(() => import('./pages/PostEditorPage'))
 const PostDetailPage   = lazy(() => import('./pages/PostDetailPage'))
@@ -550,9 +557,8 @@ export default function App() {
                 <Route path="/voyages/:voyageId/posts/:postId"     element={<PostDetailPage />} />
                 {/* Voyage sub-landing: two big entries (Open Journal / Open Feed)
                     over the scroll-driven story. */}
-                <Route path="/voyages/:voyageId" element={
-                  <VoyageLanding data={data} onNav={navClick} />
-                } />
+                {/* Voyage landing removed from the flow — open straight into the journal. */}
+                <Route path="/voyages/:voyageId" element={<VoyageRootRedirect />} />
                 {/* This voyage's social feed. */}
                 <Route path="/voyages/:voyageId/feed" element={<VoyageFeedPage />} />
                 {/* The tabbed journal. Receives data+update so it can pass them to

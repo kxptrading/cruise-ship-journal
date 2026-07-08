@@ -44,14 +44,14 @@ export default function VoyagesPage() {
   const navigate  = useNavigate()
   const w         = useW()
   const [opening, setOpening] = useState<{ voyage: VoyageRow; rect: DOMRect } | null>(null)
-  // Navigate to the voyage landing, handing the chosen hero photo via router state so
-  // the landing's hero matches the one the book-open animation revealed. The active
-  // voyage switch is handled by App's URL-change effect.
+  // Open a voyage straight into its journal (the voyage landing is skipped). The
+  // chosen hero photo is still handed via router state. The active voyage switch is
+  // handled by App's URL-change effect.
   const open = (voyage: VoyageRow, heroUrl?: string, fromBook = false) =>
-    navigate(`/voyages/${voyage.id}`, { state: { hero: heroUrl, fromBook } })
-  // Warm the destination chunks while the book-open animation plays (~1.2s) so the
-  // landing renders instantly on arrival — no lazy-load skeleton mid-transition.
-  const preloadLanding = () => { import('./VoyageLanding'); import('./VoyageStoryPage') }
+    navigate(`/voyages/${voyage.id}/journal`, { state: { hero: heroUrl, fromBook } })
+  // Warm the journal chunk while the book-open animation plays (~1.2s) so it
+  // renders instantly on arrival — no lazy-load skeleton mid-transition.
+  const preloadLanding = () => { import('./VoyageDetailPage') }
   const { data: voyages = [], isLoading, error } = useVoyages()
   // Extract ids from the loaded voyages to pass to the post counts query.
   // When voyages is still loading, ids is [] and useVoyagePostCounts is disabled.

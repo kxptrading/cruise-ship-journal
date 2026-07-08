@@ -12,7 +12,7 @@ import type { CSSProperties } from 'react'
 import { supabase } from '../lib/supabase'
 import { useGsapReveal } from '../hooks/useGsapReveal'
 import { useUserId, useW } from '../context'
-import { BP, FONT_BODY, FONT_DISPLAY, FONT_LABEL, LABEL_TRACK, NAVY2, MUTED, GOLD, CREAM, WHITE } from '../constants'
+import { BP, FONT_BODY, FONT_DISPLAY, FONT_LABEL, LABEL_TRACK, NAVY2, MUTED, GOLD, CREAM, WHITE, HERO_MIN_H } from '../constants'
 import type { Session } from '@supabase/supabase-js'
 
 import AppearanceBlock from '@/sections/profile/AppearanceBlock'
@@ -72,9 +72,11 @@ export default function SettingsPage({ session, theme, onThemeChange, iconPack, 
     <div ref={pageRef} style={{ fontFamily: FONT_BODY }}>
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? 300 : 380, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }}>
+      <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? HERO_MIN_H.mobile : HERO_MIN_H.desktop, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center', background: 'linear-gradient(150deg, var(--t-primary-dk) 0%, var(--t-primary-mid) 55%, var(--t-primary) 100%)' }}>
         <div style={{ position: 'absolute', inset: 0, backgroundImage: "url('/background_banner.jpg')", backgroundSize: 'cover', backgroundPosition: 'center', zIndex: 0 }} />
-        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.38) 0%, rgba(7,14,24,0.28) 45%, rgba(7,14,24,0.55) 100%)', zIndex: 1 }} />
+        {/* Theme-colour tint (matches the Profile hero) + legibility scrim */}
+        <div style={{ position: 'absolute', inset: 0, background: 'var(--t-primary-dk)', opacity: 0.6, zIndex: 1 }} />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(7,14,24,0.5) 0%, rgba(7,14,24,0.22) 45%, rgba(7,14,24,0.68) 100%)', zIndex: 1 }} />
         <div style={{ ...col, position: 'relative', zIndex: 2 }} data-reveal>
           <div style={{ ...kicker, color: GOLD, marginBottom: 14 }}>Deck Days</div>
           <h1 style={{ margin: 0, fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: isMobile ? 'clamp(34px,11vw,48px)' : 'clamp(48px,6vw,74px)', lineHeight: 1.05, letterSpacing: '-0.01em', textShadow: '0 2px 14px rgba(0,0,0,0.32)' }}>

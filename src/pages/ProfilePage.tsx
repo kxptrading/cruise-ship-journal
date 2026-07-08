@@ -7,7 +7,7 @@ import { supabase } from '../lib/supabase'
 import { useGsapReveal } from '../hooks/useGsapReveal'
 import type { CSSProperties } from 'react'
 import { useUserId, useW } from '../context'
-import { BP, FONT_BODY, FONT_DISPLAY, FONT_LABEL, LABEL_TRACK, GOLD, CREAM, WHITE, NAVY2, TEXT, MUTED } from '../constants'
+import { BP, FONT_BODY, FONT_DISPLAY, FONT_LABEL, LABEL_TRACK, GOLD, CREAM, WHITE, NAVY2, TEXT, MUTED, HERO_MIN_H } from '../constants'
 import ImageCropper from '../components/ImageCropper'
 import type { Session } from '@supabase/supabase-js'
 import type { VoyageListRow, Voyage } from '../types'
@@ -191,7 +191,7 @@ export default function UserProfile({ session, allVoyages, voyage: _voyage, onNa
       )}
 
       {/* ── HERO ─────────────────────────────────────────────────── */}
-      <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? 500 : 620, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center' }}>
+      <section style={{ ...fullBleed, marginTop: -heroPullUp, minHeight: isMobile ? HERO_MIN_H.mobile : HERO_MIN_H.desktop, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', color: WHITE, textAlign: 'center' }}>
         {/* Banner background — user's banner, else the landing cruise-ship photo — + theme tint + legibility */}
         <div style={{ position: 'absolute', inset: 0, zIndex: 0, backgroundSize: 'cover', backgroundPosition: 'center',
           backgroundImage: `url(${profile.bannerUrl || '/background_banner.jpg'})` }} />

@@ -19,6 +19,10 @@ export const ROSE   = '#F97316'
 export const PLUM   = '#8B5CF6'
 export const CORAL  = ROSE
 
+// Shared full-bleed page-hero height, so banners stay consistent app-wide
+// (Profile, Settings, …). { mobile, desktop } min-heights in px.
+export const HERO_MIN_H = { mobile: 500, desktop: 620 }
+
 // ── Per-section accent colours ────────────────────────────────────────────────
 export const SECTION_COLORS: Record<string, string> = {
   feed:          'var(--t-primary)',

@@ -152,18 +152,8 @@ export default function JournalEntry({ data, onChange, itinerary, voyage, initia
 
   return (
     <div style={{ fontFamily: FONT_BODY }}>
-      {/* ── Day selector ── */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 12, marginBottom: 14 }}>
-        <select value={day} onChange={e => setDay(Number(e.target.value))}
-          style={{ border: `1px solid ${BORDER}`, borderRadius: 10, padding: '8px 12px', fontSize: 14, fontFamily: FONT_BODY, color: NAVY2, background: WHITE, fontWeight: 600 }}>
-          {Array.from({ length: dayCount }, (_, i) => {
-            const p = data[i]?.port || itinerary[i]?.port || ''
-            return <option key={i} value={i}>Day {i + 1}{p ? ` · ${p.split(',')[0]}` : ''}</option>
-          })}
-        </select>
-        <div style={{ flex: 1, minWidth: 40 }} />
-        <span style={{ ...lbl, color: MUTED }}>Day {day + 1}</span>
-      </div>
+      {/* ── Deck-days strip ── */}
+      <DayStrip data={data} itinerary={itinerary} dayCount={dayCount} current={day} mobile={mobile} onPick={setDay} />
 
       {/* ── Check-in card (mood + feelings + energy) ── */}
       <div style={{
@@ -322,6 +312,60 @@ export default function JournalEntry({ data, onChange, itinerary, voyage, initia
 
       {/* ── Your voyage in feelings ── */}
       <MoodChart data={data} dayCount={dayCount} current={day} mobile={mobile} onPick={setDay} />
+    </div>
+  )
+}
+
+// ── Deck-days strip ───────────────────────────────────────────────────────────
+// The primary navigation: a bright, scrollable row of day cards. Each shows the
+// day number, its port, and a status dot (sea-state colour once a mood is set,
+// gold if the day has any entry). The active day scrolls itself into view.
+function DayStrip({ data, itinerary, dayCount, current, mobile, onPick }:
+  { data: DailyLog[]; itinerary: ItineraryDay[]; dayCount: number; current: number; mobile: boolean; onPick: (i: number) => void }) {
+  const activeRef = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+  }, [current])
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
+        <span style={{ ...lbl, color: NAVY }}>Deck days</span>
+        <span style={{ fontSize: 12, color: MUTED, fontWeight: 600 }}>{dayCount} {dayCount === 1 ? 'day' : 'days'}</span>
+      </div>
+      <div data-swipe-ignore style={{ display: 'flex', gap: 10, overflowX: 'auto', scrollSnapType: 'x proximity', padding: '2px 2px 8px' }}>
+        {Array.from({ length: dayCount }, (_, i) => {
+          const d       = data[i]
+          const port    = d?.port || itinerary[i]?.port || ''
+          const short   = port ? port.split(',')[0] : 'At sea'
+          const ss      = d?.mood ? seaState(d.mood) : null
+          const written = !!(d && (d.mood || d.rating || d.canvas?.length || d.highlights || d.bestMoment || d.feelings?.length))
+          const on      = i === current
+          return (
+            <button key={i} ref={on ? activeRef : undefined} onClick={() => onPick(i)} title={`Day ${i + 1}${port ? ` · ${short}` : ''}`}
+              style={{
+                position: 'relative', flexShrink: 0, scrollSnapAlign: 'center', textAlign: 'left',
+                minWidth: mobile ? 80 : 94, padding: mobile ? '10px 13px 12px' : '12px 15px 13px',
+                borderRadius: 14, cursor: 'pointer',
+                border: `1.5px solid ${on ? NAVY2 : BORDER}`,
+                background: on ? `linear-gradient(140deg, ${NAVY2}, ${NAVY})` : WHITE,
+                color: on ? WHITE : TEXT,
+                boxShadow: on ? '0 7px 20px rgba(0,0,0,0.20)' : '0 1px 3px rgba(0,0,0,0.05)',
+                transform: on ? 'translateY(-1px)' : 'none',
+                transition: 'all .16s ease',
+              }}>
+              <span style={{ ...lbl, fontSize: 9.5, letterSpacing: '0.18em', color: on ? GOLD : MUTED }}>Day</span>
+              <div style={{ fontFamily: FONT_DISPLAY, fontWeight: 800, fontSize: mobile ? 23 : 27, lineHeight: 1, color: on ? WHITE : NAVY2, marginTop: 1 }}>{i + 1}</div>
+              <div style={{ fontSize: 11.5, marginTop: 5, color: on ? 'rgba(255,255,255,0.85)' : MUTED, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: mobile ? 60 : 76 }}>{short}</div>
+              <span style={{
+                position: 'absolute', top: 10, right: 10, width: 9, height: 9, borderRadius: '50%',
+                background: ss ? ss.color : (written ? GOLD : 'transparent'),
+                border: (ss || written) ? 'none' : `1.5px solid ${on ? 'rgba(255,255,255,0.45)' : BORDER}`,
+              }} />
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

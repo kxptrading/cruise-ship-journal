@@ -641,8 +641,9 @@ export default function App() {
       {isMobile && (
         <BottomNav section={section} onNav={navClick} badges={navBadges} />
       )}
-      {/* Persistent quick-add: one tap to today's check-in on the current voyage. */}
-      <TodayQuickAdd isMobile={isMobile} />
+      {/* Persistent quick-add: one tap to today's check-in on the current voyage.
+          Hidden on the editor/composer routes (/…/new, /…/edit) where it'd intrude. */}
+      {!/\/(new|edit)$/.test(location.pathname) && <TodayQuickAdd isMobile={isMobile} />}
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

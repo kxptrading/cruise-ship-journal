@@ -299,15 +299,19 @@ export default function LandingPage() {
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
   const kicker: CSSProperties = { fontFamily: FONT_LABEL, fontSize: 12, fontWeight: 600, letterSpacing: LABEL_TRACK, textTransform: 'uppercase' }
 
+  // Compact, on-brand CTAs (the app uses small radius-8/10 buttons, not big pills).
   const primaryBtn: CSSProperties = {
-    background: GOLD, color: NAVY2, border: 'none', borderRadius: 980,
-    padding: mobile ? '12px 24px' : '14px 30px', fontSize: 15, fontWeight: 700,
-    fontFamily: FONT_BODY, cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
+    background: GOLD, color: NAVY2, border: 'none', borderRadius: 10,
+    padding: mobile ? '9px 16px' : '10px 20px', fontSize: mobile ? 13 : 14, fontWeight: 700,
+    fontFamily: FONT_BODY, letterSpacing: '0.01em', cursor: 'pointer', textDecoration: 'none',
+    display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
+    boxShadow: '0 3px 12px rgba(201,162,39,0.32)',
   }
   const ghostBtnLight: CSSProperties = {
-    background: 'transparent', color: WHITE, border: '1px solid rgba(255,255,255,0.5)', borderRadius: 980,
-    padding: mobile ? '12px 24px' : '14px 30px', fontSize: 15, fontWeight: 600,
-    fontFamily: FONT_BODY, cursor: 'pointer', textDecoration: 'none', display: 'inline-block',
+    background: 'rgba(255,255,255,0.08)', color: WHITE, border: '1px solid rgba(255,255,255,0.42)', borderRadius: 10,
+    padding: mobile ? '9px 16px' : '10px 20px', fontSize: mobile ? 13 : 14, fontWeight: 600,
+    fontFamily: FONT_BODY, cursor: 'pointer', textDecoration: 'none',
+    display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
   }
 
   // Preview cards split into two shorter carousels for fluid scroll panning.

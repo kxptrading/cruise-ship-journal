@@ -70,6 +70,7 @@ const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'))
 const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
 const GalleryPage      = lazy(() => import('./pages/GalleryPage'))
 const SearchPage       = lazy(() => import('./pages/SearchPage'))
+const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
 const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
 const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
 const VoyageFeedPage   = lazy(() => import('./pages/VoyageFeedPage'))
@@ -580,6 +581,7 @@ export default function App() {
                 <Route path="/feed"    element={<Feed />} />
                 <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/search"  element={<SearchPage />} />
+                <Route path="/notifications" element={<NotificationsPage />} />
                 <Route path="/profile"       element={<VoyageProfile voyage={data.voyage} allVoyages={allVoyages} voyageId={voyageId} session={session} onSwitch={switchVoyage} onCreate={createVoyage} onCoverPhotoChange={handleCoverPhotoChange} />} />
                 {/* Public-only auth routes: once signed in, send these to home so
                     a user who logged in at /login (or /signup) lands in the app

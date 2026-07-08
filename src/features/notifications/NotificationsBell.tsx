@@ -13,7 +13,7 @@ import { useIconPack } from '@/context'
 import FE from '@/components/FE'
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationsRead, type AppNotification } from './hooks'
 
-function relativeTime(iso: string): string {
+export function relativeTime(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff / 60000), h = Math.floor(diff / 3600000), d = Math.floor(diff / 86400000)
   if (m < 1) return 'just now'
@@ -23,20 +23,20 @@ function relativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 }
 
-const VERB: Record<AppNotification['type'], string> = {
+export const VERB: Record<AppNotification['type'], string> = {
   mention:  'mentioned you',
   reaction: 'reacted to your post',
   comment:  'commented on your post',
 }
 
-function TypeIcon({ type }: { type: AppNotification['type'] }) {
+export function TypeIcon({ type }: { type: AppNotification['type'] }) {
   const common = { size: 13, strokeWidth: 2.5 }
   if (type === 'mention')  return <AtSign {...common} color={GOLD} />
   if (type === 'reaction') return <Heart {...common} color="#B03060" />
   return <MessageCircle {...common} color="#0D6B55" />
 }
 
-function targetPath(n: AppNotification): string {
+export function targetPath(n: AppNotification): string {
   if (n.postId && n.voyageId) return `/voyages/${n.voyageId}/posts/${n.postId}`
   if (n.voyageId) return `/voyages/${n.voyageId}`
   return '/feed'

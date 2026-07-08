@@ -18,8 +18,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search, Settings, ShieldCheck, LogOut } from 'lucide-react'
+import { Compass, Ship, Users, MessageCircle, CircleUser, UserCircle2, Search, Settings, ShieldCheck, LogOut, Bell } from 'lucide-react'
 import NotificationsBell from '@/features/notifications/NotificationsBell'
+import { useUnreadNotificationCount } from '@/features/notifications/hooks'
 import type { LucideIcon } from 'lucide-react'
 import { gsap, prefersReducedMotion } from '../lib/gsap'
 import { WHITE, GOLD, BORDER, MUTED, TEXT, FONT_BODY, FONT_DISPLAY, FONT_LABEL } from '../constants'
@@ -53,19 +54,23 @@ interface Props {
 // Trigger button + anchored menu. Owns its open state; closes on outside
 // click, Escape, or after any menu action.
 
-function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize }: {
+function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize, compact = false }: {
   section:    string
   onNav:      (id: string) => void
   userEmail?: string
   onSignOut:  () => void
   isAdmin?:   boolean
   iconSize:   number
+  // compact = mobile: search + notifications are folded into this menu, so the
+  // trigger also surfaces an unread-notifications dot.
+  compact?:   boolean
 }) {
   const [open, setOpen] = useState(false)
   const wrapRef  = useRef<HTMLDivElement>(null)
   const menuRef  = useRef<HTMLDivElement>(null)
   const iconPack = useIconPack()
   const active   = section === 'userprofile'
+  const unread   = useUnreadNotificationCount()
 
   // Dropdown entrance: quick scale + fade from the trigger corner, then the
   // menu items cascade in.
@@ -120,6 +125,7 @@ function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize }
         aria-expanded={open}
         onClick={() => setOpen(v => !v)}
         style={{
+          position: 'relative',
           background: active || open ? 'rgba(201,162,39,0.18)' : 'transparent',
           border: 'none',
           width: 40, height: 40, flexShrink: 0,
@@ -134,6 +140,13 @@ function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize }
           ? <FE emoji="👤" size={iconSize} />
           : <UserCircle2 size={iconSize} strokeWidth={active || open ? 2.5 : 1.75} />
         }
+        {/* Unread-notifications dot — only in compact mode, where the bell is hidden. */}
+        {compact && unread > 0 && (
+          <span style={{
+            position: 'absolute', top: 6, right: 6, width: 9, height: 9, borderRadius: '50%',
+            background: '#E5484D', boxShadow: '0 0 0 2px var(--t-primary-dk)',
+          }} />
+        )}
       </button>
 
       {open && (
@@ -157,6 +170,26 @@ function ProfileMenu({ section, onNav, userEmail, onSignOut, isAdmin, iconSize }
                 {userEmail}
               </div>
             </div>
+          )}
+
+          {/* Mobile: search + notifications live here instead of on the top bar. */}
+          {compact && (
+            <>
+              <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(() => onNav('search'))}>
+                <Search size={16} strokeWidth={1.75} color={MUTED} /> Search
+              </button>
+              <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(() => onNav('notifications'))}>
+                <Bell size={16} strokeWidth={1.75} color={MUTED} /> Notifications
+                {unread > 0 && (
+                  <span style={{
+                    marginLeft: 'auto', minWidth: 18, height: 18, padding: '0 5px', borderRadius: 999,
+                    background: '#E5484D', color: WHITE, fontSize: 11, fontWeight: 800, fontFamily: FONT_BODY,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>{unread > 9 ? '9+' : unread}</span>
+                )}
+              </button>
+              <div style={{ height: 1, background: BORDER, margin: '4px 0' }} />
+            </>
           )}
 
           <button role="menuitem" style={itemStyle} onMouseEnter={e => hover(e, true)} onMouseLeave={e => hover(e, false)} onClick={act(() => onNav('userprofile'))}>
@@ -224,28 +257,8 @@ export default function TopNav({ section, onNav, isMobile, voyageLabel, badges =
 
           <div style={{ flex: 1 }} />
 
-          <button
-            aria-label="Search"
-            onClick={() => onNav('search')}
-            style={{
-              background: section === 'search' ? 'rgba(201,162,39,0.18)' : 'transparent',
-              border: 'none',
-              width: 40, height: 40, flexShrink: 0,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer',
-              color: section === 'search' ? GOLD : 'rgba(255,255,255,0.85)',
-              borderRadius: 8,
-              WebkitTapHighlightColor: 'transparent',
-            }}
-          >
-            {iconPack !== 'lucide'
-              ? <FE emoji="🔍" size={22} />
-              : <Search size={22} strokeWidth={section === 'search' ? 2.5 : 1.75} />
-            }
-          </button>
-
-          <NotificationsBell size={22} />
-
+          {/* Search + notifications are folded into the profile menu on mobile to
+              save top-bar space (see compact ProfileMenu). */}
           <ProfileMenu
             section={section}
             onNav={onNav}
@@ -253,6 +266,7 @@ export default function TopNav({ section, onNav, isMobile, voyageLabel, badges =
             onSignOut={onSignOut}
             isAdmin={isAdmin}
             iconSize={24}
+            compact
           />
         </div>
 

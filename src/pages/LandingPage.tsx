@@ -351,7 +351,7 @@ export default function LandingPage() {
             <Link to="/login" style={{ color: WHITE, fontFamily: FONT_BODY, fontSize: 14, fontWeight: 600, textDecoration: 'none', opacity: 0.92 }}>
               Log in
             </Link>
-            <Link to="/signup" style={primaryBtn}>Get started</Link>
+            <Link to="/login" style={primaryBtn}>Get started</Link>
           </nav>
         </div>
       </header>
@@ -380,7 +380,7 @@ export default function LandingPage() {
             budgets and memories, gathered into one living record of the voyage. Share only what you choose.
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: mobile ? 28 : 36 }}>
-            <Link to="/signup" style={primaryBtn}>Start your journal →</Link>
+            <Link to="/login" style={primaryBtn}>Start your journal →</Link>
             <Link to="/login" style={ghostBtnLight}>Log in</Link>
           </div>
         </div>
@@ -589,7 +589,7 @@ export default function LandingPage() {
             Create a free account and start your first journal in minutes.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
-            <Link to="/signup" style={primaryBtn}>Get started →</Link>
+            <Link to="/login" style={primaryBtn}>Get started →</Link>
             <Link to="/login" style={ghostBtnLight}>Log in</Link>
           </div>
         </div>

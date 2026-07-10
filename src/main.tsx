@@ -15,6 +15,17 @@ import './index.css'
 import { registerSW } from 'virtual:pwa-register'
 registerSW({ immediate: true })
 
+// Belt-and-suspenders for stale chunks after a deploy: Vite dispatches
+// `vite:preloadError` when a dynamic-import module preload fails (old hashed
+// chunk 404s because a new build shipped). Reload once to fetch the fresh
+// assets. Pairs with lazyWithRetry() in App.tsx.
+window.addEventListener('vite:preloadError', () => {
+  if (!sessionStorage.getItem('chunkReloaded')) {
+    sessionStorage.setItem('chunkReloaded', '1')
+    window.location.reload()
+  }
+})
+
 // Lock to portrait on Android PWA (installed to home screen).
 // screen.orientation.lock() requires the app to be running in standalone
 // mode — it silently fails in a regular browser tab and on iOS Safari

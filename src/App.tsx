@@ -22,7 +22,7 @@
 //     migrated to React Query in future phases.
 // ─────────────────────────────────────────────────────────────────────────────
 
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react'
+import { useState, useEffect, useRef, useMemo, lazy, Suspense, type ComponentType } from 'react'
 import { useNavigate, useLocation, useParams, Routes, Route, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion, MotionConfig, useScroll } from 'framer-motion'
 import { CREAM, NAVY, BP } from './constants'
@@ -46,34 +46,56 @@ import { useSyncStatus }    from './hooks/useSyncStatus'
 import { useUnreadCounts }  from './hooks/useUnreadCounts'
 import { processSyncQueue } from './services/syncService'
 import { retryFailed }      from './db/syncQueue'
+
+// Lazy import that survives stale chunks after a deploy. If a dynamic import
+// fails — usually because a new build shipped while this tab was open, so the
+// old hashed chunk 404s — reload the page ONCE to pick up the fresh index +
+// chunk names (index.html is network-first / no-store, so the reload is clean).
+// A second failure rethrows so the ErrorBoundary shows a real error instead of
+// looping. Without this, the rejected import leaves Suspense blank forever —
+// the "click Friends/Chat and nothing loads" symptom.
+function lazyWithRetry<T extends ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(() => factory().then(
+    mod => { sessionStorage.removeItem('chunkReloaded'); return mod },
+    err => {
+      if (!sessionStorage.getItem('chunkReloaded')) {
+        sessionStorage.setItem('chunkReloaded', '1')
+        window.location.reload()
+        return new Promise<{ default: T }>(() => {}) // hold Suspense until the reload takes over
+      }
+      throw err
+    },
+  ))
+}
+
 // Section components — all lazy-loaded so the initial bundle is just the shell
-const Feed             = lazy(() => import('./pages/FeedPage'))
-const VoyageProfile    = lazy(() => import('./features/voyages/VoyageProfile'))
+const Feed             = lazyWithRetry(() => import('./pages/FeedPage'))
+const VoyageProfile    = lazyWithRetry(() => import('./features/voyages/VoyageProfile'))
 // VoyageDetails / Itinerary / DailyLog etc. are no longer top-level routes —
 // they are tabs inside VoyageDetailPage. Lazy imports kept for VoyageDetailPage.
-const VoyageDetails    = lazy(() => import('./features/voyages/VoyageForm'))
-const Friends          = lazy(() => import('./pages/ContactsPage'))
-const Chat             = lazy(() => import('./sections/Chat'))
-const UserProfile      = lazy(() => import('./pages/ProfilePage'))
-const SettingsPage     = lazy(() => import('./pages/SettingsPage'))
-const DesignSystem     = lazy(() => import('./sections/DesignSystem'))
-const NotFound         = lazy(() => import('./sections/NotFound'))
-const LoginPage        = lazy(() => import('./pages/LoginPage'))
-const LandingPage      = lazy(() => import('./pages/LandingPage'))
-const FounderSuccessPage   = lazy(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderSuccessPage })))
-const FounderCancelledPage = lazy(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderCancelledPage })))
-const WelcomePage          = lazy(() => import('./pages/WelcomePage'))
-const SignupPage       = lazy(() => import('./pages/SignupPage'))
-const ComingSoonPage   = lazy(() => import('./pages/ComingSoonPage'))
-const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
-const UpdatePasswordPage = lazy(() => import('./pages/UpdatePasswordPage'))
-const VoyagesPage      = lazy(() => import('./pages/VoyagesPage'))
-const GalleryPage      = lazy(() => import('./pages/GalleryPage'))
-const SearchPage       = lazy(() => import('./pages/SearchPage'))
-const NotificationsPage = lazy(() => import('./pages/NotificationsPage'))
-const VoyageEditorPage = lazy(() => import('./pages/VoyageEditorPage'))
-const VoyageDetailPage = lazy(() => import('./pages/VoyageDetailPage'))
-const VoyageFeedPage   = lazy(() => import('./pages/VoyageFeedPage'))
+const VoyageDetails    = lazyWithRetry(() => import('./features/voyages/VoyageForm'))
+const Friends          = lazyWithRetry(() => import('./pages/ContactsPage'))
+const Chat             = lazyWithRetry(() => import('./sections/Chat'))
+const UserProfile      = lazyWithRetry(() => import('./pages/ProfilePage'))
+const SettingsPage     = lazyWithRetry(() => import('./pages/SettingsPage'))
+const DesignSystem     = lazyWithRetry(() => import('./sections/DesignSystem'))
+const NotFound         = lazyWithRetry(() => import('./sections/NotFound'))
+const LoginPage        = lazyWithRetry(() => import('./pages/LoginPage'))
+const LandingPage      = lazyWithRetry(() => import('./pages/LandingPage'))
+const FounderSuccessPage   = lazyWithRetry(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderSuccessPage })))
+const FounderCancelledPage = lazyWithRetry(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderCancelledPage })))
+const WelcomePage          = lazyWithRetry(() => import('./pages/WelcomePage'))
+const SignupPage       = lazyWithRetry(() => import('./pages/SignupPage'))
+const ComingSoonPage   = lazyWithRetry(() => import('./pages/ComingSoonPage'))
+const ResetPasswordPage  = lazyWithRetry(() => import('./pages/ResetPasswordPage'))
+const UpdatePasswordPage = lazyWithRetry(() => import('./pages/UpdatePasswordPage'))
+const VoyagesPage      = lazyWithRetry(() => import('./pages/VoyagesPage'))
+const GalleryPage      = lazyWithRetry(() => import('./pages/GalleryPage'))
+const SearchPage       = lazyWithRetry(() => import('./pages/SearchPage'))
+const NotificationsPage = lazyWithRetry(() => import('./pages/NotificationsPage'))
+const VoyageEditorPage = lazyWithRetry(() => import('./pages/VoyageEditorPage'))
+const VoyageDetailPage = lazyWithRetry(() => import('./pages/VoyageDetailPage'))
+const VoyageFeedPage   = lazyWithRetry(() => import('./pages/VoyageFeedPage'))
 
 // The voyage landing was removed from the flow: opening a voyage goes straight to
 // its journal. Any hit on /voyages/:id redirects there, preserving the ?tab query.
@@ -82,25 +104,25 @@ function VoyageRootRedirect() {
   const { search } = useLocation()
   return <Navigate to={`/voyages/${voyageId}/journal${search}`} replace />
 }
-const PostComposerPage = lazy(() => import('./pages/PostComposerPage'))
-const PostEditorPage   = lazy(() => import('./pages/PostEditorPage'))
-const PostDetailPage   = lazy(() => import('./pages/PostDetailPage'))
-const AdminReportsPage = lazy(() => import('./pages/AdminReportsPage'))
-const AdminPage        = lazy(() => import('./pages/AdminPage'))
+const PostComposerPage = lazyWithRetry(() => import('./pages/PostComposerPage'))
+const PostEditorPage   = lazyWithRetry(() => import('./pages/PostEditorPage'))
+const PostDetailPage   = lazyWithRetry(() => import('./pages/PostDetailPage'))
+const AdminReportsPage = lazyWithRetry(() => import('./pages/AdminReportsPage'))
+const AdminPage        = lazyWithRetry(() => import('./pages/AdminPage'))
 // Legal / help pages — all lazy-loaded; accessible to auth and non-auth users
-const TermsPage              = lazy(() => import('./pages/legal/TermsPage'))
-const PrivacyPage            = lazy(() => import('./pages/legal/PrivacyPage'))
-const CookiesPage            = lazy(() => import('./pages/legal/CookiesPage'))
-const AcceptableUsePage      = lazy(() => import('./pages/legal/AcceptableUsePage'))
-const CommunityGuidelinesPage = lazy(() => import('./pages/legal/CommunityGuidelinesPage'))
-const ContentPolicyPage      = lazy(() => import('./pages/legal/ContentPolicyPage'))
-const HelpPage               = lazy(() => import('./pages/HelpPage'))
-const SafetyPage             = lazy(() => import('./pages/SafetyPage'))
-const DeleteAccountPage      = lazy(() => import('./pages/DeleteAccountPage'))
-const AccessibilityPage      = lazy(() => import('./pages/AccessibilityPage'))
-const FamilyPage             = lazy(() => import('./pages/FamilyPage'))
-const ContactPage            = lazy(() => import('./pages/ContactPage'))
-const LegalShell             = lazy(() => import('./pages/legal/LegalShell'))
+const TermsPage              = lazyWithRetry(() => import('./pages/legal/TermsPage'))
+const PrivacyPage            = lazyWithRetry(() => import('./pages/legal/PrivacyPage'))
+const CookiesPage            = lazyWithRetry(() => import('./pages/legal/CookiesPage'))
+const AcceptableUsePage      = lazyWithRetry(() => import('./pages/legal/AcceptableUsePage'))
+const CommunityGuidelinesPage = lazyWithRetry(() => import('./pages/legal/CommunityGuidelinesPage'))
+const ContentPolicyPage      = lazyWithRetry(() => import('./pages/legal/ContentPolicyPage'))
+const HelpPage               = lazyWithRetry(() => import('./pages/HelpPage'))
+const SafetyPage             = lazyWithRetry(() => import('./pages/SafetyPage'))
+const DeleteAccountPage      = lazyWithRetry(() => import('./pages/DeleteAccountPage'))
+const AccessibilityPage      = lazyWithRetry(() => import('./pages/AccessibilityPage'))
+const FamilyPage             = lazyWithRetry(() => import('./pages/FamilyPage'))
+const ContactPage            = lazyWithRetry(() => import('./pages/ContactPage'))
+const LegalShell             = lazyWithRetry(() => import('./pages/legal/LegalShell'))
 import type { Session } from '@supabase/supabase-js'
 import { useIsAdmin } from './features/safety/hooks'
 

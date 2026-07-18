@@ -228,3 +228,62 @@ export function useAdminUserAction() {
     },
   })
 }
+
+// ── Voyage Passes (admin) ─────────────────────────────────────────────────────
+// All go through SECURITY DEFINER RPCs guarded by is_admin_user(); no direct
+// table access (voyage_passes RLS is read-own-only for regular users).
+
+export interface AdminPassRow {
+  id:                         string
+  user_id:                    string
+  sku:                        string
+  source:                     'purchase' | 'bundle' | 'founder' | 'promo'
+  max_nights:                 number | null
+  status:                     'available' | 'redeemed' | 'refunded'
+  needs_review:               boolean
+  redeemed_voyage_id:         string | null
+  stripe_checkout_session_id: string | null
+  purchased_at:               string
+  redeemed_at:                string | null
+}
+
+// A single user's passes — fetched on demand when their admin row is expanded.
+export function useUserPasses(userId: string, enabled: boolean) {
+  return useQuery<AdminPassRow[]>({
+    queryKey: ['admin-user-passes', userId],
+    enabled,
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_list_user_passes', { p_user_id: userId })
+      if (error) throw error
+      return (data ?? []) as AdminPassRow[]
+    },
+  })
+}
+
+// Refund/dispute-flagged passes (a chargeback landed on an already-redeemed pass).
+export function useFlaggedPasses() {
+  return useQuery<AdminPassRow[]>({
+    queryKey: ['admin-flagged-passes'],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('admin_list_flagged_passes')
+      if (error) throw error
+      return (data ?? []) as AdminPassRow[]
+    },
+    staleTime: 30_000,
+  })
+}
+
+// Grant a promo pass. maxNights null = any length; 7 = standard (up to 7 nights).
+export function useGrantPromoPass() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ userId, maxNights }: { userId: string; maxNights: number | null }) => {
+      const { error } = await supabase.rpc('admin_grant_promo_pass', { p_user_id: userId, p_max_nights: maxNights })
+      if (error) throw error
+    },
+    onSuccess: (_data, vars) => {
+      qc.invalidateQueries({ queryKey: ['admin-user-passes', vars.userId] })
+      qc.invalidateQueries({ queryKey: ['admin-audit-log'] })
+    },
+  })
+}

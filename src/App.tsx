@@ -86,7 +86,6 @@ const FounderSuccessPage   = lazyWithRetry(() => import('./pages/FounderResultPa
 const FounderCancelledPage = lazyWithRetry(() => import('./pages/FounderResultPage').then(m => ({ default: m.FounderCancelledPage })))
 const WelcomePage          = lazyWithRetry(() => import('./pages/WelcomePage'))
 const SignupPage       = lazyWithRetry(() => import('./pages/SignupPage'))
-const ComingSoonPage   = lazyWithRetry(() => import('./pages/ComingSoonPage'))
 const ResetPasswordPage  = lazyWithRetry(() => import('./pages/ResetPasswordPage'))
 const UpdatePasswordPage = lazyWithRetry(() => import('./pages/UpdatePasswordPage'))
 const VoyagesPage      = lazyWithRetry(() => import('./pages/VoyagesPage'))
@@ -94,6 +93,9 @@ const GalleryPage      = lazyWithRetry(() => import('./pages/GalleryPage'))
 const SearchPage       = lazyWithRetry(() => import('./pages/SearchPage'))
 const NotificationsPage = lazyWithRetry(() => import('./pages/NotificationsPage'))
 const VoyageEditorPage = lazyWithRetry(() => import('./pages/VoyageEditorPage'))
+const PricingPage      = lazyWithRetry(() => import('./pages/PricingPage'))
+const PassSuccessPage  = lazyWithRetry(() => import('./pages/PassSuccessPage'))
+const MyPassesPage     = lazyWithRetry(() => import('./pages/MyPassesPage'))
 const VoyageDetailPage = lazyWithRetry(() => import('./pages/VoyageDetailPage'))
 const VoyageFeedPage   = lazyWithRetry(() => import('./pages/VoyageFeedPage'))
 
@@ -436,10 +438,13 @@ export default function App() {
         {/* Public marketing landing page for logged-out visitors */}
         <Route path="/"                element={<LandingPage />} />
         <Route path="/login"           element={<LoginPage />} />
-        {/* Sign-ups disabled pre-launch — dummy placeholder. To re-enable,
-            swap this back to <SignupPage /> (still imported). */}
-        <Route path="/signup"          element={<ComingSoonPage />} />
+        {/* Public signup — the per-voyage model gates on Voyage Passes, not on
+            account creation, so anyone can make a free account and buy a pass. */}
+        <Route path="/signup"          element={<SignupPage />} />
         <Route path="/reset"           element={<ResetPasswordPage />} />
+        {/* Voyage Pass paywall — browsable logged-out; buying routes to /signup */}
+        <Route path="/pricing"         element={<PricingPage />} />
+        <Route path="/passes/success"  element={<PassSuccessPage />} />
         <Route path="/update-password" element={<UpdatePasswordPage />} />
         {/* Legal / help pages — accessible without authentication */}
         <Route path="/legal/terms"               element={<LegalShell><TermsPage /></LegalShell>} />
@@ -574,6 +579,10 @@ export default function App() {
                 {/* ── New page-based routes (Phase 2+) ───────────────────── */}
                 <Route path="/voyages"             element={<VoyagesPage />} />
                 <Route path="/voyages/new"         element={<VoyageEditorPage />} />
+                {/* Voyage Pass paywall + post-checkout + wallet */}
+                <Route path="/pricing"             element={<PricingPage />} />
+                <Route path="/passes"              element={<MyPassesPage />} />
+                <Route path="/passes/success"      element={<PassSuccessPage />} />
                 <Route path="/voyages/:voyageId/edit"              element={<VoyageEditorPage />} />
                 <Route path="/voyages/:voyageId/posts/new"         element={<PostComposerPage />} />
                 <Route path="/voyages/:voyageId/posts/:postId/edit" element={<PostEditorPage />} />

@@ -13,8 +13,8 @@ import { useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useWindowSize, WCtx } from '../context'
-import { useFounderStatus } from '../features/founder/FoundersOffer'
-import { startCheckout } from '../features/founder/checkout'
+import { usePricingPlans } from '../features/passes/hooks'
+import { bundleSaving, coversLabel, formatPrice, isBundle } from '../features/passes/pricing'
 import {
   NAVY2, GOLD, CREAM, WHITE, TEXT, MUTED, FONT_DISPLAY, FONT_BODY, FONT_LOGO, FONT_LABEL, FONT_ACCENT, LABEL_TRACK, BP,
 } from '../constants'
@@ -83,43 +83,8 @@ const FEATURES: Feature[] = [
   { Icon: Compass,   title: 'Your whole cruise, gathered', body: 'Dining, entertainment, packing and more — one calm home for the entire voyage.' },
 ]
 
-// Founder's Offer — one product (the full app), one-time lifetime pass, priced by
-// how early you join. Each price rises as its tier fills; see the get_founder_status
-// RPC / FoundersOffer component for the live counter that drives the active tier.
-const LIFETIME_FEATURES = [
-  'Lifetime access — pay once, no subscription',
-  'Unlimited voyages & the full journal',
-  'Works fully offline — no cruise Wi-Fi needed',
-  'Private social feed — share & react with family',
-  'PDF keepsake export of every voyage',
-  'Every future update included',
-]
-const SUB_FEATURES = [
-  'Everything in Deck Days',
-  'Unlimited voyages & the full journal',
-  'Works fully offline — no cruise Wi-Fi needed',
-  'Private social feed — share & react with family',
-  'PDF keepsake export of every voyage',
-  'Cancel anytime',
-]
-interface Plan { key: string; name: string; price: string; period: string; spots: string; blurb: string; features: string[]; cta: string; highlight: boolean }
-const PLANS: Plan[] = [
-  {
-    key: 'early_bird', name: 'Early Bird', price: '$15', period: 'one-time · lifetime', spots: 'First 200 members',
-    blurb: 'The founding price — lifetime access, locked in forever.',
-    features: LIFETIME_FEATURES, cta: 'Claim Early Bird', highlight: true,
-  },
-  {
-    key: 'maiden_voyage', name: 'Maiden Voyage Crew', price: '$25', period: 'one-time · lifetime', spots: 'Next 500 members',
-    blurb: 'Founder pricing — still a one-time pass for life.',
-    features: LIFETIME_FEATURES, cta: 'Join the crew', highlight: false,
-  },
-  {
-    key: 'standard', name: 'Standard Access', price: '$8', period: 'per month', spots: 'Once founder spots are gone',
-    blurb: 'Full access on a simple monthly plan — no lifetime pass needed.',
-    features: SUB_FEATURES, cta: 'Subscribe', highlight: false,
-  },
-]
+// Pricing on the landing page is the Voyage Pass model, read live from
+// pricing_plans (see the "Pricing" section below). No hardcoded plan data here.
 
 // ── In-app preview ───────────────────────────────────────────────────────────
 // Each preview renders a REAL journal-section component (VoyageForm,
@@ -284,16 +249,10 @@ export default function LandingPage() {
   const isPhone = w < 768
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // Live Founder's Offer scarcity (server-authoritative counter). Drives which
-  // tier is active, "N left"/"Sold out" chips, and the checkout CTAs below.
-  const { data: founder } = useFounderStatus()
-  const [busyTier, setBusyTier] = useState<string | null>(null)
-  const onClaim = async (tierKey: string) => {
-    if (busyTier) return
-    setBusyTier(tierKey)
-    try { await startCheckout(tierKey) }
-    catch { setBusyTier(null) }  // on success we've already navigated to Stripe
-  }
+  // Voyage Pass pricing, read live from pricing_plans (no hardcoded amounts).
+  // Cards deep-link into /pricing?tier=… where the buy + auth flow lives.
+  const { data: plans } = usePricingPlans()
+  const saving = plans ? bundleSaving(plans) : null
 
 
   const col: CSSProperties = { maxWidth: 1080, margin: '0 auto', padding: mobile ? '0 22px' : '0 40px', width: '100%' }
@@ -351,7 +310,7 @@ export default function LandingPage() {
             <Link to="/login" style={{ color: WHITE, fontFamily: FONT_BODY, fontSize: 14, fontWeight: 600, textDecoration: 'none', opacity: 0.92 }}>
               Log in
             </Link>
-            <Link to="/login" style={primaryBtn}>Get started</Link>
+            <Link to="/signup" style={primaryBtn}>Get started</Link>
           </nav>
         </div>
       </header>
@@ -380,7 +339,7 @@ export default function LandingPage() {
             budgets and memories, gathered into one living record of the voyage. Share only what you choose.
           </p>
           <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap', marginTop: mobile ? 28 : 36 }}>
-            <Link to="/login" style={primaryBtn}>Start your journal →</Link>
+            <Link to="/signup" style={primaryBtn}>Start your journal →</Link>
             <Link to="/login" style={ghostBtnLight}>Log in</Link>
           </div>
         </div>
@@ -485,94 +444,86 @@ export default function LandingPage() {
       {/* ── Pricing ────────────────────────────────────────────── */}
       <section id="pricing" style={{ background: CREAM, padding: mobile ? '48px 0' : '72px 0' }}>
         <div style={col} data-reveal>
-          <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Founder's Offer</div>
+          <div style={{ ...kicker, color: GOLD, marginBottom: 12, textAlign: 'center' }}>Voyage Passes</div>
           <h2 style={{ margin: '0 auto', maxWidth: 720, fontFamily: FONT_DISPLAY, fontWeight: 400, color: NAVY2, fontSize: mobile ? 26 : 'clamp(28px, 3.6vw, 44px)', lineHeight: 1.15, textAlign: 'center' }}>
-            Lifetime access — lock in the founder price.
+            One pass per cruise. Yours to keep.
           </h2>
           <p style={{ margin: '16px auto 0', maxWidth: 540, fontFamily: FONT_BODY, fontSize: mobile ? 15 : 17, lineHeight: 1.65, color: TEXT, textAlign: 'center' }}>
-            Founding members pay once for lifetime access — the earlier you join, the less
-            you pay. After the founder spots are gone, it's a simple $8/month plan.
+            No subscription — buy a Voyage Pass for each cruise you journal. Once a journal
+            is started it's yours forever. Sailing often? The bundle saves the most.
           </p>
         </div>
 
         <div data-reveal style={{ ...col, marginTop: mobile ? 32 : 48, display: 'grid', gridTemplateColumns: mobile ? '1fr' : 'repeat(3, 1fr)', gap: mobile ? 16 : 24, alignItems: 'stretch' }}>
-          {PLANS.map(plan => {
-            // Live tier state (lifetime tiers only; Standard has no capacity/counter).
-            const live      = founder?.tiers.find(t => t.key === plan.key)
-            const isActive  = founder?.current.key === plan.key
-            const soldOut   = !!live?.soldOut
-            const remaining = live && live.capacity != null ? Math.max(0, live.capacity - live.sold) : null
-            // Highlight the active lifetime tier (server-driven); fall back to the
-            // static "Live now" card before the counter has loaded.
-            const dark = founder ? isActive : plan.highlight
-            const busy = busyTier === plan.key
-            // Scarcity chip text: live count when known, else the static blurb.
-            const chip = soldOut
-              ? 'Sold out'
-              : remaining != null
-                ? `${remaining.toLocaleString()} left`
-                : plan.spots
+          {(plans ?? []).map(plan => {
+            const bundle = isBundle(plan)
+            const dark = bundle   // highlight the best-value bundle card
+            const savingPct = bundle && saving ? saving.savingPct : null
+            const perVoyage = bundle && saving ? formatPrice(saving.perVoyageCents, plan.currency) : null
+            const features = [
+              bundle ? `${plan.voyage_credits} cruise journals` : '1 full cruise journal',
+              coversLabel(plan),
+              'Yours to keep forever',
+              'Photos, daily log, dining, budget & more',
+            ]
             return (
-              <div key={plan.name} style={{
-                opacity: soldOut ? 0.6 : 1,
+              <div key={plan.sku} style={{
                 position: 'relative', display: 'flex', flexDirection: 'column',
                 background: dark ? SEA : WHITE, color: dark ? WHITE : NAVY2,
                 border: dark ? '1px solid rgba(255,255,255,0.12)' : '1px solid #E0DBD0',
                 borderRadius: 18, padding: mobile ? '26px 24px' : '32px 28px',
               }}>
-                {dark && !soldOut && (
+                {dark && savingPct != null && savingPct > 0 && (
                   <span style={{ position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)', background: GOLD, color: NAVY2, borderRadius: 980, padding: '4px 14px', fontFamily: FONT_BODY, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                    {plan.key === 'standard' ? 'Live now' : 'Selling now'}
+                    Best value · save {savingPct}%
                   </span>
                 )}
                 <div style={{ ...kicker, fontSize: 12, color: GOLD }}>{plan.name}</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 7, marginTop: 12 }}>
-                  <span style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 38 : 44, lineHeight: 1 }}>{plan.price}</span>
-                  <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: dark ? 'rgba(255,255,255,0.7)' : MUTED }}>{plan.period}</span>
+                  <span style={{ fontFamily: FONT_DISPLAY, fontWeight: 400, fontSize: mobile ? 38 : 44, lineHeight: 1 }}>{formatPrice(plan.amount_cents, plan.currency)}</span>
+                  <span style={{ fontFamily: FONT_BODY, fontSize: 13, color: dark ? 'rgba(255,255,255,0.7)' : MUTED }}>{bundle ? `for ${plan.voyage_credits} voyages` : 'one voyage'}</span>
                 </div>
+                {perVoyage && (
+                  <div style={{ marginTop: 6, fontFamily: FONT_BODY, fontSize: 13, color: dark ? 'rgba(255,255,255,0.72)' : MUTED }}>
+                    Just {perVoyage} per voyage
+                  </div>
+                )}
                 <div style={{ marginTop: 12 }}>
                   <span style={{
                     display: 'inline-block', fontFamily: FONT_BODY, fontSize: 11, fontWeight: 700,
                     letterSpacing: '0.04em', textTransform: 'uppercase',
-                    color: soldOut ? MUTED : dark ? GOLD : NAVY2,
-                    background: soldOut ? '#F4F1EB' : dark ? 'rgba(201,162,39,0.16)' : '#F4F1EB',
-                    border: `1px solid ${soldOut ? '#E0DBD0' : dark ? 'rgba(201,162,39,0.4)' : '#E0DBD0'}`,
+                    color: dark ? GOLD : NAVY2,
+                    background: dark ? 'rgba(201,162,39,0.16)' : '#F4F1EB',
+                    border: `1px solid ${dark ? 'rgba(201,162,39,0.4)' : '#E0DBD0'}`,
                     borderRadius: 980, padding: '4px 11px',
                   }}>
-                    {chip}
+                    {coversLabel(plan)}
                   </span>
-                  {/* Static positioning blurb kept as a sub-line when we show a live count. */}
-                  {remaining != null && !soldOut && (
-                    <span style={{ marginLeft: 8, fontFamily: FONT_BODY, fontSize: 11, color: dark ? 'rgba(255,255,255,0.6)' : MUTED }}>
-                      {plan.spots}
-                    </span>
-                  )}
                 </div>
-                <p style={{ margin: '12px 0 0', fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.55, color: dark ? 'rgba(255,255,255,0.82)' : TEXT }}>
-                  {plan.blurb}
-                </p>
+                {plan.description && (
+                  <p style={{ margin: '12px 0 0', fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.55, color: dark ? 'rgba(255,255,255,0.82)' : TEXT }}>
+                    {plan.description}
+                  </p>
+                )}
                 <ul style={{ margin: '20px 0 24px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
-                  {plan.features.map(f => (
+                  {features.map(f => (
                     <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 9, fontFamily: FONT_BODY, fontSize: 14, lineHeight: 1.4, color: dark ? 'rgba(255,255,255,0.92)' : TEXT }}>
                       <Check size={16} strokeWidth={2.4} color={GOLD} style={{ flexShrink: 0, marginTop: 1 }} />
                       {f}
                     </li>
                   ))}
                 </ul>
-                <button
-                  type="button"
-                  onClick={() => onClaim(plan.key)}
-                  disabled={soldOut || busy}
+                <Link
+                  to={`/pricing?tier=${plan.sku}`}
                   style={{
                     textAlign: 'center', borderRadius: 980, padding: '12px 24px', fontSize: 15, fontWeight: 700,
-                    fontFamily: FONT_BODY, border: 'none',
-                    cursor: soldOut || busy ? 'default' : 'pointer',
-                    background: soldOut ? '#E0DBD0' : dark ? GOLD : NAVY2,
-                    color: soldOut ? MUTED : dark ? NAVY2 : WHITE,
+                    fontFamily: FONT_BODY, border: 'none', textDecoration: 'none',
+                    background: dark ? GOLD : NAVY2,
+                    color: dark ? NAVY2 : WHITE,
                   }}
                 >
-                  {soldOut ? 'Sold out' : busy ? 'Starting checkout…' : plan.cta}
-                </button>
+                  {bundle ? 'Get the bundle' : 'Get started'}
+                </Link>
               </div>
             )
           })}
@@ -589,7 +540,7 @@ export default function LandingPage() {
             Create a free account and start your first journal in minutes.
           </p>
           <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap', marginTop: 30 }}>
-            <Link to="/login" style={primaryBtn}>Get started →</Link>
+            <Link to="/signup" style={primaryBtn}>Get started →</Link>
             <Link to="/login" style={ghostBtnLight}>Log in</Link>
           </div>
         </div>

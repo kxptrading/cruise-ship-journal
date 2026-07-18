@@ -1,13 +1,36 @@
-# Supabase Edge Functions — Founder's Offer
+# Supabase Edge Functions — Payments
 
-Two Deno edge functions power the Founder's Offer checkout + live counter.
-Both are **inert until the Stripe secrets below are set**.
+Deno edge functions powering **Voyage Passes** (per-voyage one-time purchases) and
+the legacy **Founder's Offer** (grandfathered). All are **inert until the Stripe
+secrets below are set**.
 
 | Function | Purpose | `verify_jwt` |
 |---|---|---|
-| `create-checkout-session` | Resolves the active tier + price **server-side** (via `get_founder_status()`, never trusting the client) and creates a Stripe Checkout Session — one-time `payment` for the lifetime tiers, `subscription` for Standard. Returns `{ url }`. | `false` |
-| `stripe-webhook` | Verifies the Stripe signature and, on `checkout.session.completed`, records **one** `founder_purchases` row via `record_founder_purchase()`. Idempotent (`ON CONFLICT (stripe_checkout_session) DO NOTHING`) so Stripe's at-least-once retries are safe. **This is the only path that increments the live counter.** | `false` |
-| `redeem-founder-purchase` | Turns a paid checkout into an account — the **only** way to create one (public `/signup` stays closed → "paying members only"). Retrieves the session from Stripe and confirms it's **paid** (a forged `session_id` is rejected), creates the account with `admin.createUser({ email_confirm:true })` using the Stripe-provided email, then **atomically claims** the purchase (`claim_founder_purchase`, one account per purchase) and upserts the profile. | `false` |
+| `create-voyage-checkout` | Resolves the price **server-side** from `pricing_plans` (never trusts a client amount), requires a signed-in user, and creates a one-time (`mode:'payment'`) Checkout Session with `client_reference_id = user id` + metadata `{ sku, voyage_credits }`. Returns `{ url }`. | `false` |
+| `create-checkout-session` | *(Founder's Offer, legacy)* Resolves the active tier + price via `get_founder_status()` and creates a Checkout Session. | `false` |
+| `stripe-webhook` | Verifies the signature. On `checkout.session.completed`, routes by metadata: `sku` → `fulfill_pass_purchase()` (grants Voyage Pass credits, idempotent on `(session, sku, credit_index)`); `tier_key` → `record_founder_purchase()` (unchanged). On `charge.refunded` / `charge.dispute.created` → `refund_voyage_pass()` (reclaims available passes, flags redeemed ones for admin review). | `false` |
+| `redeem-founder-purchase` | *(Founder's Offer, legacy)* Turns a paid founder checkout into an account; retrieves + verifies the paid session, creates the account, atomically claims the purchase. | `false` |
+
+## Voyage Pass go-live (test mode)
+
+1. **Seed the Stripe prices** — with the migration applied (`pricing_plans` seeded):
+   ```bash
+   STRIPE_SECRET_KEY=sk_test_… node scripts/stripe-setup-voyage-passes.mjs
+   ```
+   Idempotent: ensures a Stripe Product + one-time Price per SKU and (with
+   `SUPABASE_SERVICE_ROLE_KEY` set) writes `stripe_price_id` back into
+   `pricing_plans`; otherwise prints the `update … pricing_plans` SQL to run.
+2. **Deploy**:
+   ```bash
+   supabase functions deploy create-voyage-checkout --no-verify-jwt
+   supabase functions deploy stripe-webhook --no-verify-jwt
+   ```
+3. **Register webhook events** on the existing endpoint (Developers → Webhooks):
+   add `checkout.session.completed` (already present for founder),
+   `charge.refunded`, and `charge.dispute.created`.
+4. **Smoke test** with card `4242 4242 4242 4242`: buy a Standard pass →
+   one `voyage_passes` row appears `available` → re-send the event → **no**
+   duplicate row (idempotency holds).
 
 `verify_jwt: false` on all three: they're called by anonymous (logged-out)
 visitors — before/after checkout — and Stripe calls the webhook with no Supabase

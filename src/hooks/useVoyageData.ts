@@ -165,8 +165,9 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
   // Steps:
   //   1. Fetch all voyages for this user, ordered by creation date.
   //   2. Restore the previously active voyage from localStorage if it still exists.
-  //   3. If the user has no voyages yet, create one automatically so the app is
-  //      never in a state where voyageId is null after a valid session.
+  //   3. If the user has no voyages yet, leave voyageId null — creating a voyage now
+  //      requires a Voyage Pass and goes through the gated editor (/voyages/new).
+  //      The VoyagesPage empty state guides new users to buy a pass and start one.
   //
   // The `cancelled` flag prevents state updates if the component unmounts or
   // the session changes mid-fetch.
@@ -200,20 +201,10 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         return
       }
 
-      // Auto-create a starter voyage so new users are never stuck at a loading screen.
-      const { data: created } = await supabase
-        .from('voyages')
-        .insert({ user_id: activeSession.user.id })
-        .select(VOYAGE_SELECT)
-        .single()
-
-      if (cancelled) return
-
-      if (created) {
-        setAllVoyages([created as VoyageListRow])
-        setVoyageId((created as VoyageListRow).id)
-        localStorage.setItem('csj-activeVoyageId', (created as VoyageListRow).id)
-      }
+      // No voyages yet — a pass is required to create one. Land empty; the
+      // VoyagesPage empty state / pricing screen takes over from here.
+      setAllVoyages([])
+      localStorage.removeItem('csj-activeVoyageId')
     }
 
     initVoyage()
@@ -534,23 +525,10 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
     setVoyageId(newId)
   }, [voyageId])
 
-  // ── createVoyage ─────────────────────────────────────────────────────────────
-  // Creates a new voyage row in Supabase and switches to it immediately.
-  // The caller (App.tsx) injects the userId; this hook doesn't read it directly
-  // because it was designed before UserCtx existed.
-  const createVoyage = useCallback(async (userId: string, partial: Record<string, unknown> = {}): Promise<VoyageListRow | null> => {
-    const { data: created } = await supabase
-      .from('voyages')
-      .insert({ user_id: userId, ...partial })
-      .select(VOYAGE_SELECT)
-      .single()
-
-    if (created) {
-      setAllVoyages(prev => [...prev, created as VoyageListRow])
-      switchVoyage((created as VoyageListRow).id)
-    }
-    return (created as VoyageListRow | null)
-  }, [switchVoyage])
+  // Voyage creation now lives entirely in the gated editor (/voyages/new →
+  // useCreateVoyage → create_voyage_with_pass RPC), which redeems a Voyage Pass.
+  // Direct client INSERT on `voyages` is blocked by RLS, so this hook no longer
+  // exposes a createVoyage path.
 
   // ── handleCoverPhotoChange ───────────────────────────────────────────────────
   // Called by VoyageProfile after a successful cover photo upload.
@@ -568,7 +546,6 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
     allVoyages,
     update,
     switchVoyage,
-    createVoyage,
     handleCoverPhotoChange,
   }
 }

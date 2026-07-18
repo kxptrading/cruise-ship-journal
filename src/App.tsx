@@ -305,7 +305,6 @@ export default function App() {
     allVoyages,
     update,
     switchVoyage: switchVoyageData,
-    createVoyage: createVoyageData,
     handleCoverPhotoChange,
   } = useVoyageData({ session, showToast })
 
@@ -345,11 +344,11 @@ export default function App() {
     navigate(`/voyages/${newId}`)
   }
 
-  // Wrap createVoyage to inject session.user.id
-  // The session guard (!) is safe here because createVoyage is only callable
-  // when a session exists (the !session render branch returns early above).
-  const createVoyage = async (partial: Record<string, unknown> = {}): Promise<void> => {
-    await createVoyageData(session!.user.id, partial)
+  // Voyage creation is pass-gated and lives in the editor. Sending users to
+  // /voyages/new routes them through useCreateVoyage → create_voyage_with_pass,
+  // which redeems a Voyage Pass (or bounces to pricing if they have none).
+  const createVoyage = async (): Promise<void> => {
+    navigate('/voyages/new')
   }
 
   // ── Section completion status ───────────────────────────────────────────────

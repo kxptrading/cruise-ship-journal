@@ -71,59 +71,9 @@ function VoyageCard({ voyage, isActive, onSwitch }: VoyageCardProps) {
   )
 }
 
-interface NewVoyageFields {
-  shipName:       string
-  cruiseLine:     string
-  departureDate:  string
-  returnDate:     string
-  totalNights:    string
-}
-
-interface NewVoyageFormProps {
-  onCreate:  (partial: Record<string, unknown>) => Promise<void>
-  onCancel:  () => void
-}
-
-function NewVoyageForm({ onCreate, onCancel }: NewVoyageFormProps) {
-  const [fields, setFields] = useState<NewVoyageFields>({ shipName: '', cruiseLine: '', departureDate: '', returnDate: '', totalNights: '' })
-  const [saving, setSaving] = useState<boolean>(false)
-
-  const set = (f: keyof NewVoyageFields, v: string) => setFields(p => ({ ...p, [f]: v }))
-
-  const handleCreate = async () => {
-    if (!fields.shipName.trim()) return
-    setSaving(true)
-    await onCreate({
-      ship_name:      fields.shipName.trim()   || null,
-      cruise_line:    fields.cruiseLine.trim() || null,
-      departure_date: fields.departureDate     || null,
-      return_date:    fields.returnDate        || null,
-      total_nights:   fields.totalNights ? parseInt(fields.totalNights, 10) : null,
-    })
-    setSaving(false)
-  }
-
-  return (
-    <div style={{ background: CREAM, border: `1px solid ${BORDER}`, borderRadius: 12, padding: 20, marginTop: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: NAVY, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 16 }}>New Voyage</div>
-      <Fld label="Ship Name"><Inp value={fields.shipName} onChange={(v: string) => set('shipName', v)} placeholder="e.g. Wonder of the Seas" /></Fld>
-      <Fld label="Cruise Line"><Inp value={fields.cruiseLine} onChange={(v: string) => set('cruiseLine', v)} placeholder="e.g. Royal Caribbean" /></Fld>
-      <Row2>
-        <Fld label="Departure Date" half><Inp type="date" value={fields.departureDate} onChange={(v: string) => set('departureDate', v)} /></Fld>
-        <Fld label="Return Date" half><Inp type="date" value={fields.returnDate} onChange={(v: string) => set('returnDate', v)} /></Fld>
-      </Row2>
-      <Fld label="Total Nights"><Inp type="number" value={fields.totalNights} onChange={(v: string) => set('totalNights', v)} placeholder="e.g. 14" /></Fld>
-      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
-        <button onClick={handleCreate} disabled={saving || !fields.shipName.trim()} style={{ ...sty.btn, fontSize: 13, padding: '9px 20px', opacity: saving || !fields.shipName.trim() ? 0.5 : 1, cursor: saving || !fields.shipName.trim() ? 'not-allowed' : 'pointer' }}>
-          {saving ? 'Creating…' : 'Create Voyage'}
-        </button>
-        <button onClick={onCancel} style={{ background: 'none', border: `1px solid ${BORDER}`, borderRadius: 8, padding: '9px 18px', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', color: MUTED }}>
-          Cancel
-        </button>
-      </div>
-    </div>
-  )
-}
+// The inline "new voyage" form was removed when voyage creation became
+// pass-gated: the "+ Plan a New Voyage" button now routes to /voyages/new (the
+// gated editor) via the onCreate prop.
 
 interface Props {
   voyage:             Voyage
@@ -131,7 +81,7 @@ interface Props {
   voyageId:           string | null
   session:            Session | null
   onSwitch:           (id: string) => void
-  onCreate:           (partial: Record<string, unknown>) => Promise<void>
+  onCreate:           () => void   // routes to the pass-gated editor (/voyages/new)
   onCoverPhotoChange: (url: string | null) => void
 }
 
@@ -141,7 +91,6 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [uploading,    setUploading]    = useState<boolean>(false)
-  const [showNewForm,  setShowNewForm]  = useState<boolean>(false)
   const [uploadError,  setUploadError]  = useState<string>('')
   const [cropFile,     setCropFile]     = useState<File | null>(null)
 
@@ -178,11 +127,6 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
   const handleRemoveCover = async () => {
     await supabase.from('voyages').update({ cover_photo_url: null }).eq('id', voyageId)
     onCoverPhotoChange(null)
-  }
-
-  const handleCreate = async (partial: Record<string, unknown>) => {
-    await onCreate(partial)
-    setShowNewForm(false)
   }
 
   const currentCover = voyage.coverPhotoUrl
@@ -239,13 +183,9 @@ export default function VoyageProfile({ voyage, allVoyages, voyageId, session, o
         </div>
 
         <div style={{ marginTop: 16 }}>
-          {showNewForm ? (
-            <NewVoyageForm onCreate={handleCreate} onCancel={() => setShowNewForm(false)} />
-          ) : (
-            <button onClick={() => setShowNewForm(true)} style={{ width: '100%', background: 'transparent', border: `2px dashed ${BORDER}`, borderRadius: 12, padding: '14px 20px', cursor: 'pointer', fontSize: 14, color: MUTED, fontFamily: 'inherit', fontWeight: 600, transition: 'border-color 0.15s' }}>
-              + Plan a New Voyage
-            </button>
-          )}
+          <button onClick={() => onCreate()} style={{ width: '100%', background: 'transparent', border: `2px dashed ${BORDER}`, borderRadius: 12, padding: '14px 20px', cursor: 'pointer', fontSize: 14, color: MUTED, fontFamily: 'inherit', fontWeight: 600, transition: 'border-color 0.15s' }}>
+            + Plan a New Voyage
+          </button>
         </div>
       </div>
     </div>

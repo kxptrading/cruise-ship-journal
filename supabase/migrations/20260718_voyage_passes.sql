@@ -15,7 +15,10 @@
 -- for active rows only; never written by clients. Checkout reads the price here
 -- server-side, so the frontend never carries an amount.
 create table if not exists public.pricing_plans (
-  id              uuid primary key default uuid_generate_v4(),
+  -- gen_random_uuid() (pg_catalog) rather than uuid_generate_v4() (extensions):
+  -- the SECURITY DEFINER functions pin search_path='public', where the extensions
+  -- schema is not visible, so a uuid_generate_v4() default would fail inside them.
+  id              uuid primary key default gen_random_uuid(),
   sku             text    not null unique,
   name            text    not null,
   description     text,
@@ -48,7 +51,7 @@ on conflict (sku) do nothing;
 -- SECURITY DEFINER functions below (webhook fulfilment, admin grant, redemption)
 -- — there is no client write policy.
 create table if not exists public.voyage_passes (
-  id                         uuid primary key default uuid_generate_v4(),
+  id                         uuid primary key default gen_random_uuid(),
   user_id                    uuid not null references auth.users(id) on delete cascade,
   sku                        text not null,
   source                     text not null check (source in ('purchase','bundle','founder','promo')),
@@ -153,7 +156,7 @@ begin
   from jsonb_populate_record(
     null::voyages,
     p_voyage || jsonb_build_object(
-      'id',         uuid_generate_v4(),
+      'id',         gen_random_uuid(),
       'user_id',    v_uid,
       'created_at', now()
     )

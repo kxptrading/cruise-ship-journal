@@ -128,7 +128,7 @@ export default function FeedPage() {
             icon="📡"
             heading="Your feed is empty"
             body="When your contacts share posts with you — family or public — they'll appear here."
-            action={{ label: 'Find Friends', onClick: () => navigate('/friends') }}
+            action={{ label: 'Add Friends', onClick: () => navigate('/friends') }}
           />
         </div>
       )}

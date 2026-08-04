@@ -12,6 +12,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { NAVY2, MUTED, WHITE, BORDER, FONT_DISPLAY, FONT_BODY, sty } from '@/constants'
 import { useVoyage, useCreateVoyage, useUpdateVoyage, useDeleteVoyage } from '@/features/voyages/hooks'
 import { fromDbVoyage, toDbVoyage } from '@/lib/converters'
+import { isNoEligiblePass } from '@/features/passes/errors'
 import VoyageFormSection from '@/features/voyages/VoyageForm'
 import { SkeletonCard } from '@/components/ui/skeleton'
 import type { Voyage } from '@/types'
@@ -49,6 +50,16 @@ export default function VoyageEditorPage() {
         const newRow = await createVoyage.mutateAsync(toDbVoyage(formData))
         navigate(`/voyages/${newRow.id}`)
       }
+    } catch (err) {
+      // No Voyage Pass covers this trip length → send them to pricing with the
+      // right tier preselected, keeping the draft so they can finish after buying.
+      if (isNoEligiblePass(err)) {
+        const nights = formData.totalNights ? parseInt(formData.totalNights, 10) : 0
+        const tier = nights >= 8 ? 'VOYAGE_PASS_EXTENDED' : 'VOYAGE_PASS_STANDARD'
+        navigate(`/pricing?tier=${tier}&reason=create`)
+        return
+      }
+      throw err
     } finally {
       setSaving(false)
     }

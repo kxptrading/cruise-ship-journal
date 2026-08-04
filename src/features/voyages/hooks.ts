@@ -31,6 +31,7 @@ import { supabase } from '@/lib/supabase'
 import { queryClient as qc } from '@/lib/queryClient'
 import { useUserId } from '@/context'
 import { fetchSharedVoyageIds } from './coauthors'
+import { NoEligiblePassError, isNoEligiblePass } from '@/features/passes/errors'
 
 // ── Row shape returned from Supabase ─────────────────────────────────────────
 // Full DB schema shape. VoyagesPage and VoyageCard use a subset;
@@ -153,8 +154,12 @@ export function useVoyage(voyageId: string | null | undefined) {
   })
 }
 
-// ── Create voyage ─────────────────────────────────────────────────────────────
-// Injects user_id from UserCtx so callers don't have to pass it.
+// ── Create voyage (pass-gated) ────────────────────────────────────────────────
+// Creating a voyage journal now requires an available Voyage Pass. The
+// create_voyage_with_pass RPC atomically redeems an eligible pass and inserts the
+// voyage (direct client INSERT on `voyages` is blocked by RLS). If no pass covers
+// the entered length, it raises NO_ELIGIBLE_PASS, which we re-throw as a typed
+// error so the editor can route to the pricing screen.
 // After creation, only the list cache is invalidated (not counts — no posts yet).
 
 type CreateVoyageInput = Partial<Omit<VoyageRow, 'id' | 'user_id' | 'created_at'>>
@@ -165,12 +170,14 @@ export function useCreateVoyage() {
   return useMutation({
     mutationFn: async (input: CreateVoyageInput) => {
       if (!userId) throw new Error('Not authenticated')
-      const { data, error } = await supabase
-        .from('voyages')
-        .insert({ ...input, user_id: userId })
-        .select()
-        .single()
-      if (error) throw error
+      const { data, error } = await supabase.rpc('create_voyage_with_pass', {
+        p_voyage: input,
+        p_nights: input.total_nights ?? 0,
+      })
+      if (error) {
+        if (isNoEligiblePass(error)) throw new NoEligiblePassError()
+        throw error
+      }
       return data as VoyageRow
     },
     onSuccess: () => {

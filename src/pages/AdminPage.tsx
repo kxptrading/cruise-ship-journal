@@ -6,7 +6,7 @@ import {
   Users, FileText, Flag, Shield, BarChart2,
   Trash2, AlertTriangle, CheckCircle, XCircle,
   RefreshCw, Search, ChevronDown, ChevronRight, X,
-  TrendingUp, Globe, Lock, UserX, UserCheck, Anchor,
+  TrendingUp, Globe, Lock, UserX, UserCheck, Anchor, Ticket, Ship,
 } from 'lucide-react'
 import { WHITE, BORDER, NAVY2, MUTED, GOLD, TEAL, FONT_DISPLAY, FONT_BODY, TEXT } from '@/constants'
 import { useIsAdmin, useReports, useModerationAction } from '@/features/safety/hooks'
@@ -14,8 +14,9 @@ import type { ReportRow } from '@/features/safety/hooks'
 import {
   useAdminStats, useAdminUsers, useAdminPosts, useAdminAuditLog,
   useAdminDeletePost, useAdminUserAction,
+  useUserPasses, useFlaggedPasses, useGrantPromoPass,
 } from '@/features/admin/hooks'
-import type { AdminUserRow, AdminPostRow, AuditRow } from '@/features/admin/hooks'
+import type { AdminUserRow, AdminPostRow, AuditRow, AdminPassRow } from '@/features/admin/hooks'
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
@@ -191,8 +192,74 @@ function UserRow({ user }: { user: AdminUserRow }) {
           {user.suspension_until && (
             <div style={{ marginTop: 4, fontSize: 11, color: AMBER, fontFamily: FONT_BODY }}>Suspended until: {fmtTime(user.suspension_until)}</div>
           )}
+
+          {/* Voyage Passes — loaded on demand while the panel is open */}
+          <UserPassesPanel userId={user.user_id} />
         </div>
       )}
+    </div>
+  )
+}
+
+// ── Pass presentation helpers (shared) ────────────────────────────────────────
+
+const passCovers = (maxNights: number | null) => (maxNights == null ? 'Any length' : `≤ ${maxNights} nights`)
+
+const PASS_STATUS_COLOR: Record<AdminPassRow['status'], string> = {
+  available: GREEN, redeemed: MUTED, refunded: RED,
+}
+
+function PassStatusChip({ status }: { status: AdminPassRow['status'] }) {
+  const c = PASS_STATUS_COLOR[status]
+  return (
+    <span style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: c, background: c + '14', border: `1px solid ${c}40`, borderRadius: 6, padding: '2px 7px', fontFamily: FONT_BODY }}>
+      {status}
+    </span>
+  )
+}
+
+// ── UserPassesPanel ───────────────────────────────────────────────────────────
+// Lists a user's Voyage Passes and lets an admin grant a promo pass. Both go
+// through the is_admin_user()-guarded RPCs; grants are written to the audit log.
+
+function UserPassesPanel({ userId }: { userId: string }) {
+  const { data: passes = [], isLoading } = useUserPasses(userId, true)
+  const grant = useGrantPromoPass()
+
+  const available = passes.filter(p => p.status === 'available').length
+
+  return (
+    <div style={{ marginTop: 14, paddingTop: 12, borderTop: `1px solid ${BORDER}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, fontWeight: 700, color: MUTED, textTransform: 'uppercase', letterSpacing: '0.07em', fontFamily: FONT_BODY }}>
+          <Ticket size={13} /> Voyage Passes {passes.length > 0 && <span style={{ color: GREEN }}>· {available} available</span>}
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button onClick={() => grant.mutate({ userId, maxNights: 7 })}   disabled={grant.isPending} style={btnStyle(TEAL)}>+ Promo (≤7n)</button>
+          <button onClick={() => grant.mutate({ userId, maxNights: null })} disabled={grant.isPending} style={btnStyle('#2563EB')}>+ Promo (any)</button>
+        </div>
+      </div>
+
+      {isLoading && <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>Loading passes…</div>}
+      {!isLoading && passes.length === 0 && <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY }}>No passes.</div>}
+
+      {passes.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          {passes.map(p => (
+            <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 10px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 8 }}>
+              <Ship size={13} color={MUTED} style={{ flexShrink: 0 }} />
+              <span style={{ fontSize: 12, fontWeight: 600, color: NAVY2, fontFamily: FONT_BODY }}>{passCovers(p.max_nights)}</span>
+              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>· {p.source}</span>
+              {p.needs_review && <span style={{ fontSize: 10, fontWeight: 700, color: RED, fontFamily: FONT_BODY }}>⚠ review</span>}
+              <div style={{ flex: 1 }} />
+              <span style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>{fmt(p.purchased_at)}</span>
+              <PassStatusChip status={p.status} />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {grant.isError && <div style={{ marginTop: 6, fontSize: 11, color: RED, fontFamily: FONT_BODY }}>Grant failed: {(grant.error as Error).message}</div>}
     </div>
   )
 }
@@ -327,13 +394,14 @@ function ReportCard({ report }: { report: ReportRow }) {
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 
-type Tab = 'overview' | 'users' | 'reports' | 'posts' | 'audit'
+type Tab = 'overview' | 'users' | 'reports' | 'posts' | 'passes' | 'audit'
 
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   { id: 'overview', label: 'Overview',  icon: <BarChart2 size={14} /> },
   { id: 'users',    label: 'Users',     icon: <Users size={14} />     },
   { id: 'reports',  label: 'Reports',   icon: <Flag size={14} />      },
   { id: 'posts',    label: 'Posts',     icon: <FileText size={14} />  },
+  { id: 'passes',   label: 'Passes',    icon: <Ticket size={14} />    },
   { id: 'audit',    label: 'Audit Log', icon: <Shield size={14} />    },
 ]
 
@@ -739,6 +807,53 @@ function PostsTab() {
   )
 }
 
+// ── PassesTab ─────────────────────────────────────────────────────────────────
+// Refund/dispute-flagged passes: a chargeback landed on a pass that was already
+// redeemed into a journal. Access is never auto-revoked — these surface here for
+// an admin to decide (refund the user, revoke manually, or dismiss).
+
+function PassesTab() {
+  const { data: flagged = [], isLoading } = useFlaggedPasses()
+
+  return (
+    <div>
+      <div style={{ fontSize: 12, color: MUTED, fontFamily: FONT_BODY, marginBottom: 16 }}>
+        Passes flagged for review — a refund or dispute landed on an already-redeemed pass. Journal access is left intact; resolve these manually.
+      </div>
+
+      {isLoading && <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{[1,2,3].map(i => <div key={i} className="skeleton-shimmer" style={{ height: 52, borderRadius: 10 }} />)}</div>}
+
+      {!isLoading && flagged.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '48px 20px', color: MUTED, fontFamily: FONT_BODY }}>
+          <CheckCircle size={28} color={GREEN} style={{ marginBottom: 10 }} />
+          <div>No flagged passes. All clear.</div>
+        </div>
+      )}
+
+      {!isLoading && flagged.length > 0 && (
+        <div style={{ background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 12, overflow: 'hidden' }}>
+          {flagged.map((p, i) => (
+            <div key={p.id} style={{ padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 10, borderBottom: i < flagged.length - 1 ? `1px solid ${BORDER}` : 'none' }}>
+              <AlertTriangle size={16} color={RED} style={{ flexShrink: 0 }} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: NAVY2, fontFamily: FONT_BODY }}>
+                  {passCovers(p.max_nights)} · {p.source}
+                </div>
+                <div style={{ fontSize: 11, color: MUTED, fontFamily: FONT_BODY }}>
+                  user <code style={{ fontSize: 10 }}>{p.user_id.slice(0, 8)}…</code>
+                  {p.redeemed_voyage_id && <> · voyage <code style={{ fontSize: 10 }}>{p.redeemed_voyage_id.slice(0, 8)}…</code></>}
+                  {p.redeemed_at && <> · redeemed {fmt(p.redeemed_at)}</>}
+                </div>
+              </div>
+              <PassStatusChip status={p.status} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── AuditTab ──────────────────────────────────────────────────────────────────
 
 const ACTION_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
@@ -748,6 +863,7 @@ const ACTION_ICONS: Record<string, { icon: React.ReactNode; color: string }> = {
   update_status:{ icon: <Flag size={14} />,         color: 'var(--t-primary)' },
   grant_admin:  { icon: <Shield size={14} />,       color: '#2563EB' },
   revoke_admin: { icon: <Shield size={14} />,       color: MUTED },
+  grant_promo_pass: { icon: <Ticket size={14} />,   color: TEAL },
 }
 
 function AuditTab() {
@@ -853,6 +969,7 @@ export default function AdminPage() {
           {tab === 'users'    && <UsersTab />}
           {tab === 'reports'  && <ReportsTab />}
           {tab === 'posts'    && <PostsTab />}
+          {tab === 'passes'   && <PassesTab />}
           {tab === 'audit'    && <AuditTab />}
         </motion.div>
       </AnimatePresence>

@@ -279,7 +279,8 @@ export interface UseVoyageDataReturn {
   allVoyages:           VoyageListRow[]
   update:               (key: keyof VoyageData, val: VoyageData[keyof VoyageData]) => void
   switchVoyage:         (newId: string) => void
-  createVoyage:         (userId: string, partial?: Record<string, unknown>) => Promise<VoyageListRow | null>
+  // Voyage creation moved to the pass-gated editor (/voyages/new → useCreateVoyage
+  // → create_voyage_with_pass RPC); this hook no longer exposes a createVoyage.
   handleCoverPhotoChange: (url: string | null) => void
 }
 

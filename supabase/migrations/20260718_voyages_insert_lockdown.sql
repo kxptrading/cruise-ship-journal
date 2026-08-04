@@ -11,6 +11,11 @@
 -- ════════════════════════════════════════════════════════════════════════════
 
 drop policy if exists "Users manage own voyages" on public.voyages;
+-- Also drop the temporary own-row INSERT policy that was restored to keep the
+-- pre-passes `main` frontend working while this branch was in flight. Once this
+-- migration ships alongside the RPC-based creation flow, direct INSERT must be
+-- closed again. (No-op if it was never created.)
+drop policy if exists voyages_insert_own on public.voyages;
 
 create policy voyages_update_own on public.voyages
   for update using (user_id = auth.uid()) with check (user_id = auth.uid());

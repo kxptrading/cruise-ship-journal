@@ -8,7 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { BookOpen } from 'lucide-react'
 import { useVoyages, type VoyageRow } from '../voyages/hooks'
 import { GOLD, NAVY2, FONT_LABEL } from '../../constants'
@@ -47,11 +47,24 @@ function resolveCurrentVoyage(voyages: VoyageRow[]): string | null {
 
 export default function JournalFab({ isMobile }: { isMobile: boolean }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { data: voyages = [] } = useVoyages()
   const [openId, setOpenId] = useState<string | null>(null)
 
+  // Which voyage to open, most-specific first:
+  //   1. the voyage in the current URL (/voyages/:id/…) — what you're looking at
+  //   2. the app's last active voyage (csj-activeVoyageId), set when you open one
+  //   3. else the most relevant by date (currently sailing → nearest)
+  const resolveOpenId = (): string | null => {
+    const urlId = location.pathname.match(/^\/voyages\/([^/]+)/)?.[1]
+    if (urlId && urlId !== 'new' && voyages.some(v => v.id === urlId)) return urlId
+    const active = localStorage.getItem('csj-activeVoyageId')
+    if (active && voyages.some(v => v.id === active)) return active
+    return resolveCurrentVoyage(voyages)
+  }
+
   const open = () => {
-    const id = resolveCurrentVoyage(voyages)
+    const id = resolveOpenId()
     if (!id) { navigate('/voyages'); return }
     setOpenId(id)
   }

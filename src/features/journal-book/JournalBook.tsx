@@ -124,8 +124,13 @@ export default function JournalBook({ voyageId, onClose }: { voyageId: string; o
         )}
       </motion.div>
 
-      {/* Controls */}
-      {book && (
+      {/* Controls — or an empty-state note when the voyage has no logged days */}
+      {book && book.days.length === 0 && (
+        <div onClick={e => e.stopPropagation()} style={{ fontFamily: BOOK_FONT.body, fontSize: 13, color: 'rgba(255,255,255,0.82)', textAlign: 'center', maxWidth: 320, lineHeight: 1.5 }}>
+          No journal entries yet — log a day in this voyage and it’ll fill your book.
+        </div>
+      )}
+      {book && book.days.length > 0 && (
         <div onClick={e => e.stopPropagation()} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
           <NavBtn dir="prev" disabled={index === 0} onClick={() => go(index - 1)} />
           <span style={{ fontFamily: BOOK_FONT.body, fontSize: 12, letterSpacing: 1, color: 'rgba(255,255,255,0.75)', minWidth: 74, textAlign: 'center' }}>

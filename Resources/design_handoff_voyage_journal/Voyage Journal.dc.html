@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    body { margin: 0; background: #ded3b6; }
+    a { color: #cc6b49; }
+    a:hover { color: #a8523a; }
+    doc-page:not(:defined) { visibility: hidden; }
+  </style>
+  <script src="./doc-page.js"></script>
+  <script src="./image-slot.js"></script>
+</helmet>
+
+<doc-page width="6in" height="9in">
+
+<section class="page" data-screen-label="Cover" style="position:relative; background:#f6efe0; background-image: radial-gradient(circle at 20px 20px, rgba(45,42,36,0.05) 1px, transparent 1.5px); background-size: 14px 14px; font-family:'Nunito',sans-serif; overflow:hidden;">
+  <div style="position:absolute; inset:0; background: linear-gradient(180deg, rgba(204,107,73,0.06), transparent 30%);"></div>
+
+  <sc-if value="{{ showTape }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute; top:34px; left:44px; width:76px; height:26px; background:linear-gradient(135deg, rgba(219,164,59,0.9), rgba(219,164,59,0.7)); transform:rotate(-7deg); box-shadow:0 2px 4px rgba(0,0,0,0.12);"></div>
+    <div style="position:absolute; top:40px; right:56px; width:70px; height:24px; background:linear-gradient(135deg, rgba(63,125,120,0.85), rgba(63,125,120,0.65)); transform:rotate(9deg); box-shadow:0 2px 4px rgba(0,0,0,0.12);"></div>
+  </sc-if>
+
+  <div style="position:absolute; top:90px; left:0; right:0; text-align:center;">
+    <div style="font-family:'Caveat',cursive; font-weight:700; font-size:88px; color:#cc6b49; transform:rotate(-2deg); line-height:0.9;">Voyage<br/>Journal</div>
+    <div style="margin-top:8px; font-family:'Nunito',sans-serif; font-weight:600; font-style:italic; letter-spacing:1px; color:#55503f; font-size:15px;">wander often &middot; write always</div>
+  </div>
+
+  <div style="position:absolute; top:330px; left:50%; transform:translateX(-50%) rotate(-4deg); background:#fffdf8; padding:12px 12px 34px 12px; box-shadow:0 8px 20px rgba(0,0,0,0.18), 0 2px 4px rgba(0,0,0,0.08); width:230px;">
+    <image-slot id="cover-photo" shape="rect" style="width:100%; height:230px;" placeholder="Drop your favorite trip photo"></image-slot>
+    <div style="position:absolute; bottom:8px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:17px; color:#55503f;">my little life abroad</div>
+  </div>
+
+  <div style="position:absolute; top:300px; right:40px; width:78px; height:78px; border-radius:50%; border:3px dotted #cc6b49; display:flex; align-items:center; justify-content:center; transform:rotate(11deg); background:rgba(246,239,224,0.6);">
+    <div style="font-family:'Caveat',cursive; font-weight:700; font-size:14px; color:#cc6b49; text-align:center; line-height:1.15;">BON<br/>VOYAGE</div>
+  </div>
+
+  <div style="position:absolute; bottom:70px; left:0; right:0; text-align:center;">
+    <div style="font-family:'Nunito',sans-serif; font-size:12px; letter-spacing:1.5px; text-transform:uppercase; color:#7c8a5e; margin-bottom:10px;">this journal belongs to</div>
+    <div style="width:220px; margin:0 auto; border-bottom:2px dashed rgba(45,42,36,0.35); height:26px;"></div>
+  </div>
+
+  <div style="position:absolute; bottom:0; left:0; right:0; height:22px; background:repeating-linear-gradient(90deg, #cc6b49 0 16px, #dba43b 16px 32px);"></div>
+</section>
+
+<section class="page" data-screen-label="Template" style="position:relative; background:#f6efe0; background-image: radial-gradient(circle at 20px 20px, rgba(45,42,36,0.05) 1px, transparent 1.5px); background-size: 14px 14px; font-family:'Nunito',sans-serif; overflow:hidden; padding:40px; box-sizing:border-box; display:flex; flex-direction:column; gap:14px;">
+
+  <sc-if value="{{ showTape }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute; top:-8px; left:60px; width:70px; height:24px; background:linear-gradient(135deg, rgba(217,138,134,0.85), rgba(217,138,134,0.65)); transform:rotate(-5deg); box-shadow:0 2px 4px rgba(0,0,0,0.1);"></div>
+  </sc-if>
+
+  <div style="display:flex; align-items:baseline; gap:14px;">
+    <span style="font-family:'Caveat',cursive; font-weight:700; font-size:40px; color:#cc6b49;">Day</span>
+    <span style="flex:0 0 60px; border-bottom:2px dashed rgba(45,42,36,0.35); height:30px;"></span>
+    <span style="flex:1; border-bottom:2px dashed rgba(45,42,36,0.2); height:30px; margin-left:10px;"></span>
+  </div>
+  <div style="display:flex; align-items:baseline; gap:10px; margin-top:-10px;">
+    <span style="font-family:'Nunito',sans-serif; font-weight:800; font-size:11px; letter-spacing:1.5px; text-transform:uppercase; color:#7c8a5e;">Location</span>
+    <span style="flex:1; border-bottom:1.5px dashed rgba(45,42,36,0.3); height:20px;"></span>
+  </div>
+
+  <sc-if value="{{ showWeatherMood }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;">
+      <span style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(45,42,36,0.25); color:#55503f; font-weight:700; font-size:10.5px; letter-spacing:0.5px;">SUNNY</span>
+      <span style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(45,42,36,0.25); color:#55503f; font-weight:700; font-size:10.5px; letter-spacing:0.5px;">CLOUDY</span>
+      <span style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(45,42,36,0.25); color:#55503f; font-weight:700; font-size:10.5px; letter-spacing:0.5px;">RAINY</span>
+      <span style="padding:4px 12px; border-radius:20px; border:1.5px solid rgba(45,42,36,0.25); color:#55503f; font-weight:700; font-size:10.5px; letter-spacing:0.5px;">STORMY</span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#55503f; font-weight:700; letter-spacing:0.5px;">
+      MOOD
+      <span style="width:16px; height:16px; border-radius:50%; border:2px solid #55503f;"></span>
+      <span style="width:16px; height:16px; border-radius:50%; border:2px solid #55503f;"></span>
+      <span style="width:16px; height:16px; border-radius:50%; border:2px solid #55503f;"></span>
+      <span style="width:16px; height:16px; border-radius:50%; border:2px solid #55503f;"></span>
+      <span style="width:16px; height:16px; border-radius:50%; border:2px solid #55503f;"></span>
+    </div>
+  </sc-if>
+
+  <div style="display:flex; gap:14px; margin-top:4px;">
+    <div style="position:relative; width:150px; transform:rotate(-3deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 5px 12px rgba(0,0,0,0.15);">
+      <image-slot id="tmpl-photo-1" shape="rect" style="width:100%; height:120px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:13px; color:#55503f;">caption</div>
+    </div>
+    <div style="position:relative; width:150px; transform:rotate(3deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 5px 12px rgba(0,0,0,0.15); margin-top:16px;">
+      <image-slot id="tmpl-photo-2" shape="rect" style="width:100%; height:120px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:13px; color:#55503f;">caption</div>
+    </div>
+  </div>
+
+  <div style="margin-top:10px;">
+    <div style="font-family:'Caveat',cursive; font-weight:700; font-size:24px; color:#3f7d78; margin-bottom:4px;">Today's Story</div>
+    <div style="height:150px; padding-top:6px; background-image: repeating-linear-gradient(to bottom, transparent 0 27px, rgba(45,42,36,0.15) 27px 28px); font-family:'Nunito',sans-serif; font-size:12.5px; color:rgba(45,42,36,0.4); font-style:italic;">
+      What happened today? What made you smile? Any surprises worth remembering?
+    </div>
+  </div>
+
+  <sc-if value="{{ showChecklist }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:6px;">
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:16px; color:#cc6b49;">I ate:</span> <span style="border-bottom:1px dashed rgba(45,42,36,0.3); display:inline-block; width:70%; height:16px;"></span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:16px; color:#cc6b49;">I saw:</span> <span style="border-bottom:1px dashed rgba(45,42,36,0.3); display:inline-block; width:70%; height:16px;"></span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:16px; color:#cc6b49;">I met:</span> <span style="border-bottom:1px dashed rgba(45,42,36,0.3); display:inline-block; width:70%; height:16px;"></span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:16px; color:#cc6b49;">Favorite moment:</span> <span style="border-bottom:1px dashed rgba(45,42,36,0.3); display:inline-block; width:56%; height:16px;"></span></div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute; bottom:18px; right:22px; width:50px; height:50px; border-radius:50%; border:2px dotted rgba(45,42,36,0.4); display:flex; align-items:center; justify-content:center; transform:rotate(-10deg); font-family:'Caveat',cursive; font-size:12px; color:rgba(45,42,36,0.5); text-align:center;">PAGE&nbsp;02</div>
+</section>
+
+<section class="page" data-screen-label="Day 1 Rome" style="position:relative; background:#f6efe0; background-image: radial-gradient(circle at 20px 20px, rgba(45,42,36,0.05) 1px, transparent 1.5px); background-size: 14px 14px; font-family:'Nunito',sans-serif; overflow:hidden; padding:36px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px;">
+
+  <div style="display:flex; align-items:baseline; gap:10px;">
+    <span style="font-family:'Caveat',cursive; font-weight:700; font-size:42px; color:#cc6b49;">Day 1</span>
+    <span style="font-family:'Nunito',sans-serif; font-size:12px; color:#55503f; font-weight:700; letter-spacing:0.5px;">JUNE 3</span>
+    <span style="margin-left:auto; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; letter-spacing:1px; color:#7c8a5e; text-transform:uppercase;">Rome, Italy</span>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+    <span style="padding:4px 12px; border-radius:20px; background:#dba43b; color:#fff; font-weight:800; font-size:10.5px; letter-spacing:0.5px;">SUNNY</span>
+    <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:#55503f; font-weight:700; margin-left:8px;">
+      MOOD
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+    </span>
+  </div>
+
+  <div style="position:relative; height:190px; margin-top:6px;">
+    <sc-if value="{{ showTape }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; top:-6px; left:14px; width:60px; height:20px; background:rgba(63,125,120,0.75); transform:rotate(-8deg); z-index:5;"></div>
+    </sc-if>
+    <div style="position:absolute; left:0; top:10px; width:140px; transform:rotate(-6deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 6px 14px rgba(0,0,0,0.18); z-index:2;">
+      <image-slot id="d1-photo-1" shape="rect" style="width:100%; height:110px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12.5px; color:#55503f;">Trevi coin toss</div>
+    </div>
+    <div style="position:absolute; left:120px; top:0; width:150px; transform:rotate(4deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 6px 14px rgba(0,0,0,0.18); z-index:3;">
+      <image-slot id="d1-photo-2" shape="rect" style="width:100%; height:120px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12.5px; color:#55503f;">first real carbonara</div>
+    </div>
+    <div style="position:absolute; left:290px; top:26px; width:135px; transform:rotate(-3deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 6px 14px rgba(0,0,0,0.18); z-index:4;">
+      <image-slot id="d1-photo-3" shape="rect" style="width:100%; height:105px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12.5px; color:#55503f;">lost near the Pantheon</div>
+    </div>
+  </div>
+
+  <div style="margin-top:14px; font-family:'Nunito',sans-serif; font-size:13.5px; line-height:1.7; color:#2d2a24;">
+    Landed at nine, napped for exactly zero minutes, and was immediately, gloriously lost. Rome does not care about your jetlag &mdash; it just hands you a gelato and points you toward the nearest fountain. Threw a coin in the Trevi (rules say I'm coming back, so, noted), ate carbonara that ruined every carbonara before it, and somehow ended up serenaded by a street violinist outside the Pantheon. Feet hurt. Heart very full.
+  </div>
+
+  <sc-if value="{{ showChecklist }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:5px;">
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I ate:</span> <span style="font-size:12.5px; color:#2d2a24;"> cacio e pepe, three scoops of gelato</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I saw:</span> <span style="font-size:12.5px; color:#2d2a24;"> the Colosseum lit up gold at sunset</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">Favorite moment:</span> <span style="font-size:12.5px; color:#2d2a24;"> that first bite of pizza al taglio, eaten standing up on a curb</span></div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute; bottom:18px; right:22px; width:50px; height:50px; border-radius:50%; border:2px dotted rgba(45,42,36,0.4); display:flex; align-items:center; justify-content:center; transform:rotate(-10deg); font-family:'Caveat',cursive; font-size:12px; color:rgba(45,42,36,0.5); text-align:center;">PAGE&nbsp;03</div>
+</section>
+
+<section class="page" data-screen-label="Day 2 Florence" style="position:relative; background:#f6efe0; background-image: radial-gradient(circle at 20px 20px, rgba(45,42,36,0.05) 1px, transparent 1.5px); background-size: 14px 14px; font-family:'Nunito',sans-serif; overflow:hidden; padding:36px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px;">
+
+  <div style="display:flex; align-items:baseline; gap:10px;">
+    <span style="font-family:'Caveat',cursive; font-weight:700; font-size:42px; color:#cc6b49;">Day 2</span>
+    <span style="font-family:'Nunito',sans-serif; font-size:12px; color:#55503f; font-weight:700; letter-spacing:0.5px;">JUNE 4</span>
+    <span style="margin-left:auto; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; letter-spacing:1px; color:#7c8a5e; text-transform:uppercase;">Florence, Italy</span>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+    <span style="padding:4px 12px; border-radius:20px; background:#dba43b; color:#fff; font-weight:800; font-size:10.5px; letter-spacing:0.5px;">SUNNY</span>
+    <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:#55503f; font-weight:700; margin-left:8px;">
+      MOOD
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; border:2px solid #cc6b49;"></span>
+    </span>
+  </div>
+
+  <div style="display:flex; gap:16px; margin-top:6px; align-items:flex-start;">
+    <div style="position:relative; width:210px; transform:rotate(-3deg); background:#fffdf8; padding:9px 9px 28px 9px; box-shadow:0 8px 16px rgba(0,0,0,0.18);">
+      <image-slot id="d2-photo-1" shape="rect" style="width:100%; height:190px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:6px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:13.5px; color:#55503f;">Ponte Vecchio at golden hour</div>
+    </div>
+    <div style="display:flex; flex-direction:column; gap:14px; margin-top:10px;">
+      <div style="position:relative; width:120px; transform:rotate(4deg); background:#fffdf8; padding:7px 7px 22px 7px; box-shadow:0 6px 12px rgba(0,0,0,0.16);">
+        <image-slot id="d2-photo-2" shape="rect" style="width:100%; height:90px;" placeholder="Drop a photo"></image-slot>
+        <div style="position:absolute; bottom:4px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12px; color:#55503f;">gelato, again</div>
+      </div>
+      <sc-if value="{{ showTape }}" hint-placeholder-val="{{ true }}">
+        <div style="position:relative; background:#fdf6e3; border:1px dashed #7c8a5e; padding:8px 10px; width:120px; transform:rotate(-2deg);">
+          <div style="font-size:9px; letter-spacing:1px; color:#7c8a5e; text-transform:uppercase; font-weight:700;">Trenitalia</div>
+          <div style="font-family:'Caveat',cursive; font-size:16px; color:#2d2a24; line-height:1.1;">Roma &rarr; Firenze</div>
+          <div style="font-size:9.5px; color:#55503f;">kept the ticket stub</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="margin-top:10px; font-family:'Nunito',sans-serif; font-size:13.5px; line-height:1.7; color:#2d2a24;">
+    Two hours on the train and suddenly everything is Renaissance. Spent the whole afternoon at the Uffizi getting genuinely overwhelmed &mdash; there is only so much beauty a person can process before lunch. Crossed the Ponte Vecchio three separate times because the light kept changing and I couldn't stop taking the same photo. Bought leather I absolutely do not need. No regrets.
+  </div>
+
+  <sc-if value="{{ showChecklist }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:5px;">
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I ate:</span> <span style="font-size:12.5px; color:#2d2a24;"> bistecca alla fiorentina, way too much of it</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I saw:</span> <span style="font-size:12.5px; color:#2d2a24;"> Botticelli's Birth of Venus, in actual real life</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">Favorite moment:</span> <span style="font-size:12.5px; color:#2d2a24;"> watching the sunset paint the Arno orange from the bridge</span></div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute; bottom:18px; right:22px; width:50px; height:50px; border-radius:50%; border:2px dotted rgba(45,42,36,0.4); display:flex; align-items:center; justify-content:center; transform:rotate(-10deg); font-family:'Caveat',cursive; font-size:12px; color:rgba(45,42,36,0.5); text-align:center;">PAGE&nbsp;04</div>
+</section>
+
+<section class="page" data-screen-label="Day 3 Venice" style="position:relative; background:#f6efe0; background-image: radial-gradient(circle at 20px 20px, rgba(45,42,36,0.05) 1px, transparent 1.5px); background-size: 14px 14px; font-family:'Nunito',sans-serif; overflow:hidden; padding:36px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px;">
+
+  <div style="display:flex; align-items:baseline; gap:10px;">
+    <span style="font-family:'Caveat',cursive; font-weight:700; font-size:42px; color:#cc6b49;">Day 3</span>
+    <span style="font-family:'Nunito',sans-serif; font-size:12px; color:#55503f; font-weight:700; letter-spacing:0.5px;">JUNE 5</span>
+    <span style="margin-left:auto; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; letter-spacing:1px; color:#7c8a5e; text-transform:uppercase;">Venice, Italy</span>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+    <span style="padding:4px 12px; border-radius:20px; background:rgba(45,42,36,0.15); color:#55503f; font-weight:800; font-size:10.5px; letter-spacing:0.5px;">CLOUDY</span>
+    <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:#55503f; font-weight:700; margin-left:8px;">
+      MOOD
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; border:2px solid #cc6b49;"></span>
+    </span>
+  </div>
+
+  <div style="position:relative; height:180px; margin-top:8px;">
+    <sc-if value="{{ showTape }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; top:-6px; left:180px; width:64px; height:20px; background:rgba(219,164,59,0.8); transform:rotate(6deg); z-index:5;"></div>
+    </sc-if>
+    <div style="position:absolute; left:10px; top:14px; width:170px; transform:rotate(3deg); background:#fffdf8; padding:9px 9px 28px 9px; box-shadow:0 7px 15px rgba(0,0,0,0.18); z-index:2;">
+      <image-slot id="d3-photo-1" shape="rect" style="width:100%; height:140px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:6px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:13px; color:#55503f;">canal-side, no destination</div>
+    </div>
+    <div style="position:absolute; left:210px; top:0; width:160px; transform:rotate(-4deg); background:#fffdf8; padding:9px 9px 28px 9px; box-shadow:0 7px 15px rgba(0,0,0,0.18); z-index:3;">
+      <image-slot id="d3-photo-2" shape="rect" style="width:100%; height:150px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:6px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:13px; color:#55503f;">vaporetto views</div>
+    </div>
+  </div>
+
+  <div style="margin-top:10px; font-family:'Nunito',sans-serif; font-size:13.5px; line-height:1.7; color:#2d2a24;">
+    There are no cars here and it changes everything about how a place sounds. Got beautifully, hopelessly lost in the back streets for two hours &mdash; every wrong turn led to a smaller, prettier canal. Rode the vaporetto up the Grand Canal like it was a bus, because it is one. Ended the day hopping between bacari for cicchetti and one very small glass of wine after another. Venice does not do anything quietly, except itself.
+  </div>
+
+  <sc-if value="{{ showChecklist }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:5px;">
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I ate:</span> <span style="font-size:12.5px; color:#2d2a24;"> baccal&agrave; mantecato on crostini, more than I'll admit</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I met:</span> <span style="font-size:12.5px; color:#2d2a24;"> a gondolier who gave terrible, wonderful directions</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">Favorite moment:</span> <span style="font-size:12.5px; color:#2d2a24;"> the quiet canal at dusk with not another soul around</span></div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute; bottom:18px; right:22px; width:50px; height:50px; border-radius:50%; border:2px dotted rgba(45,42,36,0.4); display:flex; align-items:center; justify-content:center; transform:rotate(-10deg); font-family:'Caveat',cursive; font-size:12px; color:rgba(45,42,36,0.5); text-align:center;">PAGE&nbsp;05</div>
+</section>
+
+<section class="page" data-screen-label="Day 4 Amalfi Coast" style="position:relative; background:#f6efe0; background-image: radial-gradient(circle at 20px 20px, rgba(45,42,36,0.05) 1px, transparent 1.5px); background-size: 14px 14px; font-family:'Nunito',sans-serif; overflow:hidden; padding:36px; box-sizing:border-box; display:flex; flex-direction:column; gap:12px;">
+
+  <div style="display:flex; align-items:baseline; gap:10px;">
+    <span style="font-family:'Caveat',cursive; font-weight:700; font-size:42px; color:#cc6b49;">Day 4</span>
+    <span style="font-family:'Nunito',sans-serif; font-size:12px; color:#55503f; font-weight:700; letter-spacing:0.5px;">JUNE 6</span>
+    <span style="margin-left:auto; font-family:'Nunito',sans-serif; font-weight:800; font-size:12px; letter-spacing:1px; color:#7c8a5e; text-transform:uppercase;">Amalfi Coast, Italy</span>
+  </div>
+
+  <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center;">
+    <span style="padding:4px 12px; border-radius:20px; background:#dba43b; color:#fff; font-weight:800; font-size:10.5px; letter-spacing:0.5px;">SUNNY</span>
+    <span style="display:flex; align-items:center; gap:6px; font-size:11px; color:#55503f; font-weight:700; margin-left:8px;">
+      MOOD
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+      <span style="width:15px; height:15px; border-radius:50%; background:#cc6b49;"></span>
+    </span>
+  </div>
+
+  <div style="position:relative; height:200px; margin-top:6px;">
+    <sc-if value="{{ showTape }}" hint-placeholder-val="{{ true }}">
+      <div style="position:absolute; top:-6px; left:130px; width:60px; height:20px; background:rgba(217,138,134,0.85); transform:rotate(-5deg); z-index:6;"></div>
+    </sc-if>
+    <div style="position:absolute; left:0; top:20px; width:150px; transform:rotate(-5deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 7px 15px rgba(0,0,0,0.18); z-index:2;">
+      <image-slot id="d4-photo-1" shape="rect" style="width:100%; height:120px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12.5px; color:#55503f;">lemon groves forever</div>
+    </div>
+    <div style="position:absolute; left:130px; top:0; width:165px; transform:rotate(3deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 7px 15px rgba(0,0,0,0.18); z-index:3;">
+      <image-slot id="d4-photo-2" shape="rect" style="width:100%; height:135px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12.5px; color:#55503f;">cliffside, no words</div>
+    </div>
+    <div style="position:absolute; left:310px; top:36px; width:130px; transform:rotate(-3deg); background:#fffdf8; padding:8px 8px 26px 8px; box-shadow:0 7px 15px rgba(0,0,0,0.18); z-index:4;">
+      <image-slot id="d4-photo-3" shape="rect" style="width:100%; height:100px;" placeholder="Drop a photo"></image-slot>
+      <div style="position:absolute; bottom:5px; left:0; right:0; text-align:center; font-family:'Caveat',cursive; font-size:12.5px; color:#55503f;">sunset from the boat</div>
+    </div>
+  </div>
+
+  <div style="margin-top:16px; font-family:'Nunito',sans-serif; font-size:13.5px; line-height:1.7; color:#2d2a24;">
+    Last full day and the coastline is showing off. Took a tiny wooden boat out from the harbor and just floated for an hour, staring at cliffs that shouldn't be able to hold houses but somehow do. Bought a bag of lemons the size of my head from a roadside stand, ate lunch with my feet basically in the water, and watched the whole sky turn the exact color of the spritz in my hand. Already planning how to come back.
+  </div>
+
+  <sc-if value="{{ showChecklist }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:auto; display:flex; flex-direction:column; gap:5px;">
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I ate:</span> <span style="font-size:12.5px; color:#2d2a24;"> a lemon granita that reset my entire nervous system</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">I saw:</span> <span style="font-size:12.5px; color:#2d2a24;"> Positano from the water, impossibly stacked on the cliff</span></div>
+      <div><span style="font-family:'Caveat',cursive; font-weight:600; font-size:15px; color:#cc6b49;">Favorite moment:</span> <span style="font-size:12.5px; color:#2d2a24;"> the boat engine cutting off and just&hellip; silence, and sea</span></div>
+    </div>
+  </sc-if>
+
+  <div style="position:absolute; bottom:18px; right:22px; width:50px; height:50px; border-radius:50%; border:2px dotted rgba(45,42,36,0.4); display:flex; align-items:center; justify-content:center; transform:rotate(-10deg); font-family:'Caveat',cursive; font-size:12px; color:rgba(45,42,36,0.5); text-align:center;">PAGE&nbsp;06</div>
+</section>
+
+</doc-page>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;showChecklist&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Content sections&quot;},
+  &quot;showWeatherMood&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Content sections&quot;},
+  &quot;showTape&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: true, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;Decoration&quot;}
+}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      showChecklist: this.props.showChecklist ?? true,
+      showWeatherMood: this.props.showWeatherMood ?? true,
+      showTape: this.props.showTape ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>

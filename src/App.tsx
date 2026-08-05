@@ -34,7 +34,7 @@ import { useBreakpoint } from './hooks/useBreakpoint'
 import { PAGE_TRANSITION } from './lib/motion'
 import TopNav         from './components/TopNav'
 import BottomNav      from './components/BottomNav'
-import TodayQuickAdd  from './features/voyages/TodayQuickAdd'
+import JournalFab     from './features/journal-book/JournalFab'
 import AuthScreen     from './components/AuthScreen'
 import ErrorBoundary  from './components/ErrorBoundary'
 import { Toast }      from './components/ui'
@@ -667,7 +667,7 @@ export default function App() {
       )}
       {/* Persistent quick-add: one tap to today's check-in on the current voyage.
           Hidden on the editor/composer routes (/…/new, /…/edit) where it'd intrude. */}
-      {!/\/(new|edit)$/.test(location.pathname) && <TodayQuickAdd isMobile={isMobile} />}
+      {!/\/(new|edit)$/.test(location.pathname) && <JournalFab isMobile={isMobile} />}
     </WCtx.Provider>
     </UserCtx.Provider>
     </VoyageCtx.Provider>

@@ -49,16 +49,19 @@ export function WashiTape({ color, w = 68, h = 22, rotate = 0, style }: {
 }
 
 // ── Weather chip ──────────────────────────────────────────────────────────────
-const CHIP_FILL: Record<WeatherChipType, string> = {
-  SUNNY:  BOOK.mustard,
-  CLOUDY: 'rgba(45,42,36,0.35)',
-  RAINY:  BOOK.teal,
-  STORMY: BOOK.ink,
+// Filled with the app palette; text colour flips to stay legible (dark ink on the
+// gold "sunny" chip, white on the darker chips).
+const CHIP: Record<WeatherChipType, { bg: string; fg: string }> = {
+  SUNNY:  { bg: BOOK.mustard, fg: BOOK.ink },   // gold + dark ink
+  CLOUDY: { bg: BOOK.inkSoft, fg: '#fff' },     // muted grey
+  RAINY:  { bg: BOOK.teal,    fg: '#fff' },     // navy
+  STORMY: { bg: BOOK.terracotta, fg: '#fff' },  // navy-dark
 }
 export function WeatherChip({ value }: { value: WeatherChipType }) {
+  const c = CHIP[value]
   return (
     <span style={{
-      padding: '4px 12px', borderRadius: 20, background: CHIP_FILL[value], color: '#fff',
+      padding: '5px 14px', borderRadius: 20, background: c.bg, color: c.fg,
       fontFamily: BOOK_FONT.body, fontWeight: 800, fontSize: 10.5, letterSpacing: 0.5,
     }}>{value}</span>
   )
@@ -72,8 +75,8 @@ export function MoodDots({ value }: { value: number }) {
       {[1, 2, 3, 4, 5].map(i => (
         <span key={i} style={{
           width: 15, height: 15, borderRadius: '50%',
-          background: i <= value ? BOOK.terracotta : 'transparent',
-          border: i <= value ? 'none' : `2px solid ${BOOK.terracotta}`,
+          background: i <= value ? BOOK.mustard : 'transparent',
+          border: i <= value ? 'none' : `2px solid ${BOOK.mustard}`,
         }} />
       ))}
     </span>
@@ -92,13 +95,14 @@ export function PageStamp({ n }: { n: number }) {
 }
 
 // ── Shared page shell (paper + dot grain, fixed 576×864 coordinate box) ───────
-export function PageShell({ children, padding = 36 }: { children: React.ReactNode; padding?: number }) {
+// Roomier defaults (padding + gap) so day pages don't feel cramped.
+export function PageShell({ children, padding = 46 }: { children: React.ReactNode; padding?: number }) {
   return (
     <div style={{
       position: 'absolute', inset: 0, background: BOOK.paper,
       backgroundImage: BOOK.grain, backgroundSize: BOOK.grainSize,
       fontFamily: BOOK_FONT.body, overflow: 'hidden', padding, boxSizing: 'border-box',
-      display: 'flex', flexDirection: 'column', gap: 12,
+      display: 'flex', flexDirection: 'column', gap: 20,
     }}>{children}</div>
   )
 }

@@ -53,8 +53,9 @@ export default function JournalBook({ voyageId, onClose }: { voyageId: string; o
     return () => window.removeEventListener('keydown', onKey)
   }, [index, total]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Scale the 576×864 page to fit, leaving room for controls/padding.
-  const scale = Math.min((vw - 48) / PAGE_W, (vh - 132) / PAGE_H, 1)
+  // Scale the 576×864 page to fit, leaving room for controls/padding. Allow it
+  // to grow past 1× on large screens so the (roomier) layout has space to breathe.
+  const scale = Math.min((vw - 40) / PAGE_W, (vh - 120) / PAGE_H, 1.35)
   const boxW = PAGE_W * scale
   const boxH = PAGE_H * scale
 

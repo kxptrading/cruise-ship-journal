@@ -19,9 +19,9 @@ export default function BookCover({ cover }: { cover: BookCoverModel }) {
     }}>
       <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(204,107,73,0.06), transparent 30%)' }} />
 
-      {/* Washi tape, top corners */}
-      <WashiTape color="linear-gradient(135deg, rgba(219,164,59,0.9), rgba(219,164,59,0.7))" w={76} h={26} rotate={-7} style={{ top: 34, left: 44 }} />
-      <WashiTape color="linear-gradient(135deg, rgba(63,125,120,0.85), rgba(63,125,120,0.65))" w={70} h={24} rotate={9} style={{ top: 40, right: 56 }} />
+      {/* Washi tape, top corners (gold + navy, on-brand) */}
+      <WashiTape color="linear-gradient(135deg, rgba(201,162,39,0.9), rgba(201,162,39,0.65))" w={76} h={26} rotate={-7} style={{ top: 34, left: 44 }} />
+      <WashiTape color="linear-gradient(135deg, rgba(27,58,92,0.8), rgba(27,58,92,0.55))" w={70} h={24} rotate={9} style={{ top: 40, right: 56 }} />
 
       {/* Wordmark + subtitle */}
       <div style={{ position: 'absolute', top: 90, left: 0, right: 0, textAlign: 'center' }}>

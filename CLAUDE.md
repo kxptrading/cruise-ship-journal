@@ -8,13 +8,15 @@ The journal is the primary surface; the Feed is secondary.
 
 **Canonical production URL:** `https://cruise-ship-journal.vercel.app` (Vercel).
 
-> ⚠️ **Domain note:** `deck-days.com` is the intended custom domain but is **not yet
-> pointed at Vercel** — it does not resolve to production today. The UI/marketing copy
-> already uses the "Deck Days" / `deck-days.com` brand, but anything that must hit the
-> live app (CORS allow-lists, OAuth/Supabase redirect URLs, social-share/OG meta tags,
-> canonical links, sitemaps) MUST use the `.vercel.app` URL above until the custom
-> domain is live. When `deck-days.com` is connected, update this line and audit those
-> call sites together.
+> ⚠️ **Domain note:** `deck-days.com` **is now pointed at Vercel** (as of Aug 2026).
+> `www.deck-days.com` serves production (HTTP 200); the apex `deck-days.com`
+> resolves to Vercel and redirects http→https, but apex HTTPS has been flaky
+> (TLS completes then no response) — **prefer `www.deck-days.com`** and verify the
+> apex/`www` config in Vercel. Now that the custom domain is live, the call sites
+> that were pinned to `.vercel.app` (CORS allow-lists, OAuth/Supabase redirect
+> URLs, social-share/OG meta tags, canonical links, sitemaps) should be audited
+> and migrated to `deck-days.com`. The canonical `.vercel.app` URL above still
+> works and remains a valid fallback.
 
 ---
 

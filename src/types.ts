@@ -141,6 +141,30 @@ export interface Highlights {
   moment:    string
 }
 
+// ── Ship ──────────────────────────────────────────────────────────────────────
+// Singleton per voyage (one ship). Specs grid + free-form fun facts + photo gallery.
+
+export interface Ship {
+  shipName:      string
+  cruiseLine:    string
+  yearBuilt:     string
+  builder:       string
+  tonnage:       string
+  length:        string   // overall length (stored with the user's own units)
+  beam:          string
+  maxSpeed:      string
+  guestCapacity: string
+  crewCount:     string
+  decks:         string
+  godmother:     string
+  homePort:      string
+  registry:      string
+  maidenVoyage:  string
+  notes:         string
+  funFacts:      string[]   // free-form list of fun facts
+  mediaPaths:    string[]   // storage paths in daily-photos bucket
+}
+
 // ── Budget ────────────────────────────────────────────────────────────────────
 
 export interface BudgetItem {
@@ -190,6 +214,7 @@ export interface Note {
 
 export interface VoyageData {
   voyage:           Voyage
+  ship:             Partial<Ship>
   itinerary:        ItineraryDay[]
   dailyLogs:        DailyLog[]
   foodLogs:         FoodLog[]

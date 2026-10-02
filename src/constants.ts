@@ -92,6 +92,7 @@ export const PRIMARY_NAV: NavItem[] = [
 
 // Journal sub-sections — shown in the sidebar under a divider (legacy routes)
 export const NAV: NavItem[] = [
+  { id: 'ship',          label: 'The Ship',           icon: '🚢' },
   { id: 'daily',         label: 'Daily Log',          icon: '📅' },
   { id: 'itinerary',     label: 'Itinerary',          icon: '🗺️' },
   { id: 'food',          label: 'Food Log',           icon: '🍴' },

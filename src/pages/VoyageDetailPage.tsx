@@ -58,6 +58,7 @@ import PostList       from '@/features/posts/PostList'
 
 // Journal section components — lazy-loaded per-tab
 // Each chunk is only downloaded when the user clicks the corresponding tab.
+const ShipSection    = lazy(() => import('@/sections/ship/ShipSection'))
 const DailyLog       = lazy(() => import('@/sections/dailylog/JournalEntry'))
 const ItinerarySection = lazy(() => import('@/features/voyages/ItineraryEditor'))
 const BudgetTracker  = lazy(() => import('@/sections/BudgetTracker'))
@@ -72,10 +73,11 @@ const MemoryGallery  = lazy(() => import('@/features/voyages/MemoryGallery'))
 // ── Tab definitions ───────────────────────────────────────────────────────────
 // 'daily' (Daily Log) is the default/first tab — it's where "Open Journal" lands.
 
-type Tab = 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
+type Tab = 'ship' | 'voyage' | 'posts' | 'gallery' | 'daily' | 'itinerary' | 'budget' | 'food' | 'dining' |
            'entertainment' | 'foodfav' | 'shopping' | 'highlights' | 'packing' | 'notes' | 'badges'
 
 const TABS: { id: Tab; label: string; emoji: string }[] = [
+  { id: 'ship',          label: 'Ship',          emoji: '🚢' },
   { id: 'daily',         label: 'Daily Log',     emoji: '📅' },
   { id: 'badges',        label: 'Badges',        emoji: '🏅' },
   { id: 'posts',         label: 'Posts',         emoji: '📝' },
@@ -387,6 +389,7 @@ export default function VoyageDetailPage({ data, update, showToast, isAdult }: P
               <MemoryGallery voyageId={voyageId} />
             )}
             {/* Legacy tabs — receive data + update from useVoyageData (via App.tsx props) */}
+            {safeTab ==='ship'          && <ShipSection data={data.ship} onChange={v => update('ship', v)} voyage={data.voyage} userId={userId} />}
             {safeTab ==='daily'         && <DailyLog data={data.dailyLogs} onChange={v => update('dailyLogs', v)} itinerary={data.itinerary} voyage={data.voyage} initialDay={initialDay} />}
             {safeTab ==='itinerary'     && <ItinerarySection data={data.itinerary} onChange={v => update('itinerary', v)} />}
             {/* Budget tab is hidden unless isAdult is true (controlled by profile.age) */}

@@ -81,7 +81,8 @@ src/
 
   sections/             — legacy journal sub-sections, used as tabs in VoyageDetailPage
     BudgetTracker, DailyLog, DiningLog, EntertainmentLog, FoodFavourites,
-    FoodLog, Highlights, Notes, PackingList, ShoppingLog, Chat, DayDetail
+    FoodLog, Highlights, Notes, PackingList, ShoppingLog, Chat, DayDetail,
+    ship/ShipSection (singleton — specs + fun facts + photo gallery)
 
   ui/                   — shared UI primitives (spec §5)
     MediaUploader.tsx   — drag-drop multi-file uploader
@@ -204,6 +205,11 @@ voyages        id, user_id, ship_name, cruise_line, cabin, deck,
                departure_date, return_date, departure_port, total_nights,
                companion_1..4, emergency_contact, phone, guest_services,
                muster_station, dining_time, created_at
+ship           id, voyage_id (unique), ship_name, cruise_line, year_built, builder,
+               tonnage, length_m, beam_m, max_speed, guest_capacity, crew_count,
+               decks, godmother, home_port, registry, maiden_voyage, notes,
+               fun_facts TEXT[], media_paths TEXT[], updated_at
+               — singleton; RLS: owner + is_voyage_member()
 itinerary      id, voyage_id, day_number, date, port, arrive, depart
 daily_logs     id, voyage_id, day_number, date, port, weather, highlights,
                breakfast, lunch, dinner, drink, activity, duration, exc_cost,
@@ -227,6 +233,7 @@ photos         id, voyage_id, day_number, storage_path, caption, created_at
 
 | ID | Label | Source PDF | Status |
 |---|---|---|---|
+| ship | The Ship | — | **Built** — lead tab. Singleton per voyage (`ship` table, upsert on `voyage_id`). `sections/ship/ShipSection.tsx`: hero identity banner (prefilled from the voyage), specs grid (year built, tonnage, length, capacity, decks, godmother…), free-form fun-facts list (`fun_facts text[]`), photo gallery (`media_paths text[]`, reuses `MediaUploader`), notes. Rides the `highlights`-style singleton write path + 'ship' sync entity type. |
 | dashboard | Dashboard | — | Built — hero, 6 metrics, timeline, budget breakdown |
 | voyage | Voyage Details | `02_voyage_details.pdf` | Built |
 | itinerary | Itinerary | `04_itinerary_overview.pdf` | Built |

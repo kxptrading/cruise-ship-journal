@@ -32,6 +32,7 @@ const MIGRATIONS: Record<EntityType, MigrationStep[]> = {
   entertainmentLog: [],
   foodFav:          [],
   highlights:       [],
+  ship:             [],
   budget:           [],
   shopping:         [],
   packing:          [],

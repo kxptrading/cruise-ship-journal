@@ -28,6 +28,7 @@ import {
   toDbEntertainmentLog,
   toDbFoodFav,
   toDbHighlights,
+  toDbShip,
   toDbShoppingItems,
   toDbPackingItems,
   toDbNotes,
@@ -100,6 +101,7 @@ async function writeToSupabase(item: SyncQueueItem): Promise<void> {
     case 'entertainmentLog': return writeEntertainmentLog(cruiseId, payload as VoyageData['entertainmentLog'], del)
     case 'foodFav':      return writeFoodFav(cruiseId, payload as VoyageData['foodFav'])
     case 'highlights':   return writeHighlights(cruiseId, payload as VoyageData['highlights'])
+    case 'ship':         return writeShip(cruiseId, payload as VoyageData['ship'])
     case 'budget':       return writeBudget(cruiseId, payload as VoyageData['budget'], item.budgetId, del)
     case 'shopping':     return writeShopping(cruiseId, payload as VoyageData['shopping'], del)
     case 'packing':      return writePacking(cruiseId, payload as VoyageData['packing'])
@@ -167,6 +169,13 @@ async function writeFoodFav(voyageId: string, val: VoyageData['foodFav']) {
 async function writeHighlights(voyageId: string, val: VoyageData['highlights']) {
   check(await supabase.from('highlights').upsert(
     toDbHighlights(voyageId, val),
+    { onConflict: 'voyage_id' },
+  ))
+}
+
+async function writeShip(voyageId: string, val: VoyageData['ship']) {
+  check(await supabase.from('ship').upsert(
+    toDbShip(voyageId, val),
     { onConflict: 'voyage_id' },
   ))
 }

@@ -1,0 +1,46 @@
+name: Supabase keep-alive
+
+# Supabase pauses free-tier projects after ~7 days with no activity, which takes
+# the database AND Auth offline (production login breaks). An external request to
+# the REST API resets that inactivity timer. This pings it twice a week so the
+# project never sleeps.
+#
+# Runs only from the default branch (GitHub ignores scheduled workflows on other
+# branches). Secrets SUPABASE_URL and SUPABASE_ANON_KEY are configured in the repo.
+
+on:
+  schedule:
+    # 06:12 UTC every Monday and Thursday → max gap ~3–4 days (well under the 7-day
+    # pause window). Off-the-hour minute avoids GitHub's top-of-hour scheduling lag.
+    - cron: "12 6 * * 1,4"
+  workflow_dispatch: {}   # allow manual runs from the Actions tab
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SUPABASE_URL:-}" ] || [ -z "${SUPABASE_ANON_KEY:-}" ]; then
+            echo "::error::SUPABASE_URL / SUPABASE_ANON_KEY secrets are not set."
+            exit 1
+          fi
+          # Lightweight real DB query. RLS returns an empty array for the anon role,
+          # but the request still counts as activity and must return a 2xx.
+          code=$(curl -s -o /tmp/resp.txt -w "%{http_code}" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
+            "${SUPABASE_URL}/rest/v1/voyages?select=id&limit=1")
+          echo "HTTP ${code}"
+          head -c 300 /tmp/resp.txt || true
+          echo
+          if [ "${code}" -lt 200 ] || [ "${code}" -ge 300 ]; then
+            echo "::error::Keep-alive ping failed with HTTP ${code}"
+            exit 1
+          fi
+          echo "Keep-alive ping OK."

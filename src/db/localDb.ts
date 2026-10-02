@@ -23,6 +23,7 @@ export type EntityType =
   | 'entertainmentLog'
   | 'foodFav'
   | 'highlights'
+  | 'ship'
   | 'budget'
   | 'shopping'
   | 'packing'

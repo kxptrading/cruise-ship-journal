@@ -4,7 +4,7 @@
 
 import type {
   Voyage, ItineraryDay, DailyLog, FoodLog, DiningEntry, EntertainmentEntry,
-  FoodFavourites, Highlights, Budget, BudgetItem, Shopping, ShoppingItem,
+  FoodFavourites, Highlights, Ship, Budget, BudgetItem, Shopping, ShoppingItem,
   Packing, Note,
 } from '../types'
 import type { CanvasItem } from '../sections/dailylog/canvasTypes'
@@ -468,6 +468,77 @@ export function toDbHighlights(voyageId: string, v: Partial<Highlights>) {
     friends:    v.friends   || null,
     first_time: v.firstTime || null,
     moment:     v.moment    || null,
+  }
+}
+
+// ── Ship ──────────────────────────────────────────────────────────────────────
+
+interface ShipRow {
+  ship_name?:      string | null
+  cruise_line?:    string | null
+  year_built?:     string | null
+  builder?:        string | null
+  tonnage?:        string | null
+  length_m?:       string | null
+  beam_m?:         string | null
+  max_speed?:      string | null
+  guest_capacity?: string | null
+  crew_count?:     string | null
+  decks?:          string | null
+  godmother?:      string | null
+  home_port?:      string | null
+  registry?:       string | null
+  maiden_voyage?:  string | null
+  notes?:          string | null
+  fun_facts?:      string[] | null
+  media_paths?:    string[] | null
+}
+
+export function fromDbShip(row: ShipRow | null | undefined): Partial<Ship> {
+  if (!row) return {}
+  return {
+    shipName:      row.ship_name      ?? '',
+    cruiseLine:    row.cruise_line    ?? '',
+    yearBuilt:     row.year_built     ?? '',
+    builder:       row.builder        ?? '',
+    tonnage:       row.tonnage        ?? '',
+    length:        row.length_m       ?? '',
+    beam:          row.beam_m         ?? '',
+    maxSpeed:      row.max_speed      ?? '',
+    guestCapacity: row.guest_capacity ?? '',
+    crewCount:     row.crew_count     ?? '',
+    decks:         row.decks          ?? '',
+    godmother:     row.godmother      ?? '',
+    homePort:      row.home_port      ?? '',
+    registry:      row.registry       ?? '',
+    maidenVoyage:  row.maiden_voyage  ?? '',
+    notes:         row.notes          ?? '',
+    funFacts:      row.fun_facts      ?? [],
+    mediaPaths:    row.media_paths    ?? [],
+  }
+}
+
+export function toDbShip(voyageId: string, v: Partial<Ship>) {
+  return {
+    voyage_id:      voyageId,
+    ship_name:      v.shipName      || null,
+    cruise_line:    v.cruiseLine    || null,
+    year_built:     v.yearBuilt     || null,
+    builder:        v.builder       || null,
+    tonnage:        v.tonnage       || null,
+    length_m:       v.length        || null,
+    beam_m:         v.beam          || null,
+    max_speed:      v.maxSpeed      || null,
+    guest_capacity: v.guestCapacity || null,
+    crew_count:     v.crewCount     || null,
+    decks:          v.decks         || null,
+    godmother:      v.godmother     || null,
+    home_port:      v.homePort      || null,
+    registry:       v.registry      || null,
+    maiden_voyage:  v.maidenVoyage  || null,
+    notes:          v.notes         || null,
+    fun_facts:      v.funFacts   ?? [],
+    media_paths:    v.mediaPaths ?? [],
   }
 }
 

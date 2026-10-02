@@ -58,6 +58,7 @@ import {
   fromDbEntertainmentLog, toDbEntertainmentLog,
   fromDbFoodFav,   toDbFoodFav,
   fromDbHighlights, toDbHighlights,
+  fromDbShip,      toDbShip,
   fromDbBudget,
   fromDbShopping,  toDbShoppingItems,
   fromDbPacking,   toDbPackingItems,
@@ -71,6 +72,7 @@ import { EMPTY_VOYAGE } from '../types'
 // All arrays are [] so section components don't need to null-check.
 export const INIT: VoyageData = {
   voyage:           EMPTY_VOYAGE,
+  ship:             {},
   itinerary:        [],
   dailyLogs:        [],
   foodLogs:         [],
@@ -287,6 +289,7 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         { data: entertainmentRows },
         { data: foodFavRow },
         { data: highlightsRow },
+        { data: shipRow },
         { data: budgetRow },
         { data: shoppingRows },
         { data: packingRows },
@@ -297,6 +300,7 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         supabase.from('entertainment_log').select('id,day,date,name,type,venue,performers,duration,rating,notes').eq('voyage_id', voyageId),
         supabase.from('food_favourites').select('best,buffet,specialty,surprising,recreate,regret').eq('voyage_id', voyageId).maybeSingle(),
         supabase.from('highlights').select('port,meal,funny,view,friends,first_time,moment').eq('voyage_id', voyageId).maybeSingle(),
+        supabase.from('ship').select('ship_name,cruise_line,year_built,builder,tonnage,length_m,beam_m,max_speed,guest_capacity,crew_count,decks,godmother,home_port,registry,maiden_voyage,notes,fun_facts,media_paths').eq('voyage_id', voyageId).maybeSingle(),
         supabase.from('budget').select('id,total_budget').eq('voyage_id', voyageId).maybeSingle(),
         supabase.from('shopping_items').select('id,item,port,cost').eq('voyage_id', voyageId),
         supabase.from('packing_items').select('category,item,checked').eq('voyage_id', voyageId),
@@ -331,6 +335,7 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
         entertainmentLog: fromDbEntertainmentLog(entertainmentRows || []),
         foodFav:          fromDbFoodFav(foodFavRow),
         highlights:       fromDbHighlights(highlightsRow),
+        ship:             fromDbShip(shipRow),
         budget:           fromDbBudget(budgetRow as { total_budget?: number | string | null } | null, budgetItemRows),
         shopping:         fromDbShopping(shoppingRows        || []),
         packing:          fromDbPacking(packingRows          || []),
@@ -414,6 +419,10 @@ export function useVoyageData({ session, showToast }: Options): UseVoyageDataRet
     if (key === 'highlights' && voyageId) {
       supabase.from('highlights').upsert(toDbHighlights(voyageId, val as VoyageData['highlights']), { onConflict: 'voyage_id' })
         .then(r => syncCheck(r, 'highlights', val))
+    }
+    if (key === 'ship' && voyageId) {
+      supabase.from('ship').upsert(toDbShip(voyageId, val as VoyageData['ship']), { onConflict: 'voyage_id' })
+        .then(r => syncCheck(r, 'ship', val))
     }
     // Array rows with composite key — debounced UPSERT
     if (key === 'itinerary' && voyageId) {

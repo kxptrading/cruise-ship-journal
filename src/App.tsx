@@ -128,7 +128,7 @@ import { useIsAdmin } from './features/safety/hooks'
 
 // All valid section IDs — anything else renders NotFound
 const KNOWN_SECTIONS = new Set([
-  'feed', 'profile', 'voyage', 'itinerary', 'daily', 'food', 'dining',
+  'feed', 'profile', 'ship', 'voyage', 'itinerary', 'daily', 'food', 'dining',
   'entertainment', 'foodfav', 'budget', 'shopping', 'highlights', 'packing',
   'notes', 'friends', 'chat', 'userprofile', 'design-system',
 ])
@@ -361,6 +361,7 @@ export default function App() {
   const sectionStatus = useMemo(() => {
     const has = new Set<string>()
     if (data.voyage.shipName || data.voyage.cruiseLine || data.voyage.departureDate) has.add('voyage')
+    if (Object.values(data.ship).some(v => Array.isArray(v) ? v.length > 0 : v)) has.add('ship')
     if (data.itinerary.length > 0) has.add('itinerary')
     if (data.dailyLogs.some(d => d.highlights || d.bestMoment || d.activity)) has.add('daily')
     if (data.foodLogs.length > 0) has.add('food')
@@ -381,7 +382,7 @@ export default function App() {
   // of these IDs, redirect to /voyages/:id?tab=<section> so the correct tab
   // opens. Fall back to /voyages if voyageId isn't available yet.
   const JOURNAL_TABS = new Set([
-    'daily','itinerary','food','dining','entertainment',
+    'ship','daily','itinerary','food','dining','entertainment',
     'foodfav','budget','shopping','highlights','packing','notes','voyage',
   ])
 
@@ -611,7 +612,7 @@ export default function App() {
                 <Route path="/login"  element={<Navigate to="/" replace />} />
                 <Route path="/signup" element={<Navigate to="/" replace />} />
                 {/* Legacy section routes — redirect to /voyages so old bookmarks don't 404 */}
-                {['voyage','itinerary','daily','food','dining','entertainment','foodfav','budget','shopping','highlights','packing','notes'].map(path => (
+                {['ship','voyage','itinerary','daily','food','dining','entertainment','foodfav','budget','shopping','highlights','packing','notes'].map(path => (
                   <Route key={path} path={`/${path}`} element={<Navigate to="/voyages" replace />} />
                 ))}
                 {/* /friends and /contacts both route to the new ContactsPage */}
